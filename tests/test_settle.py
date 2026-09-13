@@ -14,6 +14,11 @@ def run(frames, cfg=None, duration=None):
     for i, g in enumerate(frames):
         out += m.step(i, i / FPS, g)
     out += m.finish(duration if duration is not None else len(frames) / FPS)
+    for a, b in zip(out, out[1:]):  # record invariants (§7.3)
+        assert a.t_change <= a.t_settled <= a.t_end, (a.frame_index, a.t_change, a.t_settled, a.t_end)
+        assert a.t_end == b.t_change
+        if not a.settled and not b.settled:
+            assert b.t_settled - a.t_settled >= cfg.settle.max_hold_s - 1e-6, "two unsettled snapshots closer than M"
     return out
 
 
@@ -142,3 +147,38 @@ def test_scrolling_region_yields_ticks_and_a_final_settled_state():
     assert len(ticks) >= 2
     final = ems[-1]
     assert final.settled and abs(final.t_settled - (30 + 299) / FPS) < 0.1
+
+
+def test_churn_and_max_hold_do_not_double_emit():
+    cfg = Stage1Config()
+    cfg.churn.window_s = 1.0
+    cfg.churn.min_area = 100
+    rng = np.random.default_rng(2)
+    frames = [blank() for _ in range(30)]
+    for i in range(240):  # a churning region plus a block sweeping elsewhere: both snapshot clocks are due together
+        g = blank()
+        g[10:40, 120:160] = (rng.random((30, 40)) * 255).astype(np.uint8)
+        x = 5 + (i * 5) % 150  # 5 px per frame (3 px edges would be bar-shaped); period 1.0 s, longer than a blink period
+        g[45:58, x:x + 20] = 255
+        frames.append(g)
+    frames += [frames[-1] for _ in range(90)]
+    ems = run(frames, cfg)  # invariants in run() check spacing and t_end >= t_settled
+    assert sum(1 for e in ems if not e.settled) >= 2
+
+
+def test_caret_is_found_at_finalization_long_after_the_cursor_moved():
+    frames = []
+    for i in range(60):  # 2 s: bar caret blinking at x=100
+        g = blank()
+        if (i // 15) % 2 == 1:
+            g[20:38, 100:102] = 255
+        frames.append(g)
+    for i in range(60, 300):  # 8 s: a new glyph appears and the caret blinks at x=140 (the first blinker expires)
+        g = with_glyphs(1, x0=110)
+        if (i // 15) % 2 == 1:
+            g[20:38, 140:142] = 255
+        frames.append(g)
+    ems = run(frames)
+    assert len(ems) == 2
+    assert ems[0].caret is not None and abs(ems[0].caret[0] - 100) <= 1
+    assert ems[1].caret is not None and abs(ems[1].caret[0] - 140) <= 1

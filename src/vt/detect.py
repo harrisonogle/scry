@@ -106,6 +106,7 @@ class ChurnTracker:
         self.last_change = np.full(size, -1, dtype=np.int32)
         self.times: dict[int, float] = {}
         self.regions: list[BBox] = []
+        self._leave_max = -1  # latest last_change index among pixels that left the mask since the last deactivation event
 
     @property
     def active(self) -> bool:
@@ -134,13 +135,18 @@ class ChurnTracker:
         stay = self.mask & (self.count > self.p.rho_off * n)
         new_mask = on | stay
         leaving = self.mask & ~new_mask
-        deactivated = bool(leaving.any())
+        if leaving.any():
+            self._leave_max = max(self._leave_max, int(self.last_change[leaving].max()))
+        self.mask = new_mask
+        before = len(self.regions)
+        self.regions = self._regions(new_mask)
+        # per-pixel hysteresis empties a region gradually; the event is "a region disappeared", dated by the last change
+        # inside the pixels that left it (§7.4)
+        deactivated = before > 0 and len(self.regions) < before
         t_last = None
         if deactivated:
-            idx = int(self.last_change[leaving].max())
-            t_last = self.times.get(idx, t)
-        self.mask = new_mask
-        self.regions = self._regions(new_mask)
+            t_last = self.times.get(self._leave_max, t) if self._leave_max >= 0 else t
+            self._leave_max = -1
         return ChurnUpdate(self.regions, deactivated, t_last)
 
     def _regions(self, mask: np.ndarray) -> list[BBox]:
@@ -188,6 +194,7 @@ class BlinkTracker:
     def __init__(self, p: BlinkParams):
         self.p = p
         self.cands: list[Candidate] = []
+        self.history: list[tuple[BBox, float, float]] = []  # (bbox, first toggle, last toggle) of expired confirmed blinkers
 
     def _match(self, bbox: BBox) -> Candidate | None:
         best, best_iou = None, 0.0
@@ -227,7 +234,17 @@ class BlinkTracker:
                 newly.append(cand)
             if cand.confirmed:
                 excluded.add(idx)
-        self.cands = [c for c in self.cands if t - c.last_seen <= self.p.expiry_s]
+        keep = []
+        for c in self.cands:
+            if t - c.last_seen <= self.p.expiry_s:
+                if len(c.times) > 64:  # a cursor that blinks for minutes: keep only what confirmation and lookup need
+                    c.times = c.times[-64:]
+                keep.append(c)
+            elif c.confirmed:
+                self.history.append((c.bbox, c.times[0], c.last_seen))
+        self.cands = keep
+        if len(self.history) > 4096:
+            self.history = self.history[-2048:]
         return BlinkUpdate(excluded, newly)
 
     def is_blinker_bbox(self, bbox: BBox) -> bool:
@@ -240,9 +257,16 @@ class BlinkTracker:
         return c.times[-1] if c is not None and not c.confirmed else None
 
     def caret_for_interval(self, t0: float, t1: float) -> BBox | None:
-        best: Candidate | None = None
+        """The confirmed blinker active during [t0, t1] (live or expired), preferring the latest one."""
+        best: tuple[float, BBox] | None = None
         for c in self.cands:
-            if c.confirmed and any(t0 <= x <= t1 for x in c.times):
-                if best is None or c.times[-1] > best.times[-1]:
-                    best = c
-        return best.bbox if best else None
+            if c.confirmed and c.times[0] <= t1 and c.last_seen >= t0:
+                last = min(c.last_seen, t1)
+                if best is None or last > best[0]:
+                    best = (last, c.bbox)
+        for bbox, first, last_seen in self.history:
+            if first <= t1 and last_seen >= t0:
+                last = min(last_seen, t1)
+                if best is None or last > best[0]:
+                    best = (last, bbox)
+        return best[1] if best else None

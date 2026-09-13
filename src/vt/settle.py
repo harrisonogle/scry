@@ -80,6 +80,7 @@ class SettleMachine:
         return True, all(pending(c) for c in active)
 
     def _emit(self, index: int, t: float, gray: np.ndarray, frame: object, t_change: float, t_settled: float, settled: bool) -> None:
+        t_settled = max(t_settled, t_change)  # churn deactivation can date the final state before the last snapshot
         em = Emission(index, t_change, t_settled, settled, [self._scale(b) for b in self.churn.regions], frame=frame)
         self._finalize(t_change)
         self.last = em
@@ -91,8 +92,8 @@ class SettleMachine:
     def _finalize(self, t_end: float) -> None:
         if self.last is None:
             return
-        self.last.t_end = t_end
-        caret = self.blink.caret_for_interval(self.last.t_settled, t_end)
+        self.last.t_end = max(t_end, self.last.t_settled)  # a snapshot's stable interval may be empty, never negative
+        caret = self.blink.caret_for_interval(self.last.t_settled, self.last.t_end)
         self.last.caret = self._scale(caret) if caret else None
         self.finalized.append(self.last)
         self.last = None
@@ -135,16 +136,18 @@ class SettleMachine:
                 if not deferred:
                     if novel:
                         self._emit(index, t, gray, frame, self.t_change, self.t_still, True)
-                    elif self.last is not None and not self.last.settled:
+                    elif self.last is not None and not self.last.settled and not self.churn.active:
                         self.last.settled = True
-                        self.last.t_settled = self.t_still
+                        self.last.t_settled = max(self.t_still, self.last.t_change)  # a snapshot taken after the region stopped
                     self.changed = False
 
-        if self.changed and self.t_still is None and t - self.t_change >= self.M:
-            self._emit(index, t, gray, frame, self.t_change, t, False)
-            self.t_change = t
-        if self.churn.active and t - self.t_last_emit >= self.M:
-            self._emit(index, t, gray, frame, self.t_last_emit, t, False)
+        max_hold_due = self.changed and self.t_still is None and t - self.t_change >= self.M
+        tick_due = self.churn.active and t - self.t_last_emit >= self.M
+        if (max_hold_due or tick_due) and t - self.t_last_emit >= self.M - 1e-9:  # never two snapshots within M of each other
+            t_change = max(self.t_change if self.changed else self.t_last_emit, self.t_last_emit)
+            self._emit(index, t, gray, frame, t_change, t, False)
+            if self.changed:
+                self.t_change = t
         if churn_upd.deactivated:
             if not self.changed:
                 self.changed, self.t_change = True, self.t_last_emit
