@@ -1,5 +1,7 @@
 # Visual Transcript Pipeline Implementation Plan
 
+> **Executed 2026-09-13.** Every task landed as a commit on `main` (one per task). The repository is now the source of truth; where the code diverged from the blocks below during execution, the change is recorded in `docs/decision-ledger.md` (L25 onward) and in the design's §24 (revision 5). The code blocks here are the plan as reviewed, not a mirror of the tree.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build `vt`, a Python command-line pipeline that turns a silent screen-recording tutorial video into an exact, timestamped, queryable visual transcript (frames → OCR + VLM perception → merged states → line diffs and coalesced transitions → VLM interpretations → step/section hierarchy → SQLite index → question-answering agent), as specified in the design document.
