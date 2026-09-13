@@ -157,15 +157,17 @@ class SettleMachine:
             if t_real is None:
                 continue
             if self.changed and (self.t_still is None or t_real < self.t_still):
-                self.t_still = t_real
+                self.t_still = max(t_real, self.t_change)  # never before the motion that started this state
             if self.last is not None and any(abs(self.last.t_settled - x) < 1e-9 for x in cand.times) and t_real < self.last.t_settled:
-                self.last.t_settled = t_real  # the buffered emission "settled" on a cursor toggle, not on real motion
+                self.last.t_settled = max(t_real, self.last.t_change)  # the buffered emission "settled" on a cursor toggle
 
         self.prev, self.prev_t, self.prev_index, self.prev_frame = gray, t, index, frame
         return self._drain()
 
     def finish(self, duration: float) -> list[Emission]:
-        if self.prev is not None and self.changed and self.last_gray is not None and self._novel(self.prev, self.prev_t + 10.0)[0]:
+        recent_snapshot = self.t_still is None and self.prev_t - self.t_last_emit < self.S  # a max-hold just captured this
+        if (self.prev is not None and self.changed and self.last_gray is not None and not recent_snapshot
+                and self._novel(self.prev, self.prev_t + 10.0)[0]):
             t_settled = self.t_still if self.t_still is not None else self.prev_t
             self._emit(self.prev_index, self.prev_t, self.prev, self.prev_frame, self.t_change, t_settled, self.t_still is not None)
         self._finalize(duration)

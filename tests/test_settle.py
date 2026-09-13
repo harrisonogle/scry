@@ -182,3 +182,26 @@ def test_caret_is_found_at_finalization_long_after_the_cursor_moved():
     assert len(ems) == 2
     assert ems[0].caret is not None and abs(ems[0].caret[0] - 100) <= 1
     assert ems[1].caret is not None and abs(ems[1].caret[0] - 140) <= 1
+
+
+def test_cursor_toggles_after_a_keystroke_keep_timestamps_ordered():
+    frames = [blank() for _ in range(15)]
+    for i in range(15, 240):  # glyph appears at 0.5 s; from 1.0 s a block cursor blinks next to it
+        g = with_glyphs(1)
+        if i >= 30 and ((i - 30) // 15) % 2 == 0:
+            g[20:32, 20:28] = 255
+        frames.append(g)
+    ems = run(frames)  # invariants checked in run()
+    assert len(ems) == 2 and ems[1].settled
+    assert abs(ems[1].t_change - 15 / FPS) < 1e-6 and abs(ems[1].t_settled - 15 / FPS) < 0.05
+
+
+def test_end_of_stream_does_not_add_a_snapshot_right_after_a_max_hold():
+    frames = [blank() for _ in range(30)]
+    for i in range(100):  # motion until the end: the max-hold fires at frame 120, the stream ends 9 frames later
+        g = blank()
+        x = 10 + (i * 5) % 140
+        g[30:50, x:x + 20] = 255
+        frames.append(g)
+    ems = run(frames)
+    assert len(ems) == 2 and not ems[1].settled
