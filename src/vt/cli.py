@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 
@@ -107,3 +108,88 @@ def ask(run_dir: Path, question: str, config: Path | None = None, verbose: bool 
     _setup_logging(verbose)
     from vt.agent import ask as _ask
     typer.echo(_ask(Run(run_dir), load_config(config), question))
+
+
+STAGES = ["outline", "decode", "ocr", "overlay", "perceive", "merge", "diff", "interpret", "hierarchy", "index"]
+
+
+@app.command()
+def run(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None = None, stages: str | None = None, verbose: bool = False):
+    """Run every stage in order (idempotent; each stage skips itself when inputs and config are unchanged)."""
+    _setup_logging(verbose)
+    cfg = load_config(config)
+    r = Run(out)
+    wanted = stages.split(",") if stages else STAGES
+    import time
+    from vt import coalesce, hierarchy as hier, index as idx, interpret as interp, merge as mrg, overlay as ov, perceive as perc, stage1, stage2a
+    from vt.diagnostics import diagnostics
+
+    def _outline():
+        from vt.outline import run_outline  # created in Task 20; imported lazily so `vt run` works before that task lands
+        run_outline(r, cfg, video)
+
+    steps = {"outline": _outline, "decode": lambda: stage1.run_stage1(r, cfg, video),
+             "ocr": lambda: stage2a.run_ocr(r, cfg), "overlay": lambda: ov.run_overlay(r, cfg), "perceive": lambda: perc.run_perceive(r, cfg),
+             "merge": lambda: mrg.run_merge(r, cfg), "diff": lambda: coalesce.run_diff(r, cfg), "interpret": lambda: interp.run_interpret(r, cfg),
+             "hierarchy": lambda: hier.run_hierarchy(r, cfg), "index": lambda: idx.build_index(r, cfg)}
+    keys = {"decode": "stage1", "ocr": "ocr", "overlay": "overlay", "perceive": "perceive", "merge": "merge", "diff": "diff",
+            "interpret": "interpret", "hierarchy": "hierarchy", "index": "index"}
+    for name in STAGES:
+        if name in wanted:
+            typer.echo(f"== {name}")
+            t0 = time.perf_counter()
+            steps[name]()
+            st = r.manifest_read().get("stages", {})
+            if keys.get(name) in st:  # per-stage wall time (§18.4)
+                st[keys[name]]["seconds"] = round(time.perf_counter() - t0, 1)
+                r.manifest_update(stages=st)
+    r.manifest_update(diagnostics=diagnostics(r))
+    typer.echo(json.dumps(r.manifest_read().get("diagnostics", {}), indent=2))
+
+
+@app.command()
+def setup(config: Path | None = None):
+    """Check the environment: Vision OCR, FTS5, sqlite-vec, credentials, optional embedder."""
+    import sqlite3
+    cfg = load_config(config)
+    ok = True
+    try:
+        from vt.ocr import get_engine
+        get_engine(cfg.ocr)
+        typer.echo(f"ocr engine {cfg.ocr.engine}: ok")
+    except Exception as e:
+        ok = False
+        typer.echo(f"ocr engine {cfg.ocr.engine}: FAILED ({e})")
+    try:
+        sqlite3.connect(":memory:").execute("create virtual table t using fts5(x)")
+        typer.echo("sqlite fts5: ok")
+    except Exception as e:
+        ok = False
+        typer.echo(f"sqlite fts5: FAILED ({e})")
+    try:
+        import sqlite_vec
+        db = sqlite3.connect(":memory:"); db.enable_load_extension(True); sqlite_vec.load(db)
+        typer.echo("sqlite-vec: ok")
+    except Exception as e:
+        typer.echo(f"sqlite-vec: unavailable ({e}); lexical retrieval only")
+    import os
+    typer.echo("anthropic credentials: " + ("ANTHROPIC_API_KEY set" if os.environ.get("ANTHROPIC_API_KEY") else "no env var (an `ant auth login` profile may still work)"))
+    if cfg.index.embedder != "none":
+        try:
+            from vt.index import get_embedder
+            get_embedder(cfg.index)
+            typer.echo(f"embedder {cfg.index.embedder}: ok")
+        except Exception as e:
+            typer.echo(f"embedder {cfg.index.embedder}: FAILED ({e})")
+    raise typer.Exit(code=0 if ok else 1)
+
+
+@app.command()
+def outline(video: Path, out: Path = typer.Option(..., "--out"), import_path: Path | None = typer.Option(None, "--import"), config: Path | None = None):
+    """Stage 0 (optional): Gemini agentic chapter outline, or import one from a JSON file."""
+    from vt.outline import run_outline
+    cfg = load_config(config)
+    if import_path is None and not cfg.outline.enabled:
+        typer.echo("outline disabled in config (set [outline] enabled = true) and no --import given")
+        raise typer.Exit(code=1)
+    run_outline(Run(out), cfg, video, import_path)
