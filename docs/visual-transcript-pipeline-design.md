@@ -2,8 +2,9 @@
 
 | | |
 |---|---|
-| **Status** | Draft design, pre-implementation |
+| **Status** | Draft design, pre-implementation — **revision 2** (macOS/Python port; supersedes the Windows/.NET-oriented revision 1; see §24) |
 | **Date** | 2026-09-13 |
+| **Platform** | Processing runs on macOS (Apple Silicon; macOS 13 or later for Vision text-recognition revision 3 **[verify floor]**; verified on macOS 26.3). Recordings may come from any OS — the sample corpus was recorded on Windows. Linux and Windows ports: §20.8. |
 | **Scope** | Silent screen-recording tutorial videos → exact, timestamped, queryable "visual transcript" |
 | **Audience** | A cold reader with systems-programming background and no prior context on this project |
 
@@ -13,7 +14,7 @@
 
 Section 1 states the problem and requirements. Section 2 is a one-page summary of the design. Section 3 records every load-bearing decision and why it was made. Section 4 is a glossary; terms are defined there once and used freely afterward. Section 5 summarizes the tool landscape that was surveyed, so the choices in Section 3 are legible. Sections 6–14 are the stage-by-stage specification (with the data model in §10); §15 gives the prompt contracts, §16 the parameters, §17 failure modes, §18 the evaluation plan, §19 the cost model, §20 implementation notes, §21 the v2 roadmap, §22 open questions, and §23 references.
 
-Anything marked **[verify]** is a fact recalled rather than confirmed from documentation during design and should be checked before it is relied on. Anything marked **[reasoned]** is a rule derived from first principles rather than taken from literature or prior art, and should be validated against ground truth.
+Anything marked **[verify]** is a fact recalled rather than confirmed from documentation during design and should be checked before it is relied on. Anything marked **[reasoned]** is a rule derived from first principles rather than taken from literature or prior art, and should be validated against ground truth. Anything marked **[measured]** was observed on the development machine (Apple Silicon, macOS 26.3) on 2026-09-13 with the sample video or a synthetic frame; treat it as an order of magnitude, not a benchmark. §24 lists what changed between revisions.
 
 ---
 
@@ -25,6 +26,7 @@ Anything marked **[verify]** is a fact recalled rather than confirmed from docum
 - **No audio track.** All information is visual.
 - Typical resolution 1080p or 1440p at 30 or 60 fps. **4K is out of scope for v1** (see §21).
 - Videos already exist; there is no control over how they were recorded (no OS-level capture of window trees or input events). See §21 for what changes if that control is gained.
+- The recording OS is irrelevant to processing. The sample corpus was recorded on Windows (Windows Terminal, PowerShell, the Azure portal in a browser); the pipeline runs on macOS and reads nothing OS-specific from the video. Examples throughout this document therefore show Windows *content* processed by macOS *tooling*.
 
 ### 1.2 Required outputs
 
@@ -58,7 +60,7 @@ A **visual transcript** per video, consisting of:
 
 ## 2. Design summary
 
-The pipeline decodes the video at native frame rate, detects every screen change with a pixel-difference test, waits for the screen to settle, and emits one frame per distinct settled state. Each emitted frame is perceived twice from the same PNG: by an OCR engine (exact characters with bounding boxes) and by a vision-language model (VLM) that groups the OCR'd lines into windows and panes, names them, and produces its own verbatim transcription. The two transcriptions are aligned line by line and an agreement flag is recorded. Consecutive states are diffed at line level to produce exact text deltas, which are coalesced into action-sized events (typed commands, appended output). A second VLM call per transition sees both frames as images plus the computed diff and produces an interpretation (action, result). Transitions are then grouped by semantic segmentation into steps, steps into sections, sections into a whole-video summary. Every node from every level is indexed for lexical and vector retrieval, and an agent answers questions over that index, fetching the underlying frame images as evidence when needed. In parallel, Gemini's agentic video mode produces a coarse chapter outline of the whole video that is used as global context and as a retrieval document, but never overrides frame-level evidence.
+The pipeline decodes the video at native frame rate, detects every screen change with a pixel-difference test, waits for the screen to settle, and emits one frame per distinct settled state. Each emitted frame is perceived twice from the same PNG: by an OCR engine (exact characters with bounding boxes) and by a vision-language model (VLM) that groups the OCR'd lines into windows and panes, names them, and produces its own verbatim transcription. The two transcriptions are aligned line by line and an agreement flag is recorded. Consecutive states are diffed at line level to produce exact text deltas, which are coalesced into action-sized events (typed commands, appended output). A second VLM call per transition sees both frames as images plus the computed diff and produces an interpretation (action, result). Transitions are then grouped by semantic segmentation into steps, steps into sections, sections into a whole-video summary. Every node from every level is indexed for lexical and vector retrieval, and an agent answers questions over that index, fetching the underlying frame images as evidence when needed. Optionally and in parallel, Gemini's agentic video mode produces a coarse chapter outline of the whole video that is used as global context and as a retrieval document, but never overrides frame-level evidence; every consumer of the outline also runs without it (§6).
 
 ```
                  ┌──────────────────────────────────────────────────────────────┐
@@ -109,12 +111,16 @@ The pipeline decodes the video at native frame rate, detects every screen change
 | D9 | **Gemini agentic outline as Stage 0, read-only.** | Cheap global context that disambiguates local transitions; useful section-boundary prior; indexable. Must never override frame evidence because its per-frame resolution is low. | Second coarse frame pass with the image model (redundant once per-frame layer is precise). |
 | D10 | **No tiling or cropping in v1.** | 1080p and 1440p pass through the chosen image models at native resolution (§5.3). Crop-by-region is an extra failure point needed only for 4K. | Grid tiling (bisects windows); crop-by-region (v2, 4K only). |
 | D11 | **Ensemble members are switchable stages with per-component metrics; ensemble-first is acceptable under that condition.** | Cost is not the only ensemble downside: reconciliation logic must exist, and failures must be attributable. Both are solved by independent metrics. | Build-small-then-add (acceptable, not required); like-for-like ensembling of two VLMs per frame (no a priori reconciliation rule — not done). |
-| D12 | **Windows.Media.Ocr as the baseline OCR engine; PaddleOCR evaluated against it.** | Zero-setup .NET baseline. Paddle is generally stronger on small monospace text. The evaluation harness decides. | Tesseract (weakest on UI text). |
+| D12 | **Apple Vision (`VNRecognizeTextRequest`, accurate level, language correction off) as the baseline OCR engine; RapidOCR (PaddleOCR models on ONNX Runtime) evaluated against it.** | Ships with macOS; offline; no model download; returns text lines with a confidence and per-substring boxes. In a smoke test on a synthetic terminal frame it returned `PS C:\src> git status` and a 70-character `az aks create …` line character-for-character in ~0.3 s **[measured]**. Language correction must be off: it rewrites tokens toward dictionary words, which is exactly the "correction" R1 forbids. RapidOCR is pip-installable and cross-platform (so it doubles as the Linux engine), but on the same frame it dropped inter-word spaces and one whole line, so it is the challenger, not the baseline. The harness decides (§18.3). | Windows.Media.Ocr (revision 1's baseline; Windows-only; remains the engine for a Windows port, §20.8); Tesseract (weakest on anti-aliased UI text). |
+| D13 | **Python (3.12 floor; 3.14 verified) as the implementation language, with `uv` for environments and the lockfile.** | The perception stack is Python-first: Apple Vision through PyObjC, PaddleOCR-family engines through ONNX Runtime, PyAV for decode, numpy/scipy for pixels, the Anthropic SDK with structured outputs, SQLite FTS5 and `sqlite-vec` for the index. Every dependency resolved, installed, and ran on the dev machine (§20.1). A .NET port on macOS would need the macOS workload for Vision bindings and has no maintained PaddleOCR path; Swift has the best Vision access but the weakest model-SDK and OCR-challenger story. | .NET (revision 1's choice; Windows-centric OCR); Swift; Rust/Go (no Vision bindings worth the effort). |
+| D14 | **Decode in-process with PyAV (bundled FFmpeg); pixel processing with numpy/`scipy.ndimage`, not OpenCV.** | PyAV yields the decoder's exact per-frame presentation timestamp (`pts × time_base`) and needs no system `ffmpeg`. OpenCV's wheel bundles a second FFmpeg; loading it beside PyAV's on macOS logs duplicate Objective-C class warnings ("may cause spurious casting failures and mysterious crashes") **[measured]**. Everything Stage 1 needs (absolute difference, threshold, morphological opening, connected components with areas) is a few lines of numpy/scipy and runs in ~5 ms per half-resolution 1080p frame **[measured]**. | `ffmpeg` subprocess (extra install; time reconstructed from frame index); OpenCV (library conflict; no capability the pipeline lacks without it). |
+| D15 | **One VLM provider in v1 — Anthropic, default model `claude-opus-5` — behind a provider interface; further providers are added when the harness can compare them.** | The interface is narrow: labeled images and text blocks in, JSON conforming to a schema out, plus token usage. Implementing three providers before a single ground-truth frame exists adds surface area without evidence. Claude's high-resolution image tier accepts 1080p and 1440p frames without downscaling (§5.3), which is the one property the design requires. `claude-sonnet-5` and `claude-haiku-4-5` are configuration alternatives for the cost bake-off. | Multi-provider from day one; Gemini-image as default (video-native context is Stage 0's job, not Stage 2's). |
 
 ---
 
 ## 4. Glossary
 
+- **Accessibility tree (AX):** the OS-maintained hierarchy of UI elements (windows, panes, controls) with text and rectangles — UI Automation on Windows, the Accessibility API (`AXUIElement`) on macOS. Available live on the recording machine only; not recoverable from a video.
 - **Agentic video mode (Gemini):** a processing mode in which the model navigates the video with tools (read transcript, fetch frames for a time window at a chosen frame rate, re-fetch at higher rate) in a reason–call–observe loop rather than receiving all frames up front.
 - **BM25 / lexical index:** full-text search scoring exact token matches. Needed for exact strings (commands, identifiers) that embeddings blur.
 - **Caret:** the blinking text-insertion cursor (1–2 px wide vertical bar).
@@ -135,6 +141,7 @@ The pipeline decodes the video at native frame rate, detects every screen change
 - **Myers diff / LCS:** the sequence-alignment algorithm behind `git diff`; produces insert/delete/equal runs between two sequences.
 - **OCR:** optical character recognition; returns words and lines with bounding boxes and confidence.
 - **Patch / visual token:** vision encoders cut an image into a full grid of small squares (28×28 px on Claude, 32×32 px on newer OpenAI models); each becomes one token the language model attends over. Not tiling: the model attends across all patches jointly, so text spanning patch boundaries is normal.
+- **PTS (presentation timestamp):** the decoder's per-frame display time in stream time-base units; multiplied by the stream's time base it gives seconds. The source of every timestamp in this system (R2).
 - **Refine summarization:** sequentially update one running summary with each new chunk. Cheap but early errors persist.
 - **Region:** a node in the region tree: a window, a pane within a window, or a popup. Leaf regions hold lines.
 - **Region tree:** window → panes → lines, built per frame by the set-of-mark grouping call.
@@ -158,7 +165,7 @@ The pipeline decodes the video at native frame rate, detects every screen change
 ### 5.2 Image-input models (used for per-frame perception)
 
 - **OpenAI.** No native video input as of 2026-09 (docs' "Images and video" section covers image understanding, image generation, and video generation only). Image path: up to 1,500 images per request; `detail: "original"` recommended for OCR and small-object tasks; 32-px patches; a 30,000-patch rejection limit per image; token multiplier 1.2× on newer models.
-- **Claude (Anthropic).** No native video input. Image path: 28×28-px patches, cost ⌈w/28⌉×⌈h/28⌉ visual tokens; up to 600 images per request on newer models (32 MB request cap); newer models accept up to 2576 px on the long edge before downscaling.
+- **Claude (Anthropic).** No native video input. Image path (confirmed against the vision documentation on 2026-09-13): 28×28-px patches, cost ⌈w/28⌉×⌈h/28⌉ visual tokens. Models from Claude 4.7 onward are the "high-resolution tier": up to 2576 px on the long edge **and** up to 4,784 visual tokens per image before downscaling (older models: 1568 px / 1,568 tokens). Up to 600 images per request (100 on 200k-context models), 10 MB per image, 32 MB per request; a request with more than 20 images imposes a stricter ~2000-px per-image limit (irrelevant here — every call carries one to three images). PNG/JPEG/GIF/WebP; images are best placed *before* the text that refers to them and introduced with a short label ("Image 1:"). Structured outputs (`output_config.format` with a JSON schema, or the SDK's `messages.parse`) return schema-conforming JSON. Image metadata is never read. v1 default model: `claude-opus-5` (D15).
 - **Gemini image input** at `media_resolution: high` is a third option (images get larger token budgets than video frames).
 - **Qwen3.5 (open weights, Apache-2.0, 2B–397B MoE).** Local inference; no per-token cost, no rate limits, data stays local, fine-tunable. Requires GPU hardware (~24–48 GB VRAM for a ~30B-class model at 8/4-bit) and vLLM-style serving. Quality relative to frontier APIs on these frames is an empirical question for the harness.
 
@@ -169,20 +176,23 @@ Model ranking on small-text OCR, verbatim compliance, and GUI grounding changes 
 | Recording | Claude visual tokens (28 px) | OpenAI patches ×1.2 (32 px) | Downscaled? |
 |---|---|---|---|
 | 1920×1080 | 69×39 = 2,691 | 60×34 = 2,040 → 2,448 tokens | No (both) |
-| 2560×1440 | 92×52 = 4,784 | 80×45 = 3,600 → 4,320 tokens | No (both; 2560 < 2576 on newer Claude) |
-| 3840×2160 | — | — | Yes on Claude (long edge > 2576); OpenAI within patch limit at `original` but treat as v2 |
+| 2560×1440 | 92×52 = 4,784 (exactly the high-resolution tier's visual-token cap) | 80×45 = 3,600 → 4,320 tokens | No (both; 2560 < 2576 and 4,784 ≤ 4,784 on Claude 4.7+) |
+| 3840×2160 | downscaled to 2576×1449 → 4,784 | — | Yes on Claude (long edge > 2576; small text lost); OpenAI within patch limit at `original` but treat as v2 |
+
+Claude figures are confirmed from the vision documentation (§23). OpenAI figures are as recalled in revision 1 and remain **[verify]**; they matter only if an OpenAI provider is added (D15). A 1440p frame sits exactly at Claude's token cap, so any overlay border or padding that enlarges the image must be drawn *inside* the frame's dimensions (§8.2).
 
 ### 5.4 OCR engines
 
-- **Windows.Media.Ocr** (ships with Windows; WinRT, callable from .NET with a Windows TFM such as `net8.0-windows10.0.19041.0`). Offline library call on any `SoftwareBitmap` — unrelated to capture; the recording's origin is irrelevant. Returns `Lines[]`, each with `Text` and `Words[]` with `BoundingRect`; the line box is computed as the union of its word boxes. Requires an installed language pack. Has a maximum image dimension (`OcrEngine.MaxImageDimension`, ~2600 px **[verify]**). Middling on small monospace text.
-- **PaddleOCR** (open source). Detects text lines directly as quadrilaterals; generally stronger on small text. Python-first; ONNX-runtime ports with .NET wrappers exist (PaddleOCRSharp, RapidOCR) **[verify current packaging]**.
-- **Tesseract.** .NET bindings exist; weakest on anti-aliased UI text; needs upscaling and inversion of dark themes. Not planned.
+- **Apple Vision (`VNRecognizeTextRequest`)** — ships with macOS (Vision.framework; text-recognition revision 3, the only non-deprecated revision as of macOS 26 **[measured: `supportedRevisions` = 1–3]**). An offline library call on any `CGImage`; unrelated to how the video was captured. Settings that matter here: `recognitionLevel = accurate`; **`usesLanguageCorrection = false`** (mandatory — correction rewrites tokens toward dictionary words, which is exactly what R1 forbids); `recognitionLanguages = ["en-US"]` with `automaticallyDetectsLanguage = false`; `minimumTextHeight` left at 0 so small text is attempted; `customWords` available for domain tokens (§22). Returns one `VNRecognizedTextObservation` per detected text line with `topCandidates(n)` (string + confidence) and a `boundingBox` in **normalized coordinates with a bottom-left origin** (converted at §8.1); per-substring boxes via `boundingBox(for: range)`, which yields word boxes on request. No documented maximum image dimension; 1080p frames are processed directly **[verify at 1440p]**. ~0.3 s for a 1000×300 synthetic frame **[measured]**; per-1080p-frame time to be measured (§22). Known behaviors to handle: an observation may merge text across a wide horizontal gap or split one visual line into fragments, and fragmentation can differ between visually near-identical frames (§9.0). Callable from Python through PyObjC (`pyobjc-framework-Vision`, `pyobjc-framework-Quartz`); a Swift command-line helper is the fallback if PyObjC ever breaks.
+- **RapidOCR** (`rapidocr-onnxruntime`: PaddleOCR PP-OCR detection and recognition models on ONNX Runtime, CPU). pip-installable on macOS arm64 and Linux; detects text lines as quadrilaterals (take the axis-aligned box); no word boxes. On the synthetic terminal frame the default models dropped inter-word spaces (`PSC:\src>gitstatus`), substituted a full-width comma, and missed the longest line entirely, in ~2.6 s including model load **[measured]**; it needs the English recognizer and a space-preserving configuration before it is competitive **[verify current packaging and model options]**. Role: comparison engine in the bake-off (§18.3) and the OCR engine for a Linux port (§20.8).
+- **Windows.Media.Ocr** — revision 1's baseline. Windows-only WinRT API returning lines of words with `BoundingRect`; line box = union of word boxes; has a maximum image dimension (`OcrEngine.MaxImageDimension`, ~2600 px **[verify]**). Same engine interface as the others (§8.1); the engine for a Windows port (§20.8). Not used on macOS.
+- **Tesseract.** Weakest on anti-aliased UI text; needs upscaling and inversion of dark themes. Not planned.
 
 ### 5.5 Screen parsing and layout (v2 candidates)
 
 - **OmniParser (Microsoft).** Detects interactable elements and icons from screenshots with a trained detector plus OCR and captioning; built to feed computer-use agents. Likely more accurate than VLM grouping for buttons/icons; tuned for interactable elements rather than text-pane hierarchy. Complement, not replacement.
 - **ScreenAI (Google).** Defines a screen-annotation schema (element types, boxes, text). Reference for schema design.
-- **OS accessibility tree (Windows UI Automation).** Exact window/pane/control hierarchy with text and rects — but only available live on the recording machine. Not applicable to existing videos; see §21.
+- **OS accessibility tree** (UI Automation on Windows; the Accessibility API / `AXUIElement` on macOS). Exact window/pane/control hierarchy with text and rects — but only available live on the *recording* machine, whatever OS that is. Not applicable to existing videos; see §21.
 
 ### 5.6 Long-video research (context for Stage 7)
 
@@ -192,7 +202,9 @@ Long-video work is categorized into single-pass multimodal LLMs, memory-based ap
 
 ## 6. Stage 0 — Global outline (Gemini agentic)
 
-**Runs in parallel with Stage 1. Read-only downstream.**
+**Optional. Runs in parallel with Stage 1. Read-only downstream.**
+
+Stage 0 needs a Gemini API key and a provider used nowhere else in the pipeline, so it is an optional stage: every consumer listed below must run correctly with `outline.json` absent (Stage 5 omits the outline preamble; Stage 6's section-boundary call receives no suggestion; Stage 7 indexes nothing from it; `outline_chapter` fields are `null`). v1 implements the absent-outline path first and the Gemini call behind the same optional-stage switch.
 
 - **Input:** the whole video file (or YouTube URL). Agentic mode; `media_resolution` default (resolution is irrelevant here; only structure is wanted).
 - **Prompt:** produce a chapter outline as JSON: `[{start_s, end_s, title, gist}]`, with 5–20 chapters, boundaries at changes of sub-goal, no attempt at exact text.
@@ -209,20 +221,21 @@ Long-video work is categorized into single-pass multimodal LLMs, memory-based ap
 
 ### 7.1 Decode
 
-Spawn ffmpeg and read raw grayscale frames from stdout at native frame rate:
+Decode in-process with PyAV, which bundles FFmpeg (no system `ffmpeg` install). Every frame's presentation time is `frame.pts × stream.time_base` — the decoder's clock, never a frame counter (R2). For each decoded frame:
 
-```
-ffmpeg -i in.mp4 -f rawvideo -pix_fmt gray -
-```
+1. Convert to 8-bit grayscale (`frame.to_ndarray(format="gray")`) for detection; by default downsample ×2 for detection (thresholds scale by 4, §16).
+2. Keep the decoded frame object until the settle logic (§7.3) decides whether to emit it; on emit, convert *the same frame* to RGB and write a lossless PNG (never JPEG — compression artifacts damage small text). No second decode pass and no parallel color stream are needed.
 
-Track presentation time per frame from the frame index and the stream's frame rate (or use `showinfo`/`pts_time` if reading via a decoder library). Optionally downsample by 2 for detection (thresholds scale by 4); emit frames must be written from a full-resolution decode (a second pass or a parallel `-pix_fmt rgb24` stream at emit time).
+Set the stream's `thread_type` to `AUTO` so decoding uses several cores. VideoToolbox hardware decode is an optional flag **[verify PyAV hwaccel API]**. The 1080p/30 fps sample (h264, 14.2 min, no audio stream) decodes to grayscale at ~535 fps with `AUTO` threading **[measured]**, so a 15-minute video decodes in under a minute; PNG encoding of an emitted frame costs ~0.3 s at Pillow's default compression **[measured]** and is done off the decode thread.
+
+Alternative (portable, not default): spawn `ffmpeg -i in.mp4 -f rawvideo -pix_fmt gray -` and read fixed-size frames from stdout, reconstructing time from the frame index and stream rate, or `-vf showinfo` to recover `pts_time`.
 
 ### 7.2 Change detection (per frame)
 
 ```
 changed[p] = |luma_f[p] − luma_prev[p]| > θpix      for unmasked pixels p
-changed    = open(changed, 3×3)                      // erode then dilate: kills isolated codec noise
-comps      = connectedComponents(changed, 8-conn)    // e.g. OpenCvSharp ConnectedComponentsWithStats
+changed    = open(changed, 3×3)                      // erode then dilate: kills isolated codec noise (scipy.ndimage.binary_opening)
+comps      = connectedComponents(changed, 8-conn)    // scipy.ndimage.label with a 3×3 structure; areas via np.bincount
 trigger    = any(comp.area ≥ θcomp)                  // one small solid change (a 16×16 checkbox)
           or Σ(comp.area for comp.area ≥ 16) ≥ θcount   // several medium changes
 ```
@@ -233,21 +246,23 @@ Rationale: an **absolute** pixel count is used, never a fraction. A 1080p frame 
 
 ```
 emit(f0, tChange=t0, tSettled=t0, settled=true); prev=last=f0
-changed=false; tChange=∅; tStill=t0
+changed=false; tChange=∅; tStill=∅
 for each frame f at time t:
   if trigger(f, prev):                     // moving
      if !changed { changed=true; tChange=t }
-     tStill = t
-  else if changed and t − tStill ≥ S:      // was moving, now still for S
-     if trigger(f, last): emit(f, tChange, tSettled=t, settled=true); last=f
-     changed=false                         // else: something flashed and reverted — nothing to emit
+     tStill = ∅
+  else if changed:                         // a still frame after motion
+     if tStill == ∅ { tStill = t }         // first still frame: the state has been fully on screen since here
+     if t − tStill ≥ S:                    // still for S
+        if trigger(f, last): emit(f, tChange, tSettled=tStill, settled=true); last=f
+        changed=false                      // else: something flashed and reverted — nothing to emit
   if changed and t − tChange ≥ M:          // never settled: max-hold
      emit(f, tChange, tSettled=t, settled=false); last=f; tChange=t
   prev=f
 ```
 
 - Comparison against `prev` measures stillness; comparison against `last` (last emitted) measures novelty. A menu that opens and closes within S emits nothing.
-- Each emitted frame records `t_change` (when the previous state ended) and `t_settled` (when this state was fully on screen). The state's stable interval is `[t_settled_i, t_change_i+1)`; the gap `[t_change_i+1, t_settled_i+1)` is "in transition." The last frame's `t_end` is the video end.
+- Each emitted frame records `t_change` (when the previous state ended) and `t_settled` (when this state was fully on screen — the first still frame, not the frame S later at which stillness was confirmed; revision 1 recorded the latter, which overstated every settle time by S). The PNG is taken from the confirming frame, which is identical to the first still frame up to sub-threshold change such as a caret blink. The state's stable interval is `[t_settled_i, t_change_i+1)`; the gap `[t_change_i+1, t_settled_i+1)` is "in transition." The last frame's `t_end` is the video end.
 - Sub-threshold changes (caret blink, clock) do not reset the settle timer; that is what makes settling possible.
 - A typing pause longer than S splits one command into two emitted frames. This is not a failure; coalescing (Stage 4b) rejoins them.
 
@@ -266,7 +281,7 @@ hysteresis: a component enters the mask at ρ_on = 0.5 and leaves at ρ_off = 0.
 
 - Masked pixels are excluded **only** from change detection (§7.2). Nothing else in the pipeline is masked.
 - Every emitted frame records `churn_regions` (active churn bboxes). Downstream: OCR lines inside churn are tagged `in_churn=true` (low confidence); the Stage 2 VLM prompt lists them as "animating"; Stage 5 is told the region was changing continuously.
-- Memory: 1080p × 150 maps × 1 bit ≈ 39 MB; halve by detecting at half resolution.
+- Memory: 1080p × 150 maps × 1 bit ≈ 39 MB (≈ 10 MB at half resolution). Implementation: a ring buffer of bit-packed maps (`np.packbits`) plus a running per-pixel count (`uint8`) updated by adding the entering map and subtracting the leaving one, so the threshold test is one comparison per frame rather than a sum over the window.
 - Churn cannot distinguish a spinner from a continuously scrolling log; both are churn. Max-hold M still emits frames periodically, so nothing stalls, and Stage 5 sees "output was scrolling continuously."
 
 ### 7.5 Caret tracking (for focus confidence, §9.4)
@@ -293,9 +308,13 @@ One OCR run and one VLM call per emitted frame. Both consume the same PNG.
 
 ### 8.1 Stage 2a — OCR
 
-- Input: `frames/NNNNN.png` (full resolution; if the engine has a dimension cap below the frame size, run at the cap and scale boxes back — see coordinate convention §10.5; for v1 1080p/1440p this does not arise with Windows.Media.Ocr **[verify cap]**).
-- Output per frame: `lines[] = {id, bbox:[x0,y0,x1,y1], text, conf, words[]}` in **original-frame pixel coordinates**.
-- Line construction: engines return a hierarchy. Windows.Media.Ocr returns lines with words; the line box is the union of the word boxes. PaddleOCR returns line quadrilaterals; take their axis-aligned bounding box. If only words are available, group them:
+- Input: `frames/NNNNN.png` at full resolution. Engines with a dimension cap below the frame size run at the cap and have their boxes scaled back (§10.5); Apple Vision has no documented cap and processes 1080p directly.
+- Output per frame: `lines[] = {id, bbox:[x0,y0,x1,y1], text, conf, words[]}` in **original-frame pixel coordinates**, plus the engine settings used (§20.9 manifest).
+- **Engine interface** (every engine conforms; selected by configuration): `recognize(png) → [{text, conf, bbox, words: [{text, bbox}] | null}]`, one entry per text line, boxes already in original-frame pixels. Adapters:
+  - *Apple Vision:* one observation per line; `topCandidates(1)[0]` gives `string` and `confidence`; word boxes from `boundingBox(for:)` over each whitespace-delimited token's character range (cheap; stored). Vision's boxes are normalized with a bottom-left origin: `x0 = bx·W`, `y0 = (1 − by − bh)·H`, `x1 = (bx + bw)·W`, `y1 = (1 − by)·H`, rounded to integers. Settings: accurate level, `usesLanguageCorrection = false`, `["en-US"]`, automatic language detection off.
+  - *RapidOCR:* line quadrilaterals → axis-aligned bbox; `words = null`.
+  - *Windows.Media.Ocr (Windows port only):* lines of words; line bbox = union of word boxes.
+- Word grouping fallback, for an engine that returns only words:
 
 ```
 sort words by y-center
@@ -303,18 +322,18 @@ a word joins the current line if |yc(word) − yc(line)| < 0.5 · median(word he
 within each line sort by x; line.text = join(words, " "); line.bbox = union(word boxes)
 ```
 
-- Line IDs are stable within a frame (`l1…lN`, assigned in reading order: sorted by y0 then x0).
+- Line IDs are stable within a frame (`l1…lN`, assigned in reading order: sorted by y0 then x0). Fragments of one visual line are **not** joined here — that would join text across adjacent windows; it is done per leaf region after grouping (§9.0).
 - Lines whose bbox intersects a churn region are tagged `in_churn=true`.
 
 ### 8.2 Stage 2b — Set-of-mark overlay
 
-Draw each OCR line's bbox on a copy of the frame as a thin colored rectangle with its numeric ID in a small legible font placed outside the box (top-left, offset), avoiding occlusion of the text. Save as `overlays/NNNNN.png`. This is what the VLM sees; the VLM never sees raw coordinates and never emits them.
+Draw each OCR line's bbox on a copy of the frame (Pillow) as a 1-px rectangle in a color that contrasts with the frame, with its numeric ID in a 10–12 px font (Menlo or SF Mono on macOS) placed just outside the box's top-left corner; if that would fall outside the image or onto another line's box, place it inside the box's top-left corner instead. The overlay keeps the frame's exact dimensions — no border or padding — because a 1440p frame already sits at Claude's visual-token cap (§5.3). Save as `overlays/NNNNN.png`. This is what the VLM sees; the VLM never sees raw coordinates and never emits them.
 
 ### 8.3 Stage 2c — VLM grouping and transcription call
 
-- Input: the overlay PNG, sent at native resolution (`detail: "original"` on OpenAI; default on Claude; `media_resolution: high` on Gemini).
+- Input: the overlay PNG, sent at native resolution as a base64 PNG image block preceded by a short text label carrying the frame ID and time (Claude's high-resolution tier needs no opt-in; `detail: "original"` on OpenAI; `media_resolution: high` on Gemini).
 - Contract (full prompt text in §15.1): group the numbered lines into a region tree (windows → panes → popups), name each region and its application, identify the focused window with a confidence and the cues used, and for each leaf region transcribe its visible text verbatim in reading order — including any text that has no number (OCR missed it). Free-text `description` field for anything a line list cannot express (diagram relationships, highlighted rows, selected items, icons).
-- Output schema (structured output):
+- Output schema (structured output — with the Anthropic SDK, `messages.parse` with a pydantic model, or `output_config.format` with the equivalent JSON schema; the models in code are the source of truth and this rendering is illustrative):
 
 ```json
 {
@@ -340,6 +359,10 @@ Any of the §5.2 models. Choose by the harness: transcribe the 20-frame calibrat
 ## 9. Stage 3 — Merge
 
 Produces the canonical per-frame state record (`frames.jsonl`, §10.1). Nothing downstream touches raw OCR or raw VLM output again.
+
+### 9.0 Fragment join **[reasoned]**
+
+OCR engines split or merge visual lines on their own criteria, and the split can differ between two frames whose text is identical (§5.4). Left alone, that produces spurious `delete`/`insert` pairs in Stage 4 and failed OCR↔VLM alignments in §9.2. So, within each leaf region, after grouping and before anything else: OCR lines whose vertical centers differ by less than 0.5 × the region's median line height are joined into one line, in x order, with a single space between fragments. The joined line keeps the leftmost fragment's ID, takes the union bbox, the minimum confidence, and records `merged_from: ["l7", "l8"]` with the fragments' own boxes so any op can still cite the original marks. This is done here rather than at Stage 2a because at Stage 2a it would join text across adjacent windows; inside a leaf region a reader treats a row as one line (a table row, a prompt plus its command). Everything below — alignment, agreement, diff — operates on joined lines. Whether a horizontal-gap limit is also needed is an open question (§22).
 
 ### 9.1 Region geometry
 
@@ -500,7 +523,7 @@ Field notes:
 
 ### 10.5 Coordinate convention
 
-All stored boxes are `[x0, y0, x1, y1]` in **original-frame pixels** (the recording's native grid), integers, origin top-left. Any tool that saw a transformed image (an OCR engine with a dimension cap, a provider that resizes) has its boxes scaled back before storage. Normalized (0–1) coordinates are not stored.
+All stored boxes are `[x0, y0, x1, y1]` in **original-frame pixels** (the recording's native grid), integers, origin top-left. Any tool that saw a transformed image (an OCR engine with a dimension cap, a provider that resizes) has its boxes scaled back before storage. Apple Vision's normalized, bottom-left-origin boxes are converted at Stage 2a (§8.1) before anything is stored. Normalized (0–1) coordinates are not stored.
 
 ### 10.6 ID conventions
 
@@ -523,7 +546,8 @@ Before diffing, match leaf regions between frame *i* and frame *i+1*: same `app`
 ```
 prev = [norm(line.text) for line in region_i.lines   sorted by (y0, x0)]
 cur  = [norm(line.text) for line in region_i+1.lines sorted by (y0, x0)]
-ops  = myers_diff(prev, cur)                       // insert / delete / equal runs (DiffPlex in .NET)
+ops  = myers_diff(prev, cur)                       // insert / delete / equal runs (a small Myers implementation in the repo;
+                                                   // Python's difflib uses a different algorithm with junk heuristics and is not used)
 post-process adjacent (delete a, insert b):
     pair as modify(a → b) if boxes overlap vertically (|yc(a) − yc(b)| < 0.5·h)   // preferred signal
                           or similarity(a, b) ≥ 0.6
@@ -534,6 +558,7 @@ post-process adjacent (delete a, insert b):
 - Raw `delete/insert` ops are always stored; `modify` is a derived annotation. A mis-pairing therefore loses nothing — both readings remain — it only affects readability. Y-overlap is the stronger pairing signal on screens because a modified line stays put.
 - **Why line-level:** the diff turns "the screen changed" into a short, exact op list a model would get wrong by eyeballing two dense screenshots, and a line is the natural unit of everything of interest (command, log line, list item, menu entry) and of OCR output. Character-level diff over a whole region yields "inserted `tus` at offset 87" — exact but meaningless to humans and models; it is used only *inside* a modified line.
 - **Scrolling** is handled for free: shifted-but-identical lines align as `equal`; only genuinely new bottom lines are `insert`.
+- Lines are the **joined** lines of §9.0, so an OCR engine's changing its mind about where a line breaks between two frames does not surface as a change.
 
 ### 11.3 Coalescing **[reasoned]**
 
@@ -606,8 +631,8 @@ Every node from every level is a retrieval document: frame states (one document 
 
 ### 14.2 Indexes
 
-- **Lexical** (BM25 or SQLite FTS5): exact strings — commands, identifiers, resource names. This is the reason R1 matters at query time.
-- **Vector** (embeddings): semantic questions ("where did they set up authentication").
+- **Lexical** (SQLite FTS5, present in Python's bundled SQLite **[measured]**): exact strings — commands, identifiers, resource names. This is the reason R1 matters at query time. Tokenization must not split on `-`, `_`, `.`, `/`, `:` inside identifiers (`--resource-group`, `aks-demo-01`), so the FTS5 table uses the `unicode61` tokenizer with those characters declared as token characters, plus a `trigram` companion index for substring matches **[verify FTS5 tokenizer options]**.
+- **Vector** (embeddings, stored in `sqlite-vec` in the same database file **[measured: loads on macOS arm64]**): semantic questions ("where did they set up authentication"). The embedder is pluggable; v1 default is a local ONNX sentence-embedding model (`fastembed`, no API key, CPU) with a hosted embedder as a configuration alternative; `none` disables the vector index and leaves lexical retrieval only.
 - **Collapsed-tree retrieval:** both indexes hold all levels in one pool; a query retrieves top-k across levels with reciprocal-rank fusion of lexical and vector results, filtered by metadata where the question specifies (video, app, time range). Region/app names from `layout_conf < 0.5` frames are soft boosts only.
 
 ### 14.3 Answering agent
@@ -666,6 +691,8 @@ All are initial values to be tuned on the ground-truth set (§17). Detection thr
 | churn min area | 400 px | §7.4 | Minimum component area to become a churn region |
 | caret size / period | ≤ 3×30 px; 0.3–1.2 s | §7.5 | Caret detection |
 | line grouping | 0.5 × median word height | §8.1 | Vertical tolerance for words joining a line |
+| fragment join | 0.5 × median line height (per leaf region) | §9.0 | Vertical tolerance for joining OCR fragments into one line |
+| OCR engine | Vision: accurate, language correction off, `en-US`, auto-detect off, `minimumTextHeight` 0 | §8.1 | Recorded in the run manifest |
 | align similarity | ≥ 0.8 | §9.2 | OCR↔VLM line alignment predicate |
 | modify similarity | ≥ 0.6 | §11.2 | Delete+insert pairing (or y-overlap) |
 | region IoU | ≥ 0.3 | §11.1 | Cross-frame region matching |
@@ -722,7 +749,7 @@ All are initial values to be tuned on the ground-truth set (§17). Detection thr
 |---|---|
 | Stage 1 detection | Recall and precision of emitted frames against a hand-marked list of state changes; timing error (ms) of `t_change` |
 | Stage 1 settle | Fraction of emitted frames that are end states (not mid-animation) |
-| OCR alone | CER on commands; line recall |
+| OCR alone | CER on commands; line recall; fragment stability (fraction of unchanged lines whose OCR line count differs between consecutive frames, before and after §9.0) |
 | VLM transcription alone | CER on commands; line recall; paraphrase rate (normalized-equal but not exact) |
 | Fused (`agree=true` lines) | CER; coverage (fraction of ground-truth strings with an `agree=true` line) |
 | Grouping | Fraction of lines assigned to the correct window/pane; `layout_conf` correlation with errors |
@@ -735,7 +762,7 @@ All are initial values to be tuned on the ground-truth set (§17). Detection thr
 
 ### 18.3 Bake-offs
 
-1. OCR engines: Windows.Media.Ocr vs PaddleOCR on the 20-frame set.
+1. OCR engines: Apple Vision vs RapidOCR on the 20-frame set (Windows.Media.Ocr too if a Windows machine is available).
 2. VLMs: at least two of Claude / OpenAI / Gemini-image / Qwen3.5-local on the 20-frame set (transcription CER, grouping accuracy, cost per frame, latency).
 3. Ensemble ablations: each switchable stage off, one at a time, against the full pipeline.
 
@@ -750,7 +777,7 @@ A 30-minute tutorial with typical activity yields on the order of 100–400 emit
 ### 19.2 Per-frame perception
 
 - Visual tokens per frame (§5.3): ~2,700 (1080p) or ~4,800 (1440p) on Claude; ~2,450 / ~4,320 on OpenAI at `original`. Plus prompt and output text (~1–3k tokens).
-- OCR: local, milliseconds to low seconds per frame.
+- OCR: local; Apple Vision at the accurate level is expected at well under 2 s per 1080p frame **[measure]** (0.3 s on a 1000×300 synthetic frame **[measured]**).
 - One VLM call per frame; parallelizable up to provider rate limits.
 
 ### 19.3 Transitions
@@ -766,30 +793,117 @@ Text-only; a few dozen calls per video (one boundary call per level, one elabora
 - **Single-call whole video** (all emitted frames in one request): ~300 frames × ~2.5k ≈ 750k tokens; fits 1M-context models but is expensive per call and multimodal quality degrades at very long contexts. Rejected for v1; the pairwise design has no batching problem because no call is long.
 - **Batches with overlap and carry-forward summary:** the general fallback if any stage ever needs multi-frame context beyond a pair — overlap by one or two frames so a boundary-straddling transition is visible to both batches, and include the previous batch's output as text so later batches know the context. Not needed in v1.
 
-### 19.6 Local inference option
+### 19.6 Dollar estimate at current Claude prices
+
+List prices on 2026-09-13: `claude-opus-5` $5 / $25 per million input / output tokens; `claude-sonnet-5` $2 / $10; `claude-haiku-4-5` $1 / $5. Per 1080p frame on Opus 5, Stage 2 costs about 2.7k visual + ~2k text input tokens (≈ $0.024) and ~1.5k output tokens (≈ $0.038), so ≈ $0.06 per frame; Stage 5 sends two frames (≈ 5.4k visual + ~2k text, ≈ $0.037) and returns ~0.5k tokens (≈ $0.013), so ≈ $0.05 per transition. A 300-frame video is therefore ≈ $18 (Stage 2) + ≈ $15 (Stage 5) + a few dollars (Stage 6) ≈ **$35 on Opus 5**, ≈ $14 on Sonnet 5, 1.8× more at 1440p. The Message Batches API halves all of it for offline runs (§20.7); prompt caching of the fixed system prompt and schema removes most of the repeated text cost.
+
+### 19.7 Local inference option
 
 If per-frame API cost dominates at corpus scale, Qwen3.5 (or a successor) on a local GPU removes the per-token cost for Stage 2c/5; the harness decides whether quality is acceptable.
 
 ---
 
-## 20. Implementation notes (.NET)
+## 20. Implementation notes (Python on macOS)
 
-- **Decode:** spawn `ffmpeg -i in.mp4 -f rawvideo -pix_fmt gray -` and read fixed-size frames from stdout; keep a parallel or second-pass full-color decode for emitted frames. Alternatively FFmpeg.AutoGen for in-process decoding with exact PTS.
-- **Change detection / churn / connected components:** OpenCvSharp (`Cv2.Absdiff`, `Cv2.Threshold`, `Cv2.MorphologyEx`, `Cv2.ConnectedComponentsWithStats`). Detect at half resolution if CPU-bound.
-- **OCR:** `Windows.Media.Ocr` via a Windows TFM (`net8.0-windows10.0.19041.0` or later); `BitmapDecoder` → `SoftwareBitmap` → `OcrEngine.TryCreateFromUserProfileLanguages()` → `RecognizeAsync`. Check `OcrEngine.MaxImageDimension` and scale if needed. PaddleOCR via PaddleOCRSharp/RapidOCR (ONNX Runtime) as the comparison engine **[verify packaging]**.
-- **Overlay drawing:** System.Drawing or SkiaSharp; thin 1–2 px rectangles, IDs in a 10–12 px font placed outside the box.
-- **Diff:** DiffPlex for Myers line diff; a small Levenshtein implementation for similarity and char-level diff.
-- **Model calls:** provider SDKs with structured-output/JSON-schema mode; images as base64 PNG content blocks preceded by a text block carrying frame ID and time (models never see filenames or metadata). Pin model versions. Cache every call by `(stage, model version, prompt hash, input hash)`.
-- **Idempotency (R6):** frames content-addressed by SHA-256; each stage writes its own JSONL and is skippable when its inputs and configuration hash are unchanged.
-- **Concurrency:** Stage 2 and Stage 5 are embarrassingly parallel per frame/pair; bound by provider rate limits. Stage 6 is sequential per level.
-- **Index:** SQLite FTS5 for lexical; any local vector store (or SQLite with a vector extension) for embeddings; reciprocal-rank fusion in code.
-- **Config:** every parameter in §16 in one config file, recorded into each run's manifest.
+### 20.1 Toolchain (verified on the dev machine, 2026-09-13)
 
----
+| Component | Choice | Verified |
+|---|---|---|
+| OS / CPU | macOS 26.3, Apple Silicon (arm64) | — |
+| Language | Python ≥ 3.12 (3.14.6 in use); `uv` for the virtual environment and lockfile | resolves and runs on 3.14 |
+| Decode | `av` (PyAV 18, bundled FFmpeg) | decodes the sample at ~535 fps grayscale |
+| Pixels | `numpy` 2.5, `scipy` 1.18 (`ndimage.binary_opening`, `ndimage.label`) | ~5 ms per 960×540 frame |
+| OCR | `pyobjc-framework-Vision`, `pyobjc-framework-Quartz` (Apple Vision); `rapidocr-onnxruntime` as an optional extra | Vision: exact transcription on a synthetic frame; RapidOCR: runs, weaker |
+| Images | `pillow` 12 (PNG I/O, overlay drawing) | — |
+| Text similarity | `rapidfuzz` (normalized Levenshtein); Myers diff implemented in the repo | — |
+| Models | `anthropic` 1.5 (`AsyncAnthropic`, `messages.parse`, Batches); `pydantic` 2 for every schema | `parse` accepts `output_format` and `output_config` |
+| Index | `sqlite3` with FTS5 (bundled); `sqlite-vec` 0.1.9; `fastembed` (local ONNX embeddings, optional) | FTS5 and `sqlite-vec` load |
+| CLI / tests | `typer`; `pytest` | — |
+
+Not used, and why: OpenCV (D14); a system `ffmpeg` (D14); `difflib` for the op list (§11.2); JPEG anywhere (§7.1).
+
+### 20.2 Decode (§7.1)
+
+`av.open(path)`; `stream = container.streams.video[0]`; `stream.thread_type = "AUTO"`; iterate `container.decode(stream)`; `t = float(frame.pts * stream.time_base)`; `gray = frame.to_ndarray(format="gray")`; on emit, `frame.to_image().save(png, compress_level=…)`. Detection at half resolution: `gray[::2, ::2]` (nearest) or a 2×2 mean; thresholds in §16 are given for full resolution and divided by 4.
+
+### 20.3 Change detection, churn, caret (§7.2–§7.5)
+
+`np.abs(cur.astype(np.int16) − prev) > θpix` → bool map; `scipy.ndimage.binary_opening(map, structure=np.ones((3,3)))`; `labels, n = scipy.ndimage.label(opened, structure=np.ones((3,3)))`; `areas = np.bincount(labels.ravel())[1:]`. Churn: ring buffer of `np.packbits` maps and a running `uint8` count per pixel (§7.4); component boxes from `scipy.ndimage.find_objects`. Caret: components ≤ 3×30 px tracked by position across frames with a toggle-period test. All of Stage 1 is one process; decode and detection run in the main loop, PNG encoding in a small thread pool.
+
+### 20.4 OCR (§8.1)
+
+Apple Vision through PyObjC:
+
+```python
+import Vision, Quartz, Foundation
+src = Quartz.CGImageSourceCreateWithURL(Foundation.NSURL.fileURLWithPath_(png), None)
+cg = Quartz.CGImageSourceCreateImageAtIndex(src, 0, None)
+req = Vision.VNRecognizeTextRequest.alloc().init()
+req.setRecognitionLevel_(Vision.VNRequestTextRecognitionLevelAccurate)
+req.setUsesLanguageCorrection_(False)
+req.setRecognitionLanguages_(["en-US"])
+req.setAutomaticallyDetectsLanguage_(False)
+handler = Vision.VNImageRequestHandler.alloc().initWithCGImage_options_(cg, None)
+ok, err = handler.performRequests_error_([req], None)
+for obs in req.results():
+    cand = obs.topCandidates_(1)[0]           # cand.string(), cand.confidence()
+    box = obs.boundingBox()                    # normalized, origin bottom-left → §8.1 conversion
+    rect, err = cand.boundingBoxForRange_error_(Foundation.NSMakeRange(start, length), None)  # word boxes
+```
+
+The calls above ran on the dev machine **[measured]**. Vision requests are independent, so frames can be OCR'd in a process pool if a single process is too slow (§22). RapidOCR adapter: `RapidOCR()(png) → [(quad, text, conf), …]`. Engine and settings are recorded in the run manifest; a change to either invalidates Stage 2a's cache.
+
+### 20.5 Overlay (§8.2)
+
+Pillow `ImageDraw.rectangle` (width 1) and `ImageDraw.text` with `ImageFont.truetype("/System/Library/Fonts/Menlo.ttc", 11)`; fall back to Pillow's default bitmap font if the path is absent. Output PNG has the frame's exact dimensions.
+
+### 20.6 Diff and similarity (§9.2, §11)
+
+A Myers O(ND) implementation over lists of strings produces `equal`/`insert`/`delete` runs; the same function over lists of characters produces `char_diff` inside a `modify`. `rapidfuzz.distance.Levenshtein.normalized_similarity` implements `similarity(a, b)`. `norm()` is a pure function shared by §9.2 and §11.2.
+
+### 20.7 Model calls (§8.3, §12, §13)
+
+- **Client:** `anthropic.AsyncAnthropic()` (credentials from the environment or an `ant auth login` profile); concurrency bounded by an `asyncio.Semaphore` sized from the account's rate limit; the SDK's own retries handle 429/5xx.
+- **Structured output:** `client.messages.parse(model=…, system=…, messages=…, output_format=SomePydanticModel, max_tokens=16000)`; `response.parsed_output` is the validated model. Field descriptions on the pydantic models *are* the prompt contract (§15).
+- **Content layout:** for each image, a text block `"Frame 12 (t=47.72s):"` followed by the base64 PNG image block, then the diff/context text, then the task instruction — images before the text that refers to them, each labeled (§5.2). Models never see filenames or metadata.
+- **Caching:** the system prompt and schema are byte-identical across calls of a stage, so the system block carries `cache_control: {"type": "ephemeral"}`; volatile content (frame labels, diffs) comes after it. Check `usage.cache_read_input_tokens` in the run log.
+- **Model pinning and provenance:** model ID, prompt version, and schema hash are recorded on every output record and in the manifest.
+- **Call cache:** every request is keyed by SHA-256 of `(stage, model, prompt_version, schema_hash, input_hashes)` and stored on disk (`cache/<key>.json`, request + response + usage); a re-run with unchanged inputs makes no API calls (R6).
+- **Batch mode:** Stages 2 and 5 are offline and embarrassingly parallel, so they can be submitted as a Message Batch (`client.messages.batches.create`, results keyed by `custom_id` = cache key) at 50 % of list price with up to 24 h latency; the cache is populated from batch results so downstream stages are unchanged. Synchronous mode is the default for development.
+- **Refusals:** `stop_reason == "refusal"` is recorded on the frame/transition (`vlm: null`, `error: "refusal"`) and the pipeline continues; server-side fallbacks are a configuration option.
+- **Usage accounting:** `response.usage` is summed per stage into the manifest, which is how §19's estimates get replaced by measurements.
+
+### 20.8 Portability
+
+Everything except the OCR adapter is platform-neutral. Linux: select the RapidOCR engine (or another ONNX engine) in configuration; Vision is skipped. Windows: select a Windows.Media.Ocr adapter (via the `winocr` package or a small .NET helper process **[verify]**). The engine is a configuration key, never an import-time decision, so a run manifest states which engine produced each `ocr` field.
+
+### 20.9 Idempotency, manifests, configuration (R5, R6)
+
+- One TOML configuration file holds every parameter in §16, the OCR engine and settings, the model IDs, and the prompt versions; it is loaded into a pydantic model and its hash is recorded in the run manifest (`runs/<video_id>/manifest.json`, which also records library versions, the video's SHA-256, and per-stage token usage and wall time).
+- Each stage reads the previous stage's JSONL and writes its own; a stage is skipped when its inputs' hashes and its slice of the configuration are unchanged. Frames are content-addressed by SHA-256 as well as numbered.
+- Stage boundaries are the switch points R5 requires: any stage can be re-run with a different engine, model, or prompt and compared on the same inputs.
+
+### 20.10 Index and retrieval (§14)
+
+One SQLite file per corpus: a `nodes` table (metadata as columns, JSON payload), an FTS5 virtual table over the text with the tokenizer settings of §14.2, and a `sqlite-vec` virtual table over embeddings. Reciprocal-rank fusion is a few lines of Python over the two ranked lists. The answering agent is a tool-use loop over the Anthropic SDK (`search`, `get_node`, `get_transitions`, `get_frame` returning the PNG as an image block, `redecode`).
+
+### 20.11 Command line
+
+One entry point, `vt`: `vt run <video> --out runs/<id>` executes every stage in order; `vt decode | ocr | overlay | perceive | merge | diff | interpret | hierarchy | index` run one stage on an existing run directory; `vt ask "<question>"` runs the agent over an index. Every command is idempotent (§20.9).
+
+### 20.12 Repository layout
+
+```
+docs/                  this design; implementation plan; decision ledger
+src/vt/                package: config, stage modules (decode, detect, ocr, overlay, perceive, merge, diff, coalesce, interpret, hierarchy, index, agent), providers/, schemas/
+tests/                 unit tests over synthetic frames and hand-written line lists (no video, no network)
+runs/                  per-video outputs (git-ignored)
+assets/                sample video(s)
+```
 
 ## 21. v2 roadmap
 
-1. **Record-time capture (highest value where possible).** If future recordings can be influenced, capture the Windows UI Automation tree (exact window/pane/control hierarchy with text and rects) and input events (keystrokes, clicks with coordinates) alongside the video. This replaces Stages 2–4 for those videos with exact data and reduces the vision pipeline to verification.
+1. **Record-time capture (highest value where possible).** If future recordings can be influenced, capture the OS accessibility tree (UI Automation on Windows, `AXUIElement` on macOS — whichever OS the *recording* machine runs) and input events (keystrokes, clicks with coordinates) alongside the video. This replaces Stages 2–4 for those videos with exact data and reduces the vision pipeline to verification.
 2. **4K support:** crop-by-region using region text extents (padded) from Stage 3, or the true window rect if captured; never grid tiling.
 3. **Screen parsing:** OmniParser for interactable elements and icons; ScreenAI's annotation schema as a reference for extending the region model.
 4. **Cross-video retrieval:** RAPTOR-style similarity clustering over steps across the whole corpus ("every step that configures storage") as an additional index alongside the temporal tree.
@@ -810,6 +924,10 @@ If per-frame API cost dominates at corpus scale, Qwen3.5 (or a successor) on a l
 5. Whether Stage 0 measurably improves step boundaries (§18.2 delta) or can be dropped.
 6. Whether OCR cross-checking is needed for VLM-only lines (currently `agree` is undefined there) — e.g., re-OCR a crop of the region.
 7. Whether region text extents are sufficient for retrieval filtering or true window rects are needed sooner than 4K.
+8. How stable Apple Vision's line fragmentation is across near-identical frames, and whether the §9.0 join (vertical tolerance only) is sufficient or a horizontal-gap limit is also needed.
+9. Whether Vision's `customWords` (CLI tool names, resource-name patterns) improves command transcription without reintroducing dictionary-style corrections.
+10. Vision throughput per 1080p/1440p frame at the accurate level, and whether a process pool is needed for Stage 2a.
+11. Which embedder (local ONNX vs hosted) is adequate for the semantic questions in the question set, or whether lexical retrieval alone suffices for v1.
 
 ---
 
@@ -822,7 +940,16 @@ Documentation consulted during design (2026-09):
 - Google blog — Agentic video understanding (2026-09-01): https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-agentic-video-in-gemini/
 - OpenAI — Images and vision (image input limits, detail levels, patch tokenization): https://developers.openai.com/api/docs/guides/images-vision
 - OpenAI — Cookbook, frame-extraction video narration (archived): https://developers.openai.com/cookbook/examples/gpt_with_vision_for_video_understanding
-- Claude — Vision (patches, image limits, resolution): https://platform.claude.com/docs/en/build-with-claude/vision
+- Claude — Vision (patches, image limits, resolution tiers; confirmed 2026-09-13): https://platform.claude.com/docs/en/build-with-claude/vision
+- Claude — Structured outputs and Message Batches (via the Anthropic SDK reference bundled with the development tooling, 2026-09-13)
+- Apple — `VNRecognizeTextRequest` (properties: `recognitionLevel`, `usesLanguageCorrection`, `recognitionLanguages`, `customWords`, `minimumTextHeight`, `automaticallyDetectsLanguage`; revisions 1–3): https://developer.apple.com/documentation/vision/vnrecognizetextrequest
+- Apple — Recognizing text in images: https://developer.apple.com/documentation/vision/recognizing-text-in-images
+- PyObjC: https://pyobjc.readthedocs.io/
+- PyAV: https://pyav.org/docs/stable/
+- RapidOCR: https://github.com/RapidAI/RapidOCR
+- sqlite-vec: https://github.com/asg017/sqlite-vec
+- SQLite FTS5: https://www.sqlite.org/fts5.html
+- fastembed: https://github.com/qdrant/fastembed
 - TwelveLabs — Pegasus: https://docs.twelvelabs.io/docs/concepts/models/pegasus
 - Overshoot — Open-source VLM catalog (2026): https://www.overshoot.ai/blogs/vlm-survey-2026
 - Benchmarking open-source video LLMs on news captioning (arXiv 2603.27662): https://arxiv.org/pdf/2603.27662
@@ -836,3 +963,10 @@ Prior art recalled from training, not fetched during design **[verify IDs]**:
 - OmniParser (Microsoft, 2024) — arXiv 2408.00203
 - ScreenAI (Google, 2024) — arXiv 2402.04615
 - Myers, "An O(ND) Difference Algorithm and Its Variations" (1986)
+
+---
+
+## 24. Revision history
+
+- **Revision 1 (2026-09-13, earlier):** original draft, written with Windows.Media.Ocr and .NET as the implementation platform.
+- **Revision 2 (2026-09-13):** macOS/Python port, without changing the pipeline's stages, data model, or prompt contracts. Changes: platform row in the header; §1.1 note that recording OS and processing OS are independent; D12 rewritten (Apple Vision baseline, RapidOCR challenger) and D13–D15 added (Python/uv; PyAV + numpy/scipy, no OpenCV; single VLM provider in v1); glossary entries for the accessibility tree and PTS; §5.2–§5.3 Claude image facts confirmed against documentation (4,784-token cap noted for 1440p); §5.4 rewritten; §5.5 and §21 generalized from Windows UI Automation to the OS accessibility tree; §6 made explicitly optional; §7.1 rewritten for in-process decode; §7.2/§7.4 implementation notes; §7.3 `t_settled` corrected to the first still frame; §8.1 rewritten around an engine interface with Vision's coordinate conversion; §8.2 overlay-dimension rule; §9.0 fragment join added and referenced from §11.2; §14.2 concrete index choices; §16, §18.2, §22, §23 extended; §19.6 dollar estimate added; §20 rewritten for Python on macOS with measured figures.
