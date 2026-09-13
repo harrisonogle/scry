@@ -187,7 +187,7 @@ Claude figures are confirmed from the vision documentation (§23). OpenAI figure
 
 ### 5.4 OCR engines
 
-- **Apple Vision (`VNRecognizeTextRequest`)** — ships with macOS (Vision.framework; text-recognition revision 3, the only non-deprecated revision as of macOS 26 **[measured: `supportedRevisions` = 1–3]**). An offline library call on any `CGImage`; unrelated to how the video was captured. Settings that matter here: `recognitionLevel = accurate`; **`usesLanguageCorrection = false`** (mandatory — correction rewrites tokens toward dictionary words, which is exactly what R1 forbids); `recognitionLanguages = ["en-US"]` with `automaticallyDetectsLanguage = false`; `minimumTextHeight` left at 0 so small text is attempted; `customWords` available for domain tokens (§22). Returns one `VNRecognizedTextObservation` per detected text line with `topCandidates(n)` (string + confidence) and a `boundingBox` in **normalized coordinates with a bottom-left origin** (converted at §8.1); per-substring boxes via `boundingBox(for: range)`, which yields word boxes on request. No documented maximum image dimension; 1080p frames are processed directly **[verify at 1440p]**. ~0.3 s for a 1000×300 synthetic frame **[measured]**; per-1080p-frame time to be measured (§22). Known behaviors to handle: an observation may merge text across a wide horizontal gap or split one visual line into fragments, and fragmentation can differ between visually near-identical frames (§9.0). Callable from Python through PyObjC (`pyobjc-framework-Vision`, `pyobjc-framework-Quartz`); a Swift command-line helper is the fallback if PyObjC ever breaks.
+- **Apple Vision (`VNRecognizeTextRequest`)** — ships with macOS (Vision.framework; text-recognition revision 3, the only non-deprecated revision as of macOS 26 **[measured: `supportedRevisions` = 1–3]**). An offline library call on any `CGImage`; unrelated to how the video was captured. Settings that matter here: `recognitionLevel = accurate`; **`usesLanguageCorrection = false`** (mandatory — correction rewrites tokens toward dictionary words, which is exactly what R1 forbids); `recognitionLanguages = ["en-US"]` with `automaticallyDetectsLanguage = false`; `minimumTextHeight` left at 0 so small text is attempted; `customWords` available for domain tokens (§22). Returns one `VNRecognizedTextObservation` per detected text line with `topCandidates(n)` (string + confidence) and a `boundingBox` in **normalized coordinates with a bottom-left origin** (converted at §8.1); per-substring boxes via `boundingBox(for: range)`, which yields word boxes on request. No documented maximum image dimension; 1080p frames are processed directly **[verify at 1440p]**. ~0.3 s for a 1000×300 synthetic frame **[measured]**; per-1080p-frame time to be measured (§22). Known behaviors to handle: an observation may merge text across a wide horizontal gap or split one visual line into fragments, and fragmentation can differ between visually near-identical frames (§9.0). On an 18-px Menlo fixture it also split a 57-character command into two observations and read `--resource-group` as `-resource-group`, dropping a hyphen while reporting confidence 1.0 **[measured by two reviewers]** — a command-syntax error nothing but the VLM cross-check (§9.2) and indexing both readings (§14.1) can catch. Callable from Python through PyObjC (`pyobjc-framework-Vision`, `pyobjc-framework-Quartz`); a Swift command-line helper is the fallback if PyObjC ever breaks.
 - **RapidOCR** (`rapidocr-onnxruntime`: PaddleOCR PP-OCR detection and recognition models on ONNX Runtime, CPU). pip-installable on macOS arm64 and Linux; detects text lines as quadrilaterals (take the axis-aligned box); no word boxes. On the synthetic terminal frame the default models dropped inter-word spaces (`PSC:\src>gitstatus`), substituted a full-width comma, and missed the longest line entirely, in ~2.6 s including model load **[measured]**; it needs the English recognizer and a space-preserving configuration before it is competitive **[verify current packaging and model options]**. Role: comparison engine in the bake-off (§18.3) and the OCR engine for a Linux port (§20.8).
 - **Windows.Media.Ocr** — revision 1's baseline. Windows-only WinRT API returning lines of words with `BoundingRect`; line box = union of word boxes; has a maximum image dimension (`OcrEngine.MaxImageDimension`, ~2600 px **[verify]**). Same engine interface as the others (§8.1); the engine for a Windows port (§20.8). Not used on macOS.
 - **Tesseract.** Weakest on anti-aliased UI text; needs upscaling and inversion of dark themes. Not planned.
@@ -244,7 +244,8 @@ The revision-1 rule applied a 3×3 morphological opening to the changed-pixel ma
 delta      = |luma_f − luma_prev|                        // ALL pixels; nothing is masked here
 changed    = delta > θpix                                // θpix = 12; feeds the churn ring buffer (§7.4) and last_change (§7.4)
 blobs      = dilate(changed, 3×3)                        // merge the strokes of one glyph/word; NO opening
-comps      = label(blobs, 8-conn)                        // scipy.ndimage.label; area(c) = count of *changed* (pre-dilation) pixels in c
+comps      = label(blobs, 8-conn)                        // scipy.ndimage.label; area(c) = count of *changed* (pre-dilation) pixels in c;
+                                                         // bbox(c) = tight box of those pixels, not of the dilated blob (else a 2-px caret is 4 px wide)
 comps      = [c for c in comps if area(c) ≥ θmin]        // θmin = 8 px: removes I-frame residual blobs
 bars       = [c for c in comps if width(c) ≤ 3 and 8 ≤ height(c) ≤ 30]   // bar carets (and 1-px glyphs such as l, i, |): never trigger
 comps      = comps − bars − blinkers(§7.5) − inside_churn(§7.4)
@@ -272,9 +273,10 @@ for each frame f at time t (tPrev = time of prev):
   elif changed:                                          // a still frame after motion
      if tStill==∅: tStill=tPrev                          // f equals prev, so the state was already on screen at tPrev
      if t − tStill ≥ S:                                  // still for S
-        if novel(f, last): emit(f, tChange, tSettled=tStill, settled=true); last=f; tLastEmit=t
-        elif !last.settled: last.settled=true; last.t_settled=tStill   // a max-hold / churn-tick frame was the end state
-        changed=false                                    // else: something flashed and reverted — nothing to emit
+        if deferred(f, last): wait                       // §7.5: every novelty component sits at an unconfirmed blink-candidate position seen within one blink period
+        elif novel(f, last): emit(f, tChange, tSettled=tStill, settled=true); last=f; tLastEmit=t; changed=false
+        elif !last.settled: last.settled=true; last.t_settled=tStill; changed=false   // a max-hold / churn-tick frame was the end state
+        else: changed=false                              // something flashed and reverted — nothing to emit
   if changed and tStill==∅ and t − tChange ≥ M:          // max-hold: only while actually moving
      emit(f, tChange, tSettled=t, settled=false); last=f; tLastEmit=t; tChange=t
   if churn_active and t − tLastEmit ≥ M:                 // churn tick: a churning region gets an unsettled snapshot every M
@@ -282,8 +284,11 @@ for each frame f at time t (tPrev = time of prev):
   if churn_deactivated_this_frame:                       // §7.4: pixels left the churn mask
      if !changed: changed=true; tChange=tLastEmit
      tStill=t_last_change(leaving pixels)                // the final state has been on screen since the last change inside the region
-  if a blinker was confirmed this frame (§7.5) and the only motion since its first toggle was that blinker:
-     tStill = time of the last non-blinker motion frame  // corrects t_settled for block cursors, which trigger until confirmed
+  if a blinker was confirmed this frame (§7.5):
+     tReal = time of the last motion frame whose components were not all that blinker's toggles
+     if changed and (tStill = ∅ or tReal < tStill): tStill = tReal                       // corrects the pending state
+     if last.t_settled is one of the blinker's toggle times and tReal < last.t_settled:
+        last.t_settled = tReal                                                          // corrects the buffered emission
   prev=f
 end of stream:
   if changed and novel(prev, last): emit(prev, tChange, tSettled=(tStill or tPrev), settled=(tStill≠∅))
@@ -325,8 +330,8 @@ Bar carets (1–3 px wide) are excluded from the trigger by shape alone (§7.2).
 
 - Candidates: components (after the θmin filter, before exclusions) with bbox ≤ 12×32 px. Track candidates by bbox: a new component with IoU ≥ 0.5 against a tracked candidate is a recurrence of it.
 - A candidate becomes a **blinker** after ≥ 2 recurrences with 0.15–0.7 s between consecutive recurrences, all within 3 s. Blinkers are excluded from the stillness and novelty tests until they have not recurred for 2 s.
-- Because confirmation takes one or two blink periods, a block cursor triggers a few times after each state change before it is masked. The correction rule in §7.3 restores `t_settled` to the last non-blinker motion, so the record is exact; only the emission is delayed by up to ~1.5 s.
-- The caret position for a frame is the bbox of the blinker (or bar-shaped component recurring at one position) active during the frame's stable interval, written when the record is finalized at `t_end`: `caret: [x,y,w,h] | null`.
+- Because confirmation takes one or two blink periods, a block cursor triggers a few times after each state change before it is masked — and a cursor's half-period (~0.5 s) exceeds S, so between toggles the screen looks settled and each toggle would be emitted as a state. Two rules in §7.3 handle this: a novelty decision whose components all sit at unconfirmed candidate positions seen within one maximum blink period is **deferred** (a genuine one-off change of that size is emitted at most 0.7 s late, with correct times), and on confirmation `t_settled` of both the pending state and the buffered emission is restored to the last non-blinker motion. Verified on the synthetic block-cursor fixture of §18.4 **[measured]**.
+- The caret position for a frame is the bbox of the blinker (or bar-shaped component recurring at one position) active during the frame's stable interval, written when the record is finalized at `t_end`: `caret: [x0,y0,x1,y1] | null` — a box like every other stored geometry (§10.5).
 - A typed glyph adjacent to the caret moves the caret one cell; the merged change component is wider than 12 px and is not a candidate, so typing still triggers. A lone bar-shaped keystroke is the accepted exception (§7.2).
 
 ### 7.6 Outputs (`stage1.jsonl`, `frames/`)
@@ -339,6 +344,7 @@ Bar carets (1–3 px wide) are excluded from the trigger by shape alone (§7.2).
 - **False positives** (spurious emitted frames) cost tokens only. Known source: a taskbar or terminal clock changing a digit (~80 px) every minute exceeds θcomp; Stage 4 tags such ops `clock` and the transition `kind: trivial`, which skips Stage 5 (§11.2).
 - **False negatives** (a change below threshold) do not vanish: the change is still present at the next emitted frame and appears in that transition, with coarser timing and possibly bundled with another change. The bar-shaped-keystroke exclusion is the known case.
 - **True loss** is only a sub-threshold change that reverts before the next emission — rare and low value.
+- A solid object moving ≤ 3 px per frame (a slow window drag) has bar-shaped leading and trailing edges and is invisible to the trigger while it moves; its end position is captured by the novelty test once it stops. A ≤ 12×32 px change that toggles once at blink cadence and never confirms is emitted up to 0.7 s late (deferral, §7.5). Both accepted.
 - **Recovery tool:** the video is kept; every record carries a time range; any downstream stage may request a re-decode of `[t_a, t_b]` at full rate to look again. This is exposed as a callable tool (`redecode(video_id, t_a, t_b, fps)`), not a manual step.
 
 ---
@@ -393,7 +399,7 @@ Draw each OCR line's bbox on a copy of the frame (Pillow) as a 1-px rectangle in
 ```
 
 - Rules enforced by prompt and validated by code: every OCR line ID appears in exactly one row of exactly one region or in `unassigned_line_ids`; `rows` and `vlm_lines` have equal length; `vlm_lines` are verbatim with `?` for unresolvable characters; no normalization of code; whitespace preserved. Any region may hold rows (a window's title bar plus child panes is normal); "leaf region" below means a region that holds rows. `occludes` = regions this region visually covers, in whole or in part. Lines in `unassigned_line_ids` are transcribed nowhere.
-- **Validation is by repair, never by abort:** a line ID missing from every row is appended to `unassigned_line_ids`; a duplicate keeps its first occurrence (deepest region first); an unknown ID is dropped; `focused_region` naming no emitted region becomes `null`; `rows`/`vlm_lines` length mismatch truncates to the shorter and flags the region. Repairs are counted on the frame record (`grouping_repairs`). Truncated output (`stop_reason == "max_tokens"`) is retried once at twice the token budget (≤ 32k); a schema failure is retried once with the validation error quoted; after that the frame gets `vlm: null, error: "…"` and the run continues.
+- **Validation is by repair, never by abort:** an unknown ID is dropped; a duplicate keeps its first occurrence; a row whose marks were all dropped is removed together with its text; a `rows`/`vlm_lines` length mismatch truncates to the shorter and the cut rows' marks fall through to `unassigned_line_ids`; a mark missing from every row is appended to `unassigned_line_ids`; a `parent` naming no region or closing a cycle becomes `null`; `focused_region` naming no emitted region becomes `null`. Every mark ends up exactly once. Repairs are counted on the frame record (`grouping_repairs`). Truncated output (`stop_reason == "max_tokens"`) is retried once at twice the token budget (≤ 32k); a schema failure is retried once with the validation error quoted; after that the frame gets `vlm: null, error: "…"` and the run continues.
 
 ### 8.4 Model choice
 
@@ -468,7 +474,7 @@ Combination (`focused_conf`; `focused_signals` lists the contributors):
 | caret or retrospective agrees with VLM | that region, 0.9 |
 | a computed signal present, VLM `null` | computed, 0.7 |
 | a computed signal disagrees with VLM | computed, 0.6; the VLM's answer recorded at 0.3 |
-| caret and retrospective disagree | retrospective, 0.6 |
+| caret and retrospective disagree | retrospective, 0.6 — whatever the VLM says (it is listed as a contributor when it agrees) |
 | only VLM | VLM, 0.5 |
 | nothing | `null` |
 
@@ -494,7 +500,7 @@ All files are JSON Lines (one object per line) except `outline.json`, `video.jso
   "sha256": "…",
   "width": 1920, "height": 1080,
   "churn_regions": [[1700, 40, 1760, 100]],
-  "caret": [318, 41, 2, 18],
+  "caret": [318, 41, 320, 59],
   "focused_region": "r1",
   "focused_conf": 0.9,
   "focused_signals": ["caret", "vlm"],
@@ -625,7 +631,7 @@ All stored boxes are `[x0, y0, x1, y1]` in **original-frame pixels** (the record
 | `manifest.json` | runner | everyone | config hash, versions, per-stage usage/time, diagnostics (§18.4) |
 | `cache/<key>.json`, `batches.json` | model client | model client | call cache; batch submission state (§20.7) |
 
-`load_frames(run)` returns `frames.jsonl` records with `focus.jsonl` applied and `chapter_of()` available; `load_transitions(run)` returns transitions with interpretations attached. Stages 5–7 use the loaders, never the raw files. A stage is skipped when the SHA-256 of its inputs and of its slice of the configuration are unchanged (§20.9).
+`load_frames(run)` returns `frames.jsonl` records with `focus.jsonl` applied and `chapter_of()` available; `load_transitions(run)` returns transitions, and `load_interpretations(run)` the interpretations keyed by transition ID. Stages 5–7 use the loaders, never the raw files. A stage is skipped when the SHA-256 of its inputs and of its slice of the configuration are unchanged (§20.9).
 
 ---
 
@@ -638,7 +644,8 @@ Order of operations, per video: (1) region correspondence and line diff for ever
 Before diffing, match regions between frame *i* and frame *i+1*. Revision 1 matched by VLM-emitted names plus bbox IoU; names vary from call to call and text extents change whenever text is added (a terminal with one line and then thirty has IoU ≈ 0.03), so a miss turned every region into `appeared`/`disappeared` and Stage 5 lost the computed diff. Revision 3 scores every pair of regions that hold lines:
 
 ```
-J     = Jaccard(set of normalized fused line texts in A, same in B)     // 0 if either side is empty
+J     = |A ∩ B| / min(|A|, |B|) over the sets of normalized fused line texts   // containment, not Jaccard: a terminal growing
+                                                                            // from 1 line to 31 keeps J = 1; 0 if either side is empty
 IoU   = bbox intersection over union                                    // 0 if either bbox is null
 s     = 0.5·J + 0.3·IoU + 0.1·[norm(app) equal] + 0.1·[norm(name) equal]
 assignment: greedy one-to-one by descending s; accept s ≥ 0.3
@@ -720,7 +727,7 @@ Levels: transitions → steps → sections → video. Each level is produced by 
 ### 13.1 Boundary call (pass 1)
 
 - Input: the ordered list of level-*n* items, each rendered as one line, e.g. `T17 [f11→f16, 40.1–47.7s] Windows Terminal: typed "git status"; 2 lines appended` (steps rendered as `S4 [f10→f44] Configure the storage account`). For sections, the Stage 0 chapter boundaries, if present, are appended as a suggestion.
-- Instruction: output the IDs at which a new sub-goal (steps) or topic (sections) begins, with a short label per segment: `[{start_id, label}]`. Ends are derived in code, so any output becomes contiguous, non-overlapping, and covering after sorting, de-duplicating, dropping unknown IDs, and forcing the first item to be a start. Re-prompt once only if no valid start survives; on a second failure fall back to the Stage 0 chapter boundaries (sections, if the outline exists) or fixed windows (20 transitions per step; 8 steps per section) and flag the level `segmentation_conf: low`.
+- Instruction: output the IDs at which a new sub-goal (steps) or topic (sections) begins, with a short label per segment: `[{start_id, label}]`. Ends are derived in code, so any output becomes contiguous, non-overlapping, and covering after sorting, de-duplicating, dropping unknown IDs, and forcing the first item to be a start. Re-prompt once — with a changed request, or the call cache would return the same answer — only if no valid start survives; on a second failure fall back to the Stage 0 chapter boundaries mapped to the first step starting at or after each chapter (sections, if the outline exists) or fixed windows (20 transitions per step; 8 steps per section) and flag the level `segmentation_conf: low`.
 - Lists too long for one call: at a 1M-token context a two-hour video (~1,600 transitions at ~40 tokens each) fits one call, so the window is 2,000 items and windowing is effectively off for v1. When it does apply (overlap 200): keep every boundary found in a window's non-overlap zone; in an overlap zone keep boundaries found by both windows, else by the window in which the boundary lies ≥ 25 items from an edge.
 
 ### 13.2 Elaboration call (pass 2)
@@ -738,7 +745,7 @@ Levels: transitions → steps → sections → video. Each level is produced by 
 
 ### 14.1 Nodes
 
-Every node from every level is a retrieval document: frame states (one document per region that holds lines, plus one per frame `description`), transitions (computed events plus interpretation), steps, sections, the video summary, and Stage 0 outline entries. Each document carries metadata: `video_id`, `level`, `id`, `frames`, `t`, `apps`, `region_names`, `layout_conf` (min over involved regions), `step_id`, `section_id`, `chapter_id`. The index contains whatever was on screen — including identifiers such as subscription IDs and tenant domains visible in the sample — with no redaction in v1 (§22).
+Every node from every level is a retrieval document: frame states (one document per region that holds lines — its fused text plus the VLM reading of every `agree = false` line, so a query hits whichever reading is right — plus one per frame `description`), transitions (computed events plus interpretation), steps, sections, the video summary, and Stage 0 outline entries. Each document carries metadata: `video_id`, `level`, `id`, `frames`, `t`, `apps`, `region_names`, `layout_conf` (min over involved regions), `step_id`, `section_id`, `chapter_id`. The index contains whatever was on screen — including identifiers such as subscription IDs and tenant domains visible in the sample — with no redaction in v1 (§22).
 
 ### 14.2 Indexes
 
@@ -816,7 +823,7 @@ All are initial values to be tuned on the ground-truth set (§18.1); until then,
 | glyph strip | one leading/trailing token of ≤ 2 chars | — | §9.2 | Icon-glyph agreement rule |
 | `layout_conf` penalties | −0.3 per interleaved region (cap 0.6); −0.2 if row coverage < 0.3; cap 0.6 singleton; cap 0.5 no bbox | — | §9.3 | |
 | focus combination | 0.9 / 0.7 / 0.6 / 0.6 / 0.5 / null | — | §9.4 | |
-| region correspondence | s = 0.5·J + 0.3·IoU + 0.1·app + 0.1·name; accept ≥ 0.3 | — | §11.1 | Cross-frame region matching |
+| region correspondence | s = 0.5·J + 0.3·IoU + 0.1·app + 0.1·name (J = text containment); accept ≥ 0.3 | — | §11.1 | Cross-frame region matching |
 | modify pairing | y-overlap (0.5·h) or similarity ≥ 0.6 | — | §11.2 | Delete+insert pairing |
 | typed tolerance | lcp ≥ len(a) − 3 | — | §11.3 | Backspace / inline-prediction tolerance |
 | `T_transient` | 2 s | — | §11.4 | Max hold for a transient |
@@ -974,7 +981,7 @@ Not used, and why: OpenCV (D14); a system `ffmpeg` (D14); `difflib` for the op l
 
 ### 20.2 Decode (§7.1)
 
-`av.open(path)`; `stream = container.streams.video[0]`; `stream.thread_type = "AUTO"`; iterate `container.decode(stream)`; `t = float(frame.pts * stream.time_base)` with the `pts is None` guard; `gray = frame.to_ndarray(format="gray")`; on emit, `frame.to_image().save(png, compress_level=1)` (≈ 350–570 KB per 1080p frame **[measured]**). Half-resolution mode converts in swscale (`frame.reformat(width // 2, height // 2, "gray")`) rather than slicing a full-resolution array, and reduces `changed` with a 2×2 max before labeling. Duration from `container.duration` (microseconds).
+`av.open(path)`; `stream = container.streams.video[0]`; `stream.thread_type = "AUTO"`; iterate `container.decode(stream)`; `t = float(frame.pts * stream.time_base)` with the `pts is None` guard; `gray = frame.to_ndarray(format="gray")`; on emit, `frame.to_image().save(png, compress_level=1)` (≈ 350–570 KB per 1080p frame **[measured]**). Half-resolution mode keeps the full-resolution grayscale and thresholds at full resolution; only the boolean change map is reduced with a 2×2 max (`changed.reshape(h//2, 2, w//2, 2).any(axis=(1, 3))`) before dilation and labeling, so 1-px strokes survive (§7.2). Full-resolution detection runs at roughly 44 fps on frames with change and much faster on static stretches **[measured]**, so the sample takes 5–10 minutes. Duration from `container.duration` (microseconds).
 
 ### 20.3 Change detection, churn, blink tracker (§7.2–§7.5)
 
@@ -1019,7 +1026,7 @@ A Myers O(ND) implementation over lists of strings produces `equal`/`insert`/`de
 - **Content layout:** for each image, a text block (`"Image 1 (clean frame 12, t=47.72s):"`, `"Frame 16 (t=52.10s):"`) followed by the base64 PNG image block, then the diff/context text, then the task instruction — images before the text that refers to them, each labeled (§5.2). Models never see filenames or metadata.
 - **Caching:** the system prompt and schema are byte-identical across calls of a stage, so the system block carries `cache_control: {"type": "ephemeral"}`; volatile content (frame labels, diffs) comes after it. The minimum cacheable prefix is model-dependent (512 tokens on Opus 5); if a stage's system block is shorter, pad it with the §15 worked example. Verify with `usage.cache_read_input_tokens` in the run log.
 - **Model pinning and provenance:** model ID, prompt version, and schema hash are recorded on every output record and in the manifest.
-- **Call cache:** every request is keyed by SHA-256 of `(stage, model, effort, max_tokens, prompt_version, schema_hash, input_hashes)` and stored on disk (`cache/<key>.json`, request + response + usage); a re-run with unchanged inputs makes no API calls (R6).
+- **Call cache:** every request is keyed by SHA-256 of `(stage, model, effort, max_tokens, prompt_version, schema_hash, input_hashes)` and stored on disk (`cache/<key>.json`, request + response + usage); a re-run with unchanged inputs makes no API calls (R6). Only terminal outcomes are cached — a parsed result, a refusal, or a schema failure after its retry; transient API errors are not, so a re-run repairs them.
 - **Batch mode:** Stages 2c and 5 are offline and embarrassingly parallel, so they can be submitted as Message Batches at 50 % of list price with up to 24 h latency. A batch is capped at 256 MB and 100,000 requests; a Stage 5 request carries two or three ~0.5 MB base64 PNGs, so a video's Stage 5 (~300 requests ≈ 350–550 MB) is chunked by serialized size (≤ 200 MB per batch). `runs/<id>/batches.json` records `{batch_id, custom_ids, status}` so an interrupted poll resumes instead of resubmitting; `custom_id` = the 64-hex cache key **[verify the 64-character limit and charset]**; `errored`/`expired`/`canceled` results are re-queued into the next batch (an `invalid_request` error goes to the manifest and the record gets `error`); results populate the same cache, so downstream stages are unchanged. Uploading each PNG once via the Files API and referencing `file_id` would shrink batch payloads to text size **[verify that file references are accepted inside batch requests]**. The server-side `fallbacks` parameter is rejected on the Batches API. Synchronous mode is the default for development.
 - **Refusals:** `stop_reason == "refusal"` is recorded on the frame/transition (`error: "refusal"`) and the pipeline continues; server-side fallbacks are a configuration option for synchronous mode.
 
@@ -1081,6 +1088,7 @@ assets/                sample video(s)
 11. Which embedder (local ONNX vs hosted) is adequate for the semantic questions in the question set, or whether lexical retrieval alone suffices for v1.
 12. Redaction: recorded screens contain identifiers (subscription IDs, tenant domains, resource names) that end up verbatim in the index and in answers. Whether v1 needs a redaction or allow-list pass before indexing, and where it would sit (Stage 7 input) without breaking R1 for the owner's own queries.
 13. Whether Files API references are accepted inside batch requests, and the Batches `custom_id` limits (§20.7 **[verify]**).
+14. How often Apple Vision drops a hyphen from `--flag` tokens or splits commands on real frames (seen on an 18-px Menlo fixture, §5.4), and whether `customWords` or a larger `minimumTextHeight` changes it.
 
 ---
 ## 23. References
@@ -1123,3 +1131,4 @@ Prior art recalled from training, not fetched during design **[verify IDs]**:
 - **Revision 1 (2026-09-13, earlier):** original draft, written with Windows.Media.Ocr and .NET as the implementation platform.
 - **Revision 2 (2026-09-13):** macOS/Python port, without changing the pipeline's stages, data model, or prompt contracts. Changes: platform row in the header; §1.1 note that recording OS and processing OS are independent; D12 rewritten (Apple Vision baseline, RapidOCR challenger) and D13–D15 added (Python/uv; PyAV + numpy/scipy, no OpenCV; single VLM provider in v1); glossary entries for the accessibility tree and PTS; §5.2–§5.3 Claude image facts confirmed against documentation (4,784-token cap noted for 1440p); §5.4 rewritten; §5.5 and §21 generalized from Windows UI Automation to the OS accessibility tree; §6 made explicitly optional; §7.1 rewritten for in-process decode; §7.2/§7.4 implementation notes; §7.3 `t_settled` corrected to the first still frame; §8.1 rewritten around an engine interface with Vision's coordinate conversion; §8.2 overlay-dimension rule; §9.0 fragment join added and referenced from §11.2 (replaced by VLM-proposed rows in revision 3); §14.2 concrete index choices; §16, §18.2, §22, §23 extended; §19.6 dollar estimate added; §20 rewritten for Python on macOS with measured figures.
 - **Revision 3 (2026-09-13):** synthesis of two independent design reviews (one with full project context, one cold), both of which ran experiments on the sample video. Stage 1 rewritten: the morphological opening that erased typed text is replaced by dilation plus a minimum-area filter (§7.2, verified on synthetic and real frames); the settle state machine gains an end-of-stream flush, a max-hold that fires only while moving, an in-place upgrade of max-hold frames that were end states, and `t_settled` at the first still frame (§7.3); the churn ring buffer is fed by the unmasked map with per-pixel hysteresis, and churn ticks plus a deactivation rule capture scrolling output (§7.4); a blink tracker handles block cursors and locates the caret (§7.5); thresholds no longer scale with recording resolution (§16). Stage 2: two images (clean + overlay) per VLM call and never-inside label placement (§8.2–§8.3, D16); the VLM proposes rows (§8.3, §9.0, D17); repair-not-abort validation. Stage 3: glyph-strip agreement, short-line alignment, `ocr_conf` declared advisory, `layout_conf` excludes occluding pairs and uses row coverage, focus combination table (§9). Data model: transitions carry `t`; `computed_diff` keyed by to-frame region with `from_region`; refs are `"<frame>:<line_id>"` and validated; sidecars `focus.jsonl` and `interpretations.jsonl` so no stage writes another's file; `outline_chapter` computed on read; file ownership table (§10.7); IDs unpadded. Stage 4: text-Jaccard region correspondence; clock ops and trivial transitions; coalescing tolerant of backspace, inline prediction and scroll-off, plus Rule 1b; transient rule relaxed; explicit ordering (§11). Stage 5 made parallel (context from computed events, not prior `action` fields) (§12). Stage 6: boundary output as start IDs with repair; fallbacks without Stage 0 (§13). Stage 7: query-builder rules, filters before top-k, embedder default `none` (§14). §16 rewritten; §17 extended; §18 ground-truth inventory completed and §18.4 fixtures/diagnostics added; §19.6 includes thinking tokens and the second image; §20.7 batch chunking/resume, cache key with effort. Open questions renumbered (§22). Not adopted from the reviews: `t_change = tPrev` (kept `t_change = t`, the first frame that no longer shows the previous state, matching the half-open stable-interval semantics).
+- **Revision 4 (2026-09-13):** amendments from two independent reviews of the implementation plan, both of which executed the plan's code. §7.2: component boxes are tight boxes of changed pixels. §7.3/§7.5: novelty decisions resting only on unconfirmed blink candidates are deferred, and the confirmation correction also applies to the buffered emission (a block cursor's half-period exceeds S; without these, every keystroke pause emitted spurious states on the synthetic fixture); caret stored as a box. §7.7: slow solid motion and never-confirming toggles listed as accepted losses. §5.4/§22: Vision dropped a hyphen from `--resource-group` on a fixture. §8.3: repair rules completed (emptied rows, truncated rows, parent cycles). §9.4: caret/retrospective conflict caps at 0.6. §11.1/§16: region correspondence uses text containment instead of Jaccard (Jaccard collapsed on the growth case §11.1 itself cites). §13.1: the re-prompt must vary the request; chapter fallback mapping stated. §14.1: region documents index both readings of disagreeing lines. §10.7: loader wording. §20.2: half-resolution reduces the change map, not the frame. §20.7: only terminal outcomes are cached.

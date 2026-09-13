@@ -4,7 +4,7 @@
 
 **Goal:** Build `vt`, a Python command-line pipeline that turns a silent screen-recording tutorial video into an exact, timestamped, queryable visual transcript (frames → OCR + VLM perception → merged states → line diffs and coalesced transitions → VLM interpretations → step/section hierarchy → SQLite index → question-answering agent), as specified in the design document.
 
-**Architecture:** Nine idempotent stages, each a module under `src/vt/` that reads other stages' JSONL files from a run directory and writes exactly one file of its own (`docs/visual-transcript-pipeline-design.md` §10.7). Stage 1 (decode, change detection, settle, churn, blink tracking) is a pure state machine over grayscale frames so it can be simulated on synthetic sequences. Perception uses Apple Vision through PyObjC and the Anthropic SDK with structured outputs behind a provider interface and an on-disk call cache. Everything downstream of perception is deterministic Python over pydantic records.
+**Architecture:** Ten idempotent stages (Stage 0 optional), each a module under `src/vt/` that reads other stages' JSONL files from a run directory and writes exactly one file of its own (`docs/visual-transcript-pipeline-design.md` §10.7). Stage 1 (decode, change detection, settle, churn, blink tracking) is a pure state machine over grayscale frames so it can be simulated on synthetic sequences. Perception uses Apple Vision through PyObjC and the Anthropic SDK with structured outputs behind a provider interface and an on-disk call cache. Everything downstream of perception is deterministic Python over pydantic records.
 
 **Tech Stack:** Python ≥ 3.12 (3.14.6 here), `uv`; `av` (PyAV) for decode; `numpy` + `scipy.ndimage` for pixels; `pyobjc-framework-Vision`/`Quartz` for OCR; `pillow` for PNG and overlays; `rapidfuzz` for similarity; `anthropic` ≥ 1.5 with `pydantic` 2 for model calls; `sqlite3` FTS5 + `sqlite-vec` for the index; `typer` CLI; `pytest`.
 
@@ -832,7 +832,7 @@ git commit -m "feat: project scaffolding, configuration, record schemas"
 - Test: `tests/test_textdiff.py`
 
 **Interfaces:**
-- Produces: `norm(s: str) -> str`; `similarity(a, b) -> float` (rapidfuzz normalized Levenshtein on `norm`); `levenshtein(a, b) -> int`; `myers(a: Sequence, b: Sequence) -> list[tuple[str, int, int]]` returning runs `("equal"|"insert"|"delete", i, j)` per element; `line_ops(prev: list[str], cur: list[str]) -> list[dict]` raw insert/delete ops with indices; `pair_modifies(ops, prev_y, cur_y, heights, sim_threshold) -> list[DiffOp]`; `char_diff(a, b) -> list[list[str]]` runs `[op, text]`; `is_clock_change(a, b) -> bool`; `lcp_len(a, b) -> int`.
+- Produces: `norm(s: str) -> str`; `similarity(a, b) -> float` (rapidfuzz normalized Levenshtein on `norm`); `levenshtein(a, b) -> int`; `myers(a: Sequence, b: Sequence) -> list[tuple[str, int, int]]` returning runs `("equal"|"insert"|"delete", i, j)` per element; `line_ops(prev: list[str], cur: list[str]) -> list[dict]` raw insert/delete ops with indices; `pair_modifies(ops, prev_y, cur_y, line_h, sim_threshold) -> list[DiffOp]`; `char_diff(a, b) -> list[list[str]]` runs `[op, text]`; `is_clock_change(a, b) -> bool`; `lcp_len(a, b) -> int`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1074,7 +1074,7 @@ git commit -m "feat: text normalization, Myers diff, modify pairing, clock detec
 - Test: `tests/test_decode.py`, `tests/conftest.py`
 
 **Interfaces:**
-- Produces: `VideoInfo(width, height, fps, duration, codec)`; `video_info(path) -> VideoInfo`; `DecodedFrame(index, t, gray, frame)`; `iter_frames(path, downsample=1) -> Iterator[DecodedFrame]` where `gray` is `uint8` at detection resolution and `frame` is the full-resolution `av.VideoFrame`.
+- Produces: `VideoInfo(width, height, fps, duration, codec)`; `video_info(path) -> VideoInfo`; `DecodedFrame(index, t, gray, frame)`; `iter_frames(path, start=None) -> Iterator[DecodedFrame]` where `gray` is the full-resolution `uint8` grayscale (any detection downsampling happens inside the settle machine, §7.2) and `frame` is the `av.VideoFrame`; `start` seeks to a time in seconds (used by the agent's `redecode` tool).
 - `tests/conftest.py` produces `make_video(path, frames: list[np.ndarray], fps)` used by this and later tests.
 
 - [ ] **Step 1: Write the conftest helper and the failing test**
@@ -1132,8 +1132,8 @@ def test_iter_frames_times_and_shapes(video_factory):
     assert decoded[0].t == 0.0
     assert all(abs((decoded[i + 1].t - decoded[i].t) - 1 / 30) < 1e-3 for i in range(11))
     assert decoded[0].gray.shape == (64, 96) and decoded[0].gray.dtype == np.uint8
-    half = list(iter_frames(path, downsample=2))
-    assert half[0].gray.shape == (32, 48)
+    tail = list(iter_frames(path, start=0.2))
+    assert tail and tail[0].t >= 0.15 and len(tail) < 12
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -1181,7 +1181,7 @@ def video_info(path: Path) -> VideoInfo:
         s = c.streams.video[0]
         fps = float(s.average_rate or s.guessed_rate or 30)
         if c.duration:
-            duration = float(c.duration * av.time_base)
+            duration = float(c.duration / av.time_base)  # av.time_base is the int 1_000_000 (AV_TIME_BASE) in PyAV 18
         elif s.duration:
             duration = float(s.duration * s.time_base)
         else:
@@ -1189,12 +1189,15 @@ def video_info(path: Path) -> VideoInfo:
         return VideoInfo(s.width, s.height, fps, duration, s.codec_context.name)
 
 
-def iter_frames(path: Path, downsample: int = 1) -> Iterator[DecodedFrame]:
+def iter_frames(path: Path, start: float | None = None) -> Iterator[DecodedFrame]:
+    """Full-resolution grayscale frames with exact presentation times; `start` seeks to a time in seconds."""
     with av.open(str(path)) as c:
         s = c.streams.video[0]
         s.thread_type = "AUTO"
         tb = s.time_base
         fps = float(s.average_rate or 30)
+        if start:
+            c.seek(int(start / tb), stream=s, backward=True, any_frame=False)
         prev_t: float | None = None
         for i, fr in enumerate(c.decode(s)):
             if fr.pts is not None:
@@ -1204,12 +1207,10 @@ def iter_frames(path: Path, downsample: int = 1) -> Iterator[DecodedFrame]:
             else:
                 t = (prev_t + 1.0 / fps) if prev_t is not None else 0.0
                 log.warning("frame %d has no pts; using %.4f", i, t)
-            if downsample == 1:
-                gray = fr.to_ndarray(format="gray")
-            else:
-                gray = fr.reformat(width=fr.width // downsample, height=fr.height // downsample, format="gray").to_ndarray()
-            yield DecodedFrame(i, t, gray, fr)
             prev_t = t
+            if start and t < start:
+                continue
+            yield DecodedFrame(i, t, fr.to_ndarray(format="gray"), fr)
 ```
 
 - [ ] **Step 4: Run the test to verify it passes**
@@ -1233,7 +1234,7 @@ git commit -m "feat: PyAV decode with exact presentation timestamps"
 - Test: `tests/test_detect.py`
 
 **Interfaces:**
-- Produces: `Component(area, bbox)`; `scale_params(detect, churn, blink, downsample) -> (DetectParams, ChurnParams, BlinkParams)`; `change_map(prev, cur, theta_pix) -> bool ndarray`; `components(changed, theta_min) -> list[Component]` (tight bboxes of changed pixels, exclusive x1/y1); `is_bar(c, p) -> bool`; `trigger(comps, p) -> bool`; `iou(a, b) -> float`; `ChurnTracker(shape, fps, p)` with `.update(changed, frame_index, t) -> ChurnUpdate(regions, deactivated, t_last_change)` and `.excludes(c) -> bool` and `.active -> bool`; `BlinkTracker(p)` with `.update(comps, t) -> BlinkUpdate(excluded: set[int], newly_confirmed: list[Candidate])`, `.is_blinker_bbox(bbox) -> bool`, `.caret_for_interval(t0, t1) -> BBox | None`.
+- Produces: `Component(area, bbox)`; `scale_params(detect, churn, blink, downsample) -> (DetectParams, ChurnParams, BlinkParams)`; `change_map(prev, cur, theta_pix) -> bool ndarray`; `components(changed, theta_min) -> list[Component]` (tight bboxes of changed pixels, exclusive x1/y1); `reduce_2x2(changed) -> bool ndarray` (§7.2 half-resolution mode: 2×2 max of the change map); `is_bar(c, p) -> bool`; `trigger(comps, p) -> bool`; `iou(a, b) -> float`; `ChurnTracker(shape, fps, p)` with `.update(changed, frame_index, t) -> ChurnUpdate(regions, deactivated, t_last_change)` and `.excludes(c) -> bool` and `.active -> bool`; `BlinkTracker(p)` with `.update(comps, t) -> BlinkUpdate(excluded: set[int], newly_confirmed: list[Candidate])`, `.is_blinker_bbox(bbox) -> bool`, `.candidate_last_seen(bbox) -> float | None` (last toggle time of an unconfirmed candidate at that position), `.caret_for_interval(t0, t1) -> BBox | None`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1346,6 +1347,15 @@ def test_blink_tracker_ignores_large_components():
     for i in range(0, 90, 15):
         upd = bt.update([Component(500, (0, 0, 40, 40))], i / 30)
         assert upd.excluded == set()
+
+
+def test_reduce_2x2_keeps_single_pixel_strokes():
+    from vt.detect import reduce_2x2
+
+    m = np.zeros((6, 9), bool)
+    m[1, 3] = True
+    r = reduce_2x2(m)
+    assert r.shape == (3, 4) and r[0, 1] and r.sum() == 1
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -1385,13 +1395,19 @@ def scale_params(d: DetectParams, c: ChurnParams, b: BlinkParams, downsample: in
     d2 = d.model_copy(update=dict(theta_min=max(2, round(d.theta_min * a)), theta_comp=round(d.theta_comp * a),
                                   theta_count=round(d.theta_count * a), bar_max_width=max(1, d.bar_max_width // 2 + 1),
                                   bar_min_height=d.bar_min_height // 2, bar_max_height=d.bar_max_height // 2))
-    c2 = c.model_copy(update=dict(min_area=round(c.min_area * a)))
+    c2 = c.model_copy(update=dict(min_area=round(c.min_area / 4)))  # a region's area scales by 4 (§16: 400 → 100)
     b2 = b.model_copy(update=dict(max_w=b.max_w // 2, max_h=b.max_h // 2))
     return d2, c2, b2
 
 
 def change_map(prev: np.ndarray, cur: np.ndarray, theta_pix: int) -> np.ndarray:
     return np.abs(cur.astype(np.int16) - prev.astype(np.int16)) > theta_pix
+
+
+def reduce_2x2(changed: np.ndarray) -> np.ndarray:
+    """§7.2 half-resolution mode: 2×2 max (any) of the full-resolution change map, so 1-px strokes survive; odd edges cropped."""
+    h, w = changed.shape[0] // 2 * 2, changed.shape[1] // 2 * 2
+    return changed[:h, :w].reshape(h // 2, 2, w // 2, 2).any(axis=(1, 3))
 
 
 def components(changed: np.ndarray, theta_min: int) -> list[Component]:
@@ -1588,6 +1604,11 @@ class BlinkTracker:
         c = self._match(bbox)
         return c is not None and c.confirmed
 
+    def candidate_last_seen(self, bbox: BBox) -> float | None:
+        """Last toggle time of an unconfirmed candidate at this position (None if untracked or confirmed)."""
+        c = self._match(bbox)
+        return c.times[-1] if c is not None and not c.confirmed else None
+
     def caret_for_interval(self, t0: float, t1: float) -> BBox | None:
         best: Candidate | None = None
         for c in self.cands:
@@ -1600,7 +1621,7 @@ class BlinkTracker:
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_detect.py -v`
-Expected: 7 passed. If `test_churn_activates…` deactivates outside the expected window, print `tr.count.max()` per frame: with `window_s=1.0` (30 maps) and `rho_off=0.2`, the count drops below 6 about 24 frames after the flicker stops (frame ~114).
+Expected: 8 passed. If `test_churn_activates…` deactivates outside the expected window, print `tr.count.max()` per frame: with `window_s=1.0` (30 maps) and `rho_off=0.2`, the count drops below 6 about 24 frames after the flicker stops (frame ~114).
 
 - [ ] **Step 5: Commit**
 
@@ -1619,7 +1640,7 @@ git commit -m "feat: change detection with dilation+min-area, churn tracker, bli
 
 **Interfaces:**
 - Consumes: `vt.detect` (Task 4), `Stage1Config` (Task 1).
-- Produces: `Emission(frame_index, t_change, t_settled, settled, churn_regions, frame, t_end, caret)`; `SettleMachine(cfg: Stage1Config, fps, shape, downsample=1, on_emit=None)` with `.step(index, t, gray, frame=None) -> list[Emission]` (records finalized by this step) and `.finish(duration) -> list[Emission]`. `on_emit(em)` is called at emission time with the frame object attached (for PNG encoding); finalized records carry `t_end` and `caret`. Bboxes in emissions are scaled back to full-resolution pixels.
+- Produces: `Emission(frame_index, t_change, t_settled, settled, churn_regions, frame, t_end, caret)`; `SettleMachine(cfg: Stage1Config, fps, shape, downsample=1, on_emit=None)` (`shape` is the full-resolution `(H, W)`; with `downsample=2` the machine reduces each change map with a 2×2 max, §7.2) with `.step(index, t, gray, frame=None) -> list[Emission]` (records finalized by this step) and `.finish(duration) -> list[Emission]`. `on_emit(em)` is called at emission time with the frame object attached (for PNG encoding); finalized records carry `t_end` and `caret`. Bboxes in emissions are scaled back to full-resolution pixels.
 
 - [ ] **Step 1: Write the failing simulation tests**
 
@@ -1722,9 +1743,9 @@ def test_typing_without_pauses_is_one_state_and_with_a_pause_is_two():
 
 def test_max_hold_during_continuous_motion_then_settle():
     frames = [blank() for _ in range(30)]
-    for i in range(150):  # a 20x20 block sweeping right for 5 s
+    for i in range(150):  # a 20x20 block jumping 5 px per frame for 5 s (1 px/frame leaves bar-shaped edges, design §7.7)
         g = blank()
-        x = 10 + i
+        x = 10 + (i * 5) % 140
         g[30:50, x:x + 20] = 255
         frames.append(g)
     frames += [frames[-1] for _ in range(60)]
@@ -1737,14 +1758,15 @@ def test_max_hold_during_continuous_motion_then_settle():
 
 def test_max_hold_frame_that_is_the_end_state_is_upgraded():
     frames = [blank() for _ in range(30)]
-    for i in range(90):  # motion for exactly M = 3 s
+    for i in range(91):  # motion for M plus one frame, so the max-hold fires on the last moving frame
         g = blank()
-        g[30:50, 10 + i:30 + i] = 255
+        x = 10 + (i * 5) % 140
+        g[30:50, x:x + 20] = 255
         frames.append(g)
     frames += [frames[-1] for _ in range(60)]  # identical to the max-hold frame
     ems = run(frames)
     assert len(ems) == 2
-    assert ems[1].settled and ems[1].t_settled == (30 + 89) / FPS
+    assert ems[1].settled and ems[1].t_settled == (30 + 90) / FPS
 
 
 def test_end_of_stream_flushes_pending_change():
@@ -1784,13 +1806,14 @@ Expected: FAIL with `ModuleNotFoundError: vt.settle`.
 from __future__ import annotations
 
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable
 
 import numpy as np
 
 from vt.config import Stage1Config
-from vt.detect import BlinkTracker, ChurnTracker, Component, change_map, components, iou, is_bar, scale_params, trigger
+from vt.detect import (BlinkTracker, ChurnTracker, Component, change_map, components, iou, is_bar, reduce_2x2,
+                       scale_params, trigger)
 from vt.schemas import BBox
 
 
@@ -1801,14 +1824,14 @@ class Emission:
     t_settled: float
     settled: bool
     churn_regions: list[BBox]
-    frame: object = None
+    frame: object = None          # av.VideoFrame at emission time; Task 6 replaces it with (n, path)
     t_end: float | None = None
     caret: BBox | None = None
-    png_future: object = None
+    png_future: object = None     # concurrent.futures.Future set by Task 6
 
 
 class SettleMachine:
-    """§7.3 settle state machine over grayscale frames at detection resolution."""
+    """§7.3 settle state machine over full-resolution grayscale frames; detection at full or half resolution (§7.2)."""
 
     def __init__(self, cfg: Stage1Config, fps: float, shape: tuple[int, int], downsample: int = 1,
                  on_emit: Callable[[Emission], None] | None = None):
@@ -1816,8 +1839,10 @@ class SettleMachine:
         self.S = cfg.settle.still_s
         self.M = cfg.settle.max_hold_s
         self.ds = downsample
-        self.churn = ChurnTracker(shape, fps, cp)
+        det_shape = (shape[0] // downsample, shape[1] // downsample)
+        self.churn = ChurnTracker(det_shape, fps, cp)
         self.blink = BlinkTracker(bp)
+        self.history_s = cfg.blink.confirm_window_s
         self.on_emit = on_emit
         self.prev: np.ndarray | None = None
         self.prev_t = 0.0
@@ -1837,13 +1862,27 @@ class SettleMachine:
         s = self.ds
         return (b[0] * s, b[1] * s, b[2] * s, b[3] * s)
 
+    def _cm(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
+        cm = change_map(a, b, self.d.theta_pix)
+        return reduce_2x2(cm) if self.ds == 2 else cm
+
     def _active(self, comps: list[Component], excluded: set[int]) -> list[Component]:
         return [c for i, c in enumerate(comps) if i not in excluded and not is_bar(c, self.d) and not self.churn.excludes(c)]
 
-    def _novel(self, gray: np.ndarray) -> bool:
-        comps = components(change_map(self.last_gray, gray, self.d.theta_pix), self.d.theta_min)
+    def _novel(self, gray: np.ndarray, t: float) -> tuple[bool, bool]:
+        """(novel, deferred). Deferred while every novelty component sits at an unconfirmed blink-candidate position
+        that could still recur (seen within one maximum blink period): a block cursor's first toggles must not be
+        emitted as states (§7.5). A candidate that stops recurring becomes novel after max_period_s."""
+        comps = components(self._cm(self.last_gray, gray), self.d.theta_min)
         active = [c for c in comps if not is_bar(c, self.d) and not self.churn.excludes(c) and not self.blink.is_blinker_bbox(c.bbox)]
-        return trigger(active, self.d)
+        if not trigger(active, self.d):
+            return False, False
+
+        def pending(c: Component) -> bool:
+            seen = self.blink.candidate_last_seen(c.bbox)
+            return seen is not None and t - seen <= self.blink.p.max_period_s
+
+        return True, all(pending(c) for c in active)
 
     def _emit(self, index: int, t: float, gray: np.ndarray, frame: object, t_change: float, t_settled: float, settled: bool) -> None:
         em = Emission(index, t_change, t_settled, settled, [self._scale(b) for b in self.churn.regions], frame=frame)
@@ -1867,20 +1906,26 @@ class SettleMachine:
         out, self.finalized = self.finalized, []
         return out
 
+    def _last_real_motion(self, blinker: BBox) -> float | None:
+        for t, moving, boxes in reversed(self.history):
+            if moving and any(iou(b, blinker) < self.blink.p.iou for b in boxes):
+                return t
+        return None
+
     # ---- main loop ----
     def step(self, index: int, t: float, gray: np.ndarray, frame: object = None) -> list[Emission]:
         if self.prev is None:
             self._emit(index, t, gray, frame, t_change=t, t_settled=t, settled=True)
             self.prev, self.prev_t, self.prev_index, self.prev_frame = gray, t, index, frame
             return self._drain()
-        cm = change_map(self.prev, gray, self.d.theta_pix)
+        cm = self._cm(self.prev, gray)
         churn_upd = self.churn.update(cm, index, t)
         comps = components(cm, self.d.theta_min)
         blink_upd = self.blink.update(comps, t)
         active = self._active(comps, blink_upd.excluded)
         moving = trigger(active, self.d)
         self.history.append((t, moving, [c.bbox for c in active]))
-        while self.history and t - self.history[0][0] > 3.0:
+        while self.history and t - self.history[0][0] > self.history_s:
             self.history.popleft()
 
         if moving:
@@ -1891,12 +1936,14 @@ class SettleMachine:
             if self.t_still is None:
                 self.t_still = self.prev_t
             if t - self.t_still >= self.S:
-                if self._novel(gray):
-                    self._emit(index, t, gray, frame, self.t_change, self.t_still, True)
-                elif self.last is not None and not self.last.settled:
-                    self.last.settled = True
-                    self.last.t_settled = self.t_still
-                self.changed = False
+                novel, deferred = self._novel(gray, t)
+                if not deferred:
+                    if novel:
+                        self._emit(index, t, gray, frame, self.t_change, self.t_still, True)
+                    elif self.last is not None and not self.last.settled:
+                        self.last.settled = True
+                        self.last.t_settled = self.t_still
+                    self.changed = False
 
         if self.changed and self.t_still is None and t - self.t_change >= self.M:
             self._emit(index, t, gray, frame, self.t_change, t, False)
@@ -1909,20 +1956,18 @@ class SettleMachine:
             self.t_still = churn_upd.t_last_change if churn_upd.t_last_change is not None else self.prev_t
         for cand in blink_upd.newly_confirmed:
             t_real = self._last_real_motion(cand.bbox)
-            if self.changed and t_real is not None and (self.t_still is None or t_real < self.t_still):
+            if t_real is None:
+                continue
+            if self.changed and (self.t_still is None or t_real < self.t_still):
                 self.t_still = t_real
+            if self.last is not None and any(abs(self.last.t_settled - x) < 1e-9 for x in cand.times) and t_real < self.last.t_settled:
+                self.last.t_settled = t_real  # the buffered emission "settled" on a cursor toggle, not on real motion
 
         self.prev, self.prev_t, self.prev_index, self.prev_frame = gray, t, index, frame
         return self._drain()
 
-    def _last_real_motion(self, blinker: BBox) -> float | None:
-        for t, moving, boxes in reversed(self.history):
-            if moving and any(iou(b, blinker) < self.blink.p.iou for b in boxes):
-                return t
-        return None
-
     def finish(self, duration: float) -> list[Emission]:
-        if self.prev is not None and self.changed and self.last_gray is not None and self._novel(self.prev):
+        if self.prev is not None and self.changed and self.last_gray is not None and self._novel(self.prev, self.prev_t + 10.0)[0]:
             t_settled = self.t_still if self.t_still is not None else self.prev_t
             self._emit(self.prev_index, self.prev_t, self.prev, self.prev_frame, self.t_change, t_settled, self.t_still is not None)
         self._finalize(duration)
@@ -1932,10 +1977,7 @@ class SettleMachine:
 - [ ] **Step 4: Run tests to verify they pass; tune only via the config values in `vt.toml` defaults**
 
 Run: `uv run pytest tests/test_settle.py -v`
-Expected: 10 passed. Likely first failures and their fixes:
-- *Block-cursor test finds `t_settled` at a blink time:* the correction rule needs `history` entries with the blinker's toggles marked `moving=True`; confirm `_last_real_motion` compares against the candidate's bbox at confirmation time (`cand.bbox`).
-- *Scrolling test gets no ticks:* the churn region needs ≥ 1 s of history (`warmup`); with `window_s=1.0` ticks start after `M` = 3 s; assert `len(ticks) >= 2` over 10 s.
-- *Max-hold test off by one frame:* `t_settled` for the unsettled emission is `t` of the emitting frame (frame 30 + 90); adjust the test's tolerance, not the machine.
+Expected: 10 passed (two independent reviewers ran this code and these fixtures). Notes: the block-cursor scenario depends on the deferral in `_novel` (a cursor's half-period, ~0.5 s, exceeds S, so without deferral each toggle would be emitted as a state) and on the buffered-emission correction at confirmation; the max-hold fixtures move 5 px per frame because a solid block moving 1 px per frame has bar-shaped edges that §7.2 excludes (design §7.7).
 
 - [ ] **Step 5: Commit**
 
@@ -2049,7 +2091,12 @@ class Run:
     def load_outline(self) -> list[OutlineChapter]:
         if not self.outline.exists():
             return []
-        return [OutlineChapter.model_validate(c) for c in json.loads(self.outline.read_text())]
+        mtime = self.outline.stat().st_mtime
+        cached = getattr(self, "_outline_cache", None)
+        if cached is None or cached[0] != mtime:  # chapter_of() is called once per frame and per transition
+            chapters = [OutlineChapter.model_validate(c) for c in json.loads(self.outline.read_text())]
+            self._outline_cache = (mtime, chapters)
+        return self._outline_cache[1]
 
     def chapter_of(self, t: float) -> OutlineChapter | None:
         for c in self.load_outline():
@@ -2064,6 +2111,7 @@ class Run:
 from __future__ import annotations
 
 import hashlib
+import importlib.metadata
 import io
 import logging
 from concurrent.futures import ThreadPoolExecutor
@@ -2087,6 +2135,16 @@ def _encode_png(img, path: Path) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _versions() -> dict[str, str]:
+    out = {}
+    for name in ("av", "numpy", "scipy", "anthropic", "pillow", "rapidfuzz", "pydantic"):
+        try:
+            out[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            pass
+    return out
+
+
 def run_stage1(run: Run, cfg: Config, video: Path) -> None:
     inputs = [video]
     ch = config_hash(cfg, "stage1")
@@ -2095,7 +2153,8 @@ def run_stage1(run: Run, cfg: Config, video: Path) -> None:
         return
     info = video_info(video)
     ds = cfg.stage1.detect.downsample
-    run.manifest_update(video=str(video), video_sha256=sha256_file(video), video_id=run.root.name,
+    vid = run.root.name
+    run.manifest_update(video=str(video), video_sha256=sha256_file(video), video_id=vid, versions=_versions(),
                         width=info.width, height=info.height, fps=info.fps, duration=info.duration)
     pool = ThreadPoolExecutor(max_workers=2)
     counter = {"n": 0}
@@ -2108,19 +2167,19 @@ def run_stage1(run: Run, cfg: Config, video: Path) -> None:
         em.png_future = pool.submit(_encode_png, img, path)
         em.frame = (n, path)
 
-    machine = SettleMachine(cfg.stage1, info.fps, (info.height // ds, info.width // ds), ds, on_emit=on_emit)
+    machine = SettleMachine(cfg.stage1, info.fps, (info.height, info.width), ds, on_emit=on_emit)
     records: list[Stage1Record] = []
 
     def take(ems: list[Emission]) -> None:
         for em in ems:
             n, path = em.frame
             sha = em.png_future.result()
-            records.append(Stage1Record(video_id=run.video_id, frame=n, t_change=em.t_change, t_settled=em.t_settled,
+            records.append(Stage1Record(video_id=vid, frame=n, t_change=em.t_change, t_settled=em.t_settled,
                                         t_end=em.t_end, settled=em.settled, churn_regions=em.churn_regions,
                                         caret=em.caret, width=info.width, height=info.height, sha256=sha,
                                         png=str(path.relative_to(run.root))))
 
-    for df in iter_frames(video, ds):
+    for df in iter_frames(video):
         take(machine.step(df.index, df.t, df.gray, frame=df.frame))
         if df.index % 3000 == 0 and df.index:
             log.info("decoded %d frames (t=%.1fs), emitted %d", df.index, df.t, counter["n"])
@@ -2167,7 +2226,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Smoke-run on the sample video (manual, not a test)**
 
 Run: `uv run vt decode assets/create-aks-cluster-tutorial.mp4 --out runs/aks --verbose`
-Expected: completes in a few minutes; `runs/aks/stage1.jsonl` has on the order of 100–400 records; open three PNGs from `runs/aks/frames/` and confirm they are settled screens. Record the emitted count and wall time in the decision ledger / README.
+Expected: 5–10 minutes at full resolution (detection dominates: ~44 fps on synthetic frames with change, faster on static stretches, which take the fast path) — set `downsample = 2` in `vt.toml` for a quicker pass; `runs/aks/stage1.jsonl` has on the order of 100–400 records; open three PNGs from `runs/aks/frames/` and confirm they are settled screens. Record the emitted count and wall time in the decision ledger / README.
 
 - [ ] **Step 5: Commit**
 
@@ -2227,7 +2286,7 @@ from PIL import Image, ImageDraw, ImageFont
 pytestmark = pytest.mark.skipif(sys.platform != "darwin", reason="Apple Vision is macOS only")
 
 
-def test_vision_reads_terminal_text_exactly(tmp_path: Path):
+def test_vision_reads_terminal_text(tmp_path: Path):
     from vt.config import OcrConfig
     from vt.ocr.vision import VisionEngine
 
@@ -2239,11 +2298,14 @@ def test_vision_reads_terminal_text_exactly(tmp_path: Path):
     png = tmp_path / "t.png"
     img.save(png)
     eng = VisionEngine(OcrConfig())
-    lines = sorted(eng.recognize(png), key=lambda l: l.bbox[1])
-    assert [l.text for l in lines] == ["PS C:\\src> git status", "az aks create --resource-group rg-demo --name aks-demo-01"]
+    lines = sorted(eng.recognize(png), key=lambda l: (l.bbox[1], l.bbox[0]))
+    assert lines[0].text == "PS C:\\src> git status"
     x0, y0, x1, y1 = lines[0].bbox
     assert 10 <= x0 <= 30 and 10 <= y0 <= 30 and 200 <= x1 <= 280 and 36 <= y1 <= 50
     assert lines[0].words and lines[0].words[0].text == "PS"
+    # Vision may split the long line into fragments and has been seen to read "--" as "-" (design §5.4):
+    joined = " ".join(l.text for l in lines[1:])
+    assert "rg-demo" in joined and "aks-demo-01" in joined
     assert eng.settings()["language_correction"] is False
 ```
 
@@ -2439,7 +2501,8 @@ def is_confusable(text: str) -> bool:
     """A token mixing ASCII letters/digits with non-ASCII letters (Cyrillic е in a GUID)."""
     for tok in _TOKEN.findall(text):
         has_ascii = any(ch.isascii() and ch.isalnum() for ch in tok)
-        has_foreign = any((not ch.isascii()) and unicodedata.category(ch).startswith("L") for ch in tok)
+        has_foreign = any((not ch.isascii()) and unicodedata.category(ch).startswith("L")
+                          and not unicodedata.name(ch, "").startswith("LATIN") for ch in tok)  # accented Latin is not confusable
         if has_ascii and has_foreign:
             return True
     return False
@@ -2688,7 +2751,7 @@ git commit -m "feat: set-of-mark overlay with clash-free label placement"
 - Test: `tests/test_provider.py`
 
 **Interfaces:**
-- Produces: `text_block(s) -> dict`, `image_block(png: Path) -> dict`, `VlmResult(parsed, error, usage, raw_text, cached, stop_reason)`, `VlmProvider` protocol with `async complete(*, stage, system, blocks, output_model, effort, prompt_version, input_hashes) -> VlmResult`; `CallCache(dir)` with `key(...)`, `get(key)`, `put(key, request, response)`; `AnthropicProvider(cfg: ModelConfig, cache: CallCache, client=None)`; `get_provider(cfg: Config, run: Run) -> VlmProvider`.
+- Produces: `text_block(s) -> dict`, `image_block(png: Path) -> dict`, `VlmResult(parsed, error, usage, raw_text, cached, stop_reason)`, `VlmProvider` protocol with `async complete(*, stage, system, blocks, output_model, effort, prompt_version, input_hashes) -> VlmResult`; `CallCache(dir)` with `key(...)`, `get(key)`, `put(key, request, response)`; `AnthropicProvider(cfg: ModelConfig, cache: CallCache, client=None)` with `.stats` (`hits`/`misses`), `.usage_by_stage`, and the batch hooks `.collecting`, `.pending`, `.run_batches(run)` used by Task 19; only terminal outcomes (a parsed result, a refusal, a schema failure after its retry) are cached — transient API errors are retried on the next run; `get_provider(cfg: Config, run: Run) -> VlmProvider`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -2769,6 +2832,17 @@ def test_schema_failure_retries_once_with_error_text(tmp_path: Path):
     assert r.parsed == Out(answer="c")
     second = client.messages.calls[1]["messages"][0]["content"]
     assert "validation error" in second[-1]["text"]
+
+
+def test_transient_api_error_is_not_cached(tmp_path: Path):
+    client = fake_client([RuntimeError("connection reset"), {"parsed": Out(answer="d")}])
+    p = AnthropicProvider(ModelConfig(), CallCache(tmp_path), client=client)
+    kw = dict(stage="s", system="sys", blocks=[text_block("q")], output_model=Out, effort="low", prompt_version="v1", input_hashes=["h"])
+    r1 = run(p.complete(**kw))
+    assert r1.parsed is None and r1.error.startswith("api:")
+    r2 = run(p.complete(**kw))
+    assert r2.parsed == Out(answer="d") and not r2.cached
+    assert p.stats == {"hits": 0, "misses": 2}
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -2879,6 +2953,15 @@ class AnthropicProvider:
         self.model = cfg.model
         self.cache = cache
         self.sem = asyncio.Semaphore(cfg.concurrency)
+        self.stats = {"hits": 0, "misses": 0}
+        self.usage_by_stage: dict[str, dict] = {}
+        self.collecting = False   # batch mode: record cache misses instead of calling (Task 19)
+        self.pending: list = []
+
+    def _account(self, stage: str, usage: dict) -> None:
+        acc = self.usage_by_stage.setdefault(stage, {})
+        for k, v in usage.items():
+            acc[k] = acc.get(k, 0) + (v or 0)
 
     async def complete(self, *, stage: str, system: str, blocks: list[dict], output_model: type[BaseModel], effort: str,
                        prompt_version: str, input_hashes: list[str]) -> VlmResult:
@@ -2886,9 +2969,19 @@ class AnthropicProvider:
         key = CallCache.key(stage, self.model, effort, self.cfg.max_tokens, prompt_version, schema_hash, input_hashes)
         hit = self.cache.get(key)
         if hit is not None:
+            self.stats["hits"] += 1
             resp = hit["response"]
             parsed = output_model.model_validate(resp["parsed"]) if resp.get("parsed") is not None else None
             return VlmResult(parsed, resp.get("error"), resp.get("usage", {}), resp.get("text"), True, resp.get("stop_reason"))
+        if self.collecting:
+            from vt.providers.batch import PendingRequest, strict_schema
+
+            params = {"model": self.model, "max_tokens": self.cfg.max_tokens,
+                      "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
+                      "messages": [{"role": "user", "content": blocks}],
+                      "output_config": {"effort": effort, "format": {"type": "json_schema", "schema": strict_schema(output_model)}}}
+            self.pending.append(PendingRequest(key, params, output_model, stage))
+            return VlmResult(None, "pending")
         async with self.sem:
             r = await self._call(system, blocks, output_model, effort, self.cfg.max_tokens)
             if r.stop_reason == "max_tokens":
@@ -2896,11 +2989,20 @@ class AnthropicProvider:
             if r.error and r.error.startswith("schema"):
                 retry_blocks = blocks + [text_block(f"Your previous output was invalid: {r.error}. Return JSON that matches the schema exactly.")]
                 r = await self._call(system, retry_blocks, output_model, effort, self.cfg.retry_max_tokens)
-        self.cache.put(key, {"stage": stage, "model": self.model, "effort": effort, "prompt_version": prompt_version,
-                             "schema_hash": schema_hash, "input_hashes": input_hashes},
-                       {"parsed": r.parsed.model_dump() if r.parsed is not None else None, "error": r.error,
-                        "usage": r.usage, "text": r.raw_text, "stop_reason": r.stop_reason})
+        self.stats["misses"] += 1
+        self._account(stage, r.usage)
+        if r.error is None or r.error == "refusal" or r.error.startswith("schema"):  # terminal outcomes only; API blips retry next run
+            self.cache.put(key, {"stage": stage, "model": self.model, "effort": effort, "prompt_version": prompt_version,
+                                 "schema_hash": schema_hash, "input_hashes": input_hashes},
+                           {"parsed": r.parsed.model_dump() if r.parsed is not None else None, "error": r.error,
+                            "usage": r.usage, "text": r.raw_text, "stop_reason": r.stop_reason})
         return r
+
+    async def run_batches(self, run) -> None:
+        from vt.providers.batch import BatchRunner
+
+        await BatchRunner(self.client, self.cache, run).run_pending(self.pending)
+        self.pending = []
 
     async def _call(self, system: str, blocks: list[dict], output_model: type[BaseModel], effort: str, max_tokens: int) -> VlmResult:
         try:
@@ -2950,7 +3052,7 @@ def get_provider(cfg: Config, run: Run) -> VlmProvider:
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_provider.py -v`
-Expected: 4 passed.
+Expected: 5 passed.
 
 - [ ] **Step 5: Commit**
 
@@ -2969,7 +3071,7 @@ git commit -m "feat: Anthropic provider with structured outputs, disk cache, ret
 - Test: `tests/test_perceive.py`
 
 **Interfaces:**
-- Produces: `prompts.stage2c.SYSTEM: str`, `VERSION = "s2c-v1"`; `build_blocks(rec: Stage1Record, ocr: OcrFrame, frame_png: Path, overlay_png: Path) -> list[dict]`; `repair(out: VlmPerception, mark_ids: list[str]) -> tuple[VlmPerception, int]`; `run_perceive(run, cfg, provider=None)` writing `perception.jsonl`.
+- Produces: `prompts.stage2c.SYSTEM: str`, `VERSION = "s2c-v1"`; `build_blocks(rec: Stage1Record, ocr: OcrFrame, frame_png: Path, overlay_png: Path) -> list[dict]`; `repair(out: VlmPerception, mark_ids: list[str]) -> tuple[VlmPerception, int]`; `_run_with_batches(run, cfg, provider, stage_fn)` (one event loop for the stage; the two-phase batch flow when `model.mode == "batch"`, reused by Task 14); `run_perceive(run, cfg, provider=None)` writing `perception.jsonl`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -2990,11 +3092,20 @@ def test_repair_missing_duplicate_unknown_and_lengths():
         focused_region="r7", focused_conf=0.5, description="", unassigned_line_ids=[])
     fixed, n = repair(out, ["l1", "l2", "l3", "l4"])
     r1, r2 = fixed.regions
-    assert r1.rows == [["l1"], ["l2"]]            # unknown l9 dropped
-    assert r2.rows == [["l3"]] and r2.vlm_lines == ["c"]  # duplicate l2 dropped from the later region; lengths aligned
-    assert fixed.unassigned_line_ids == ["l4"]     # missing mark appended
+    assert r1.rows == [["l1"], ["l2"]] and r1.vlm_lines == ["a", "b"]   # unknown l9 dropped
+    assert r2.rows == [] and r2.vlm_lines == []                          # duplicate l2 emptied its row; l3's row lost its text
+    assert fixed.unassigned_line_ids == ["l3", "l4"]                     # l3 released by the length repair; l4 was missing
     assert fixed.focused_region is None and r2.parent is None
-    assert n == 5
+    assert n == 7
+
+
+def test_repair_breaks_parent_cycles():
+    out = VlmPerception(regions=[region("r1", [["l1"]], ["a"], parent="r2"), region("r2", [["l2"]], ["b"], parent="r1"),
+                                 region("r3", [["l3"]], ["c"], parent="r3")],
+                        focused_region=None, focused_conf=0.0, description="", unassigned_line_ids=[])
+    fixed, n = repair(out, ["l1", "l2", "l3"])
+    parents = [r.parent for r in fixed.regions]
+    assert parents.count(None) >= 2 and n >= 2
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -3069,28 +3180,43 @@ def build_blocks(rec: Stage1Record, ocr: OcrFrame, frame_png: Path, overlay_png:
 
 
 def repair(out: VlmPerception, mark_ids: list[str]) -> tuple[VlmPerception, int]:
-    """§8.3: validation by repair, never by abort. Returns the repaired output and the number of repairs."""
+    """§8.3: validation by repair, never by abort. Returns the repaired output and the number of repairs.
+    Rules: unknown or already-placed marks are dropped; a row whose marks were all dropped is removed together with its
+    text; rows cut by the rows/vlm_lines length repair release their marks to unassigned_line_ids; parents naming unknown
+    regions or closing a cycle become null; a focused_region naming no region becomes null; every mark ends up exactly once."""
     known = set(mark_ids)
     region_ids = {r.id for r in out.regions}
     repairs = 0
     seen: set[str] = set()
     for r in out.regions:
         new_rows: list[list[str]] = []
-        for row in r.rows:
-            kept: list[str] = []
-            for m in row:
-                if m not in known or m in seen:
-                    repairs += 1
-                    continue
-                seen.add(m)
-                kept.append(m)
+        new_lines: list[str] = []
+        for k, row in enumerate(r.rows):
+            kept = [m for m in row if m in known and m not in seen]
+            repairs += len(row) - len(kept)
+            seen.update(kept)
+            if row and not kept:
+                continue
             new_rows.append(kept)
-        r.rows = new_rows
-        if len(r.vlm_lines) != len(r.rows):
+            if k < len(r.vlm_lines):
+                new_lines.append(r.vlm_lines[k])
+        if len(new_lines) != len(new_rows):
             repairs += 1
-            n = min(len(r.vlm_lines), len(r.rows))
-            r.rows, r.vlm_lines = r.rows[:n], r.vlm_lines[:n]
+            n = min(len(new_lines), len(new_rows))
+            for row in new_rows[n:]:
+                seen.difference_update(row)
+            new_rows, new_lines = new_rows[:n], new_lines[:n]
+        r.rows, r.vlm_lines = new_rows, new_lines
         if r.parent is not None and r.parent not in region_ids:
+            r.parent = None
+            repairs += 1
+    by_id = {r.id: r for r in out.regions}
+    for r in out.regions:
+        seen_ids, p = {r.id}, r.parent
+        while p is not None and p in by_id and p not in seen_ids:
+            seen_ids.add(p)
+            p = by_id[p].parent
+        if p is not None and p in seen_ids:  # r's parent chain closes a cycle
             r.parent = None
             repairs += 1
     unassigned = [m for m in out.unassigned_line_ids if m in known and m not in seen]
@@ -3109,15 +3235,17 @@ def repair(out: VlmPerception, mark_ids: list[str]) -> tuple[VlmPerception, int]
 async def _perceive_all(run: Run, cfg: Config, provider: VlmProvider) -> list[PerceptionRecord]:
     s1 = {r.frame: r for r in run.load_stage1()}
     clashes = run.manifest_read().get("overlay_clashes", {})
+    sem = asyncio.Semaphore(cfg.model.concurrency * 2)  # bound the fan-out: image payloads are built lazily
 
     async def one(of: OcrFrame) -> PerceptionRecord:
-        rec = s1[of.frame]
-        frame_png = run.root / rec.png
-        overlay_png = run.overlays_dir / f"{of.frame:05d}.png"
-        blocks = build_blocks(rec, of, frame_png, overlay_png)
-        res = await provider.complete(stage="stage2c", system=stage2c.SYSTEM, blocks=blocks, output_model=VlmPerception,
-                                      effort=cfg.model.effort_stage2c, prompt_version=stage2c.VERSION,
-                                      input_hashes=[rec.sha256, sha256_file(overlay_png)])
+        async with sem:
+            rec = s1[of.frame]
+            frame_png = run.root / rec.png
+            overlay_png = run.overlays_dir / f"{of.frame:05d}.png"
+            blocks = build_blocks(rec, of, frame_png, overlay_png)
+            res = await provider.complete(stage="stage2c", system=stage2c.SYSTEM, blocks=blocks, output_model=VlmPerception,
+                                          effort=cfg.model.effort_stage2c, prompt_version=stage2c.VERSION,
+                                          input_hashes=[rec.sha256, sha256_file(overlay_png)])
         out, repairs = (repair(res.parsed, [ln.id for ln in of.lines]) if res.parsed is not None else (None, 0))
         return PerceptionRecord(frame=of.frame, model=provider.model, prompt_version=stage2c.VERSION, output=out,
                                 error=res.error, usage=res.usage, repairs=repairs, label_clashes=int(clashes.get(str(of.frame), 0)))
@@ -3125,19 +3253,29 @@ async def _perceive_all(run: Run, cfg: Config, provider: VlmProvider) -> list[Pe
     return list(await asyncio.gather(*(one(of) for of in run.load_ocr())))
 
 
+async def _run_with_batches(run: Run, cfg: Config, provider: VlmProvider, stage_fn) -> list:
+    """One event loop for the whole stage; in batch mode collect cache misses, run the batches, then re-run (all hits)."""
+    if cfg.model.mode == "batch" and hasattr(provider, "collecting"):
+        provider.collecting = True
+        await stage_fn(run, cfg, provider)
+        provider.collecting = False
+        await provider.run_batches(run)
+    return await stage_fn(run, cfg, provider)
+
+
 def run_perceive(run: Run, cfg: Config, provider: VlmProvider | None = None) -> None:
     inputs = [run.ocr]
-    ch = config_hash(cfg, "model") + stage2c.VERSION
+    ch = config_hash(cfg, "model", "overlay") + stage2c.VERSION
     if run.stage_up_to_date("perceive", inputs, ch):
         log.info("perceive up to date")
         return
     provider = provider or get_provider(cfg, run)
-    records = asyncio.run(_perceive_all(run, cfg, provider))
+    records = asyncio.run(_run_with_batches(run, cfg, provider, _perceive_all))
     records.sort(key=lambda r: r.frame)
     write_jsonl(run.perception, records)
     usage = {k: sum(r.usage.get(k, 0) for r in records) for k in ("input_tokens", "output_tokens", "cache_read_input_tokens")}
     run.stage_done("perceive", inputs, ch, frames=len(records), errors=sum(r.error is not None for r in records),
-                   repairs=sum(r.repairs for r in records), usage=usage, model=provider.model)
+                   repairs=sum(r.repairs for r in records), usage=usage, model=provider.model, cache=getattr(provider, "stats", {}))
 ```
 
 Add to `cli.py`:
@@ -3154,7 +3292,7 @@ def perceive(run_dir: Path, config: Path | None = None, verbose: bool = False):
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `uv run pytest tests/test_perceive.py -v`
-Expected: 1 passed.
+Expected: 2 passed.
 
 - [ ] **Step 5: Commit**
 
@@ -3174,7 +3312,7 @@ git commit -m "feat: Stage 2c perception with two-image prompt and repair valida
 
 **Interfaces:**
 - Consumes: `Stage1Record`, `OcrFrame`, `PerceptionRecord` (Tasks 1, 7, 10); `norm`, `similarity`, `levenshtein` (Task 2).
-- Produces: `build_region_lines(vr: VlmRegion, ocr_by_id, cfg) -> tuple[list[Line], int, list[tuple[int, str]]]` (lines, rows_rejected, pending VLM texts for repair); `align_repair(lines, pending, cfg) -> None`; `agreement(ocr, vlm, cfg) -> tuple[bool, str | None]`; `region_bbox(region_id, regions) -> BBox | None`; `layout_conf(region, regions) -> float`; `caret_region(caret, regions) -> str | None`; `combine_focus(caret_region, retro_region, vlm_region, vlm_conf) -> tuple[str | None, float | None, list[str]]`; `merge_frame(s1, ocr, perc, cfg) -> FrameRecord`; `run_merge(run, cfg)` writing `frames.jsonl`.
+- Produces: `build_region_lines(vr: VlmRegion, ocr_by_id, cfg) -> tuple[list[Line], int, list[tuple[int, str]]]` (lines, rows_rejected, pending VLM texts for repair); `align_repair(lines, pending, cfg) -> None`; `agreement(ocr, vlm, cfg) -> tuple[bool, str | None]`; `region_bbox(region_id, regions) -> BBox | None`; `layout_conf(region, regions) -> float`; `caret_region(caret: BBox, regions) -> str | None` (the caret is a `[x0, y0, x1, y1]` box, as Stage 1 writes it); `combine_focus(caret_region, retro_region, vlm_region, vlm_conf) -> tuple[str | None, float | None, list[str]]`; `merge_frame(s1, ocr, perc, cfg) -> FrameRecord`; `run_merge(run, cfg)` writing `frames.jsonl`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -3203,7 +3341,7 @@ def test_rows_join_fragments_and_reject_implausible_rows():
     assert lines[0].agree is True
     assert lines[1].agree is True
     assert rejected == 1
-    assert [l.row_rejected for l in lines].count(True) == 2  # l4 and (duplicate) l1 split back into single-mark lines
+    assert [l.row_rejected for l in lines].count(True) == 1  # l4 split out; the duplicate l1 was already consumed by row 0
     assert pending == [(2, "nonsense")]
     vlm_only = [l for l in lines if l.marks == []]
     assert len(vlm_only) == 1 and vlm_only[0].vlm == "nothing to commit" and vlm_only[0].bbox is None and vlm_only[0].agree is None
@@ -3217,31 +3355,41 @@ def test_agreement_glyph_strip_and_short_lines():
     assert agreement("On branch maln", "On branch main", CFG) == (False, None)
 
 
+def _line(i, bbox, text):
+    return Line(id=f"l{i}", marks=[f"l{i}"], bbox=bbox, ocr=text, ocr_conf=1, vlm=text, agree=True, in_churn=False)
+
+
 def test_layout_conf_does_not_penalize_foreground_over_background():
-    term = Region(id="r1", kind="window", name="Terminal", app="T", parent=None, bbox=(12, 40, 640, 300), conf=0.95, layout_conf=0,
-                  occludes=["r2"], lines=[Line(id="l3", marks=["l3"], bbox=(12, 40, 300, 58), ocr="a", ocr_conf=1, vlm="a", agree=True, in_churn=False),
-                                          Line(id="l4", marks=["l4"], bbox=(12, 60, 540, 78), ocr="b", ocr_conf=1, vlm="b", agree=True, in_churn=False)])
+    term = Region(id="r1", kind="window", name="Terminal", app="T", parent=None, bbox=(12, 40, 540, 78), conf=0.95, layout_conf=0,
+                  occludes=["r2"], lines=[_line(3, (12, 40, 300, 58), "a"), _line(4, (12, 60, 540, 78), "b")])
     browser = Region(id="r2", kind="window", name="Portal", app="B", parent=None, bbox=(0, 0, 1920, 1080), conf=0.9, layout_conf=0,
-                     lines=[Line(id="l1", marks=["l1"], bbox=(64, 17, 181, 33), ocr="Azure", ocr_conf=1, vlm="Azure", agree=True, in_churn=False),
-                            Line(id="l9", marks=["l9"], bbox=(20, 1000, 200, 1018), ocr="z", ocr_conf=1, vlm="z", agree=True, in_churn=False)])
-    assert layout_conf(term, [term, browser]) >= 0.9
+                     lines=[_line(1, (64, 17, 181, 33), "Azure"), _line(9, (20, 1000, 200, 1018), "z")])
+    nav = Region(id="r5", kind="pane", name="nav", app="B", parent="r2", bbox=(20, 40, 200, 58), conf=0.9, layout_conf=0,
+                 lines=[_line(6, (20, 42, 200, 58), "Overview")])  # behind the terminal: occlusion extends to the browser's panes
+    assert layout_conf(term, [term, browser, nav]) >= 0.9
     # interleaved text from an unrelated region on the same rows is penalized
-    other = Region(id="r3", kind="pane", name="x", app="B", parent="r2", bbox=(300, 40, 500, 78), conf=0.9, layout_conf=0,
-                   lines=[Line(id="l7", marks=["l7"], bbox=(300, 42, 500, 58), ocr="q", ocr_conf=1, vlm="q", agree=True, in_churn=False)])
+    other = Region(id="r3", kind="pane", name="x", app="B", parent=None, bbox=(280, 42, 500, 58), conf=0.9, layout_conf=0,
+                   lines=[_line(7, (280, 42, 500, 58), "q")])
     assert layout_conf(term, [term, browser, other]) <= 0.7
     single = Region(id="r4", kind="pane", name="s", app="B", parent=None, bbox=(0, 0, 10, 10), conf=0.95, layout_conf=0,
-                    lines=[Line(id="l8", marks=["l8"], bbox=(0, 0, 10, 10), ocr="s", ocr_conf=1, vlm="s", agree=True, in_churn=False)])
+                    lines=[_line(8, (0, 0, 10, 10), "s")])
     assert layout_conf(single, [single]) <= 0.6
+    # a window whose text lives in its panes is not "scattered"
+    win = Region(id="r6", kind="window", name="Editor", app="E", parent=None, bbox=(0, 0, 800, 600), conf=0.95, layout_conf=0,
+                 lines=[_line(10, (0, 0, 300, 18), "title")])
+    pane = Region(id="r7", kind="pane", name="editor", app="E", parent="r6", bbox=(0, 30, 800, 600), conf=0.9, layout_conf=0,
+                  lines=[_line(11 + k, (0, 30 + 18 * k, 800, 48 + 18 * k), f"line {k}") for k in range(30)])
+    assert layout_conf(win, [win, pane]) >= 0.9
 
 
 def test_caret_region_and_focus_combination():
     term = Region(id="r1", kind="window", name="T", app="T", parent=None, bbox=(12, 40, 640, 300), conf=0.9, layout_conf=0.9,
-                  lines=[Line(id="l3", marks=["l3"], bbox=(12, 40, 300, 58), ocr="a", ocr_conf=1, vlm="a", agree=True, in_churn=False)])
+                  lines=[_line(3, (12, 40, 300, 58), "a")])
     pane = Region(id="r3", kind="pane", name="p", app="T", parent="r1", bbox=(12, 60, 300, 78), conf=0.9, layout_conf=0.9,
-                  lines=[Line(id="l4", marks=["l4"], bbox=(12, 60, 300, 78), ocr="b", ocr_conf=1, vlm="b", agree=True, in_churn=False)])
-    assert caret_region((318, 41, 2, 18), [term, pane]) == "r1"    # inside, compared at root-window level
-    assert caret_region((20, 90, 2, 18), [term, pane]) == "r1"     # just below the pane: within two line heights
-    assert caret_region((900, 900, 2, 18), [term, pane]) is None
+                  lines=[_line(4, (12, 60, 300, 78), "b")])
+    assert caret_region((318, 41, 320, 59), [term, pane]) == "r1"    # inside, compared at root-window level
+    assert caret_region((20, 90, 22, 108), [term, pane]) == "r1"     # just below the pane: within two line heights
+    assert caret_region((900, 900, 902, 918), [term, pane]) is None
     assert combine_focus("r1", None, "r1", 0.8) == ("r1", 0.9, ["caret", "vlm"])
     assert combine_focus("r1", None, None, 0.0) == ("r1", 0.7, ["caret"])
     assert combine_focus("r1", None, "r2", 0.8) == ("r1", 0.6, ["caret", "vlm:r2@0.3"])
@@ -3331,6 +3479,16 @@ def _make_line(marks: list[OcrLine], vlm: str | None, cfg: MergeConfig, row_reje
 
 
 # ---------- rows (§9.0) ----------
+def _row_plausible(ms: list[OcrLine], med_h: float, cfg: MergeConfig) -> bool:
+    ycs = [(m.bbox[1] + m.bbox[3]) / 2 for m in ms]
+    if max(ycs) - min(ycs) > cfg.row_y_tol * med_h:
+        return False
+    for a, b in zip(ms, ms[1:]):
+        if b.bbox[0] - a.bbox[2] > cfg.row_gap_lines * med_h:
+            return False
+    return True
+
+
 def build_region_lines(vr: VlmRegion, ocr_by_id: dict[str, OcrLine], cfg: MergeConfig) -> tuple[list[Line], int, list[tuple[int, str]]]:
     marks_all = [ocr_by_id[m] for row in vr.rows for m in row if m in ocr_by_id]
     med_h = _median_h([m.bbox for m in marks_all])
@@ -3362,16 +3520,6 @@ def build_region_lines(vr: VlmRegion, ocr_by_id: dict[str, OcrLine], cfg: MergeC
     return lines, rejected, pending
 
 
-def _row_plausible(ms: list[OcrLine], med_h: float, cfg: MergeConfig) -> bool:
-    ycs = [(m.bbox[1] + m.bbox[3]) / 2 for m in ms]
-    if max(ycs) - min(ycs) > cfg.row_y_tol * med_h:
-        return False
-    for a, b in zip(ms, ms[1:]):
-        if b.bbox[0] - a.bbox[2] > cfg.row_gap_lines * med_h:
-            return False
-    return True
-
-
 def align_repair(lines: list[Line], pending: list[tuple[int, str]], cfg: MergeConfig) -> None:
     """LCS-style repair: match pending VLM texts to lines that have no VLM text (rejected rows), in order."""
     if not pending:
@@ -3382,8 +3530,10 @@ def align_repair(lines: list[Line], pending: list[tuple[int, str]], cfg: MergeCo
     while i < len(free) and j < len(texts):
         matched = False
         for take in (1, 2, 3):
+            if j + take > len(texts):
+                break
             cand = " ".join(texts[j:j + take])
-            if j + take <= len(texts) and _matches(free[i].ocr, cand, cfg):
+            if _matches(free[i].ocr, cand, cfg):
                 free[i].vlm = cand
                 free[i].agree, free[i].ocr_glyph_stripped = agreement(free[i].ocr, cand, cfg)
                 j += take
@@ -3403,6 +3553,13 @@ def _children(rid: str, regions: list[Region]) -> list[Region]:
     return [r for r in regions if r.parent == rid]
 
 
+def _descendant_lines(rid: str, regions: list[Region]) -> list[Line]:
+    out: list[Line] = []
+    for c in _children(rid, regions):
+        out += [l for l in c.lines if l.bbox] + _descendant_lines(c.id, regions)
+    return out
+
+
 def region_bbox(rid: str, regions: list[Region]) -> BBox | None:
     r = next(x for x in regions if x.id == rid)
     boxes = [l.bbox for l in r.lines if l.bbox]
@@ -3413,17 +3570,21 @@ def region_bbox(rid: str, regions: list[Region]) -> BBox | None:
     return union(boxes)
 
 
+def _ancestors(r: Region, by_id: dict[str, Region]) -> set[str]:
+    out: set[str] = set()
+    p = r.parent
+    while p and p in by_id and p not in out:
+        out.add(p)
+        p = by_id[p].parent
+    return out
+
+
 def _related(a: Region, b: Region, regions: list[Region]) -> bool:
+    """Ancestor/descendant, or occlusion between the regions or any of their ancestors (a terminal that occludes a
+    browser window also occludes the browser's panes)."""
     by_id = {r.id: r for r in regions}
-
-    def ancestors(r: Region) -> set[str]:
-        out, p = set(), r.parent
-        while p and p in by_id:
-            out.add(p)
-            p = by_id[p].parent
-        return out
-
-    return a.id in ancestors(b) or b.id in ancestors(a) or a.id in b.occludes or b.id in a.occludes
+    anc_a, anc_b = _ancestors(a, by_id) | {a.id}, _ancestors(b, by_id) | {b.id}
+    return a.id in anc_b or b.id in anc_a or bool(anc_a & set(b.occludes)) or bool(anc_b & set(a.occludes))
 
 
 def layout_conf(region: Region, regions: list[Region]) -> float:
@@ -3449,8 +3610,9 @@ def layout_conf(region: Region, regions: list[Region]) -> float:
         if hit:
             penalty += 0.3
     score -= min(penalty, 0.6)
-    med = _median_h([l.bbox for l in lines])
-    coverage = (len(lines) * med) / max(_h(region.bbox), 1)
+    rows = lines + _descendant_lines(region.id, regions)  # a window's text may live in its panes
+    med = _median_h([l.bbox for l in rows])
+    coverage = (len(rows) * med) / max(_h(region.bbox), 1)
     if coverage < 0.3:
         score -= 0.2
     if len(lines) == 1:
@@ -3461,15 +3623,18 @@ def layout_conf(region: Region, regions: list[Region]) -> float:
 # ---------- focus (§9.4) ----------
 def _root(rid: str, regions: list[Region]) -> str:
     by_id = {r.id: r for r in regions}
-    while by_id[rid].parent and by_id[rid].parent in by_id:
+    seen = {rid}
+    while by_id[rid].parent and by_id[rid].parent in by_id and by_id[rid].parent not in seen:
         rid = by_id[rid].parent
+        seen.add(rid)
     return rid
 
 
 def caret_region(caret: BBox | None, regions: list[Region]) -> str | None:
+    """caret is a [x0, y0, x1, y1] box (§10.5)."""
     if caret is None:
         return None
-    cx, cy = caret[0] + caret[2] / 2, caret[1] + caret[3] / 2
+    cx, cy = (caret[0] + caret[2]) / 2, (caret[1] + caret[3]) / 2
     best, best_d = None, None
     for r in regions:
         if r.bbox is None:
@@ -3490,17 +3655,15 @@ def caret_region(caret: BBox | None, regions: list[Region]) -> str | None:
 
 
 def combine_focus(caret_r: str | None, retro_r: str | None, vlm_r: str | None, vlm_conf: float) -> tuple[str | None, float | None, list[str]]:
+    """§9.4 combination table; a caret/retrospective conflict caps confidence at 0.6 whatever the VLM says."""
     computed = retro_r or caret_r
-    if caret_r and retro_r and caret_r != retro_r:
-        computed = retro_r
     if computed:
+        disagree = bool(caret_r and retro_r and caret_r != retro_r)
         signals = [s for s, v in (("caret", caret_r), ("retro", retro_r)) if v == computed]
         if vlm_r is None:
-            return computed, 0.7, signals
+            return computed, (0.6 if disagree else 0.7), signals
         if vlm_r == computed:
-            return computed, 0.9, signals + ["vlm"]
-        if caret_r and retro_r and caret_r != retro_r:
-            return computed, 0.6, signals + ["vlm"] if vlm_r == computed else signals + [f"vlm:{vlm_r}@0.3"]
+            return computed, (0.6 if disagree else 0.9), signals + ["vlm"]
         return computed, 0.6, signals + [f"vlm:{vlm_r}@0.3"]
     if vlm_r:
         return vlm_r, 0.5, ["vlm"]
@@ -3700,7 +3863,7 @@ def _texts(r: Region) -> set[str]:
 
 def score(a: Region, b: Region, cfg: DiffConfig) -> float:
     ta, tb = _texts(a), _texts(b)
-    j = len(ta & tb) / len(ta | tb) if ta and tb else 0.0
+    j = len(ta & tb) / min(len(ta), len(tb)) if ta and tb else 0.0  # containment, not Jaccard: growth must not break a match (§11.1)
     i = iou(a.bbox, b.bbox) if a.bbox and b.bbox else 0.0
     app = float(norm(a.app).lower() == norm(b.app).lower())
     name = float(norm(a.name).lower() == norm(b.name).lower())
@@ -3992,7 +4155,7 @@ def _build(frames_by_id: dict[int, FrameRecord], members: list[Transition], even
     t.kind = _kind(members)
     if len(members) == 1 and members[0].kind == "transient_merged":
         t.kind = "transient_merged"
-        t.transient = members[0].transient
+    t.transient = next((m.transient for m in members if m.transient is not None), None)  # a transient inside a run survives (§11.4)
     t.events = events
     return t
 
@@ -4127,6 +4290,14 @@ def tag_trivial(t: Transition) -> Transition:
 
 
 # ---------- retrospective focus (§9.4) ----------
+def _vlm_focus(f: FrameRecord) -> str | None:
+    """Recover the VLM's own answer from Stage 3's focused_signals (it may have been recorded as 'vlm:rX@0.3')."""
+    for sig in f.focused_signals:
+        if sig.startswith("vlm:"):
+            return sig[4:].split("@")[0]
+    return f.focused_region if "vlm" in f.focused_signals else None
+
+
 def retrospective_focus(frames: list[FrameRecord], transitions: list[Transition]) -> list[FocusRecord]:
     by_id = {f.frame: f for f in frames}
     out: list[FocusRecord] = []
@@ -4134,17 +4305,22 @@ def retrospective_focus(frames: list[FrameRecord], transitions: list[Transition]
         typed = next((e for e in t.events if e.type == "typed"), None)
         if typed is None or t.regions.appeared:
             continue
-        from_region = t.computed_diff.get(typed.region).from_region if typed.region in t.computed_diff else None
+        rd = t.computed_diff.get(typed.region)
+        from_region = rd.from_region if rd else None
         if from_region is None:
             continue
-        f = by_id[t.from_frame]
-        vlm_r = next((s for s in f.focused_signals if s == "vlm"), None)
-        vlm_region = f.focused_region if ("vlm" in f.focused_signals and f.focused_region) else None
+        f, b = by_id[t.from_frame], by_id[t.to_frame]
+        if f.focused_region and b.focused_region:  # §9.4: attribute only when focus did not change across the transition
+            mapped = next((a for a, bb, _ in t.regions.matched if bb == b.focused_region), None)
+            if mapped is not None and mapped != f.focused_region:
+                continue
         root = from_region
         by_rid = {r.id: r for r in f.regions}
-        while by_rid.get(root) and by_rid[root].parent in by_rid:
+        seen = {root}
+        while by_rid.get(root) and by_rid[root].parent in by_rid and by_rid[root].parent not in seen:
             root = by_rid[root].parent
-        region, conf, signals = combine_focus(caret_region(f.caret, f.regions), root, vlm_region, f.focused_conf or 0.0)
+            seen.add(root)
+        region, conf, signals = combine_focus(caret_region(f.caret, f.regions), root, _vlm_focus(f), f.focused_conf or 0.0)
         out.append(FocusRecord(frame=f.frame, focused_region=region, focused_conf=conf, focused_signals=signals))
     return out
 
@@ -4267,7 +4443,11 @@ action: the single user action that best explains the change (typed, clicked, se
 result: what visibly changed as a consequence, including non-textual changes visible in the images (a checkbox toggled, a row highlighted, a dialog opened).
 description: anything else visible and relevant.
 confidence: 0-1.
-refs.lines: the line references your statements rest on, as "<frame>:<line_id>" using the frame numbers given, e.g. "16:l3"."""
+refs.lines: the line references your statements rest on, as "<frame>:<line_id>" using the frame numbers given, e.g. "16:l3".
+
+Worked example. Frame 11 shows a terminal with the prompt "PS C:\\src> " and, behind it, a browser. Frame 16 shows the same terminal with "PS C:\\src> git status", "On branch main", "nothing to commit, working tree clean", and the browser unchanged. The computed changes list one modify on the prompt row and two inserted lines, with the coalesced event typed "git status". A good answer is:
+{"action": "The user typed `git status` in the terminal and pressed Enter.", "result": "Git printed that the branch is main with a clean working tree; the browser behind the terminal did not change.", "description": "The terminal has keyboard focus; the caret sits on a new empty prompt line.", "confidence": 0.9, "refs": {"lines": ["16:l3", "16:l4", "16:l5"]}}
+A poor answer restates the command as "git-status" or "git stat" (altered text), asserts a reading the computed list marks as uncertain, or cites a line id that does not exist in either frame."""
 ```
 
 `src/vt/interpret.py`:
@@ -4386,15 +4566,17 @@ async def _interpret_all(run: Run, cfg: Config, provider: VlmProvider) -> list[I
     frames_list = run.load_frames()
     frames = {f.frame: f for f in frames_list}
     ts = run.load_transitions()
+    sem = asyncio.Semaphore(cfg.model.concurrency * 2)  # bound the fan-out: three base64 PNGs per request
 
     async def one(i: int, t: Transition) -> Interpretation:
         if t.kind == "trivial":
             return Interpretation(id=t.id, error="trivial")
-        chapter = run.chapter_of(frames[t.to_frame].t_settled)
-        blocks = build_blocks(t, frames, run, chapter, ts[max(0, i - 3):i])
-        res = await provider.complete(stage="stage5", system=stage5.SYSTEM, blocks=blocks, output_model=VlmInterpretation,
-                                      effort=cfg.model.effort_stage5, prompt_version=stage5.VERSION,
-                                      input_hashes=[frames[t.from_frame].sha256, frames[t.to_frame].sha256, sha256_obj(t.model_dump())])
+        async with sem:
+            chapter = run.chapter_of(frames[t.to_frame].t_settled)
+            blocks = build_blocks(t, frames, run, chapter, ts[max(0, i - 3):i])
+            res = await provider.complete(stage="stage5", system=stage5.SYSTEM, blocks=blocks, output_model=VlmInterpretation,
+                                          effort=cfg.model.effort_stage5, prompt_version=stage5.VERSION,
+                                          input_hashes=[frames[t.from_frame].sha256, frames[t.to_frame].sha256, sha256_obj(t.model_dump())])
         if res.parsed is None:
             return Interpretation(id=t.id, error=res.error, model=provider.model, prompt_version=stage5.VERSION)
         p: VlmInterpretation = res.parsed
@@ -4413,10 +4595,13 @@ def run_interpret(run: Run, cfg: Config, provider: VlmProvider | None = None) ->
         log.info("interpret up to date")
         return
     provider = provider or get_provider(cfg, run)
-    records = asyncio.run(_interpret_all(run, cfg, provider))
+    from vt.perceive import _run_with_batches
+
+    records = asyncio.run(_run_with_batches(run, cfg, provider, _interpret_all))
     write_jsonl(run.interpretations, records)
     run.stage_done("interpret", inputs, ch, transitions=len(records), errors=sum(r.error not in (None, "trivial") for r in records),
-                   invalid_refs=sum(r.invalid_refs for r in records), model=provider.model)
+                   invalid_refs=sum(r.invalid_refs for r in records), model=provider.model,
+                   usage=getattr(provider, "usage_by_stage", {}).get("stage5", {}), cache=getattr(provider, "stats", {}))
 ```
 
 Add to `cli.py`:
@@ -4504,11 +4689,21 @@ VERSION = "s6-v1"
 
 BOUNDARY_SYSTEM = """You segment an ordered list of items from a computer tutorial into coherent units.
 
-Each line is one item: its id, its frame range and time range, and a one-line summary. Output only the ids at which a new segment begins, with a short label for the segment that starts there. A segment is a coherent unit of work a tutorial reader would follow as one step (for steps) or one topic (for sections). The first item always begins the first segment. Use ids exactly as listed; do not invent ids."""
+Each line is one item: its id, its frame range and time range, and a one-line summary. Output only the ids at which a new segment begins, with a short label for the segment that starts there. A segment is a coherent unit of work a tutorial reader would follow as one step (for steps) or one topic (for sections). The first item always begins the first segment. Use ids exactly as listed; do not invent ids.
+
+Worked example for the boundary call. Given items
+T1 [f0→f2, 0.0–3.1s] Browser: Portal: 3 text changes
+T2 [f2→f5, 3.1–9.8s] Browser: Portal: typed "RG1-KodeKloud-AKS"
+T3 [f5→f9, 9.8–20.2s] Browser: Portal: 12 text changes — clicked Review + create
+T4 [f9→f12, 20.2–31.0s] Windows Terminal: typed "az aks get-credentials --resource-group RG1-KodeKloud-AKS --name AKS1"
+T5 [f12→f14, 31.0–40.5s] Windows Terminal: 6 lines appended
+a good answer is {"segments": [{"start_id": "T1", "label": "Create the resource group in the portal"}, {"start_id": "T4", "label": "Connect to the cluster from the terminal"}]}: the first item starts the first segment, and the new segment begins where the sub-goal changes (portal work → terminal work), not at every item."""
 
 ELABORATE_SYSTEM = """You describe one segment of a computer tutorial for a reader who will follow it.
 
-You are given the segment's items in full and the screen state at its start and end. Return a short label and a description. Every sentence of the description must carry, in square brackets, the ids of the items it rests on, e.g. [T13]. Quote commands, paths and identifiers exactly as given; do not paraphrase or correct them. List every cited id in refs."""
+You are given the segment's items in full and the screen state at its start and end. Return a short label and a description. Every sentence of the description must carry, in square brackets, the ids of the items it rests on, e.g. [T13]. Quote commands, paths and identifiers exactly as given; do not paraphrase or correct them. List every cited id in refs.
+
+Worked example. For a segment whose items are T4 (typed "az aks get-credentials --resource-group RG1-KodeKloud-AKS --name AKS1") and T5 (6 lines appended: "Merged \"AKS1\" as current context in C:\\Users\\msadmin\\.kube\\config"), a good answer is {"label": "Connect kubectl to the cluster", "description": "Run `az aks get-credentials --resource-group RG1-KodeKloud-AKS --name AKS1` in the terminal [T4]. The command merges the cluster's credentials into the local kubeconfig and reports \"Merged \\\"AKS1\\\" as current context\" [T5].", "refs": ["T4", "T5"]}. A poor answer paraphrases the command (dropping the resource-group flag) or leaves a sentence without a bracketed id."""
 ```
 
 `src/vt/hierarchy.py`:
@@ -4617,13 +4812,16 @@ def _state_line(f: FrameRecord) -> str:
 
 
 # ---------- level builder ----------
-async def _boundaries(provider: VlmProvider, cfg: Config, level: str, lines: list[str], suggestion: str | None) -> tuple[list[SegmentStart] | None, str | None]:
+async def _boundaries(provider: VlmProvider, cfg: Config, level: str, lines: list[str], suggestion: str | None,
+                      retry: bool = False) -> tuple[list[SegmentStart] | None, str | None]:
     text = "\n".join(lines)
     if suggestion:
         text += "\n\nSuggested boundaries from a coarse outline (reconcile against the items; the items win):\n" + suggestion
+    if retry:  # a changed request, or the call cache would hand back the failed answer (§13.1)
+        text += "\n\n(Retry: the previous answer contained no valid start ids. Use the ids exactly as listed above.)"
     res = await provider.complete(stage=f"stage6-boundary-{level}", system=stage6.BOUNDARY_SYSTEM, blocks=[text_block(text)],
                                   output_model=VlmBoundaries, effort=cfg.model.effort_stage6, prompt_version=stage6.VERSION,
-                                  input_hashes=[sha256_obj(text)])
+                                  input_hashes=[sha256_obj(text), "retry" if retry else "first"])
     return (res.parsed.segments if res.parsed else None), res.error
 
 
@@ -4638,7 +4836,8 @@ async def _elaborate(provider: VlmProvider, cfg: Config, level: str, seg_id: str
 
 
 async def build_level(provider: VlmProvider, cfg: Config, level: str, prefix: str, items: list, frames: dict[int, FrameRecord],
-                      interps: dict[str, Interpretation], suggestion: str | None, fallback_size: int) -> list[HierNode]:
+                      interps: dict[str, Interpretation], suggestion: str | None, fallback_size: int,
+                      chapter_starts: list[tuple[int, str]] | None = None) -> list[HierNode]:
     hc: HierarchyConfig = cfg.hierarchy
     ids = [it.id for it in items]
     lines = [_item_line(it, frames, interps) for it in items]
@@ -4647,10 +4846,16 @@ async def build_level(provider: VlmProvider, cfg: Config, level: str, prefix: st
     for ws, we in window_ranges(len(items), hc.window, hc.overlap):
         segs, err = await _boundaries(provider, cfg, level, lines[ws:we], suggestion)
         if segs is None or len(segs) == 0:
-            segs, err = await _boundaries(provider, cfg, level, lines[ws:we], suggestion)  # one re-prompt
-        if segs is None:
+            segs, err = await _boundaries(provider, cfg, level, lines[ws:we], suggestion, retry=True)  # one re-prompt
+        if segs is None or len(segs) == 0:
             log.warning("boundary call failed for %s window %d-%d: %s; using fallback", level, ws, we, err)
-            bounds = [(ws + k, lab) for k, lab in fallback_segments(we - ws, fallback_size)]
+            if chapter_starts:  # §13.1: Stage 0 chapter boundaries when the outline exists
+                fb = [(k - ws, lab) for k, lab in chapter_starts if ws <= k < we]
+            else:
+                fb = fallback_segments(we - ws, fallback_size)
+            if not fb or fb[0][0] != 0:
+                fb = [(0, "segment 1")] + fb
+            bounds = [(ws + k, lab) for k, lab in fb]
             seg_conf = "low"
         else:
             bounds = [(ws + k, lab) for k, lab in repair_boundaries(segs, ids[ws:we])]
@@ -4676,8 +4881,8 @@ async def build_level(provider: VlmProvider, cfg: Config, level: str, prefix: st
         nodes.append(HierNode(id=f"{prefix}{k + 1}", level=level, children=(chunk[0].id, chunk[-1].id), frames=frames_rng, t=t_rng,
                               label=label, description="", segmentation_conf=seg_conf))
     elabs = await asyncio.gather(*tasks)
-    for node, el, (s, _) in zip(nodes, elabs, bounds):
-        child_ids = {it.id for it in items[s:starts[bounds.index((s, _)) + 1]]}
+    for k, (node, el) in enumerate(zip(nodes, elabs)):
+        child_ids = {it.id for it in items[starts[k]:starts[k + 1]]}
         node.label = el.label or node.label
         node.description = el.description
         node.refs = [r for r in el.refs if r in child_ids]
@@ -4691,7 +4896,11 @@ async def _hierarchy(run: Run, cfg: Config, provider: VlmProvider) -> tuple[list
     steps = await build_level(provider, cfg, "step", "S", ts, frames, interps, None, cfg.hierarchy.fallback_step_transitions)
     outline = run.load_outline()
     suggestion = "\n".join(f"{c.start_s:.0f}s–{c.end_s:.0f}s: {c.title}" for c in outline) if outline else None
-    sections = await build_level(provider, cfg, "section", "C", steps, frames, interps, suggestion, cfg.hierarchy.fallback_section_steps)
+    chapter_starts = None
+    if outline:  # map chapter start times to the first step starting at or after them (§13.1 fallback)
+        idx = sorted({k for k in (next((k for k, st in enumerate(steps) if st.t[0] >= c.start_s), None) for c in outline) if k is not None})
+        chapter_starts = [(k, f"chapter {i + 1}") for i, k in enumerate(idx)] or None
+    sections = await build_level(provider, cfg, "section", "C", steps, frames, interps, suggestion, cfg.hierarchy.fallback_section_steps, chapter_starts)
     frames_rng, t_rng = propagate(sections)
     el = await _elaborate(provider, cfg, "video", "video", "\n".join(_item_full(s, frames, interps) for s in sections),
                           _state_line(frames[frames_rng[0]]), _state_line(frames[frames_rng[1]]))
@@ -4706,16 +4915,22 @@ def run_hierarchy(run: Run, cfg: Config, provider: VlmProvider | None = None) ->
     if run.stage_up_to_date("hierarchy", inputs, ch):
         log.info("hierarchy up to date")
         return
-    if not run.load_transitions():
-        log.warning("no transitions; skipping hierarchy")
+    if not [t for t in run.load_transitions() if t.kind != "trivial"]:
+        log.warning("no non-trivial transitions; skipping hierarchy")
         return
     provider = provider or get_provider(cfg, run)
     steps, sections, video = asyncio.run(_hierarchy(run, cfg, provider))
     write_jsonl(run.steps, steps)
     write_jsonl(run.sections, sections)
     run.video.write_text(video.model_dump_json(indent=2))
+    usage: dict = {}
+    for k, u in getattr(provider, "usage_by_stage", {}).items():
+        if k.startswith("stage6"):
+            for kk, v in u.items():
+                usage[kk] = usage.get(kk, 0) + v
     run.stage_done("hierarchy", inputs, ch, steps=len(steps), sections=len(sections),
-                   low_conf=sum(n.segmentation_conf == "low" for n in steps + sections))
+                   low_conf=sum(n.segmentation_conf == "low" for n in steps + sections), usage=usage, model=provider.model,
+                   cache=getattr(provider, "stats", {}))
 ```
 
 Add to `cli.py`:
@@ -4751,6 +4966,7 @@ git commit -m "feat: Stage 6 hierarchy with boundary repair and map-reduce elabo
 - Test: `tests/test_index.py`
 
 **Interfaces:**
+- v1 limits, stated: `app` is a hard `LIKE` filter (no soft boost for `layout_conf < 0.5` regions), and region/frame nodes carry no `step_id`/`section_id`.
 - Produces: `Node` (pydantic: `node_id, video_id, level, item_id, frames, t, apps, region_names, layout_conf, step_id, section_id, chapter_id, text, payload`); `extract_nodes(run) -> list[Node]`; `open_db(path) -> sqlite3.Connection` (schema created, sqlite-vec loaded); `index_nodes(db, nodes, embedder)`; `fts_query(query: str) -> str`; `trigram_query(query) -> str | None`; `rrf(rankings: list[list[str]], k: int) -> list[tuple[str, float]]`; `search(db, query, cfg, embedder=None, video_id=None, level=None, t_from=None, t_to=None, app=None) -> list[dict]`; `get_embedder(cfg) -> Embedder | None`; `build_index(run, cfg)`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -5031,7 +5247,8 @@ def extract_nodes(run: Run) -> list[Node]:
         chapter = run.chapter_of(f.t_settled)
         for r in f.regions:
             text = "\n".join(l.fused for l in r.lines if l.fused)
-            if not text:
+            text += "".join(f"\n{l.vlm}" for l in r.lines if l.agree is False and l.vlm)  # index both readings (§14.1)
+            if not text.strip():
                 continue
             nodes.append(Node(node_id=f"{vid}:f{f.frame}:{r.id}", video_id=vid, level="region", item_id=f"{f.frame}:{r.id}",
                               frames=(f.frame, f.frame), t=(f.t_settled, f.t_end), apps=[r.app], region_names=[r.name],
@@ -5101,7 +5318,7 @@ def search(run_dir: Path, query: str, level: str | None = None, config: Path | N
     cfg = load_config(config)
     db = open_db(Run(run_dir).index_db)
     for h in _search(db, query, cfg.index, get_embedder(cfg.index), level=level):
-        typer.echo(f"{h['score']:.4f} {h['level']:<10} {h['item_id']:<8} t={h['t'][0]:.1f}-{h['t'][1]:.1f}  {h['text'][:100]!r}")
+        typer.echo(f"{h['score']:.4f} {h['level']:<10} {h['item_id']:<8} t={h['t'][0]:.1f}-{h['t'][1]:.1f}  {h['text'][:100]}")
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -5243,9 +5460,7 @@ class Tools:
         next_t = t_a
         tmp = self.run.root / "redecode"
         tmp.mkdir(exist_ok=True)
-        for df in iter_frames(video):
-            if df.t < t_a:
-                continue
+        for df in iter_frames(video, start=t_a):  # seeks to the keyframe before t_a instead of decoding from 0
             if df.t > t_b or len(blocks) >= 12:
                 break
             if df.t >= next_t:
@@ -5273,7 +5488,10 @@ def ask(run: Run, cfg: Config, question: str, client=None, max_turns: int = 12) 
                                       output_config={"effort": cfg.model.effort_agent}, messages=messages)
         messages.append({"role": "assistant", "content": resp.content})
         if resp.stop_reason != "tool_use":
-            return "".join(b.text for b in resp.content if getattr(b, "type", "") == "text")
+            text = "".join(b.text for b in resp.content if getattr(b, "type", "") == "text")
+            if resp.stop_reason in ("refusal", "max_tokens") and not text.strip():
+                return f"No answer: the model stopped with {resp.stop_reason}."
+            return text
         results = []
         for b in resp.content:
             if getattr(b, "type", "") != "tool_use":
@@ -5321,7 +5539,7 @@ git commit -m "feat: answering agent with search/get_node/get_transitions/get_fr
 - Test: `tests/test_diagnostics.py`
 
 **Interfaces:**
-- Produces: `diagnostics(run) -> dict` (the §18.4 list: emitted frames, settled fraction, lines per frame, agree/OCR-only/VLM-only fractions, rows_rejected, grouping_repairs, label_clashes, perception errors, invalid_refs rate, transitions by kind, per-stage usage and cost estimate, cache hit rate, refusals); `estimate_cost(usage, model) -> float`; `vt run VIDEO --out RUN [--stages a,b,c] [--config]`; `vt setup`.
+- Produces: `summarize(frames: list[dict]) -> dict`; `fragment_stability(frames, transitions) -> float | None`; `diagnostics(run) -> dict` (the §18.4 list: emitted frames, settled fraction, lines per frame, agree/OCR-only/VLM-only fractions, rows_rejected, grouping_repairs, label_clashes, perception errors, refusals, transitions by kind, fragment stability, invalid_refs, per-stage usage and cost estimate, cache hits/misses/hit rate, per-stage seconds, library versions); `estimate_cost(usage, model) -> float`; `vt run VIDEO --out RUN [--stages a,b,c] [--config]`; `vt setup`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -5332,11 +5550,11 @@ from vt.diagnostics import estimate_cost, summarize
 
 
 def test_summarize_counts_and_cost():
-    frames = [{"settled": True, "lines": [{"agree": True}, {"agree": None, "ocr": None}, {"agree": False}]},
-              {"settled": False, "lines": [{"agree": True}]}]
+    frames = [{"settled": True, "lines": [{"agree": True, "ocr": "a"}, {"agree": None, "ocr": None}, {"agree": False, "ocr": "b"}]},
+              {"settled": False, "lines": [{"agree": True, "ocr": "c"}]}]
     s = summarize(frames)
     assert s["frames"] == 2 and s["settled_fraction"] == 0.5 and s["lines_per_frame"] == 2.0
-    assert s["agree_fraction"] == 0.5 and s["vlm_only_fraction"] == 0.25
+    assert s["agree_fraction"] == 0.5 and s["vlm_only_fraction"] == 0.25 and s["ocr_only_fraction"] == 0.0
     assert estimate_cost({"input_tokens": 1_000_000, "output_tokens": 100_000, "cache_read_input_tokens": 0}, "claude-opus-5") == 7.5
 ```
 
@@ -5352,9 +5570,8 @@ Expected: FAIL with `ModuleNotFoundError: vt.diagnostics`.
 ```python
 from __future__ import annotations
 
-import json
-
 from vt.run import Run
+from vt.textdiff import norm
 
 PRICES = {  # $ per million tokens, input / output / cache read (2026-09-13 list prices)
     "claude-opus-5": (5.0, 25.0, 0.5),
@@ -5369,6 +5586,7 @@ def estimate_cost(usage: dict, model: str) -> float:
 
 
 def summarize(frames: list[dict]) -> dict:
+    """frames: [{"settled": bool, "lines": [{"agree": bool|None, "ocr": str|None}, ...]}, ...]"""
     n = len(frames)
     lines = [l for f in frames for l in f.get("lines", [])]
     nl = len(lines) or 1
@@ -5377,6 +5595,28 @@ def summarize(frames: list[dict]) -> dict:
             "agree_fraction": round(sum(1 for l in lines if l.get("agree") is True) / nl, 3),
             "ocr_only_fraction": round(sum(1 for l in lines if l.get("agree") is None and l.get("ocr") is not None) / nl, 3),
             "vlm_only_fraction": round(sum(1 for l in lines if l.get("ocr") is None) / nl, 3)}
+
+
+def fragment_stability(frames: list, transitions: list) -> float | None:
+    """§18.4: fraction of unchanged lines (same fused text in matched regions of consecutive frames) whose OCR mark count
+    differs — 0.0 means the engine split lines identically frame to frame."""
+    by_id = {f.frame: f for f in frames}
+    same, differ = 0, 0
+    for t in transitions:
+        a, b = by_id.get(t.from_frame), by_id.get(t.to_frame)
+        if a is None or b is None:
+            continue
+        for ra, rb, _ in t.regions.matched:
+            la = {norm(l.fused): len(l.marks) for l in a.region(ra).lines if l.marks} if a.region(ra) else {}
+            for l in (b.region(rb).lines if b.region(rb) else []):
+                k = norm(l.fused)
+                if l.marks and k in la:
+                    if la[k] == len(l.marks):
+                        same += 1
+                    else:
+                        differ += 1
+    total = same + differ
+    return round(differ / total, 3) if total else None
 
 
 def diagnostics(run: Run) -> dict:
@@ -5388,21 +5628,30 @@ def diagnostics(run: Run) -> dict:
               "refusals": sum(1 for f in frames if f.error == "refusal")})
     ts = run.load_transitions()
     d["transitions"] = {k: sum(1 for t in ts if t.kind == k) for k in ("single", "coalesced", "transient_merged", "unsettled", "trivial")}
+    d["fragment_stability"] = fragment_stability(frames, ts)
     interps = run.load_interpretations()
     d["invalid_refs"] = sum(i.invalid_refs for i in interps.values())
     m = run.manifest_read()
     usage_total: dict[str, int] = {}
     cost = 0.0
+    hits = misses = 0
+    seconds: dict[str, float] = {}
     for name, st in m.get("stages", {}).items():
         u = st.get("usage")
         if u:
             for k, v in u.items():
                 usage_total[k] = usage_total.get(k, 0) + v
             cost += estimate_cost(u, st.get("model", ""))
+        c = st.get("cache") or {}
+        hits += c.get("hits", 0)
+        misses += c.get("misses", 0)
+        if "seconds" in st:
+            seconds[name] = st["seconds"]
     d["usage"] = usage_total
     d["estimated_cost_usd"] = round(cost, 2)
-    cache_files = list(run.cache_dir.glob("*.json"))
-    d["cache_entries"] = len(cache_files)
+    d["cache"] = {"hits": hits, "misses": misses, "hit_rate": round(hits / (hits + misses), 3) if hits + misses else None}
+    d["seconds"] = seconds
+    d["versions"] = m.get("versions", {})
     return d
 ```
 
@@ -5419,18 +5668,29 @@ def run(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None
     cfg = load_config(config)
     r = Run(out)
     wanted = stages.split(",") if stages else STAGES
+    import time
     from vt import coalesce, hierarchy as hier, index as idx, interpret as interp, merge as mrg, overlay as ov, perceive as perc, stage1, stage2a
     from vt.diagnostics import diagnostics
-    from vt.outline import run_outline
 
-    steps = {"outline": lambda: run_outline(r, cfg, video), "decode": lambda: stage1.run_stage1(r, cfg, video),
+    def _outline():
+        from vt.outline import run_outline  # created in Task 20; imported lazily so `vt run` works before that task lands
+        run_outline(r, cfg, video)
+
+    steps = {"outline": _outline, "decode": lambda: stage1.run_stage1(r, cfg, video),
              "ocr": lambda: stage2a.run_ocr(r, cfg), "overlay": lambda: ov.run_overlay(r, cfg), "perceive": lambda: perc.run_perceive(r, cfg),
              "merge": lambda: mrg.run_merge(r, cfg), "diff": lambda: coalesce.run_diff(r, cfg), "interpret": lambda: interp.run_interpret(r, cfg),
              "hierarchy": lambda: hier.run_hierarchy(r, cfg), "index": lambda: idx.build_index(r, cfg)}
+    keys = {"decode": "stage1", "ocr": "ocr", "overlay": "overlay", "perceive": "perceive", "merge": "merge", "diff": "diff",
+            "interpret": "interpret", "hierarchy": "hierarchy", "index": "index"}
     for name in STAGES:
         if name in wanted:
             typer.echo(f"== {name}")
+            t0 = time.perf_counter()
             steps[name]()
+            st = r.manifest_read().get("stages", {})
+            if keys.get(name) in st:  # per-stage wall time (§18.4)
+                st[keys[name]]["seconds"] = round(time.perf_counter() - t0, 1)
+                r.manifest_update(stages=st)
     r.manifest_update(diagnostics=diagnostics(r))
     typer.echo(json.dumps(r.manifest_read().get("diagnostics", {}), indent=2))
 
@@ -5492,12 +5752,12 @@ git commit -m "feat: vt run pipeline driver, vt setup, run diagnostics"
 
 **Files:**
 - Create: `src/vt/providers/batch.py`
-- Modify: `src/vt/providers/anthropic_.py` (collect mode), `src/vt/perceive.py`, `src/vt/interpret.py` (two-phase run when `model.mode == "batch"`)
 - Test: `tests/test_batch.py`
+- (The provider's collect mode — `collecting`, `pending`, `run_batches` — landed in Task 9, and the two-phase stage flow `_run_with_batches` in Tasks 10 and 14; this task adds only the batch runner and its test.)
 
 **Interfaces:**
 - Produces: `strict_schema(model: type[BaseModel]) -> dict` (the SDK's `transform_schema` when importable, else a local transformation that sets `additionalProperties: false` and requires every property, recursively); `chunk_requests(reqs: list[dict], max_bytes) -> list[list[dict]]`; `BatchRunner(client, cache, run)` with `async run(pending: list[PendingRequest]) -> None` (submit chunks, persist `batches.json`, poll, write results into the cache, re-queue errored/expired once).
-- `AnthropicProvider.collecting: bool` — when true, `complete()` records a `PendingRequest(key, request_params, output_model)` on a cache miss and returns `VlmResult(None, "pending")`; `provider.pending` is the list.
+- Consumes (Task 9): `AnthropicProvider.collecting` — when true, `complete()` records a `PendingRequest(key, params, output_model, stage)` on a cache miss and returns `VlmResult(None, "pending")`; `provider.pending` is the list; `provider.run_batches(run)` calls `BatchRunner`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -5523,7 +5783,7 @@ def test_strict_schema_requires_all_and_forbids_extras():
     s = strict_schema(Outer)
     assert s["additionalProperties"] is False and set(s["required"]) == {"items", "name"}
     inner = s["$defs"]["Inner"] if "$defs" in s else s["properties"]["items"]["items"]
-    assert inner["additionalProperties"] is False and set(inner["required"]) == {"a", "b"}
+    assert inner["additionalProperties"] is False and "a" in inner["required"] and "b" not in inner["required"]  # defaulted fields stay optional, as the SDK's parse() sends them
 
 
 def test_chunk_requests_by_size():
@@ -5562,7 +5822,7 @@ def _local_strict(schema: dict) -> dict:
         if isinstance(node, dict):
             if node.get("type") == "object" and "properties" in node:
                 node["additionalProperties"] = False
-                node["required"] = list(node["properties"].keys())
+                node["required"] = [k for k, v in node["properties"].items() if "default" not in v]  # mirror the SDK: defaulted fields stay optional
             for v in node.values():
                 walk(v)
         elif isinstance(node, list):
@@ -5587,6 +5847,7 @@ class PendingRequest:
     key: str
     params: dict
     output_model: type[BaseModel]
+    stage: str = ""
 
 
 def chunk_requests(reqs: list[dict], max_bytes: int = 200 * 1024 * 1024) -> list[list[dict]]:
@@ -5649,7 +5910,7 @@ class BatchRunner:
                     except Exception as e:
                         parsed, error = None, f"schema: {str(e)[:300]}"
                     self.cache.put(p.key, {"batch": b["batch_id"]}, {"parsed": parsed, "error": error, "usage": usage, "text": text, "stop_reason": msg.stop_reason})
-                elif res.result.type == "errored" and res.result.error.type == "invalid_request":
+                elif res.result.type == "errored" and getattr(getattr(res.result.error, "error", None), "type", "") == "invalid_request_error":
                     self.cache.put(p.key, {"batch": b["batch_id"]}, {"parsed": None, "error": f"invalid_request: {res.result.error}", "usage": {}, "text": None, "stop_reason": None})
                 else:
                     requeue.append(p)
@@ -5659,54 +5920,22 @@ class BatchRunner:
         if requeue and not getattr(self, "_retried", False):
             self._retried = True
             await self.run_pending(requeue)
+        elif requeue:
+            for p in requeue:  # failed twice: record it so the synchronous pass does not silently re-issue the call
+                self.cache.put(p.key, {"batch": "failed-twice"}, {"parsed": None, "error": "batch: errored twice", "usage": {}, "text": None, "stop_reason": None})
 ```
 
-Changes to `src/vt/providers/anthropic_.py` — add collect mode: in `__init__` add `self.collecting = False` and `self.pending: list = []`; in `complete()`, after the cache-miss check and before `async with self.sem`, insert:
-
-```python
-        if self.collecting:
-            from vt.providers.batch import PendingRequest, strict_schema
-
-            params = {"model": self.model, "max_tokens": self.cfg.max_tokens,
-                      "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-                      "messages": [{"role": "user", "content": blocks}],
-                      "output_config": {"effort": effort, "format": {"type": "json_schema", "schema": strict_schema(output_model)}}}
-            self.pending.append(PendingRequest(key, params, output_model))
-            return VlmResult(None, "pending")
-```
-
-and add:
-
-```python
-    async def run_batches(self, run) -> None:
-        from vt.providers.batch import BatchRunner
-
-        await BatchRunner(self.client, self.cache, run).run_pending(self.pending)
-        self.pending = []
-```
-
-Changes to `run_perceive` and `run_interpret`: replace `records = asyncio.run(_xxx_all(run, cfg, provider))` with:
-
-```python
-    if cfg.model.mode == "batch" and hasattr(provider, "collecting"):
-        provider.collecting = True
-        asyncio.run(_perceive_all(run, cfg, provider))      # collect cache misses
-        provider.collecting = False
-        asyncio.run(provider.run_batches(run))              # submit, poll, fill the cache
-    records = asyncio.run(_perceive_all(run, cfg, provider))
-```
-
-(same shape with `_interpret_all` in `interpret.py`).
+No changes to other files: the provider (Task 9) already records pending requests in collect mode and exposes `run_batches`, and `run_perceive` / `run_interpret` (Tasks 10, 14) already run the collect → batch → re-run flow inside one event loop via `_run_with_batches` (three separate `asyncio.run()` calls on one `AsyncAnthropic` client would fail with a closed event loop).
 
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `uv run pytest tests/test_batch.py tests/test_provider.py -v`
-Expected: 6 passed.
+Expected: 7 passed.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/vt/providers/batch.py src/vt/providers/anthropic_.py src/vt/perceive.py src/vt/interpret.py tests/test_batch.py
+git add src/vt/providers/batch.py tests/test_batch.py
 git commit -m "feat: Message Batches mode for Stages 2c and 5 with size chunking and resume"
 ```
 
@@ -5789,6 +6018,7 @@ def _gemini_outline(video: Path, model: str) -> str:
     while not f.state or f.state.name != "ACTIVE":
         time.sleep(5)
         f = client.files.get(name=f.name)
+    # [verify] input item shape per the Gemini docs fetched 2026-09-13; google-genai 2.23 exposes client.interactions
     interaction = client.interactions.create(model=model, input=[
         {"type": "video", "uri": f.uri, "mime_type": f.mime_type, "processing": "agentic"},
         {"type": "text", "text": PROMPT}])
@@ -5845,7 +6075,7 @@ git commit -m "feat: optional Stage 0 outline (Gemini agentic or imported)"
 - [ ] **Step 1: Run the whole test suite**
 
 Run: `uv run pytest -v`
-Expected: all tests pass (≈ 45). Fix anything red before continuing.
+Expected: all tests pass (≈ 72). Fix anything red before continuing.
 
 - [ ] **Step 2: Smoke-run the local stages on the sample video**
 
@@ -5874,8 +6104,8 @@ git commit -m "docs: implementation status and first-run numbers"
 
 **Spec coverage** — design section → task: §6 Stage 0 → Task 20; §7.1 decode → Task 3; §7.2/§7.4/§7.5 → Task 4; §7.3/§7.6 → Tasks 5–6; §8.1 → Task 7; §8.2 → Task 8; §8.3/§15.1 → Tasks 9–10; §9 → Task 11; §10 data model → Task 1 (schemas) with owners in Tasks 6, 7, 10, 11, 13, 14, 15, 16, 20; §10.7 loaders → Task 6; §11.1–§11.2 → Task 12; §11.3–§11.5 → Task 13; §12/§15.2 → Task 14; §13/§15.3 → Task 15; §14/§15.4 → Tasks 16–17; §16 parameters → Task 1 (`vt.toml`, config models); §18.4 fixtures and diagnostics → Tasks 4, 5, 18; §19/§20.7 batch and cost → Tasks 18–19; §20.9 idempotency → Task 6 (`Run.stage_up_to_date`) used by every stage; §20.11 CLI → Tasks 6–18. Not implemented in v1, by design: a second VLM provider (D15), the RapidOCR bake-off harness (§18.3 needs ground truth), redaction (§22 #12), Windows/Linux adapters beyond the engine switch (§20.8).
 
-**Placeholder scan** — no TBD/TODO; every code step has the code.
+**Placeholder scan** — no TBD/TODO; every code step has the code. Two independent reviewers extracted every code block into a scratch project and ran the tests; the fixes they found (settle-machine deferral for block cursors, PyAV `time_base` units, containment scoring for region correspondence, repair semantics for emptied rows, caret box convention, layout_conf occlusion transitivity, transient API errors not cached, parent cycles, batch error attribute, single event loop for batch mode) are folded in above.
 
-**Type consistency** — `Line.fused`/`uncertain` (Task 1) are used by Tasks 12–14, 16; `Correspondence.matched` is `list[tuple[str, str, float]]` in Tasks 1, 12, 13; `Transition.t` is `tuple[float, float]` = `(prev.t_end, cur.t_settled)` in Tasks 12–16; `DiffOp.in_churn` is declared in Task 1, set in Task 12 and read in Tasks 13–14; `VlmProvider.complete` keyword signature is identical in Tasks 9, 10, 14, 15; `Run.load_frames()` applies `focus.jsonl` (Task 6) and is what Tasks 13–17 read; `SettleMachine.on_emit` receives the `Emission` with `frame` set (Task 5) and Task 6 replaces `frame` with `(n, path)` and sets `png_future`.
+**Type consistency** — `Line.fused`/`uncertain` (Task 1) are used by Tasks 12–14, 16; `Correspondence.matched` is `list[tuple[str, str, float]]` in Tasks 1, 12, 13; `Transition.t` is `tuple[float, float]` = `(prev.t_end, cur.t_settled)` in Tasks 12–16; `DiffOp.in_churn` is declared in Task 1, set in Task 12 and read in Tasks 13–14; `VlmProvider.complete` keyword signature is identical in Tasks 9, 10, 14, 15; `Run.load_frames()` applies `focus.jsonl` (Task 6) and is what Tasks 13–17 read; `SettleMachine.on_emit` receives the `Emission` with `frame` set (Task 5) and Task 6 replaces `frame` with `(n, path)` and sets `png_future`; `caret` is a `[x0, y0, x1, y1]` box everywhere (Stage 1 writes the blinker's bbox, `caret_region` reads it as a box, §10.5); `iter_frames` yields full-resolution gray and the machine owns any downsampling.
 
 **Owner's constraints honoured** — tests are unit tests over synthetic frames, hand-written records and fake clients only; no integration tests; no test uses the sample video or the network. Manual smoke checks are labelled as such.
