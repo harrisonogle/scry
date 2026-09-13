@@ -1,0 +1,85 @@
+[stage1.detect]
+theta_pix = 12
+theta_min = 8
+theta_comp = 24
+theta_count = 100
+bar_max_width = 3
+bar_min_height = 8
+bar_max_height = 30
+downsample = 1
+
+[stage1.settle]
+still_s = 0.4
+max_hold_s = 3.0
+
+[stage1.churn]
+window_s = 5.0
+rho_on = 0.5
+rho_off = 0.2
+min_area = 400
+
+[stage1.blink]
+max_w = 12
+max_h = 32
+min_period_s = 0.15
+max_period_s = 0.7
+confirm_recurrences = 2
+confirm_window_s = 3.0
+expiry_s = 2.0
+iou = 0.5
+
+[ocr]
+engine = "vision"
+languages = ["en-US"]
+language_correction = false
+minimum_text_height = 0.0
+
+[overlay]
+font_size = 11
+font_path = "/System/Library/Fonts/Menlo.ttc"
+
+[model]
+provider = "anthropic"
+model = "claude-opus-5"
+effort_stage2c = "low"
+effort_stage5 = "low"
+effort_stage6 = "medium"
+effort_agent = "high"
+max_tokens = 16000
+retry_max_tokens = 32000
+concurrency = 4
+mode = "sync"
+
+[merge]
+row_y_tol = 0.5
+row_gap_lines = 3.0
+align_sim = 0.8
+align_short_len = 8
+align_short_lev = 1
+glyph_max_len = 2
+
+[diff]
+modify_sim = 0.6
+typed_tolerance = 3
+transient_max_s = 2.0
+corr_w_text = 0.5
+corr_w_iou = 0.3
+corr_w_app = 0.1
+corr_w_name = 0.1
+corr_accept = 0.3
+
+[hierarchy]
+window = 2000
+overlap = 200
+fallback_step_transitions = 20
+fallback_section_steps = 8
+
+[index]
+embedder = "none"
+k = 20
+k_filtered = 50
+rrf = 60
+
+[outline]
+enabled = false
+model = "gemini-3.8-flash"
