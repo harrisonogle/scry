@@ -3615,7 +3615,7 @@ def layout_conf(region: Region, regions: list[Region]) -> float:
     coverage = (len(rows) * med) / max(_h(region.bbox), 1)
     if coverage < 0.3:
         score -= 0.2
-    if len(lines) == 1:
+    if len(rows) == 1:  # a window with one title row and thirty pane rows is not a singleton
         score = min(score, 0.6)
     return round(max(0.0, min(1.0, score)), 3)
 

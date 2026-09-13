@@ -49,3 +49,61 @@ def perceive(run_dir: Path, config: Path | None = None, verbose: bool = False):
     _setup_logging(verbose)
     from vt.perceive import run_perceive
     run_perceive(Run(run_dir), load_config(config))
+
+
+@app.command()
+def merge(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """Stage 3: merge OCR and VLM output → frames.jsonl."""
+    _setup_logging(verbose)
+    from vt.merge import run_merge
+    run_merge(Run(run_dir), load_config(config))
+
+
+@app.command()
+def diff(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """Stage 4/4b: diffs, transients, coalescing → transitions.jsonl, focus.jsonl."""
+    _setup_logging(verbose)
+    from vt.coalesce import run_diff
+    run_diff(Run(run_dir), load_config(config))
+
+
+@app.command()
+def interpret(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """Stage 5: VLM interpretation of each transition → interpretations.jsonl."""
+    _setup_logging(verbose)
+    from vt.interpret import run_interpret
+    run_interpret(Run(run_dir), load_config(config))
+
+
+@app.command()
+def hierarchy(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """Stage 6: steps, sections, video summary."""
+    _setup_logging(verbose)
+    from vt.hierarchy import run_hierarchy
+    run_hierarchy(Run(run_dir), load_config(config))
+
+
+@app.command()
+def index(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """Stage 7: build index.sqlite."""
+    _setup_logging(verbose)
+    from vt.index import build_index
+    build_index(Run(run_dir), load_config(config))
+
+
+@app.command()
+def search(run_dir: Path, query: str, level: str | None = None, config: Path | None = None):
+    """Search the index (lexical + trigram, vector if configured)."""
+    from vt.index import get_embedder, open_db, search as _search
+    cfg = load_config(config)
+    db = open_db(Run(run_dir).index_db)
+    for h in _search(db, query, cfg.index, get_embedder(cfg.index), level=level):
+        typer.echo(f"{h['score']:.4f} {h['level']:<10} {h['item_id']:<8} t={h['t'][0]:.1f}-{h['t'][1]:.1f}  {h['text'][:100]}")
+
+
+@app.command()
+def ask(run_dir: Path, question: str, config: Path | None = None, verbose: bool = False):
+    """Answer a question over a run's index with citations."""
+    _setup_logging(verbose)
+    from vt.agent import ask as _ask
+    typer.echo(_ask(Run(run_dir), load_config(config), question))

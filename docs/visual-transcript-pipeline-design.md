@@ -450,9 +450,9 @@ for each row line L of the region:
         and is not related to it by `occludes` in either direction,
         and has a row line whose bbox overlaps L vertically by ≥ 50 % of L's height and overlaps L horizontally:
             score −= 0.3                                         // interleaved text from two regions (total penalty capped at 0.6)
-row_coverage = (number of distinct text rows × median line height) / bbox height
+row_coverage = (number of distinct text rows, including descendants' rows × median line height) / bbox height
 if row_coverage < 0.3: score −= 0.2                             // scattered membership
-if the region has exactly one row line: score = min(score, 0.6)
+if the region, counting the rows of its descendants, has exactly one row line: score = min(score, 0.6)
 regions with bbox = null: score = min(score, 0.5); geometric tests skipped
 clamp to [0,1]
 ```
