@@ -72,6 +72,7 @@ class ModelConfig(BaseModel):
     effort_stage5: Effort = "low"
     effort_stage6: Effort = "medium"
     effort_agent: Effort = "high"
+    stage2c_mark_coords: bool = False  # list each mark's box in the Stage 2c prompt (ledger L30 experiment)
     max_tokens: int = 16000
     retry_max_tokens: int = 32000
     concurrency: int = 4

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from scry.run import Run
-from scry.textdiff import norm
+from scry.schemas import OcrFrame, PerceptionRecord
+from scry.textdiff import norm, similarity
 
 PRICES = {  # $ per million tokens, input / output / cache read (2026-09-13 list prices)
     "claude-opus-5": (5.0, 25.0, 0.5),
@@ -49,6 +50,24 @@ def fragment_stability(frames: list, transitions: list) -> float | None:
     return round(differ / total, 3) if total else None
 
 
+def mark_match(ocr_frames: list[OcrFrame], perception: list[PerceptionRecord], threshold: float = 0.8) -> tuple[int, int]:
+    """Rows of VLM output whose transcription resembles the OCR text of the marks the row names (similarity ≥ threshold),
+    over all rows with marks and text. Low values mean the model is not reading the overlay ids (ledger L28)."""
+    ocr = {f.frame: {l.id: l.text for l in f.lines} for f in ocr_frames}
+    hit = total = 0
+    for p in perception:
+        if p.output is None or p.frame not in ocr:
+            continue
+        for r in p.output.regions:
+            for row, text in zip(r.rows, r.vlm_lines):
+                named = " ".join(ocr[p.frame][m] for m in row if m in ocr[p.frame])
+                if not row or not text.strip() or not named:
+                    continue
+                total += 1
+                hit += similarity(named, text) >= threshold
+    return hit, total
+
+
 def diagnostics(run: Run) -> dict:
     frames = run.load_frames()
     flat = [{"settled": f.settled, "lines": [{"agree": l.agree, "ocr": l.ocr} for r in f.regions for l in r.lines]} for f in frames]
@@ -56,6 +75,8 @@ def diagnostics(run: Run) -> dict:
     d.update({"rows_rejected": sum(f.rows_rejected for f in frames), "grouping_repairs": sum(f.grouping_repairs for f in frames),
               "label_clashes": sum(f.label_clashes for f in frames), "perception_errors": sum(1 for f in frames if f.error),
               "refusals": sum(1 for f in frames if f.error == "refusal")})
+    hit, total = mark_match(run.load_ocr(), run.load_perception())
+    d["mark_match_fraction"] = round(hit / total, 3) if total else None
     ts = run.load_transitions()
     d["transitions"] = {k: sum(1 for t in ts if t.kind == k) for k in ("single", "coalesced", "transient_merged", "unsettled", "trivial")}
     d["fragment_stability"] = fragment_stability(frames, ts)

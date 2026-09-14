@@ -15,13 +15,27 @@ from scry.schemas import OcrFrame, PerceptionRecord, Stage1Record, VlmPerception
 log = logging.getLogger(__name__)
 
 
-def build_blocks(rec: Stage1Record, ocr: OcrFrame, frame_png: Path, overlay_png: Path) -> list[dict]:
+def prompt_version(coords: bool) -> str:
+    return stage2c.VERSION + ("+coords" if coords else "")
+
+
+def marks_text(ocr: OcrFrame, coords: bool) -> str:
     ids = [ln.id for ln in ocr.lines]
+    if not ids:
+        return "Marks present: none."
+    if not coords:
+        return f"Marks present: {', '.join(ids)}."
+    boxes = "; ".join(f"{ln.id}: {ln.bbox[0]},{ln.bbox[1]},{ln.bbox[2]},{ln.bbox[3]}" for ln in ocr.lines)
+    return ("Marks present, as id: x0,y0,x1,y1 (pixels in Image 1, top-left origin, x1 and y1 exclusive), in top-to-bottom "
+            f"order: {boxes}. Use these boxes together with Image 2 to tell which number belongs to which line.")
+
+
+def build_blocks(rec: Stage1Record, ocr: OcrFrame, frame_png: Path, overlay_png: Path, coords: bool = False) -> list[dict]:
     animating = [ln.id for ln in ocr.lines if ln.in_churn]
     blocks = [
         text_block(f"Image 1 (clean frame {rec.frame}, t={rec.t_settled:.2f}s):"), image_block(frame_png),
         text_block("Image 2 (same frame with numbered boxes):"), image_block(overlay_png),
-        text_block(f"Marks present: {', '.join(ids) if ids else 'none'}."),
+        text_block(marks_text(ocr, coords)),
     ]
     if animating:
         blocks.append(text_block(f"Marks inside animating regions (low confidence): {', '.join(animating)}."))
@@ -94,12 +108,13 @@ async def _perceive_all(run: Run, cfg: Config, provider: VlmProvider) -> list[Pe
             rec = s1[of.frame]
             frame_png = run.root / rec.png
             overlay_png = run.overlays_dir / f"{of.frame:05d}.png"
-            blocks = build_blocks(rec, of, frame_png, overlay_png)
+            coords = cfg.model.stage2c_mark_coords
+            blocks = build_blocks(rec, of, frame_png, overlay_png, coords=coords)
             res = await provider.complete(stage="stage2c", system=stage2c.SYSTEM, blocks=blocks, output_model=VlmPerception,
-                                          effort=cfg.model.effort_stage2c, prompt_version=stage2c.VERSION,
+                                          effort=cfg.model.effort_stage2c, prompt_version=prompt_version(coords),
                                           input_hashes=[rec.sha256, sha256_file(overlay_png)])
         out, repairs = (repair(res.parsed, [ln.id for ln in of.lines]) if res.parsed is not None else (None, 0))
-        return PerceptionRecord(frame=of.frame, model=provider.model, prompt_version=stage2c.VERSION, output=out,
+        return PerceptionRecord(frame=of.frame, model=provider.model, prompt_version=prompt_version(cfg.model.stage2c_mark_coords), output=out,
                                 error=res.error, usage=res.usage, repairs=repairs, label_clashes=int(clashes.get(str(of.frame), 0)))
 
     return list(await asyncio.gather(*(one(of) for of in run.load_ocr())))
@@ -117,7 +132,7 @@ async def _run_with_batches(run: Run, cfg: Config, provider: VlmProvider, stage_
 
 def run_perceive(run: Run, cfg: Config, provider: VlmProvider | None = None) -> None:
     inputs = [run.ocr]
-    ch = config_hash(cfg, "model", "overlay") + stage2c.VERSION
+    ch = config_hash(cfg, "model", "overlay") + prompt_version(cfg.model.stage2c_mark_coords)
     if run.stage_up_to_date("perceive", inputs, ch):
         log.info("perceive up to date")
         return
