@@ -1,5 +1,5 @@
-from vt.hierarchy import fallback_segments, merge_window_boundaries, propagate, repair_boundaries, window_ranges
-from vt.schemas import HierNode, SegmentStart, Transition
+from scry.hierarchy import fallback_segments, merge_window_boundaries, propagate, repair_boundaries, window_ranges
+from scry.schemas import HierNode, SegmentStart, Transition
 
 
 def test_repair_boundaries_sorts_dedups_drops_unknown_and_forces_first():

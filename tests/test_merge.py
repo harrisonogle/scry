@@ -1,6 +1,6 @@
-from vt.config import MergeConfig
-from vt.merge import agreement, build_region_lines, caret_region, combine_focus, layout_conf, merge_frame
-from vt.schemas import (Line, OcrFrame, OcrLine, PerceptionRecord, Region, Stage1Record, VlmPerception, VlmRegion)
+from scry.config import MergeConfig
+from scry.merge import agreement, build_region_lines, caret_region, combine_focus, layout_conf, merge_frame
+from scry.schemas import (Line, OcrFrame, OcrLine, PerceptionRecord, Region, Stage1Record, VlmPerception, VlmRegion)
 
 CFG = MergeConfig()
 

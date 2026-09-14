@@ -8,8 +8,8 @@ pytestmark = pytest.mark.skipif(sys.platform != "darwin", reason="Apple Vision i
 
 
 def test_vision_reads_terminal_text(tmp_path: Path):
-    from vt.config import OcrConfig
-    from vt.ocr.vision import VisionEngine
+    from scry.config import OcrConfig
+    from scry.ocr.vision import VisionEngine
 
     img = Image.new("RGB", (900, 120), (12, 12, 12))
     d = ImageDraw.Draw(img)

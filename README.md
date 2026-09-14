@@ -1,6 +1,6 @@
-# agentic-escort — visual transcript pipeline
+# agentic-escort — `scry`, a visual transcript pipeline
 
-`vt` turns a silent screen-recording tutorial (terminal, editor, browser portal) into an exact,
+`scry` turns a silent screen-recording tutorial (terminal, editor, browser portal) into an exact,
 timestamped, queryable "visual transcript": every distinct screen state with its text and layout,
 every change between states with what the user did, a step/section hierarchy, and a searchable index.
 
@@ -13,18 +13,18 @@ every change between states with what the user did, a step/section hierarchy, an
 ## Setup (macOS, Apple Silicon)
 
     uv sync
-    uv run vt setup            # checks Vision OCR, FTS5, credentials
+    uv run scry setup            # checks Vision OCR, FTS5, credentials
 
 Model calls use the Anthropic SDK. Credentials, in order of preference: `ant auth login` (no key to store), or an
 `ANTHROPIC_API_KEY` in a git-ignored `.env` file at the repo root (`cp .env.example .env && chmod 600 .env`, then fill
-it in); `vt` loads `.env` at startup and a variable already in the environment always wins.
+it in); `scry` loads `.env` at startup and a variable already in the environment always wins.
 
 ## Run
 
-    uv run vt run assets/create-aks-cluster-tutorial.mp4 --out runs/aks
-    uv run vt ask runs/aks "what command created the cluster?"
+    uv run scry run assets/create-aks-cluster-tutorial.mp4 --out runs/aks
+    uv run scry ask runs/aks "what command created the cluster?"
 
-Each stage can be run alone (`vt decode|ocr|overlay|perceive|merge|diff|interpret|hierarchy|index <run-dir>`);
+Each stage can be run alone (`scry decode|ocr|overlay|perceive|merge|diff|interpret|hierarchy|index <run-dir>`);
 every stage is idempotent and skips itself when its inputs and configuration are unchanged.
 
 ## Tests
@@ -45,9 +45,9 @@ fake model client; no test touches the sample video or the network). What has an
 | 3 merge, 4/4b diff + coalescing, 7 index + search | on the synthetic run | with OCR-only regions (the perception fallback) |
 | 0 outline (Gemini) | no | optional; `--import` a JSON outline instead |
 
-To run the model stages: set `ANTHROPIC_API_KEY` (or log in with the `ant` CLI) and re-run `uv run vt run … --out runs/aks`;
+To run the model stages: set `ANTHROPIC_API_KEY` (or log in with the `ant` CLI) and re-run `uv run scry run … --out runs/aks`;
 finished stages are skipped and the ≈ 221 frames go through perception and interpretation (design §19.6 estimates
-$18–45 on `claude-opus-5`; halve it with `[model] mode = "batch"` in `vt.toml`). Retrieval is lexical-only until an
+$18–45 on `claude-opus-5`; halve it with `[model] mode = "batch"` in `scry.toml`). Retrieval is lexical-only until an
 embedder is configured (`[index] embedder`). A stage re-runs only when its inputs or its configuration section change;
 after a code change to a stage, delete its entry from `runs/<id>/manifest.json` (or the run directory).
 

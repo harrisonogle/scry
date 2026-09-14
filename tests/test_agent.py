@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from vt.agent import TOOL_DEFS, Tools
-from vt.config import Config
-from vt.index import Node, index_nodes, open_db
-from vt.run import Run
+from scry.agent import TOOL_DEFS, Tools
+from scry.config import Config
+from scry.index import Node, index_nodes, open_db
+from scry.run import Run
 
 
 def test_tools_search_and_get_node(tmp_path: Path):

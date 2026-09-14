@@ -1,5 +1,5 @@
-from vt.interpret import render_diff, render_transition_line, validate_refs
-from vt.schemas import DiffOp, Event, FrameRecord, Line, Region, RegionDiff, Transition
+from scry.interpret import render_diff, render_transition_line, validate_refs
+from scry.schemas import DiffOp, Event, FrameRecord, Line, Region, RegionDiff, Transition
 
 
 def ln(i, text, y, agree=True, vlm=None):

@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from vt.env import load_dotenv, parse_dotenv
+from scry.env import load_dotenv, parse_dotenv
 
 
 def test_parse_dotenv_forms():

@@ -1,7 +1,7 @@
-from vt.coalesce import coalesce, merge_transients, retrospective_focus, tag_trivial
-from vt.config import DiffConfig
-from vt.diff import diff_pair
-from vt.schemas import FrameRecord, Line, Region
+from scry.coalesce import coalesce, merge_transients, retrospective_focus, tag_trivial
+from scry.config import DiffConfig
+from scry.diff import diff_pair
+from scry.schemas import FrameRecord, Line, Region
 
 CFG = DiffConfig()
 

@@ -1,5 +1,5 @@
-from vt.perceive import repair
-from vt.schemas import VlmPerception, VlmRegion
+from scry.perceive import repair
+from scry.schemas import VlmPerception, VlmRegion
 
 
 def region(rid, rows, lines, parent=None):

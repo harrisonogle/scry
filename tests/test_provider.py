@@ -4,10 +4,10 @@ from types import SimpleNamespace
 
 from pydantic import BaseModel
 
-from vt.config import ModelConfig
-from vt.providers.anthropic_ import AnthropicProvider
-from vt.providers.base import text_block
-from vt.providers.cache import CallCache
+from scry.config import ModelConfig
+from scry.providers.anthropic_ import AnthropicProvider
+from scry.providers.base import text_block
+from scry.providers.cache import CallCache
 
 
 class Out(BaseModel):

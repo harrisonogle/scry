@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from vt.config import Config, config_hash, load_config
-from vt.jsonl import read_jsonl, write_jsonl
-from vt.schemas import FrameRecord, Line, Region, Transition
+from scry.config import Config, config_hash, load_config
+from scry.jsonl import read_jsonl, write_jsonl
+from scry.schemas import FrameRecord, Line, Region, Transition
 
 
 def test_config_defaults_and_hash_are_stable(tmp_path: Path):

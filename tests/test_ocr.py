@@ -1,6 +1,6 @@
-from vt.ocr.base import RawLine
-from vt.schemas import RawWord
-from vt.stage2a import assign_ids, is_confusable
+from scry.ocr.base import RawLine
+from scry.schemas import RawWord
+from scry.stage2a import assign_ids, is_confusable
 
 
 def test_confusable_flags_mixed_script_tokens():

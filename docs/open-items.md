@@ -7,8 +7,8 @@ design's §21. This list is the short "what next" view across all three.
 ## Before the first real run
 
 - [ ] **Credentials.** No Anthropic key is configured on the build machine. `cp .env.example .env && chmod 600 .env`,
-      fill in `ANTHROPIC_API_KEY` (or `ant auth login`), confirm with `uv run vt setup`.
-- [ ] **First paid run on the sample** (`uv run vt run assets/create-aks-cluster-tutorial.mp4 --out runs/aks`;
+      fill in `ANTHROPIC_API_KEY` (or `ant auth login`), confirm with `uv run scry setup`.
+- [ ] **First paid run on the sample** (`uv run scry run assets/create-aks-cluster-tutorial.mp4 --out runs/aks`;
       ≈ $18–45 on `claude-opus-5`, half in batch mode). Stages 2c, 5, 6 and the agent have only been exercised on their
       no-credentials error path. Read `manifest.json` → `diagnostics` afterwards: `agree_fraction`, `rows_rejected`,
       `grouping_repairs`, `invalid_refs`, refusals, cost.

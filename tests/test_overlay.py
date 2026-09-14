@@ -2,9 +2,9 @@ from pathlib import Path
 
 from PIL import Image
 
-from vt.config import OverlayConfig
-from vt.overlay import draw_overlay, place_label
-from vt.schemas import OcrLine
+from scry.config import OverlayConfig
+from scry.overlay import draw_overlay, place_label
+from scry.schemas import OcrLine
 
 
 def test_place_label_prefers_right_then_left_then_above_then_below():

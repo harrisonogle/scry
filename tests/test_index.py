@@ -1,5 +1,5 @@
-from vt.config import IndexConfig
-from vt.index import Node, fts_query, index_nodes, open_db, rrf, search, trigram_query
+from scry.config import IndexConfig
+from scry.index import Node, fts_query, index_nodes, open_db, rrf, search, trigram_query
 
 
 def node(i, text, level="transition", t=(0.0, 1.0), apps=("Windows Terminal",)):

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from vt.providers.batch import chunk_requests, strict_schema
+from scry.providers.batch import chunk_requests, strict_schema
 
 
 class Inner(BaseModel):

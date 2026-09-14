@@ -1,4 +1,4 @@
-from vt.diagnostics import estimate_cost, summarize
+from scry.diagnostics import estimate_cost, summarize
 
 
 def test_summarize_counts_and_cost():

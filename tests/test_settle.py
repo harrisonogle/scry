@@ -1,7 +1,7 @@
 import numpy as np
 
-from vt.config import Stage1Config
-from vt.settle import SettleMachine
+from scry.config import Stage1Config
+from scry.settle import SettleMachine
 
 FPS = 30
 H, W = 60, 200

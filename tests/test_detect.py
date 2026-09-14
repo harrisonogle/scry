@@ -1,7 +1,7 @@
 import numpy as np
 
-from vt.config import BlinkParams, ChurnParams, DetectParams
-from vt.detect import BlinkTracker, ChurnTracker, Component, change_map, components, is_bar, trigger
+from scry.config import BlinkParams, ChurnParams, DetectParams
+from scry.detect import BlinkTracker, ChurnTracker, Component, change_map, components, is_bar, trigger
 
 
 def glyph(img, x, y, w=6, h=10, v=255):
@@ -107,7 +107,7 @@ def test_blink_tracker_ignores_large_components():
 
 
 def test_reduce_2x2_keeps_single_pixel_strokes():
-    from vt.detect import reduce_2x2
+    from scry.detect import reduce_2x2
 
     m = np.zeros((6, 9), bool)
     m[1, 3] = True

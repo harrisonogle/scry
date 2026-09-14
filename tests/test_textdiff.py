@@ -1,5 +1,5 @@
-from vt.schemas import DiffOp
-from vt.textdiff import char_diff, is_clock_change, lcp_len, line_ops, myers, norm, pair_modifies, similarity
+from scry.schemas import DiffOp
+from scry.textdiff import char_diff, is_clock_change, lcp_len, line_ops, myers, norm, pair_modifies, similarity
 
 
 def test_norm_collapses_whitespace_and_quotes_but_keeps_case():

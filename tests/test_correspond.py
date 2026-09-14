@@ -1,6 +1,6 @@
-from vt.config import DiffConfig
-from vt.correspond import correspond, score
-from vt.schemas import FrameRecord, Line, Region
+from scry.config import DiffConfig
+from scry.correspond import correspond, score
+from scry.schemas import FrameRecord, Line, Region
 
 
 def ln(i, text, y):

@@ -1,4 +1,4 @@
-from vt.outline import parse_outline_text
+from scry.outline import parse_outline_text
 
 
 def test_parse_outline_text_handles_fences_and_bad_entries():

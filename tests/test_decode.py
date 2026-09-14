@@ -1,6 +1,6 @@
 import numpy as np
 
-from vt.decode import iter_frames, video_info
+from scry.decode import iter_frames, video_info
 
 
 def test_iter_frames_times_and_shapes(video_factory):
