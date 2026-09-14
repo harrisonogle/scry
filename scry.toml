@@ -35,7 +35,7 @@ language_correction = false
 minimum_text_height = 0.0
 
 [overlay]
-font_size = 11
+font_size = 12
 font_path = "/System/Library/Fonts/Menlo.ttc"
 
 [model]

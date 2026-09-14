@@ -10,7 +10,10 @@ from scry.run import Run
 from scry.schemas import BBox, OcrLine
 
 log = logging.getLogger(__name__)
-COLOR = (255, 0, 255, 255)
+COLOR = (255, 0, 255, 255)   # box outline
+LABEL_BG = (255, 255, 0, 255)  # opaque yellow tag with black digits: the first live run showed the model could not read
+LABEL_FG = (0, 0, 0, 255)      # magenta digits on a translucent dark backing and guessed the ids (ledger L29)
+PAD = 2
 
 
 def _overlap(a: BBox, b: BBox) -> int:
@@ -55,11 +58,11 @@ def draw_overlay(png_in: Path, lines: list[OcrLine], png_out: Path, cfg: Overlay
         draw.rectangle((x0, y0, max(x1 - 1, x0), max(y1 - 1, y0)), outline=COLOR, width=1)
         label = ln.id[1:]  # "l17" → "17"
         l, t, r, b = font.getbbox(label)
-        lw, lh = (r - l) + 2, (b - t) + 2
+        lw, lh = (r - l) + 2 * PAD, (b - t) + 2 * PAD
         x, y, clash = place_label(ln.bbox, lw, lh, boxes, W, H)
         clashes += int(clash)
-        draw.rectangle((x, y, x + lw, y + lh), fill=(0, 0, 0, 128))
-        draw.text((x + 1 - l, y + 1 - t), label, fill=COLOR, font=font)
+        draw.rectangle((x, y, x + lw - 1, y + lh - 1), fill=LABEL_BG)
+        draw.text((x + PAD - l, y + PAD - t), label, fill=LABEL_FG, font=font)
     Image.alpha_composite(img, layer).convert("RGB").save(png_out, format="PNG", compress_level=1)
     return clashes
 

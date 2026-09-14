@@ -44,3 +44,14 @@ def test_draw_overlay_keeps_dimensions(tmp_path: Path):
     im = Image.open(out)
     assert im.size == (320, 120) and clashes == 0
     assert im.getpixel((10, 10)) != (10, 10, 10)  # a rectangle was drawn
+
+
+def test_labels_are_opaque_high_contrast_tags(tmp_path: Path):
+    src = tmp_path / "f.png"
+    Image.new("RGB", (320, 120), (200, 200, 200)).save(src)
+    out = tmp_path / "o.png"
+    draw_overlay(src, [OcrLine(id="l7", bbox=(10, 10, 120, 28), text="a", conf=1.0)], out, OverlayConfig())
+    im = Image.open(out).convert("RGB")
+    tag = {im.getpixel((x, y)) for x in range(122, 140) for y in range(6, 34)}  # the label sits right of the box
+    assert (255, 255, 0) in tag  # opaque backing, not blended with the frame
+    assert min(sum(c) for c in tag) < 250  # dark digit pixels on it

@@ -8,13 +8,33 @@ design's §21. This list is the short "what next" view across all three.
 
 - [x] **Credentials.** Done 2026-09-13: `.env` holds `ANTHROPIC_API_KEY` and `uv run scry setup` reports it. On a new
       machine: `cp .env.example .env && chmod 600 .env`, fill in the key (or `ant auth login`), confirm with `uv run scry setup`.
-- [ ] **First paid run on the sample** (`uv run scry run assets/create-aks-cluster-tutorial.mp4 --out runs/aks`;
-      ≈ $18–45 on `claude-opus-5`, half in batch mode). Stages 2c, 5, 6 and the agent have only been exercised on their
-      no-credentials error path. Read `manifest.json` → `diagnostics` afterwards: `agree_fraction`, `rows_rejected`,
-      `grouping_repairs`, `invalid_refs`, refusals, cost.
+- [x] **Live smoke of the model stages** on 11 frames (ledger L28–L29): contract verified, overlay labels fixed,
+      measured cost ≈ $0.076 per frame for Stage 2c and ≈ $0.042 per transition for Stage 5.
+- [ ] **First full run on the sample** (`uv run scry run assets/create-aks-cluster-tutorial.mp4 --out runs/aks`;
+      projected ≈ $27 sync or ≈ $14 with `[model] mode = "batch"`, ~25 min wall; the 11 smoke frames are cache hits).
+      Decide the two tuning items below first, since they shape everything downstream and merge is free to re-run.
+      Read `manifest.json` → `diagnostics` afterwards: `agree_fraction`, `rows_rejected`, `invalid_refs`, refusals, cost.
 - [ ] **Revisit the embedder default.** Retrieval is lexical-only (`[index] embedder = "none"`) because the local ONNX
       model could not be downloaded during a transient network fault (ledger L9). With the network working, try
       `embedder = "fastembed"` (`uv sync --extra embed`) and see whether semantic questions improve.
+
+## Findings from the smoke run (ledger L28–L29)
+
+- [ ] **`[merge] row_gap_lines = 3` rejects the rows the prompt asks for.** 135 of the 165 rejected rows on the
+      smoke are label/value pairs and table rows whose column gap is 7–25 line heights; the y-spread test already
+      catches marks from different lines. Re-merging the cached data in memory: 10 → 75 rejected, `agree_fraction`
+      0.495; 30 → 58, 0.518; off → 30, 0.553. Pick a value (§16) before the full run.
+- [ ] **The typed-command rule missed the `az login` keystroke (T9 on the smoke).** OCR read `Users \msadmin` with a
+      space on frame 154 and `Users\msadmin` on 155; the fused text is the OCR reading whenever the readers disagree,
+      so the longest-common-prefix test failed (§22 #15, second occurrence; L24 said to prefer the VLM reading if it
+      recurred). Options: a whitespace-insensitive prefix test in `_typed_op`, or prefer the VLM reading in `Line.fused`
+      when the two are near-identical, or both. Separate question for §22: both readers transcribe the shell's grey
+      inline autocomplete (`login`) as if typed.
+- [ ] **Harmless `RuntimeError: Event loop is closed` tracebacks** at the end of every async stage: the
+      `AsyncAnthropic` client is never closed inside the loop. Close it at the end of `_run_with_batches`.
+- [ ] **Usage accounting.** `run_perceive` sums only three usage keys, dropping `cache_creation_input_tokens` from the
+      manifest; `estimate_cost` ignores cache-creation tokens (billed at 1.25× input). ≈ $0.05 on the smoke.
+- [ ] **Batch mode** (`[model] mode = "batch"`) is still unexercised live.
 
 ## Needs the owner (hand-made ground truth, design §18.1)
 

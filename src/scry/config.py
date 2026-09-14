@@ -58,7 +58,7 @@ class OcrConfig(BaseModel):
 
 
 class OverlayConfig(BaseModel):
-    font_size: int = 11
+    font_size: int = 12
     font_path: str = "/System/Library/Fonts/Menlo.ttc"
 
 
