@@ -75,4 +75,3 @@ request. It assumes a Mac with Apple Silicon: the OCR baseline is Apple Vision, 
 | `docs/decision-ledger.md` | decisions made without the owner present, with rationale and how to undo each |
 | `docs/reviews/` | archived design and plan reviews |
 | `runs/` | per-video outputs (git-ignored) |
-| `scripts/audit_stage1.py` | checks a run's Stage 1 output against the video for settled screens that were not emitted |
