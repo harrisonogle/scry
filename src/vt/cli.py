@@ -12,6 +12,14 @@ from vt.run import Run
 app = typer.Typer(no_args_is_help=True, help="Visual transcript pipeline")
 
 
+@app.callback()
+def _startup():
+    """Load ./.env (git-ignored; see .env.example) before any command; real environment variables win."""
+    from vt.env import load_dotenv
+
+    load_dotenv()
+
+
 def _setup_logging(verbose: bool) -> None:
     logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO, format="%(asctime)s %(name)s %(message)s")
 
@@ -173,7 +181,11 @@ def setup(config: Path | None = None):
     except Exception as e:
         typer.echo(f"sqlite-vec: unavailable ({e}); lexical retrieval only")
     import os
-    typer.echo("anthropic credentials: " + ("ANTHROPIC_API_KEY set" if os.environ.get("ANTHROPIC_API_KEY") else "no env var (an `ant auth login` profile may still work)"))
+    from vt.env import LOADED
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        typer.echo("anthropic credentials: ANTHROPIC_API_KEY set" + (" (from .env)" if "ANTHROPIC_API_KEY" in LOADED else " (from the environment)"))
+    else:
+        typer.echo("anthropic credentials: no ANTHROPIC_API_KEY in the environment or ./.env (an `ant auth login` profile may still work)")
     if cfg.index.embedder != "none":
         try:
             from vt.index import get_embedder

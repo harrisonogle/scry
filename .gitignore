@@ -6,3 +6,6 @@ runs/
 cache/
 *.egg-info/
 .DS_Store
+.env
+.env.*
+!.env.example

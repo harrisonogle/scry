@@ -14,7 +14,9 @@ every change between states with what the user did, a step/section hierarchy, an
     uv sync
     uv run vt setup            # checks Vision OCR, FTS5, credentials
 
-Model calls use the Anthropic SDK; credentials come from `ANTHROPIC_API_KEY` or `ant auth login`.
+Model calls use the Anthropic SDK. Credentials, in order of preference: `ant auth login` (no key to store), or an
+`ANTHROPIC_API_KEY` in a git-ignored `.env` file at the repo root (`cp .env.example .env && chmod 600 .env`, then fill
+it in); `vt` loads `.env` at startup and a variable already in the environment always wins.
 
 ## Run
 
