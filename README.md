@@ -25,7 +25,10 @@ it in); `scry` loads `.env` at startup and a variable already in the environment
     uv run scry ask runs/aks "what command created the cluster?"
 
 Each stage can be run alone (`scry decode|ocr|overlay|perceive|merge|diff|interpret|hierarchy|index <run-dir>`);
-every stage is idempotent and skips itself when its inputs and configuration are unchanged.
+every stage is idempotent and skips itself when its inputs and configuration are unchanged. To exercise the model
+stages on a few frames before paying for a whole video, derive a subset run from an existing Stage 1 output:
+`scry subset runs/aks --out runs/smoke --frames 145-155`, then `scry run <video> --out runs/smoke` (Stage 1 is
+marked done; the subset shares the source run's call cache, so those calls are free again in the full run).
 
 ## Tests
 

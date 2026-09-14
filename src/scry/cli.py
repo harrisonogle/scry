@@ -118,6 +118,18 @@ def ask(run_dir: Path, question: str, config: Path | None = None, verbose: bool 
     typer.echo(_ask(Run(run_dir), load_config(config), question))
 
 
+@app.command()
+def subset(src: Path, out: Path = typer.Option(..., "--out"),
+           frames: str = typer.Option(..., "--frames", help="inclusive Stage 1 frame range, e.g. 145-155"),
+           share_cache: bool = typer.Option(True, "--share-cache/--no-share-cache", help="symlink the source run's call cache"),
+           verbose: bool = False):
+    """Derive a small run directory from an existing run's Stage 1 frames, for cheap live checks of the model stages."""
+    _setup_logging(verbose)
+    from scry.subset import make_subset, parse_frames
+    dst = make_subset(Run(src), out, parse_frames(frames), share_cache)
+    typer.echo(f"{out}: {len(dst.load_stage1())} frames; Stage 1 is marked done, so `scry run <video> --out {out}` runs the rest")
+
+
 STAGES = ["outline", "decode", "ocr", "overlay", "perceive", "merge", "diff", "interpret", "hierarchy", "index"]
 
 

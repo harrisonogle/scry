@@ -58,8 +58,9 @@ request. It assumes a Mac with Apple Silicon: the OCR baseline is Apple Vision, 
 5. **Re-running a stage after a code change.** The skip logic keys on input hashes and the configuration section, not on
    code. Delete the stage's entry from `runs/<id>/manifest.json` (or the run directory) to force it.
 6. **Model-stage changes cost money to exercise for real.** Test against the fake client first, then on a run directory
-   trimmed to a few frames. Every model call is cached under `runs/<id>/cache/`; a re-run with unchanged inputs makes
-   no API calls.
+   trimmed to a few frames: `uv run scry subset runs/aks --out runs/smoke --frames 145-155` followed by
+   `uv run scry run <video> --out runs/smoke`. Every model call is cached under `runs/<id>/cache/` (a subset shares its
+   source's cache); a re-run with unchanged inputs makes no API calls.
 7. **Before you commit:** `uv run pytest` is green; nothing under `runs/`, no `.env`, and no cache files are staged
    (`.gitignore` already covers them); commit messages say what changed and why.
 
