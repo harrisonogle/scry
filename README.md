@@ -8,6 +8,7 @@ every change between states with what the user did, a step/section hierarchy, an
 - Implementation plan: `docs/superpowers/plans/2026-09-13-visual-transcript-pipeline.md`
 - Decisions made without the owner present: `docs/decision-ledger.md`
 - Design reviews: `docs/reviews/`
+- Contributing: `CONTRIBUTING.md`
 
 ## Setup (macOS, Apple Silicon)
 
