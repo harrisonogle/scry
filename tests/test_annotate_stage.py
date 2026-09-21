@@ -2,6 +2,7 @@ import base64
 import io
 from pathlib import Path
 
+import pytest
 from annotate_fixtures import fb, fixture_e, fixture_t, record_a10, record_a11, write_run
 from fakes import AnswerProvider, call_frame
 from PIL import Image
@@ -11,7 +12,7 @@ from scry.annotate.output import output_model
 from scry.annotate.stage import mark_match
 from scry.config import Config
 from scry.prompts.annotate import system_prompt
-from scry.schemas import Annotation, PairLink, TextReading
+from scry.schemas import Annotation, PairLink, RunLink, TextReading
 
 
 def standard(kw: dict, second: str = "b2", empty: bool = False):
@@ -25,6 +26,17 @@ def standard(kw: dict, second: str = "b2", empty: bool = False):
     if "texts" in model.model_fields:
         data |= {"texts": [] if empty else [{"box": "b1", "text": "a"}, {"box": "b2", "text": "B"}], "missed": []}
     return model.model_validate(data)
+
+
+def answer_from(record: Annotation, kw: dict):
+    """A stored record's content as the model's answer, built with the call's own answer class."""
+    links = {kind: [l.model_dump(exclude={"kind"}) for l in record.links if l.kind == kind] for kind in ("run", "pair", "record")}
+    return kw["output_model"].model_validate({
+        "containers": [c.model_dump(include={"id", "kind", "app", "name", "owner", "covers"}) for c in record.containers],
+        "assign": [a.model_dump(include={"box", "container"}) for a in record.assign], "unassigned": record.unassigned,
+        "runs": links["run"], "pairs": links["pair"], "records": links["record"],
+        "texts": [t.model_dump() for t in record.texts], "missed": [m.model_dump(include={"text", "container"}) for m in record.missed],
+        "description": record.description})
 
 
 def _run(tmp_path: Path):
@@ -168,6 +180,50 @@ def test_writes_only_its_own_files(tmp_path: Path):
     before = (run.frames.read_bytes(), run.boxes.read_bytes())
     run_annotate(run, Config(), AnswerProvider(standard))
     assert (run.frames.read_bytes(), run.boxes.read_bytes()) == before
+
+
+def _texts(kw: dict) -> list[str]:
+    return [b["text"] for b in kw["blocks"] if b["type"] == "text"]
+
+
+def test_incremental_run(tmp_path: Path):
+    stored = {10: record_a10(), 11: record_a11()}
+
+    def answer(kw: dict):
+        return answer_from(stored.get(call_frame(kw), stored[11]), kw)
+
+    run, provider = write_run(tmp_path / "incremental", *fixture_t()), AnswerProvider(answer)
+    run_annotate(run, _cfg(mode="incremental"), provider)
+    calls = {call_frame(kw): kw for kw in provider.calls}
+    assert sorted(calls) == [10, 11]  # no changed pixel into frame 12: no call
+    for kw in calls.values():  # the every-frame call: one prompt, one schema, one version
+        assert kw["system"] == system_prompt() and kw["output_model"] is output_model("A", True)
+        assert kw["prompt_version"] == "annotate-v2" and len(_image_sizes(kw)) == 2
+    assert "Targets: all boxes." in _texts(calls[10]) and "Targets: b1, b5." in _texts(calls[11])
+    records = run.load_annotations()
+    assert [r.frame for r in records] == [10, 11]
+    for got in records:
+        want = stored[got.frame]
+        for field in ("targets", "containers", "assign", "links", "texts", "missed", "description", "repairs"):
+            assert getattr(got, field) == getattr(want, field), (got.frame, field)  # repairs 0: repair cannot know that b2 is linked
+    m = _entry(run)
+    assert (m["mode"], m["calls"], m["frames"], m["skipped_frames"], m["targets"]) == ("incremental", 2, 3, 1, 6)
+    labels = run.load_labels()
+    assert labels.frame(12).links == [PairLink(key=["12:b2"], value=["12:b3"]), RunLink(boxes=["12:b4", "12:b5"], joiner=" ")]
+    assert labels.relinked == 1
+    # cache-key behaviour: the call for a first frame is the every-frame call, so a paid every-frame answer is reused
+    every = AnswerProvider(answer)
+    run_annotate(write_run(tmp_path / "every_frame", *fixture_t()), Config(), every)
+    first = next(kw for kw in every.calls if call_frame(kw) == 10)
+    assert _texts(first) == _texts(calls[10])
+    assert (first["prompt_version"], first["input_hashes"]) == (calls[10]["prompt_version"], calls[10]["input_hashes"])
+
+
+def test_incremental_needs_track(tmp_path: Path):
+    run = write_run(tmp_path, *fixture_t())
+    run.lifetimes.unlink()
+    with pytest.raises(ValueError, match="scry track"):
+        run_annotate(run, _cfg(mode="incremental"), AnswerProvider(standard))
 
 
 def test_mark_match():

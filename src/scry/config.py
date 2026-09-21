@@ -68,8 +68,12 @@ class TrackConfig(BaseModel):
 
 class AnnotateConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    # which frames get a call and which boxes are targets; "off" is the "no annotation" base (spec §2)
-    mode: Literal["every_frame", "off"] = "every_frame"
+    # which frames get a call and which boxes are targets (spec §2). "every_frame": every frame, every box;
+    # "incremental": the first frame and every frame whose incoming transition changed pixels, the targets being the
+    # boxes whose lifetime starts there; "off": the "no annotation" base. [model] mode = "batch" works with each.
+    # Incremental annotation is built for the id-based arms only: when the `arm` key arrives, a validator here refuses
+    # mode = "incremental" with arm B or C ("incremental annotation needs arm A or D").
+    mode: Literal["every_frame", "incremental", "off"] = "every_frame"
     transcribe: bool = True  # true: the call also returns a second reading (texts, missed); false: group-only
     scale: float = Field(1.0, gt=0, le=1)  # factor applied to every image sent; tags keep their pixel size
 
