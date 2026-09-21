@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from scry.config import Config
-from scry.providers.base import VlmProvider, VlmResult, image_block, text_block  # noqa: F401
+from scry.providers.base import VlmProvider, VlmResult, image_block, is_transient, text_block  # noqa: F401
 from scry.providers.cache import CallCache
 from scry.run import Run
 

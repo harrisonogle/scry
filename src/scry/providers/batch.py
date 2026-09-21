@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import logging
 from dataclasses import dataclass
@@ -99,7 +100,8 @@ class BatchRunner:
                     msg = res.result.message
                     text = next((c.text for c in msg.content if getattr(c, "type", "") == "text"), "")
                     usage = {"input_tokens": msg.usage.input_tokens, "output_tokens": msg.usage.output_tokens,
-                             "cache_read_input_tokens": getattr(msg.usage, "cache_read_input_tokens", 0) or 0}
+                             "cache_read_input_tokens": getattr(msg.usage, "cache_read_input_tokens", 0) or 0,
+                             "cache_creation_input_tokens": getattr(msg.usage, "cache_creation_input_tokens", 0) or 0}
                     try:
                         parsed = p.output_model.model_validate_json(text).model_dump() if msg.stop_reason != "refusal" else None
                         error = "refusal" if msg.stop_reason == "refusal" else None
@@ -119,3 +121,22 @@ class BatchRunner:
         elif requeue:
             for p in requeue:  # failed twice: record it so the synchronous pass does not silently re-issue the call
                 self.cache.put(p.key, {"batch": "failed-twice"}, {"parsed": None, "error": "batch: errored twice", "usage": {}, "text": None, "stop_reason": None})
+
+
+async def run_with_batches(run: Run, cfg, provider, stage_fn) -> list:
+    """One event loop for a whole stage. In batch mode, with a provider that can collect: run the stage once collecting
+    its cache misses, run the batches, then run it again (all cache hits) and return that result; otherwise run it
+    once. Afterwards, also when the stage raised, the provider's client is closed inside the loop, so a provider
+    serves one stage run."""
+    try:
+        if cfg.model.mode == "batch" and hasattr(provider, "collecting"):
+            provider.collecting = True
+            await stage_fn(run, cfg, provider)
+            provider.collecting = False
+            await provider.run_batches(run)
+        return await stage_fn(run, cfg, provider)
+    finally:
+        close = getattr(getattr(provider, "client", None), "close", None)
+        closing = close() if close is not None else None
+        if inspect.isawaitable(closing):
+            await closing

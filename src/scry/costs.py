@@ -1,12 +1,34 @@
 from __future__ import annotations
 
+import logging
+
+log = logging.getLogger(__name__)
+
 PRICES = {  # $ per million tokens, input / output / cache read (2026-09-13 list prices)
     "claude-opus-5": (5.0, 25.0, 0.5),
     "claude-sonnet-5": (2.0, 10.0, 0.2),
     "claude-haiku-4-5": (1.0, 5.0, 0.1),
 }
+USAGE_KEYS = ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")
+CACHE_WRITE_MULTIPLIER = 1.25  # × the input price: a write to the default five-minute prompt cache
+BATCH_MULTIPLIER = 0.5  # × everything: the Batches API discount
+_warned: set[str] = set()
 
 
-def estimate_cost(usage: dict, model: str) -> float:
-    pin, pout, pcache = PRICES.get(model, (5.0, 25.0, 0.5))
-    return round((usage.get("input_tokens", 0) * pin + usage.get("output_tokens", 0) * pout + usage.get("cache_read_input_tokens", 0) * pcache) / 1e6, 4)
+def add_usage(total: dict, usage: dict) -> dict:
+    """Add the four usage keys of `usage` into `total` (absent or None counts 0) and return it."""
+    for k in USAGE_KEYS:
+        total[k] = (total.get(k) or 0) + (usage.get(k) or 0)
+    return total
+
+
+def estimate_cost(usage: dict, model: str, batch: bool = False) -> float:
+    """Dollars for a usage dict. An unknown model is priced as claude-opus-5, with one warning per model name."""
+    if model not in PRICES and model not in _warned:
+        _warned.add(model)
+        log.warning("no price for model %r: priced as claude-opus-5", model)
+    pin, pout, pcache = PRICES.get(model, PRICES["claude-opus-5"])
+    u = add_usage({}, usage)
+    dollars = (u["input_tokens"] * pin + u["output_tokens"] * pout + u["cache_read_input_tokens"] * pcache
+               + u["cache_creation_input_tokens"] * pin * CACHE_WRITE_MULTIPLIER) / 1e6
+    return round(dollars * (BATCH_MULTIPLIER if batch else 1.0), 4)

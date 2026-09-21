@@ -29,6 +29,12 @@ class VlmResult:
     stop_reason: str | None = None
 
 
+def is_transient(error: str | None) -> bool:
+    """True for the outcomes `complete` does not store in the call cache (an API error, a truncation): a stage whose
+    last run left one is worth running again, and pays only for those calls."""
+    return error is not None and (error.startswith("api:") or error == "max_tokens")
+
+
 class VlmProvider(Protocol):
     model: str
 
