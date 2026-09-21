@@ -56,9 +56,9 @@ design's §21. This list is the short "what next" view across all three.
 - [ ] **Typed rule: compare either reading** (§22 #15, third option). Preferred over a whitespace-blind prefix test,
       which would loosen what counts as typing; making the model's reading the fused text (L24's suggestion) is held
       for ground truth because near-identical readings are where a model "completion" hides.
-- [ ] **Default OCR engine.** After the rapidocr 3.9 adapter lands (L34), re-run the smoke on Rapid boxes
-      (Stage 2c ≈ $0.85) and compare `agree_fraction` and `mark_match_fraction` with Vision's 0.363 / 0.726, then
-      decide the default.
+- [ ] **Default OCR engine: recommend `rapid`.** Measured (L35): mark match 0.726 → 0.920, disagreeing lines 19.5 % → 4.7 %,
+      the typed event fires, at +1.1 s OCR per frame and +29 % Stage 2c output tokens. Pair it with a wider
+      `row_gap_lines` (30 gives `agree_fraction` 0.630 on Rapid boxes). Owner's call; one line in `scry.toml` each.
 - [ ] **Rows as OCR boxes plus model-proposed associations.** If rows exist to pair labels with values, ask the model
       for the associations between box ids and drop the row geometry checks and the repair pass; the diff no longer
       needs rows as its unit once the pixel gate (L32) and box-level matching carry it. Decide after the engine change.
