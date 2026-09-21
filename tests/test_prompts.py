@@ -21,6 +21,6 @@ def test_prompts_hold_the_rulings():
         flat = " ".join(s.split())
         for banned in ("focus", "az ", "kubectl"):
             assert banned not in flat, banned
-    assert scry.prompts.interpret.VERSION == "interpret-v1"
+    assert scry.prompts.interpret.VERSION == "interpret-v2"
     assert scry.prompts.summarize.VERSION == "summarize-v1"
     assert scry.prompts.ask.VERSION == "ask-v1"

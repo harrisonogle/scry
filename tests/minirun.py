@@ -129,7 +129,7 @@ def mini_run(tmp_path: Path, labels: bool = False) -> Run:
 
 
 def mini_interpretations(run: Run) -> None:
-    common = dict(description="", model="fake-model", prompt_version="interpret-v1+scaled0.5", usage={}, invalid_citations=0)
+    common = dict(description="", model="fake-model", prompt_version="interpret-v2+scaled0.5", usage={}, invalid_citations=0)
     write_jsonl(run.interpretations, [
         Interpretation(id="T1", action='The user typed " st" in the terminal; the shell offers "atus" as a completion.',
                        result="The command line now reads git st with a greyed suggestion.", confidence=0.8,

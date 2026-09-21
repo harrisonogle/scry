@@ -58,14 +58,14 @@ def test_scaled_mode_is_the_default(tmp_path: Path):
     assert "Changes:\nTransition T1:" in texts
     assert texts.endswith("Return the JSON object.")
     assert ids == ["11:b3", "10:b3"]
-    assert prompt_version(InterpretConfig()) == "interpret-v1+scaled0.5"
+    assert prompt_version(InterpretConfig()) == "interpret-v2+scaled0.5"
 
 
 def test_full_mode_sends_native_size(tmp_path: Path):
     blocks, _, _ = _blocks(mini_run(tmp_path), "T1", InterpretConfig(images="full"))
     assert _images(blocks) == [(400, 200), (400, 200)]
     assert "downscaled" not in _texts(blocks)
-    assert prompt_version(InterpretConfig(images="full")) == "interpret-v1+full"
+    assert prompt_version(InterpretConfig(images="full")) == "interpret-v2+full"
 
 
 def test_context_and_labels_reach_the_blocks(tmp_path: Path):
@@ -77,6 +77,39 @@ def test_context_and_labels_reach_the_blocks(tmp_path: Path):
     assert _blocks(run, "T3", InterpretConfig(), chapter)[0][0]["text"].startswith("Chapter: Setup — Check the repo")
     labelled, _, _ = _blocks(mini_run(tmp_path / "labelled", labels=True), "T3", InterpretConfig())
     assert 'value of "Status"' in _texts(labelled)
+
+
+def test_screen_descriptions_reach_the_user_turn_and_the_cache_key(tmp_path: Path):
+    plain = _blocks(mini_run(tmp_path / "plain"), "T2", InterpretConfig())
+    assert "Screen descriptions" not in _texts(plain[0]) and "Screen descriptions" not in plain[2]
+    run = mini_run(tmp_path / "labelled", labels=True)
+    blocks, _, hashed = _blocks(run, "T2", InterpretConfig())
+    described = ("Screen descriptions:\nFrame a: The Overview item is highlighted in the left navigation.\n"
+                 "Frame b: The terminal shows new output.")
+    texts = [b["text"] for b in blocks if b["type"] == "text"]
+    assert texts[3] == described and texts[4].startswith("Changes:\nTransition T2:")  # after the two frames, before Changes
+    assert described in hashed
+    # incremental annotation: frame 12 has no record of its own, so frame 11's description is in force there, and says so
+    lines = [line for line in run.annotations.read_text().splitlines() if '"frame": 12,' not in line]
+    run.annotations.write_text("\n".join(lines) + "\n")
+    _, _, stale = _blocks(run, "T2", InterpretConfig())
+    assert "Frame b (written at frame 11, the latest before it): The Overview item is highlighted" in stale
+    assert stale != hashed
+    assert "full resolution" in " ".join(SYSTEM.split())
+
+
+def test_a_changed_description_is_a_new_call_key(tmp_path: Path):
+    run, provider = mini_run(tmp_path, labels=True), AnswerProvider(lambda kw: M)
+    run_interpret(run, Config(), provider)
+    before = {call_text(kw).split("Transition ")[1][:2]: kw["input_hashes"] for kw in provider.calls}
+    run.annotations.write_text(run.annotations.read_text().replace("The terminal shows new output.",
+                                                                   "The command line shows a greyed suggestion."))
+    run_interpret(run, Config(), provider)  # annotations.jsonl is an input of the up-to-date check
+    assert len(provider.calls) == 6
+    after = {call_text(kw).split("Transition ")[1][:2]: kw["input_hashes"] for kw in provider.calls[3:]}
+    assert before["T1"] == after["T1"]  # frames 10 and 11: neither description changed
+    assert before["T2"] != after["T2"] and before["T3"] != after["T3"]  # frame 12 is T2's later frame and T3's earlier
+    assert "The command line shows a greyed suggestion." in call_text(provider.calls[4])
 
 
 def _stats(run) -> dict:
@@ -92,7 +125,7 @@ def test_run_interpret_writes_records_and_stats(tmp_path: Path):
     assert (records["T2"].citations, records["T2"].invalid_citations) == ([], 3)
     assert records["T3"].invalid_citations == 3
     for r in records.values():
-        assert (r.entered_text, r.submitted, r.usage, r.prompt_version) == ("git st", "no", USAGE, "interpret-v1+scaled0.5")
+        assert (r.entered_text, r.submitted, r.usage, r.prompt_version) == ("git st", "no", USAGE, "interpret-v2+scaled0.5")
         assert (r.action, r.result, r.description, r.confidence, r.model, r.error) == ("a", "r", "d", 0.7, "fake-model", None)
     stats = _stats(run)
     expected = {"transitions": 3, "interpreted": 3, "errors": 0, "invalid_citations": 7, "entered": 3,
@@ -113,7 +146,7 @@ def test_run_interpret_writes_records_and_stats(tmp_path: Path):
     assert len(provider.calls) == 3
     run_interpret(run, Config(interpret=InterpretConfig(images="full")), provider)
     assert len(provider.calls) == 6
-    assert {kw["prompt_version"] for kw in provider.calls[3:]} == {"interpret-v1+full"}
+    assert {kw["prompt_version"] for kw in provider.calls[3:]} == {"interpret-v2+full"}
 
 
 def test_missing_png_makes_no_call(tmp_path: Path):

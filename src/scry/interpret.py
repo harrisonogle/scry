@@ -48,18 +48,33 @@ def context_text(chapter: OutlineChapter | None, previous: list[Change]) -> str:
     return "\n".join(lines) if lines else "No preceding context."
 
 
+def descriptions_text(c: Change, labels: Labels | None) -> str:
+    """The screen description in force at each of the transition's two frames, one line per frame that has one; ""
+    without annotations or without a description. A description written at an earlier frame says so."""
+    lines = []
+    for name, frame in (("a", c.from_frame), ("b", c.to_frame)):
+        label = labels.frame(frame) if labels is not None else None
+        if label is not None and label.description and label.description.strip():
+            written = "" if label.description_frame == frame else f" (written at frame {label.description_frame}, the latest before it)"
+            lines.append(f"Frame {name}{written}: {label.description.strip()}")
+    return "\n".join(["Screen descriptions:", *lines]) if lines else ""
+
+
 def build_blocks(c: Change, previous: list[Change], frames: dict[int, Frame], boxes: dict[int, FrameBoxes], labels: Labels | None,
                  run: Run, chapter: OutlineChapter | None, ic: InterpretConfig) -> tuple[list[dict], list[str], str]:
     """The content blocks of one call, the ids it may cite, and the text the call cache hashes with the two frames."""
     context = context_text(chapter, previous)
     change_text, ids = render_change(c, boxes, labels)
+    described = descriptions_text(c, labels)
     scale = 1.0 if ic.images == "full" else ic.scale
     tail = ":" if ic.images == "full" else f", downscaled by {ic.scale:g}:"
     blocks = [text_block(context)]
     for name, f in (("a", frames[c.from_frame]), ("b", frames[c.to_frame])):
         blocks += [text_block(f"Frame {name} = frame {f.frame} (t={f.t_settled:.2f}s){tail}"), frame_block(run.root / f.png, scale)]
+    if described:
+        blocks.append(text_block(described))
     blocks += [text_block("Changes:\n" + change_text), text_block("Return the JSON object.")]
-    return blocks, ids, context + "\n" + change_text
+    return blocks, ids, "\n".join(x for x in (context, described, change_text) if x)
 
 
 async def _interpret_all(run: Run, cfg: Config, provider: VlmProvider) -> list[Interpretation]:

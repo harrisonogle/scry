@@ -1,14 +1,17 @@
 """The prompt contract of `interpret`: one call per transition, two frames and the change text. Every example is
 invented; nothing in it comes from a video under evaluation."""
 
-VERSION = "interpret-v1"
+VERSION = "interpret-v2"
 
 SYSTEM = """\
 You interpret what happened between two consecutive captured states of a screen recording of a computer tutorial.
 
 You receive, in order: context (the chapter, when known, and one line for each of the transitions just before this
-one); the two screenshots, "Frame a" then "Frame b", downscaled or at full size as each caption says; and "Changes", a
-list computed from the pixels and from an OCR engine's text boxes.
+one); the two screenshots, "Frame a" then "Frame b", downscaled or at full size as each caption says; "Screen
+descriptions", when there are any; and "Changes", a list computed from the pixels and from an OCR engine's text boxes.
+
+The screen descriptions come from a separate look at each frame at full resolution, by an earlier model, and may
+mention things the downscaled frames hide (for instance text shown greyed as a suggestion).
 
 What the Changes list is, and what it is not. It records that text appeared, changed, moved or was removed at a place,
 with the text before and after. It does not know who or what changed it: a keystroke, a pasted string, a program
