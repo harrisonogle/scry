@@ -6,6 +6,9 @@ from pathlib import Path
 from scry.costs import PRICES, estimate_cost
 
 BATCH_PRICE_SHARE = 0.5  # the Batch API's list discount; no sibling records a batch price, so a report halves
+# The runner times question answering as a stage, but it is no pipeline stage: its dollars are per question and outside
+# the manifest, so its seconds stay out of seconds per frame and are reported per question (ledger L57).
+QUESTION_STAGE = "ask"
 
 
 def _emitted(manifest: dict) -> int | None:
@@ -37,8 +40,11 @@ def _rates(dollars: float, frames: int, projection: int | None) -> tuple[float |
 def cost_summary(manifest: dict, stage_seconds: dict[str, float], frames: int, projection: int | None,
                  default_model: str) -> dict:
     """Dollars and seconds per stage, per frame and per video, read from the manifest's usage and nothing else: a
-    stage's usage counts cache hits, so a resumed run cannot under-report. The question set and the judge are apart."""
+    stage's usage counts cache hits, so a resumed run cannot under-report. The question set and the judge are apart,
+    in dollars and in seconds alike: seconds per frame covers the stages dollars per frame covers (through `index`)."""
     stages = manifest.get("stages", {})
+    question_seconds = round(stage_seconds.get(QUESTION_STAGE, 0.0), 1)
+    stage_seconds = {name: s for name, s in stage_seconds.items() if name != QUESTION_STAGE}
     by_stage: dict[str, dict] = {}
     warnings: list[str] = []
     cache_hits = 0
@@ -70,4 +76,5 @@ def cost_summary(manifest: dict, stage_seconds: dict[str, float], frames: int, p
     return {"frames": frames, "projection_frames": projection, "dollars": dollars,
             "dollars_batch": round(dollars * BATCH_PRICE_SHARE, 4), "per_frame": per_frame, "per_video": per_video,
             "seconds": seconds, "seconds_per_frame": round(seconds / frames, 1) if frames else None,
+            "question_seconds": question_seconds,
             "cache_hits": cache_hits, "by_stage": by_stage, "warnings": warnings}

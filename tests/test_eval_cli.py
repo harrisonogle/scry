@@ -101,3 +101,4 @@ def test_run_and_report_end_to_end_with_fake_stages(tmp_path: Path, monkeypatch)
     assert "One `outside` row is weak evidence" in report and "linear projection" in report
     runs_table = report[report.index("## Runs"):report.index("## Cost")]
     assert "$ / frame" in runs_table and "$ / video" in runs_table
+    assert "| configuration | $ / question | s / question | question set $ | judge $ |" in report

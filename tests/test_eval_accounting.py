@@ -38,6 +38,13 @@ def test_cost_per_stage_frame_and_video():
     assert c["frames"] == 10 and c["projection_frames"] == 200
 
 
+def test_question_seconds_stay_out_of_seconds_per_frame():
+    # seconds per frame cover the stages dollars per frame cover; answering is timed per question (ledger L57)
+    c = cost_summary(MANIFEST, SECONDS | {"ask": 300.0}, frames=10, projection=200, default_model="claude-opus-5")
+    assert (c["seconds"], c["seconds_per_frame"], c["question_seconds"]) == (200.0, 20.0, 300.0)
+    assert "ask" not in c["by_stage"]
+
+
 def test_cache_hits_and_unknown_model_are_flagged():
     m = copy.deepcopy(MANIFEST)
     m["stages"]["interpret"]["cache"] = {"hits": 3, "misses": 6}

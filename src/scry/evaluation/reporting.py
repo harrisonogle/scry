@@ -92,6 +92,7 @@ def config_rows(cards: list[dict]) -> list[dict]:
                            "per_repeat": [q[polarity]["mean"] for q in judged], "mean": _mean([q[polarity]["mean"] for q in judged], 4)}
                 for polarity in ("positive", "negative")}
             row |= {"dollars_per_question": _mean([q["dollars_per_question"] for q in judged], 4),
+                    "seconds_per_question": _mean([q["seconds_per_question"] for q in judged], 1),
                     "ask_dollars": _mean([q["ask_dollars"] for q in judged], 4), "judge_dollars": _mean([q["judge_dollars"] for q in judged], 4),
                     "stale": sum(q["stale"] for q in judged)}
         rows.append(row)
@@ -134,10 +135,10 @@ def _header(m: Matrix, cards: list[dict], today: str) -> list[str]:
 def _runs(cards: list[dict]) -> list[str]:
     rows = [[c["run"]["name"], c["run"]["status"], c["counts"]["frames"], "yes" if c["run"]["cold"] else "no",
              "yes" if c["run"]["resumed"] else "no", c["cost"]["cache_hits"], _usd(c["cost"]["dollars"]), _usd(c["cost"]["per_frame"]),
-             _usd(c["cost"]["per_video"], 2), c["cost"]["seconds"]] for c in cards]
+             _usd(c["cost"]["per_video"], 2), c["cost"]["seconds"], c["cost"].get("question_seconds")] for c in cards]
     counters = [[c["run"]["name"], *(json.dumps(c["counters"][stage], sort_keys=True) if c["counters"][stage] else None
                                      for stage in ("annotate", "interpret"))] for c in cards]
-    return ["## Runs", "", table(["run", "status", "frames", "cold", "resumed", "cache hits", "$", *COST_HEADERS, "wall s"], rows), "",
+    return ["## Runs", "", table(["run", "status", "frames", "cold", "resumed", "cache hits", "$", *COST_HEADERS, "pipeline s", "questions s"], rows), "",
             "The stages' own counters, reported, never compared:", "", table(["run", "annotate", "interpret"], counters), ""]
 
 
@@ -157,13 +158,15 @@ def _cost_section(configs: list[dict], cards: list[dict]) -> list[str]:
         rows.append([cfg["config_id"], "all stages", _usd(cfg["dollars"]), *_cost(cfg), *_batch(cfg["dollars"], cfg["per_frame"], cfg["per_video"]),
                      cfg["seconds_per_frame"]])
     out = ["## Cost", "", "Means over a configuration's repeats, per stage. One figure per stage, at the synchronous list price; the batch "
-           "columns are half of it.", "",
+           "columns are half of it. s / frame is the wall time of the stages the dollars cover (the pipeline through `index`); "
+           "answering the questions is timed per question, below.", "",
            table(["configuration", "stage", "$", *COST_HEADERS, "batch $", "batch $ / frame", "batch $ / video", "s / frame"], rows), ""]
     asked = [cfg for cfg in configs if cfg["questions"] is not None]
     if asked:
         out += ["The question set, outside $ / video, and the judge, apart (means per run):", "",
-                table(["configuration", "$ / question", "question set $", "judge $"],
-                      [[cfg["config_id"], _usd(cfg["dollars_per_question"]), _usd(cfg["ask_dollars"]), _usd(cfg["judge_dollars"])] for cfg in asked]), ""]
+                table(["configuration", "$ / question", "s / question", "question set $", "judge $"],
+                      [[cfg["config_id"], _usd(cfg["dollars_per_question"]), cfg["seconds_per_question"], _usd(cfg["ask_dollars"]),
+                        _usd(cfg["judge_dollars"])] for cfg in asked]), ""]
     judged = [c["questions"] for c in cards if c["questions"] is not None]
     out += [f"Spend over all {len(cards)} runs: pipeline {_usd(sum(c['cost']['dollars'] for c in cards))}; question set "
             f"{_usd(sum(q['ask_dollars'] for q in judged))}; judge {_usd(sum(q['judge_dollars'] for q in judged))} "
