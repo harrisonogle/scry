@@ -15,8 +15,7 @@ from scry.prompts import stage2c
 from scry.providers import get_provider, image_block, text_block
 from scry.providers.base import VlmProvider
 from scry.run import Run
-from scry.schemas import (OcrFrame, OcrLine, PerceptionRecord, Stage1Record, VlmPerception, VlmPerceptionGroupOnly,
-                          perception_from_group_only)
+from scry.schemas import OcrFrame, OcrLine, PerceptionRecord, Stage1Record, VlmPerception, perception_from_variant, perception_model
 
 log = logging.getLogger(__name__)
 
@@ -26,14 +25,18 @@ MASK_NOTE = {"opaque": "Text areas are covered by boxes; group them by layout an
              "rendered": "Text has been re-rendered inside its boxes."}
 
 
-def prompt_version(coords: bool, transcribe: bool = True, scale: float = 1.0, mask: str = "none") -> str:
+def prompt_version(coords: bool, transcribe: bool = True, scale: float = 1.0, mask: str = "none", panes: bool = True,
+                   rows: str = "lines") -> str:
     return (stage2c.VERSION + ("+coords" if coords else "") + ("" if transcribe else "+grouponly")
+            + ("" if panes else "+nopanes") + ("+boxes" if rows == "boxes" else "")  # structural variants (schemas.py)
             + ("" if scale == 1.0 else f"+s{scale:g}")  # scaled or masked runs never hit the plain cache entries
             + ("" if mask == "none" else f"+m{mask}"))
 
 
-def system_prompt(transcribe: bool) -> str:
-    return stage2c.SYSTEM if transcribe else stage2c.SYSTEM_GROUP_ONLY
+def system_prompt(transcribe: bool, panes: bool = True, rows: str = "lines") -> str:
+    if panes and rows == "lines":
+        return stage2c.SYSTEM if transcribe else stage2c.SYSTEM_GROUP_ONLY
+    return stage2c.build(transcribe, panes, rows)
 
 
 def marks_text(ocr: OcrFrame, coords: bool, scale: float = 1.0, frame_size: tuple[int, int] = (0, 0)) -> str:
@@ -138,7 +141,9 @@ async def _perceive_all(run: Run, cfg: Config, provider: VlmProvider) -> list[Pe
     clashes = run.manifest_read().get("overlay_clashes", {})
     sem = asyncio.Semaphore(cfg.model.concurrency * 2)  # bound the fan-out: image payloads are built lazily
     coords, transcribe, ov = cfg.model.stage2c_mark_coords, cfg.model.stage2c_transcribe, cfg.overlay
-    version = prompt_version(coords, transcribe, ov.scale, ov.mask)
+    panes, rows = cfg.model.stage2c_panes, cfg.model.stage2c_rows
+    version = prompt_version(coords, transcribe, ov.scale, ov.mask, panes, rows)
+    system, output_model = system_prompt(transcribe, panes, rows), perception_model(transcribe, panes, rows)
 
     async def one(of: OcrFrame) -> PerceptionRecord:
         async with sem:
@@ -146,14 +151,14 @@ async def _perceive_all(run: Run, cfg: Config, provider: VlmProvider) -> list[Pe
             frame_png = run.root / rec.png
             overlay_png = run.overlays_dir / f"{of.frame:05d}.png"
             blocks = build_blocks(rec, of, frame_png, overlay_png, coords=coords, overlay=ov)
-            res = await provider.complete(stage="stage2c", system=system_prompt(transcribe), blocks=blocks,
-                                          output_model=VlmPerception if transcribe else VlmPerceptionGroupOnly,
+            res = await provider.complete(stage="stage2c", system=system, blocks=blocks, output_model=output_model,
                                           effort=cfg.model.effort_stage2c, prompt_version=version,
                                           input_hashes=[rec.sha256, sha256_file(overlay_png)])
-        parsed = res.parsed if transcribe or res.parsed is None else perception_from_group_only(res.parsed)
+        parsed, assoc = perception_from_variant(res.parsed) if res.parsed is not None else (None, {})
         out, repairs = (repair(parsed, [ln.id for ln in of.lines]) if parsed is not None else (None, 0))
         return PerceptionRecord(frame=of.frame, model=provider.model, prompt_version=version, output=out,
-                                error=res.error, usage=res.usage, repairs=repairs, label_clashes=int(clashes.get(str(of.frame), 0)))
+                                error=res.error, usage=res.usage, repairs=repairs, label_clashes=int(clashes.get(str(of.frame), 0)),
+                                associations=assoc)
 
     return list(await asyncio.gather(*(one(of) for of in run.load_ocr())))
 
@@ -171,7 +176,8 @@ async def _run_with_batches(run: Run, cfg: Config, provider: VlmProvider, stage_
 def run_perceive(run: Run, cfg: Config, provider: VlmProvider | None = None) -> None:
     inputs = [run.ocr]
     ch = config_hash(cfg, "model", "overlay") + prompt_version(cfg.model.stage2c_mark_coords, cfg.model.stage2c_transcribe,
-                                                               cfg.overlay.scale, cfg.overlay.mask)
+                                                               cfg.overlay.scale, cfg.overlay.mask, cfg.model.stage2c_panes,
+                                                               cfg.model.stage2c_rows)
     if run.stage_up_to_date("perceive", inputs, ch):
         log.info("perceive up to date")
         return

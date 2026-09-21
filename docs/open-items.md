@@ -62,11 +62,13 @@ design's §21. This list is the short "what next" view across all three.
 - [x] **Default OCR engine: `rapid`** (owner, 2026-09-21; ledger L36). Measured (L35): mark match 0.726 → 0.920, disagreeing
       lines 19.5 % → 4.7 %, the typed event fires, at +1.1 s OCR per frame and +29 % Stage 2c output tokens. The row gap
       test went off rather than wider (L37). Vision stays selectable on macOS.
-- [ ] **Rows as OCR boxes plus model-proposed associations.** If rows exist to pair labels with values, ask the model
-      for the associations between box ids and drop the row geometry checks and the repair pass; the diff no longer
-      needs rows as its unit once the pixel gate (L32) and box-level matching carry it. Decide after the engine change.
-- [ ] **Windows and popups only in the Stage 2c schema.** Panes are labels since L31; asking for them still costs
-      output tokens and is where the model's grouping churns.
+- [x] **Windows and popups only in the Stage 2c schema.** Measured (L41): harmful, rows built across columns; rejected.
+- [x] **Rows as OCR boxes plus model associations.** Measured (L41): agreement 0.752 → 0.768 at +20 % cost, associations
+      correct and searchable; kept as a switch, not the default.
+- [ ] **`_other_ops_ok` vetoes a typed event when any other unit has a surviving op** (blocked T9 in the rows-as-boxes run
+      on one flicker op in the browser). With the pixel gate on, consider limiting the check to the typing unit.
+- [ ] **Empty transcriptions.** In rows-as-boxes mode the model transcribes icon-only marks as "" (the prompt's icon rule),
+      which merge treats as no reading (OCR-only). Whether "" should count as agreement that a mark is not text is a policy call.
 - [x] **Stage 5 image scale.** Measured (L39): half scale keeps the descriptions at 47 % of the cost; now the default.
 - [x] **Masking the text for Stage 2c** (owner's three variants plus re-rendered text at half scale): not adopted (L40).
 - [x] **Vision misses the grey label column** on portal pages; addressed by the engine change (L34).

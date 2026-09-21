@@ -260,3 +260,72 @@ def test_perceive_threads_the_mask_into_the_version_and_the_user_turn(tmp_path):
     assert call["prompt_version"] == rec.prompt_version == prompt_version(False, transcribe=False, mask="opaque_label")
     assert call["prompt_version"].endswith("+grouponly+mopaque_label")
     assert MASK_NOTE["opaque_label"] in [b["text"] for b in call["blocks"] if b["type"] == "text"]
+
+
+def test_structural_variants_have_their_own_prompts_and_versions():
+    from scry.perceive import prompt_version, system_prompt
+    from scry.prompts import stage2c
+    base = prompt_version(False)
+    assert prompt_version(False, panes=False) == base + "+nopanes"
+    assert prompt_version(False, rows="boxes") == base + "+boxes"
+    assert prompt_version(False, panes=False, rows="boxes", scale=0.5, mask="opaque") == base + "+nopanes+boxes+s0.5+mopaque"
+    assert prompt_version(True, transcribe=False, panes=False) == prompt_version(True) + "+grouponly+nopanes"
+    assert system_prompt(True) is stage2c.SYSTEM and system_prompt(False) is stage2c.SYSTEM_GROUP_ONLY
+    assert system_prompt(True, panes=False) == stage2c.SYSTEM_NOPANES and system_prompt(True, rows="boxes") == stage2c.SYSTEM_BOXES
+    assert system_prompt(True, panes=False, rows="boxes") == stage2c.SYSTEM_NOPANES_BOXES
+    a, w, r, wr = (s.split("\n\n") for s in (stage2c.SYSTEM, stage2c.SYSTEM_NOPANES, stage2c.SYSTEM_BOXES, stage2c.SYSTEM_NOPANES_BOXES))
+    assert len(w) == len(a) and [p for i, p in enumerate(w) if i != 3] == [p for i, p in enumerate(a) if i != 3]  # only the regions paragraph
+    assert w[3].startswith("regions:") and "Do not create panes" in w[3] and "panes (areas inside" not in w[3] and "popups (menus" in w[3]
+    assert len(r) == len(a) + 1 and r[:4] == a[:4] and r[7:] == a[6:]  # rows and vlm_lines swapped, associations added after them
+    assert r[4].startswith("rows:") and "exactly one mark id" in r[4] and r[5].startswith("vlm_lines:") and "each row's mark" in r[5]
+    assert r[6].startswith("associations:") and "label-and-value pair" in r[6] and "table row" in r[6] and "left to right" in r[6]
+    assert wr[3] == w[3] and wr[4:] == r[4:] and wr[:3] == a[:3]
+    g = stage2c.build(transcribe=False, rows="boxes").split("\n\n")  # group-only keeps its one-sentence vlm_lines paragraph
+    assert g[4] == r[4] and g[5] == "Do not transcribe any text: the OCR reading of each mark will be used." and g[6] == r[6]
+
+
+def test_perceive_selects_prompt_and_schema_per_structural_flag(tmp_path):
+    import asyncio
+
+    from PIL import Image
+
+    from scry.config import Config, ModelConfig
+    from scry.jsonl import write_jsonl
+    from scry.perceive import _perceive_all, prompt_version
+    from scry.prompts import stage2c
+    from scry.providers.base import VlmResult
+    from scry.run import Run
+    from scry.schemas import (OcrFrame, OcrLine, Stage1Record, VlmPerception, VlmPerceptionBoxes, VlmPerceptionNoPanes,
+                              VlmPerceptionNoPanesBoxes)
+
+    run = Run(tmp_path)
+    Image.new("RGB", (8, 8)).save(run.frames_dir / "00003.png")
+    Image.new("RGB", (8, 8)).save(run.overlays_dir / "00003.png")
+    write_jsonl(run.stage1, [Stage1Record(video_id="v", frame=3, t_change=0, t_settled=1.0, t_end=2, settled=True, width=8, height=8, sha256="x", png="frames/00003.png")])
+    write_jsonl(run.ocr, [OcrFrame(frame=3, engine="e", lines=[OcrLine(id="l1", bbox=(1, 2, 3, 4), text="a", conf=1.0),
+                                                            OcrLine(id="l2", bbox=(4, 2, 6, 4), text="b", conf=1.0)])])
+
+    class Fake:
+        model = "fake"
+        calls: list[dict] = []
+
+        async def complete(self, **kw):
+            self.calls.append(kw)
+            region_cls = kw["output_model"].model_fields["regions"].annotation.__args__[0]
+            extra = {"associations": [["l1", "l2"]]} if "associations" in region_cls.model_fields else {}
+            region = region_cls(id="r1", kind="window", name="w", app="x", parent=None, conf=0.9, rows=[["l1"], ["l2"]], vlm_lines=["a", "b"], **extra)
+            return VlmResult(kw["output_model"](regions=[region], focused_region="r1", focused_conf=0.5, description=""), None, {"input_tokens": 1})
+
+    cases = [({}, stage2c.SYSTEM, VlmPerception, {}),
+             ({"stage2c_panes": False}, stage2c.SYSTEM_NOPANES, VlmPerceptionNoPanes, {}),
+             ({"stage2c_rows": "boxes"}, stage2c.SYSTEM_BOXES, VlmPerceptionBoxes, {"r1": [["l1", "l2"]]}),
+             ({"stage2c_panes": False, "stage2c_rows": "boxes"}, stage2c.SYSTEM_NOPANES_BOXES, VlmPerceptionNoPanesBoxes, {"r1": [["l1", "l2"]]})]
+    for flags, system, model, assoc in cases:
+        Fake.calls.clear()
+        cfg = Config(model=ModelConfig(**flags))
+        [rec] = asyncio.run(_perceive_all(run, cfg, Fake()))
+        [call] = Fake.calls
+        assert call["system"] == system and call["output_model"] is model
+        assert call["prompt_version"] == rec.prompt_version == prompt_version(False, panes=cfg.model.stage2c_panes, rows=cfg.model.stage2c_rows)
+        assert type(rec.output) is VlmPerception and rec.output.regions[0].rows == [["l1"], ["l2"]] and rec.repairs == 0
+        assert rec.associations == assoc

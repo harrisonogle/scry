@@ -130,6 +130,18 @@ def align_repair(lines: list[Line], pending: list[tuple[int, str]], cfg: MergeCo
         i += 1
 
 
+def region_associations(groups: list[list[str]], lines: list[Line]) -> list[list[str]]:
+    """The boxes variant's associations (§8.3) restricted to marks the region's lines hold, in the model's left-to-right
+    order without repeats; a group left with fewer than two marks says nothing and is dropped."""
+    held = {m for l in lines for m in l.marks}
+    kept = []
+    for g in groups:
+        marks = [m for k, m in enumerate(g) if m in held and m not in g[:k]]
+        if len(marks) >= 2:
+            kept.append(marks)
+    return kept
+
+
 # ---------- regions (§9.1, §9.3) ----------
 def _children(rid: str, regions: list[Region]) -> list[Region]:
     return [r for r in regions if r.parent == rid]
@@ -271,7 +283,8 @@ def merge_frame(s1: Stage1Record, of: OcrFrame, perc: PerceptionRecord, cfg: Mer
             align_repair(lines, pending, cfg)
             rows_rejected += rej
             regions.append(Region(id=vr.id, kind=vr.kind, name=vr.name, app=vr.app, parent=vr.parent, bbox=None, conf=vr.conf,
-                                  layout_conf=0.0, occludes=list(vr.occludes), lines=lines))
+                                  layout_conf=0.0, occludes=list(vr.occludes), lines=lines,
+                                  associations=region_associations(perc.associations.get(vr.id, []), lines)))
         for r in regions:
             r.bbox = region_bbox(r.id, regions)
         for r in regions:

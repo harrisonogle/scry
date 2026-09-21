@@ -85,6 +85,54 @@ def perception_from_group_only(out: VlmPerceptionGroupOnly) -> VlmPerception:
     return VlmPerception(**out.model_dump(exclude={"regions"}), regions=regions)
 
 
+# Structural variants (`[model] stage2c_panes = false`, `stage2c_rows = "boxes"`). NoPanes: kind is window|popup and
+# parent a window id or null. Boxes: one mark per row, plus the region's associations (label-and-value pairs, table
+# rows). Each is its own model, so its schema hash, and with it the cache key, differs from the default; VlmRegion and
+# VlmPerception themselves are unchanged, and every variant is stored in their shape (perception_from_variant).
+class VlmRegionNoPanes(VlmRegion):
+    kind: Literal["window", "popup"] = Field(description="window = top-level application window; popup = menu, dialog, tooltip, toast. There are no panes: everything inside a window is the window's own rows.")
+    parent: str | None = Field(description="For a popup, the id of the window it belongs to, or null; null for a window.")
+
+
+class VlmRegionBoxes(VlmRegion):
+    rows: list[list[str]] = Field(default_factory=list, description="One row per mark in reading order (top to bottom, left to right along a visual line), each row a list holding exactly that one mark id (as 'l7'); [] for a line the boxes missed. Every mark appears in exactly one row of exactly one region, or in unassigned_line_ids.")
+    vlm_lines: list[str] = Field(default_factory=list, description="Verbatim text of each row's mark, one entry per row, same order and length as rows. Transcribe from the clean image. Preserve case, punctuation, whitespace and symbols; never correct, complete or normalize code, commands, paths or identifiers; use ? for a character you cannot resolve; do not transcribe icons.")
+    associations: list[list[str]] = Field(default_factory=list, description="Groups of this region's mark ids that belong together as one label-and-value pair or one table row, each listed left to right. A mark belongs to at most one group; marks that stand alone are not listed.")
+
+
+class VlmRegionNoPanesBoxes(VlmRegionNoPanes, VlmRegionBoxes):
+    pass
+
+
+class VlmPerceptionNoPanes(VlmPerception):
+    regions: list[VlmRegionNoPanes]
+
+
+class VlmPerceptionBoxes(VlmPerception):
+    regions: list[VlmRegionBoxes]
+
+
+class VlmPerceptionNoPanesBoxes(VlmPerception):
+    regions: list[VlmRegionNoPanesBoxes]
+
+
+def perception_model(transcribe: bool = True, panes: bool = True, rows: str = "lines") -> type[BaseModel]:
+    """The Stage 2c output model for a configuration (§8.3); the group-only model has no structural variants."""
+    if not transcribe:
+        return VlmPerceptionGroupOnly
+    return {(True, "lines"): VlmPerception, (False, "lines"): VlmPerceptionNoPanes,
+            (True, "boxes"): VlmPerceptionBoxes, (False, "boxes"): VlmPerceptionNoPanesBoxes}[(panes, rows)]
+
+
+def perception_from_variant(out: BaseModel) -> tuple[VlmPerception, dict[str, list[list[str]]]]:
+    """Any Stage 2c output in the usual shape (what the record stores and Stage 3 reads), plus the associations of the
+    boxes variant, which VlmPerception does not carry: {region id: [[mark ids, left to right], ...]}."""
+    if not isinstance(out, VlmPerception):
+        return perception_from_group_only(out), {}
+    assoc = {r.id: [list(g) for g in r.associations] for r in out.regions if getattr(r, "associations", None)}
+    return VlmPerception.model_validate(out.model_dump()), assoc
+
+
 class PerceptionRecord(BaseModel):
     frame: int
     model: str
@@ -94,6 +142,7 @@ class PerceptionRecord(BaseModel):
     usage: dict = {}
     repairs: int = 0
     label_clashes: int = 0
+    associations: dict[str, list[list[str]]] = {}  # boxes variant: per region id, the model's mark groups (perception_from_variant)
 
 
 # ---------- Stage 3 merged state (§10.1) ----------
@@ -136,6 +185,7 @@ class Region(BaseModel):
     layout_conf: float
     occludes: list[str] = []
     lines: list[Line] = []
+    associations: list[list[str]] = []  # boxes variant: mark groups that read as one label-and-value pair or table row, left to right
 
 
 class FrameRecord(BaseModel):

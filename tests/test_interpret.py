@@ -98,12 +98,12 @@ def _texts(blocks) -> str:
     return "\n".join(b["text"] for b in blocks if b["type"] == "text")
 
 
-def test_full_mode_sends_both_frames_at_native_size_and_is_the_default(tmp_path: Path):
+def test_full_mode_sends_both_frames_at_native_size(tmp_path: Path):
     run, frames = _run_with_frames(tmp_path)
     blocks = build_blocks(_transition(), frames, run, None, [], Stage5Config(images="full"))
     assert [im.size for im in _images(blocks)] == [(W, H), (W, H)]
-    assert blocks == build_blocks(_transition(), frames, run, None, [])  # no config = full
-    with_mid = build_blocks(_transition(transient=True), frames, run, None, [], Stage5Config())
+    assert build_blocks(_transition(), frames, run, None, []) == build_blocks(_transition(), frames, run, None, [], Stage5Config(images="scaled"))  # no config = the default, scaled since L39
+    with_mid = build_blocks(_transition(transient=True), frames, run, None, [], Stage5Config(images="full"))
     assert [im.size for im in _images(with_mid)] == [(W, H)] * 3 and "Transient frame 2" in _texts(with_mid)
     assert _texts(blocks).endswith("Return the JSON object.") and "Computed changes:" in _texts(blocks)
 
@@ -170,7 +170,8 @@ def test_crop_boxes_pad_clamp_merge_and_cap():
 
 
 def test_prompt_version_names_the_mode_and_its_parameters():
-    assert prompt_version() == prompt_version(Stage5Config()) == "s5-v1"
+    assert prompt_version() == prompt_version(Stage5Config(images="full")) == "s5-v1"  # no config means full; full keeps the bare version
+    assert prompt_version(Stage5Config()) == "s5-v1+scaled0.5"  # the configured default is scaled (L39)
     assert prompt_version(Stage5Config(images="text")) == "s5-v1+text"
     assert prompt_version(Stage5Config(images="scaled", scale=0.5)) == "s5-v1+scaled0.5"
     assert prompt_version(Stage5Config(images="crops")) == "s5-v1+crops0.5p40m4f0.25"

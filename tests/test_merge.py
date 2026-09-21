@@ -117,3 +117,24 @@ def test_row_gap_test_is_off_at_zero_and_rejects_wide_rows_at_three():
     lines, rejected, pending = build_region_lines(vr, by_id, MergeConfig(row_gap_lines=3))
     assert [l.marks for l in lines] == [["l1"], ["l2"], ["l3"], ["l4"]] and rejected == 2 and all(l.row_rejected for l in lines)
     assert MergeConfig().row_gap_lines == 0
+
+
+def test_one_mark_rows_never_reject_and_associations_are_kept_per_region():
+    """The boxes variant (§8.3): every row holds one mark, so the row geometry check has nothing to reject and the repair
+    pass has nothing to align; the model's associations are stored on the region, restricted to marks its lines hold."""
+    by_id = {l.id: l for l in [ocr("l1", 10, 40, 60, 58, "Status"), ocr("l2", 400, 40, 500, 58, ": Succeeded"),
+                                ocr("l3", 10, 60, 120, 78, "Location"), ocr("l4", 130, 80, 200, 98, "East US")]}
+    vr = VlmRegion(id="r1", kind="window", name="Portal", app="Browser", parent=None, conf=0.9,
+                   rows=[["l1"], ["l2"], ["l3"], ["l4"]], vlm_lines=["Status", ": Succeeded", "Location", "East US"])
+    lines, rejected, pending = build_region_lines(vr, by_id, MergeConfig(row_gap_lines=3))
+    assert rejected == 0 and pending == [] and [l.marks for l in lines] == [["l1"], ["l2"], ["l3"], ["l4"]]
+    assert all(l.agree and not l.row_rejected for l in lines)
+    s1 = Stage1Record(video_id="v", frame=3, t_change=1, t_settled=1.2, t_end=5, settled=True, width=500, height=500, sha256="x", png="frames/00003.png")
+    perc = PerceptionRecord(frame=3, model="m", prompt_version="s2c-v1+boxes",
+                            output=VlmPerception(regions=[vr], focused_region="r1", focused_conf=0.8, description=""),
+                            associations={"r1": [["l1", "l2"], ["l3", "l4", "l9", "l4"], ["l4"], ["l9", "l8"]], "zz": [["l1", "l2"]]})
+    fr = merge_frame(s1, OcrFrame(frame=3, engine="e", lines=list(by_id.values())), perc, CFG)
+    assert fr.rows_rejected == 0 and fr.grouping_repairs == 0
+    assert fr.regions[0].associations == [["l1", "l2"], ["l3", "l4"]]  # unknown l9 and the repeat dropped; a lone mark says nothing; region zz is not this one
+    plain = merge_frame(s1, OcrFrame(frame=3, engine="e", lines=list(by_id.values())), PerceptionRecord(frame=3, model="m", prompt_version="v", output=perc.output), CFG)
+    assert plain.regions[0].associations == []

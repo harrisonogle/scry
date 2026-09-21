@@ -52,3 +52,56 @@ def test_transition_without_pixels_still_loads():
            '"computed_diff": {"r1": {"from_region": "r1", "ops": [{"op": "insert", "new": "x", "new_index": 0}]}}}')
     t = Transition.model_validate_json(old)
     assert t.pixels is None and t.computed_diff["r1"].ops[0].under_change is None
+
+
+def test_stage2c_structural_variants_validate_and_convert(tmp_path: Path):
+    import pytest
+    from pydantic import ValidationError
+
+    from scry.schemas import (PerceptionRecord, VlmPerception, VlmPerceptionBoxes, VlmPerceptionGroupOnly, VlmPerceptionNoPanes,
+                              VlmPerceptionNoPanesBoxes, VlmRegion, VlmRegionBoxes, VlmRegionNoPanes, VlmRegionNoPanesBoxes,
+                              perception_from_variant, perception_model)
+    base = dict(id="r1", name="w", app="x", parent=None, conf=0.9)
+    with pytest.raises(ValidationError):
+        VlmRegionNoPanes(**base, kind="pane")
+    with pytest.raises(ValidationError):
+        VlmRegionNoPanesBoxes(**base, kind="pane")
+    popup = VlmRegionNoPanes(**base, kind="popup", rows=[["l1"]], vlm_lines=["a"])
+    boxes = VlmRegionBoxes(**base, kind="pane", rows=[["l1"], ["l2"]], vlm_lines=["a", "b"], associations=[["l1", "l2"]])
+    assert VlmRegionNoPanesBoxes(**base, kind="window", rows=[["l1"]], vlm_lines=["a"]).associations == []
+    # only the variants carry the narrowed kind or associations; VlmRegion's schema (and so its cache keys) is unchanged
+    props = lambda m: list(m.model_json_schema()["properties"])  # noqa: E731
+    assert "associations" not in props(VlmRegion) and "associations" not in props(VlmRegionNoPanes)
+    assert props(VlmRegionBoxes) == props(VlmRegionNoPanesBoxes) == props(VlmRegion) + ["associations"]
+    assert VlmRegionNoPanes.model_json_schema()["properties"]["kind"]["enum"] == ["window", "popup"]
+    assert VlmRegionNoPanesBoxes.model_json_schema()["properties"]["kind"]["enum"] == ["window", "popup"]
+    assert "one row per mark" in VlmRegionBoxes.model_json_schema()["properties"]["rows"]["description"].lower()
+    assert perception_model() is VlmPerception and perception_model(transcribe=False) is VlmPerceptionGroupOnly
+    assert perception_model(panes=False) is VlmPerceptionNoPanes and perception_model(rows="boxes") is VlmPerceptionBoxes
+    assert perception_model(panes=False, rows="boxes") is VlmPerceptionNoPanesBoxes
+    # conversion to the stored shape, with the associations keyed by region
+    out = VlmPerceptionBoxes(regions=[boxes], focused_region="r1", focused_conf=0.8, description="d")
+    conv, assoc = perception_from_variant(out)
+    assert type(conv) is VlmPerception and type(conv.regions[0]) is VlmRegion and assoc == {"r1": [["l1", "l2"]]}
+    assert conv.regions[0].rows == [["l1"], ["l2"]] and conv.regions[0].vlm_lines == ["a", "b"] and conv.description == "d"
+    conv, assoc = perception_from_variant(VlmPerceptionNoPanes(regions=[popup], focused_region=None, focused_conf=0.0, description=""))
+    assert type(conv) is VlmPerception and conv.regions[0].kind == "popup" and assoc == {}
+    conv, assoc = perception_from_variant(VlmPerceptionGroupOnly(regions=[], focused_region=None, focused_conf=0.0, description=""))
+    assert type(conv) is VlmPerception and assoc == {}
+    # the record round-trips the associations beside the usual output
+    rec = PerceptionRecord(frame=1, model="m", prompt_version="s2c-v1+boxes", output=conv, associations={"r1": [["l1", "l2"]]})
+    write_jsonl(tmp_path / "p.jsonl", [rec])
+    assert read_jsonl(tmp_path / "p.jsonl", PerceptionRecord) == [rec] and PerceptionRecord(frame=1, model="m", prompt_version="v", output=None).associations == {}
+    region = Region(id="r1", kind="window", name="w", app="x", parent=None, bbox=None, conf=0.9, layout_conf=0.9, associations=[["l1", "l2"]])
+    assert Region.model_validate_json(region.model_dump_json()).associations == [["l1", "l2"]] and Region.model_validate_json('{"id":"r","kind":"window","name":"n","app":"a","parent":null,"bbox":null,"conf":1,"layout_conf":1}').associations == []
+
+
+def test_structural_variants_need_a_transcribing_stage2c():
+    import pytest
+
+    from scry.config import ModelConfig
+    assert ModelConfig().stage2c_panes is True and ModelConfig().stage2c_rows == "lines"
+    ModelConfig(stage2c_panes=False, stage2c_rows="boxes")
+    for flags in ({"stage2c_panes": False}, {"stage2c_rows": "boxes"}):
+        with pytest.raises(ValueError):
+            ModelConfig(stage2c_transcribe=False, **flags)

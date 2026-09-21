@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from scry.config import Config, IndexConfig, config_hash
 from scry.run import Run
+from scry.schemas import Region
 
 log = logging.getLogger(__name__)
 
@@ -190,6 +191,28 @@ def search(db: sqlite3.Connection, query: str, cfg: IndexConfig, embedder: Embed
 
 
 # ---------- node extraction (§14.1) ----------
+def region_text(r: Region) -> tuple[str, list[dict]]:
+    """A region node's text: its fused lines, the VLM reading of every disagreeing line (both readings are indexed,
+    §14.1), then the joined text of each association (boxes variant, §8.3) on its own line, so a label and its value are
+    one searchable string. Returns the text and the associations as [{"marks": [...], "text": joined}] for the payload."""
+    text = "\n".join(l.fused for l in r.lines if l.fused)
+    text += "".join(f"\n{l.vlm}" for l in r.lines if l.agree is False and l.vlm)
+    by_mark = {m: l for l in r.lines for m in l.marks}
+    assoc = []
+    for group in r.associations:
+        ids, parts = [], []
+        for m in group:
+            l = by_mark.get(m)
+            if l is not None and l.id not in ids:  # a multi-mark line counts once
+                ids.append(l.id)
+                parts.append(l.fused)
+        joined = " ".join(p for p in parts if p)
+        if joined:
+            assoc.append({"marks": list(group), "text": joined})
+    text += "".join(f"\n{a['text']}" for a in assoc)
+    return text, assoc
+
+
 def extract_nodes(run: Run) -> list[Node]:
     vid = run.video_id
     frames = run.load_frames()
@@ -222,14 +245,13 @@ def extract_nodes(run: Run) -> list[Node]:
     for f in frames:
         chapter = run.chapter_of(f.t_settled)
         for r in f.regions:
-            text = "\n".join(l.fused for l in r.lines if l.fused)
-            text += "".join(f"\n{l.vlm}" for l in r.lines if l.agree is False and l.vlm)  # index both readings (§14.1)
+            text, assoc = region_text(r)
             if not text.strip():
                 continue
             nodes.append(Node(node_id=f"{vid}:f{f.frame}:{r.id}", video_id=vid, level="region", item_id=f"{f.frame}:{r.id}",
                               frames=(f.frame, f.frame), t=(f.t_settled, f.t_end), apps=[r.app], region_names=[r.name],
                               layout_conf=r.layout_conf, chapter_id=chapter.id if chapter else None, text=f"{r.app} {r.name}\n{text}",
-                              payload={"frame": f.frame, "region": r.id, "lines": [l.model_dump() for l in r.lines]}))
+                              payload={"frame": f.frame, "region": r.id, "lines": [l.model_dump() for l in r.lines], "associations": assoc}))
         if f.description:
             nodes.append(Node(node_id=f"{vid}:f{f.frame}:desc", video_id=vid, level="frame", item_id=str(f.frame), frames=(f.frame, f.frame),
                               t=(f.t_settled, f.t_end), apps=sorted({r.app for r in f.regions}), text=f.description,

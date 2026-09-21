@@ -6,7 +6,7 @@ import tomllib
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class DetectParams(BaseModel):
@@ -79,10 +79,18 @@ class ModelConfig(BaseModel):
     effort_agent: Effort = "high"
     stage2c_mark_coords: bool = False  # list each mark's box in the Stage 2c prompt (ledger L30 experiment)
     stage2c_transcribe: bool = True  # False: Stage 2c groups marks into regions and rows but transcribes nothing (§18.3 item 3 ablation)
+    stage2c_panes: bool = True  # False: Stage 2c asks for windows and popups only, rows directly under them ("+nopanes" experiment)
+    stage2c_rows: Literal["lines", "boxes"] = "lines"  # boxes: every mark is its own row and each region lists its associations ("+boxes" experiment)
     max_tokens: int = 16000
     retry_max_tokens: int = 32000
     concurrency: int = 4
     mode: Literal["sync", "batch"] = "sync"
+
+    @model_validator(mode="after")
+    def _structural_variants_transcribe(self):
+        if not self.stage2c_transcribe and (not self.stage2c_panes or self.stage2c_rows != "lines"):
+            raise ValueError("stage2c_panes = false and stage2c_rows = 'boxes' need stage2c_transcribe = true")
+        return self
 
 
 class Stage5Config(BaseModel):

@@ -42,3 +42,34 @@ occludes: for each region, the ids of regions it visually covers, in whole or in
 description: anything the rows cannot express: selections, highlights, toggles, icons, diagram relationships, dialogs, animating regions.
 
 Marks listed as animating are inside regions that were changing continuously when the frame was captured; their text is low confidence — say so rather than guessing."""
+
+
+# Structural variants (`[model] stage2c_panes = false`, `stage2c_rows = "boxes"`): the same prompt with one or two
+# paragraphs swapped. build() derives each from SYSTEM / SYSTEM_GROUP_ONLY so every other paragraph stays shared
+# verbatim; test_perceive pins the paragraph indices. The schema variants in schemas.py carry the same wording.
+REGIONS_NOPANES = """regions: the screen as a list of regions of two kinds only: windows (top-level application windows) and popups (menus, dialogs, tooltips, toasts). Do not create panes: everything inside a window (its title bar, tabs, toolbar, navigation, editor, terminal, content) belongs to the window's own rows. A window's parent is null; a popup's parent is the window it belongs to, or null. Name each region and its application. Every mark id must appear in exactly one row of exactly one region, or in unassigned_line_ids."""
+
+ROWS_BOXES = """rows: within a region, one row per mark, in reading order (top to bottom, left to right along a visual line). Each row is a list holding exactly one mark id; never put two marks in one row. A line the boxes missed entirely is an empty row []."""
+
+VLM_LINES_BOXES = """vlm_lines: the verbatim text of each row's mark (of the missed line, for an empty row), one entry per row, same order and length as rows. Preserve case, punctuation, whitespace and symbols exactly as displayed. Never correct, complete, or normalize commands, code, paths, or identifiers. Use ? for any character you cannot resolve. Do not omit rows. Icons are not text: do not transcribe them."""
+
+ASSOCIATIONS = """associations: within a region, the groups of mark ids that belong together as one label-and-value pair (a property name and its value, a form field and its content, a prompt and its command) or as one table row (its cells), each group listed left to right. A mark belongs to at most one group; do not list marks that stand alone."""
+
+PARAGRAPH = {"regions": 3, "rows": 4, "vlm_lines": 5}  # indices into SYSTEM.split("\n\n")
+
+
+def build(transcribe: bool = True, panes: bool = True, rows: str = "lines") -> str:
+    paras = (SYSTEM if transcribe else SYSTEM_GROUP_ONLY).split("\n\n")
+    if not panes:
+        paras[PARAGRAPH["regions"]] = REGIONS_NOPANES
+    if rows == "boxes":
+        paras[PARAGRAPH["rows"]] = ROWS_BOXES
+        if transcribe:
+            paras[PARAGRAPH["vlm_lines"]] = VLM_LINES_BOXES
+        paras.insert(PARAGRAPH["vlm_lines"] + 1, ASSOCIATIONS)
+    return "\n\n".join(paras)
+
+
+SYSTEM_NOPANES = build(panes=False)
+SYSTEM_BOXES = build(rows="boxes")
+SYSTEM_NOPANES_BOXES = build(panes=False, rows="boxes")
