@@ -70,7 +70,8 @@ class AnnotateConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     # which frames get a call and which boxes are targets (spec §2). "every_frame": every frame, every box;
     # "incremental": the first frame and every frame whose incoming transition changed pixels, the targets being the
-    # boxes whose lifetime starts there; "off": the "no annotation" base. [model] mode = "batch" works with each.
+    # boxes whose lifetime starts there or continues there by a move; "off": the "no annotation" base. [model] mode =
+    # "batch" works with each.
     # Incremental annotation is built for the id-based arms only: when the `arm` key arrives, a validator here refuses
     # mode = "incremental" with arm B or C ("incremental annotation needs arm A or D").
     mode: Literal["every_frame", "incremental", "off"] = "every_frame"

@@ -29,5 +29,6 @@ def plan_calls(frames: list[FrameBoxes], changes: list[Change], lifetimes: list[
         if change is None:
             raise ValueError(f"changes.jsonl has no transition into frame {fb.frame}")
         if change.pixels is None or change.pixels.components > 0:
-            plans.append(CallPlan(fb.frame, tuple(b.id for b in fb.boxes if box_ref(fb.frame, b.id) in starts)))
+            asked = starts | {later for _, later in change.moved}  # a box that moved is asked about again (ledger L56)
+            plans.append(CallPlan(fb.frame, tuple(b.id for b in fb.boxes if box_ref(fb.frame, b.id) in asked)))
     return plans

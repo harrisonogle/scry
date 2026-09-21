@@ -11,7 +11,7 @@ from scry.schemas import (Annotation, Box, BoxChange, BoxText, Change, Container
 
 
 def test_records_round_trip_unicode(tmp_path: Path):
-    fb = FrameBoxes(frame=155, png="frames/00155.png", engine={"engine": "rapidocr", "version": "3.9.2"}, seconds=1.25, boxes=[
+    fb = FrameBoxes(frame=155, png="frames/00155.png", engine={"engine": "rapidocr", "version": "3.9.2"}, boxes=[
         Box(id="b1", bbox=(24, 164, 48, 179), text="区", conf=0.41),
         Box(id="b2", bbox=(659, 352, 904, 371), text="PS C:\\Users\\msadmin> az login", conf=0.98,
             words=[RawWord(text="PS", bbox=(659, 352, 679, 371))])])
@@ -28,6 +28,8 @@ def test_records_round_trip_unicode(tmp_path: Path):
         write_jsonl(tmp_path / name, [rec])
         assert read_jsonl(tmp_path / name, model) == [rec]
     assert "区" in (tmp_path / "boxes.jsonl").read_text(encoding="utf-8")
+    old = fb.model_dump_json().replace('"frame":155,', '"frame":155,"seconds":1.25,')  # a file written before ledger L56
+    assert '"seconds"' in old and FrameBoxes.model_validate_json(old) == fb
 
 
 def test_box_ref_round_trip():

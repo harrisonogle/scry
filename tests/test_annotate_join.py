@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from annotate_fixtures import fixture_t, record_a10, record_a11, write_run
+from annotate_fixtures import fb, fixture_t, life, mk, record_a10, record_a11, write_run
 
 from scry.annotate.join import BoxLink, FrameLabel, LifetimeLink, agreement, build_labels
 from scry.jsonl import write_jsonl
@@ -98,6 +98,21 @@ def test_non_text_and_group_only():
     group.texts = None
     label = _labels([group]).box("10:b1")
     assert (label.vlm, label.agree, label.non_text) == (None, None, False)
+
+
+def test_a_relabelled_box_takes_its_new_labels_from_that_frame_on():
+    # one lifetime, labelled at frame 1, moved into frame 3 and so a target of that call too (ledger L56)
+    frames = [fb(n, [mk("b1", 10, 10 if n < 3 else 100, 110, 26 if n < 3 else 116, "ls")]) for n in (1, 2, 3, 4)]
+    lifetimes = [life("L1", "ls", ["1:b1", "2:b1", "3:b1", "4:b1"])]
+
+    def record(n: int, app: str) -> Annotation:
+        return Annotation(frame=n, targets=["b1"], containers=[Container(id="c1", kind="window", app=app, name=app)],
+                          assign=[Assign(box="b1", container="c1")], model="fake-model", prompt_version="annotate-v2")
+
+    labels = build_labels([record(1, "browser"), record(3, "terminal")], frames, lifetimes)
+    assert [labels.box(f"{n}:b1").container.app for n in (1, 2, 3, 4)] == ["browser", "browser", "terminal", "terminal"]
+    assert [labels.box(f"{n}:b1").source for n in (1, 2, 3, 4)] == ["1:b1", "1:b1", "3:b1", "3:b1"]
+    assert labels.lifetime("L1").container.app == "terminal"
 
 
 def test_without_lifetimes_nothing_is_carried():

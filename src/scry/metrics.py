@@ -60,8 +60,8 @@ def fragmentation(lifetimes: list[Lifetime], top: int = 20) -> dict:
 def incremental_projection(boxes: list[FrameBoxes], changes: list[Change], lifetimes: list[Lifetime]) -> dict:
     """The calls and target boxes incremental annotation would make, taken from the stage's own planner so the price
     and the stage cannot drift apart: one call for the first frame, with every box a target, and one for every
-    transition in which pixels changed (or that has no pixel data), even if no lifetime starts there, because the
-    screen description must be refreshed. What it saves is boxes per call, not calls."""
+    transition in which pixels changed (or that has no pixel data), even if no lifetime starts or moves there, because
+    the screen description must be refreshed. What it saves is boxes per call, not calls."""
     plans = plan_calls(boxes, changes, lifetimes, "incremental")
     n_frames, n_boxes = len(boxes), sum(len(b.boxes) for b in boxes)
     calls, target_boxes = len(plans), sum(len(p.targets) for p in plans)
