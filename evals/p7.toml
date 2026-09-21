@@ -1,0 +1,21 @@
+# P7 (ledger L64): the model tier of `annotate`. Sonnet 5 lists at 40 % of Opus 5's price per token and needs no code
+# change (the Models API says it takes `effort` and structured outputs; Haiku 4.5 does not take `effort`, so it is not
+# in this phase). Working default otherwise (incremental, transcribing, arm A, scale 1.0), through `annotate` only, judged
+# on the labels with P3's scripts against P3's Opus 5 runs at scale 1.0 (`runs/eval/p3/*-s100-*`). Two cold repeats: 4 runs.
+phase = "p7"
+source = "runs/p0"
+stages = ["read", "track", "annotate"]
+repeats = 2
+
+[spans.smoke]
+frames = "145-155"
+
+[spans.span2]
+frames = "155-187"
+
+[axis.model.sonnet5]
+"model.model" = "claude-sonnet-5"
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.arm" = "A"
+"annotate.scale" = 1.0
