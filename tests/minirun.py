@@ -9,7 +9,7 @@ from PIL import Image
 from scry.jsonl import write_jsonl
 from scry.run import Run
 from scry.schemas import (Box, BoxChange, BoxText, Change, Frame, FrameBoxes, FrameTime, Interpretation, Lifetime,
-                          PixelStats)
+                          ModelBoundaries, ModelElaboration, PixelStats, SegmentStart)
 
 TIMES = {10: (20.0, 20.4, 24.0), 11: (24.0, 24.4, 26.0), 12: (26.0, 26.4, 30.0), 13: (30.0, 30.4, 35.0)}
 PROMPT = "C:\\src>"
@@ -145,3 +145,22 @@ def mini_interpretations(run: Run) -> None:
 def call_text(kw: dict) -> str:
     """The text blocks of a recorded provider call, joined with newlines."""
     return "\n".join(b["text"] for b in kw["blocks"] if b["type"] == "text")
+
+
+def summarize_answers(kw: dict):
+    """An `AnswerProvider` answer for `summarize` over Fixture M: two steps, one section, the video. Chosen by the call's
+    stage and, for the two step elaborations (they run concurrently), by their `Segment S<n>` line."""
+    stage, text = kw["stage"], call_text(kw)
+    if stage == "summarize-boundary-step":
+        return ModelBoundaries(segments=[SegmentStart(start_id="T1", label="Run git status"),
+                                         SegmentStart(start_id="T3", label="Watch the deployment")])
+    if stage == "summarize-elaborate-step":
+        if text.startswith("Segment S1\n"):
+            return ModelElaboration(label="Run git status", description="Type `git status` [T1] and run it [T2].", refs=["T1", "T2", "T9"])
+        return ModelElaboration(label="", description="The status becomes Succeeded [T3].", refs=["T3"])
+    if stage == "summarize-boundary-section":
+        return ModelBoundaries(segments=[SegmentStart(start_id="S1", label="Everything")])
+    if stage == "summarize-elaborate-section":
+        return ModelElaboration(label="Everything", description="All of it [S1] [S2].", refs=["S1", "S2"])
+    assert stage == "summarize-elaborate-video", stage
+    return ModelElaboration(label="A short demo", description="One section [C1].", refs=["C1"])

@@ -32,3 +32,15 @@ def estimate_cost(usage: dict, model: str, batch: bool = False) -> float:
     dollars = (u["input_tokens"] * pin + u["output_tokens"] * pout + u["cache_read_input_tokens"] * pcache
                + u["cache_creation_input_tokens"] * pin * CACHE_WRITE_MULTIPLIER) / 1e6
     return round(dollars * (BATCH_MULTIPLIER if batch else 1.0), 4)
+
+
+def run_costs(manifest: dict) -> dict:
+    """One dollar figure per stage that recorded usage, their total, and dollars per emitted frame. A stage's usage
+    counts answers served from the call cache, so this is what a cold run would pay at the synchronous price; a report
+    that wants the batch price halves it."""
+    entries = manifest.get("stages", {})
+    stages = {name: {"usage": e["usage"], "cost_usd": estimate_cost(e["usage"], e.get("model", ""))}
+              for name, e in entries.items() if isinstance(e.get("usage"), dict)}
+    total = round(sum(s["cost_usd"] for s in stages.values()), 4)
+    frames = entries.get("decode", {}).get("emitted") or None
+    return {"stages": stages, "total_usd": total, "frames": frames, "per_frame_usd": round(total / frames, 4) if frames else None}

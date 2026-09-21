@@ -1,11 +1,11 @@
 from pathlib import Path
 
 from fakes import AnswerProvider
-from minirun import call_text, mini_interpretations, mini_run
+from minirun import call_text, mini_interpretations, mini_run, summarize_answers
 
 from scry.config import Config, SummarizeConfig
 from scry.jsonl import write_jsonl
-from scry.schemas import Change, HierNode, Interpretation, ModelBoundaries, ModelElaboration, SegmentStart
+from scry.schemas import Change, HierNode, Interpretation, ModelBoundaries, SegmentStart
 from scry.summarize import (fallback_segments, item_full, item_line, merge_window_boundaries, propagate, repair_boundaries,
                             run_summarize, state_line, window_ranges)
 
@@ -88,26 +88,9 @@ def test_state_line(tmp_path: Path):
     assert "focus" not in with_labels + state_line(frame, None)
 
 
-def _answers(kw: dict):
-    stage, text = kw["stage"], call_text(kw)
-    if stage == "summarize-boundary-step":
-        return ModelBoundaries(segments=[SegmentStart(start_id="T1", label="Run git status"),
-                                         SegmentStart(start_id="T3", label="Watch the deployment")])
-    if stage == "summarize-elaborate-step":
-        if text.startswith("Segment S1\n"):
-            return ModelElaboration(label="Run git status", description="Type `git status` [T1] and run it [T2].", refs=["T1", "T2", "T9"])
-        return ModelElaboration(label="", description="The status becomes Succeeded [T3].", refs=["T3"])
-    if stage == "summarize-boundary-section":
-        return ModelBoundaries(segments=[SegmentStart(start_id="S1", label="Everything")])
-    if stage == "summarize-elaborate-section":
-        return ModelElaboration(label="Everything", description="All of it [S1] [S2].", refs=["S1", "S2"])
-    assert stage == "summarize-elaborate-video"
-    return ModelElaboration(label="A short demo", description="One section [C1].", refs=["C1"])
-
-
 def test_run_summarize_builds_three_levels(tmp_path: Path):
     run, _, _ = _mini(tmp_path)
-    provider = AnswerProvider(_answers)
+    provider = AnswerProvider(summarize_answers)
     run_summarize(run, Config(), provider)
     s1, s2 = run.load_steps()
     assert (s1.id, s1.children, s1.frames, s1.t, s1.refs, s1.label) == ("S1", ("T1", "T2"), (10, 12), (24.0, 26.4), ["T1", "T2"], "Run git status")
@@ -132,7 +115,7 @@ def test_run_summarize_builds_three_levels(tmp_path: Path):
 
 def test_boundary_retry_then_fallback(tmp_path: Path):
     def answer(kw: dict):
-        return ModelBoundaries(segments=[]) if kw["stage"] == "summarize-boundary-step" else _answers(kw)
+        return ModelBoundaries(segments=[]) if kw["stage"] == "summarize-boundary-step" else summarize_answers(kw)
 
     run, _, _ = _mini(tmp_path)
     provider = AnswerProvider(answer)
@@ -149,7 +132,7 @@ def test_summarize_with_a_failed_interpretation(tmp_path: Path):
     run, _, interps = _mini(tmp_path)
     interps["T2"] = Interpretation(id="T2", error="refusal")
     write_jsonl(run.interpretations, interps.values())
-    provider = AnswerProvider(_answers)
+    provider = AnswerProvider(summarize_answers)
     run_summarize(run, Config(), provider)
     boundary = next(call_text(kw) for kw in provider.calls if kw["stage"] == "summarize-boundary-step")
     assert boundary.split("\n")[1] == "T2 [f11→f12, 26.0–26.4s] appeared 2"
@@ -159,7 +142,7 @@ def test_summarize_with_a_failed_interpretation(tmp_path: Path):
 def test_no_transitions_writes_nothing(tmp_path: Path):
     run = mini_run(tmp_path)
     write_jsonl(run.changes, [])
-    provider = AnswerProvider(_answers)
+    provider = AnswerProvider(summarize_answers)
     run_summarize(run, Config(), provider)
     assert provider.calls == [] and not run.steps.exists()
     assert "summarize" not in run.manifest_read().get("stages", {})

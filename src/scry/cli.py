@@ -154,28 +154,35 @@ def subset(src: Path, out: Path = typer.Option(..., "--out"),
     typer.echo(f"{out}: {len(dst.load_frames())} frames; {rest}")
 
 
-STAGES = ["decode", "outline", "read", "track", "annotate"]
+STAGES = ["decode", "outline", "read", "track", "annotate", "interpret", "summarize", "index"]
 
 
 @app.command()
 def run(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None = None, stages: str | None = None, verbose: bool = False):
-    """Run every stage in order (idempotent; each stage skips itself when inputs and config are unchanged)."""
+    """Run every stage in order (idempotent; each stage skips itself when inputs and config are unchanged). `outline`
+    does nothing unless enabled; every stage after `annotate` runs with or without annotations."""
     _setup_logging(verbose)
     cfg = load_config(config)
-    r = Run(out)
     wanted = stages.split(",") if stages else STAGES
+    unknown = [name for name in wanted if name not in STAGES]
+    if unknown:
+        raise typer.BadParameter(f"unknown stage {', '.join(unknown)}; the stages are {', '.join(STAGES)}", param_hint="--stages")
+    r = Run(out)
+    import json
     import time
     from scry.annotate import run_annotate
+    from scry.costs import run_costs
     from scry.decode import run_decode
+    from scry.index import build_index
+    from scry.interpret import run_interpret
+    from scry.outline import run_outline
     from scry.read import run_read
+    from scry.summarize import run_summarize
     from scry.track.stage import run_track
 
-    def _outline():
-        from scry.outline import run_outline
-        run_outline(r, cfg, video)
-
-    steps = {"outline": _outline, "decode": lambda: run_decode(r, cfg, video), "read": lambda: run_read(r, cfg),
-             "track": lambda: run_track(r, cfg), "annotate": lambda: run_annotate(r, cfg)}
+    steps = {"decode": lambda: run_decode(r, cfg, video), "outline": lambda: run_outline(r, cfg, video), "read": lambda: run_read(r, cfg),
+             "track": lambda: run_track(r, cfg), "annotate": lambda: run_annotate(r, cfg), "interpret": lambda: run_interpret(r, cfg),
+             "summarize": lambda: run_summarize(r, cfg), "index": lambda: build_index(r, cfg)}
     for name in STAGES:
         if name in wanted:
             typer.echo(f"== {name}")
@@ -185,6 +192,10 @@ def run(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None
             if name in st:  # per-stage wall time; the step name is the manifest key
                 st[name]["seconds"] = round(time.perf_counter() - t0, 1)
                 r.manifest_update(stages=st)
+    costs = run_costs(r.manifest_read())
+    r.manifest_update(costs=costs)
+    typer.echo("costs (what a cold run would pay: answers served from the call cache are priced as if paid):")
+    typer.echo(json.dumps(costs, indent=2))
 
 
 @app.command()
