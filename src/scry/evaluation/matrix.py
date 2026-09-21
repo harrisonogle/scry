@@ -123,3 +123,21 @@ def config_for(m: Matrix, spec: RunSpec) -> Config:
     with m.base_config.open("rb") as f:
         base = tomllib.load(f)
     return Config.model_validate(apply_overrides(base, spec.overrides))
+
+
+def check(m: Matrix) -> list[RunSpec]:
+    """Everything that can be refused before a cent is spent: every run's config validates, the source holds decoded
+    frames, and each span's command list and question file exist and parse. Returns the expanded runs."""
+    specs = expand(m)
+    for spec in specs:
+        config_for(m, spec)
+    if not (m.source / "frames.jsonl").exists() and not (m.source / "stage1.jsonl").exists():
+        raise ValueError(f"source {m.source} holds no decoded frames")
+    for span in m.spans.values():
+        if span.ground_truth is not None:
+            from scry.groundtruth import parse_commands
+            parse_commands(span.ground_truth.read_text())
+        if span.questions is not None:
+            from scry.evaluation.questions import parse_questions
+            parse_questions(span.questions.read_text())
+    return specs

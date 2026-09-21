@@ -1,0 +1,27 @@
+# P1 (spec §9): three co-equal bases, arm A, full scale, every frame annotated; both spans through `index`;
+# the question set on span 2; three cold repeats each: 18 runs, about $55 by the spec's estimate.
+phase = "p1"
+source = "runs/p0"
+stages = ["read", "track", "annotate", "interpret", "summarize", "index", "ask"]
+repeats = 3
+
+[spans.smoke]
+frames = "145-155"
+
+[spans.span2]
+frames = "155-187"
+ground_truth = "docs/ground-truth/span2-commands.md"
+questions = "docs/ground-truth/span2-questions.md"
+
+[axis.base.transcribing]
+"annotate.mode" = "every_frame"
+"annotate.transcribe" = true
+"annotate.scale" = 1.0
+
+[axis.base.grouponly]
+"annotate.mode" = "every_frame"
+"annotate.transcribe" = false
+"annotate.scale" = 1.0
+
+[axis.base.none]
+"annotate.mode" = "off"

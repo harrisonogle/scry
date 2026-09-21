@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import logging
 import subprocess
 import time
 from dataclasses import dataclass
@@ -13,6 +14,8 @@ from scry.evaluation.matrix import Matrix, RunSpec, config_for, expand
 from scry.jsonl import sha256_obj
 from scry.run import Run
 from scry.subset import make_subset
+
+log = logging.getLogger(__name__)
 
 STAGE_FUNCS: dict[str, str] = {
     "read": "scry.read:run_read",
@@ -111,6 +114,7 @@ def execute(m: Matrix, spec: RunSpec, root: Path, identity: dict, stage_funcs: d
                  started=state["started"] or _now(), finished=None, error=None)
     _write_json(path, state)
     for stage in spec.stages:
+        log.info("%s: %s", spec.name, stage)
         try:
             t0 = clock()
             if stage == "ask":

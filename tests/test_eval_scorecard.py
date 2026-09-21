@@ -5,8 +5,11 @@ from eval_fixtures import GROUND_TRUTH
 from minirun import mini_interpretations, mini_run
 
 from scry.config import Config
+from scry.evaluation.compare import all_pairs, noise_table
 from scry.evaluation.judge import Judgment, write_judgments
+from scry.evaluation.matrix import Matrix
 from scry.evaluation.questions import Answer
+from scry.evaluation.reporting import phase_report
 from scry.evaluation.scorecard import METRICS, build_scorecard, score_phase
 from scry.index import build_index
 from scry.jsonl import sha256_file, write_jsonl
@@ -35,7 +38,7 @@ def test_scorecard_full_and_with_pieces_missing(tmp_path: Path):
     mini_interpretations(run)
     build_index(run, Config())
     _evalrun(run, gt)
-    card = build_scorecard(run.root)
+    card = full = build_scorecard(run.root)
     assert card["run"] == {"phase": "p9", "name": "s-r1", "config_id": "s", "span": "s", "frames": [10, 13], "values": {}, "repeat": 1,
                            "status": "done", "resumed": False, "cold": True, "git_commit": "abc", "git_dirty": False}
     assert card["counts"] == {"frames": 4, "transitions": 3, "lifetimes": 7}
@@ -61,6 +64,16 @@ def test_scorecard_full_and_with_pieces_missing(tmp_path: Path):
     for word in ("index", "interpretations", "annotations", "second reader"):
         assert any(word in note for note in card["notes"]), word
     assert card["warnings"] == []
+
+    # the report renders both, side by side: null sections print as dashes, and single runs have no measured floor
+    card["run"] |= {"name": "s-bare-r1", "config_id": "s-bare"}
+    cards = [full, card]
+    m = Matrix(phase="p9", path=Path("p9.toml"), source=Path("src"), base_config=Path("scry.toml"), stages=(), repeats=1, spans={}, axes={})
+    report = phase_report(m, cards, noise_table(cards), all_pairs(cards), "2026-09-21")
+    assert "| s | 1 | `git status` | 1/1 | 1/1 | 1/1 | — | — | $0.0250 | $0.10 |" in report
+    assert "| s-bare | 1 | `git status` | — | 1/1 | — | — | — | $0.0250 | $0.10 |" in report
+    assert "| s | N1 | `git stash` | 0/1 | $0.0250 | $0.10 |" in report
+    assert "### s: A = s, B = s-bare" in report and "| unknown |" in report and "| not comparable | absent in B |" in report
 
     _evalrun(bare, gt, interpret=INTERPRET | {"cache": {"hits": 2, "misses": 1}}, status="failed", error="ValueError: boom")
     warnings = build_scorecard(bare.root)["warnings"]

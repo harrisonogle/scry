@@ -48,7 +48,7 @@ def _questions(run: Run, warnings: list[str], notes: list[str]) -> tuple[dict | 
     answers = load_answers(run)
     failed = sum(a.error is not None for a in answers)
     if failed:
-        warnings.append(f"{failed} questions failed and have no answer")
+        warnings.append(f"{failed} questions ended in an error and have no answer")
     if not (run.root / "judgments.jsonl").exists():
         if answers:
             notes.append("answers not judged: run scry eval judge")
@@ -103,7 +103,7 @@ def build_scorecard(run_dir: Path) -> dict:
         warnings.append(f"run status is {state['status']}")
     for stage in COUNTERS:
         if stages.get(stage, {}).get("errors"):
-            warnings.append(f"{stages[stage]['errors']} failed {stage} calls")
+            warnings.append(f"{stages[stage]['errors']} {stage} calls ended in an error")
 
     units: dict[str, dict[str, float]] = {}
     commands = None

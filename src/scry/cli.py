@@ -250,5 +250,10 @@ def outline(video: Path, out: Path = typer.Option(..., "--out"), import_path: Pa
     run_outline(Run(out), cfg, video, import_path)
 
 
+from scry.evaluation.cli import eval_app  # noqa: E402
+
+app.add_typer(eval_app, name="eval")
+
+
 if __name__ == "__main__":
     app()

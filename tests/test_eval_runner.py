@@ -4,30 +4,13 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from PIL import Image
+from eval_fixtures import source_run as _source
 
 from scry.evaluation.matrix import expand, load_matrix
 from scry.evaluation.runner import execute, materialise, run_matrix
-from scry.jsonl import write_jsonl
 from scry.run import Run
-from scry.schemas import Frame
 
 IDENTITY = {"git_commit": "abc", "git_dirty": True}
-
-
-def _source(tmp_path: Path) -> Run:
-    """A source run as tests/test_subset.py builds it: frames 0-3, a finished decode, one paid call in its cache."""
-    src = Run(tmp_path / "src")
-    recs = []
-    for n in range(4):
-        Image.new("L", (8, 8), 40 * n).save(src.frames_dir / f"{n:05d}.png")
-        recs.append(Frame(video_id="v", frame=n, t_change=n, t_settled=n + 0.1, t_end=n + 1, settled=n != 2,
-                          width=8, height=8, sha256=f"{n:064x}", png=f"frames/{n:05d}.png"))
-    write_jsonl(src.frames, recs)
-    src.manifest_update(video="v.mp4", video_sha256="abc", video_id="v", fps=30.0, duration=4.0, width=8, height=8)
-    src.stage_done("decode", [tmp_path / "v.mp4"], "cfg", emitted=4, settled=3)
-    (src.cache_dir / "k.json").write_text("{}")
-    return src
 
 
 def _matrix(tmp_path: Path, src: Run, stages: str, repeats: int):

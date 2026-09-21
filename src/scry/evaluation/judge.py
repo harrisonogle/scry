@@ -6,6 +6,7 @@ answers get one verdict."""
 from __future__ import annotations
 
 import asyncio
+import json
 from pathlib import Path
 from typing import Literal
 
@@ -13,7 +14,7 @@ from pydantic import BaseModel, Field
 
 from scry.config import Config
 from scry.costs import estimate_cost
-from scry.evaluation.questions import Answer, Question, RubricItem
+from scry.evaluation.questions import Answer, Question, RubricItem, load_answers, parse_questions
 from scry.jsonl import read_jsonl, sha256_obj, write_jsonl
 from scry.providers import CallCache, VlmProvider, text_block
 from scry.run import Run
@@ -129,3 +130,18 @@ def write_judgments(run: Run, js: list[Judgment]) -> None:
 
 def load_judgments(run: Run) -> list[Judgment]:
     return read_jsonl(_path(run), Judgment)
+
+
+def judge_phase(root: Path, phase: str, base_cfg: Config, effort: str = "low") -> list[tuple[str, list[Judgment]]]:
+    """Judge every run directory of the phase that has answers.jsonl, against the question file its span names, and write
+    its judgments.jsonl. The judge's cache is `<root>/<phase>/judge-cache`, shared by the phase's runs and by no run."""
+    out = []
+    for answers in sorted((Path(root) / phase).glob("*/answers.jsonl")):
+        run = Run(answers.parent)
+        state = json.loads((run.root / "evalrun.json").read_text())
+        questions = parse_questions(Path(state["span"]["questions"]).read_text())
+        provider = judge_provider(base_cfg, Path(root) / phase / "judge-cache")  # a fresh client for each run's event loop
+        js = judge_answers(state["name"], questions, load_answers(run), provider, effort)
+        write_judgments(run, js)
+        out.append((state["name"], js))
+    return out
