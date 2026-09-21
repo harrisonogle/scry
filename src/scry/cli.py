@@ -38,9 +38,13 @@ def subset(src: Path, out: Path = typer.Option(..., "--out"),
            verbose: bool = False):
     """Derive a small run directory from an existing run's decoded frames, for cheap live checks of the later stages."""
     _setup_logging(verbose)
-    from scry.subset import make_subset, parse_frames
-    dst = make_subset(Run(src), out, parse_frames(frames), share_cache)
-    typer.echo(f"{out}: {len(dst.load_frames())} frames; decode is marked done, so `scry run <video> --out {out}` runs the rest")
+    from scry.subset import is_legacy, make_subset, parse_frames
+    dst = make_subset(src, out, parse_frames(frames), share_cache)
+    if is_legacy(src):  # the copied decode entry keeps the old config hash, so `scry run` might decode again
+        rest = f"imported from a pre-re-base directory: run the stage commands (`scry read {out}`, then `scry track {out}`), not `scry run`"
+    else:
+        rest = f"decode is marked done, so `scry run <video> --out {out}` runs the rest"
+    typer.echo(f"{out}: {len(dst.load_frames())} frames; {rest}")
 
 
 STAGES = ["outline", "decode"]

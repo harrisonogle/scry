@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -32,7 +33,7 @@ def test_parse_frames():
 
 def test_subset_keeps_range_and_marks_decode_done(tmp_path):
     src = _source(tmp_path)
-    dst = make_subset(src, tmp_path / "sub", (1, 2))
+    dst = make_subset(src.root, tmp_path / "sub", (1, 2))
     assert [r.frame for r in dst.load_frames()] == [1, 2]
     assert (dst.root / "frames/00001.png").exists() and not (dst.root / "frames/00000.png").exists()
     m = dst.manifest_read()
@@ -47,7 +48,7 @@ def test_subset_keeps_range_and_marks_decode_done(tmp_path):
 
 def test_subset_shares_the_source_call_cache(tmp_path):
     src = _source(tmp_path)
-    dst = make_subset(src, tmp_path / "sub", (0, 3))
+    dst = make_subset(src.root, tmp_path / "sub", (0, 3))
     assert dst.cache_dir.is_symlink() and (dst.cache_dir / "k.json").exists()
     (dst.cache_dir / "new.json").write_text("{}")
     assert (src.cache_dir / "new.json").exists()
@@ -57,9 +58,33 @@ def test_subset_shares_the_source_call_cache(tmp_path):
 
 def test_subset_private_cache_and_refusals(tmp_path):
     src = _source(tmp_path)
-    dst = make_subset(src, tmp_path / "sub2", (0, 0), share_cache=False)
+    dst = make_subset(src.root, tmp_path / "sub2", (0, 0), share_cache=False)
     assert dst.cache_dir.is_dir() and not dst.cache_dir.is_symlink() and not (dst.cache_dir / "k.json").exists()
     with pytest.raises(FileExistsError):
-        make_subset(src, tmp_path / "sub2", (0, 0))
+        make_subset(src.root, tmp_path / "sub2", (0, 0))
     with pytest.raises(ValueError):
-        make_subset(src, tmp_path / "sub3", (9, 9))
+        make_subset(src.root, tmp_path / "sub3", (9, 9))
+
+
+def test_subset_imports_a_legacy_directory(tmp_path):
+    old = tmp_path / "old"
+    (old / "frames").mkdir(parents=True)
+    recs = []
+    for n in range(4):
+        Image.new("L", (8, 8), 40 * n).save(old / "frames" / f"{n:05d}.png")
+        recs.append(Frame(video_id="v", frame=n, t_change=n, t_settled=n + 0.1, t_end=n + 1, settled=n != 2,
+                          width=8, height=8, sha256=f"{n:064x}", png=f"frames/{n:05d}.png"))
+    write_jsonl(old / "stage1.jsonl", recs)
+    (old / "frames.jsonl").write_text('{"not": "a frame"}\n')  # the pre-re-base merged file: never read
+    (old / "manifest.json").write_text(json.dumps({"video": "v.mp4", "video_id": "v", "stages": {
+        "stage1": {"inputs": "v.mp4:abc", "config": "cfg", "emitted": 4, "settled": 3}}}))
+
+    def listing():
+        return sorted((str(p.relative_to(old)), p.stat().st_size if p.is_file() else -1) for p in old.rglob("*"))
+
+    before = listing()
+    dst = make_subset(old, tmp_path / "new", (1, 2), share_cache=False)
+    assert [r.frame for r in dst.load_frames()] == [1, 2]
+    stages = dst.manifest_read()["stages"]
+    assert stages["decode"]["emitted"] == 2 and "stage1" not in stages
+    assert listing() == before
