@@ -49,7 +49,9 @@ class OcrFrame(BaseModel):
 
 
 # ---------- Stage 2c VLM output (§8.3) ----------
-class VlmRegion(BaseModel):
+# VlmRegionGroupOnly / VlmPerceptionGroupOnly are the group-only output (`[model] stage2c_transcribe = false`): the same
+# fields without vlm_lines. The transcribing models extend them, so their JSON schemas (and cache keys) are unchanged.
+class VlmRegionGroupOnly(BaseModel):
     id: str = Field(description="Region id you assign: r1, r2, … unique in this frame.")
     kind: Literal["window", "pane", "popup"] = Field(description="window = top-level application window; pane = an area inside a window; popup = menu, dialog, tooltip, toast.")
     name: str = Field(description="Short human name for the region, e.g. 'Windows Terminal — pwsh', 'left navigation', 'Save dialog'.")
@@ -58,16 +60,29 @@ class VlmRegion(BaseModel):
     conf: float = Field(description="Your 0-1 confidence that this region exists as described and its marks are grouped correctly.")
     occludes: list[str] = Field(default_factory=list, description="Ids of regions this region visually covers, in whole or in part.")
     rows: list[list[str]] = Field(default_factory=list, description="The region's visual lines in reading order. Each row lists the mark numbers (as 'l7') that sit on that one visual line, left to right; [] for a line the boxes missed. Every mark appears in exactly one row of exactly one region, or in unassigned_line_ids.")
+
+
+class VlmRegion(VlmRegionGroupOnly):
     vlm_lines: list[str] = Field(default_factory=list, description="Verbatim text of each row, one entry per row, same order and length as rows. Transcribe from the clean image. Preserve case, punctuation, whitespace and symbols; never correct, complete or normalize code, commands, paths or identifiers; use ? for a character you cannot resolve; do not transcribe icons.")
 
 
-class VlmPerception(BaseModel):
-    regions: list[VlmRegion]
+class VlmPerceptionGroupOnly(BaseModel):
+    regions: list[VlmRegionGroupOnly]
     focused_region: str | None = Field(description="Id of the window that has keyboard focus, or null if unclear.")
     focused_conf: float = Field(description="0-1 confidence in focused_region.")
     focused_cues: list[str] = Field(default_factory=list, description="Visual cues used: title bar highlight, caret visible, dialog modality, …")
     description: str = Field(description="Anything the rows cannot express: selections, highlights, toggles, icons, diagram relationships, dialogs, animating regions.")
     unassigned_line_ids: list[str] = Field(default_factory=list, description="Marks that belong to no region.")
+
+
+class VlmPerception(VlmPerceptionGroupOnly):
+    regions: list[VlmRegion]
+
+
+def perception_from_group_only(out: VlmPerceptionGroupOnly) -> VlmPerception:
+    """Group-only output in the usual shape: an empty transcription per row, which Stage 3 treats as no reading (§8.3)."""
+    regions = [VlmRegion(**r.model_dump(), vlm_lines=[""] * len(r.rows)) for r in out.regions]
+    return VlmPerception(**out.model_dump(exclude={"regions"}), regions=regions)
 
 
 class PerceptionRecord(BaseModel):

@@ -79,7 +79,7 @@ def build_region_lines(vr: VlmRegion, ocr_by_id: dict[str, OcrLine], cfg: MergeC
     seen: set[str] = set()
     vcount = 0
     for k, row in enumerate(vr.rows):
-        vtext = vr.vlm_lines[k] if k < len(vr.vlm_lines) else None
+        vtext = (vr.vlm_lines[k] or None) if k < len(vr.vlm_lines) else None  # "" is no reading (group-only Stage 2c, §8.3)
         ms = [ocr_by_id[m] for m in row if m in ocr_by_id and m not in seen]
         if not row or not ms:
             if vtext is not None:

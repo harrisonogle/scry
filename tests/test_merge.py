@@ -84,3 +84,21 @@ def test_merge_frame_end_to_end_with_perception_error_falls_back_to_ocr_only():
     fr = merge_frame(s1, of, perc, CFG)
     assert fr.error == "refusal" and len(fr.regions) == 1 and [l.ocr for l in fr.regions[0].lines] == ["hello", "world"]
     assert fr.regions[0].kind == "unknown"
+
+
+def test_empty_vlm_text_is_no_reading():
+    """Group-only Stage 2c (§8.3) hands merge "" per row: lines stay OCR-only, and an empty row makes no VLM-only line."""
+    by_id = {l.id: l for l in [ocr("l1", 10, 40, 60, 58, "PS C:\\src>"), ocr("l2", 70, 40, 200, 58, "git status"),
+                                ocr("l3", 10, 60, 120, 78, "On branch main"), ocr("l4", 10, 400, 80, 418, "far away")]}
+    vr = VlmRegion(id="r1", kind="window", name="Terminal", app="Windows Terminal", parent=None, conf=0.9,
+                   rows=[["l1", "l2"], ["l3", "l4"], []], vlm_lines=["", "", ""])
+    lines, rejected, pending = build_region_lines(vr, by_id, CFG)
+    assert [l.marks for l in lines] == [["l1", "l2"], ["l3"], ["l4"]] and rejected == 1 and pending == []
+    assert all(l.vlm is None and l.agree is None and l.ocr for l in lines)
+    assert lines[0].fused == "PS C:\\src> git status" and not lines[0].uncertain
+    s1 = Stage1Record(video_id="v", frame=3, t_change=1, t_settled=1.2, t_end=5, settled=True, width=500, height=500, sha256="x", png="frames/00003.png")
+    perc = PerceptionRecord(frame=3, model="m", prompt_version="s2c-v1+grouponly",
+                            output=VlmPerception(regions=[vr], focused_region="r1", focused_conf=0.8, description="d"))
+    fr = merge_frame(s1, OcrFrame(frame=3, engine="e", lines=list(by_id.values())), perc, CFG)
+    assert fr.prompt_version == "s2c-v1+grouponly" and fr.description == "d"
+    assert [l.id for l in fr.regions[0].lines] == ["l1", "l3", "l4"] and all(l.vlm is None for l in fr.regions[0].lines)

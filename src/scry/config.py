@@ -73,6 +73,7 @@ class ModelConfig(BaseModel):
     effort_stage6: Effort = "medium"
     effort_agent: Effort = "high"
     stage2c_mark_coords: bool = False  # list each mark's box in the Stage 2c prompt (ledger L30 experiment)
+    stage2c_transcribe: bool = True  # False: Stage 2c groups marks into regions and rows but transcribes nothing (§18.3 item 3 ablation)
     max_tokens: int = 16000
     retry_max_tokens: int = 32000
     concurrency: int = 4

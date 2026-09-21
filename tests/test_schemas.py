@@ -10,6 +10,7 @@ def test_config_defaults_and_hash_are_stable(tmp_path: Path):
     assert cfg.stage1.detect.theta_comp == 24
     assert config_hash(cfg, "stage1") == config_hash(Config(), "stage1")
     assert config_hash(cfg, "stage1") != config_hash(cfg, "merge")
+    assert cfg.model.stage2c_transcribe is True  # group-only Stage 2c is opt-in (§8.3)
 
 
 def test_frame_record_roundtrip(tmp_path: Path):
@@ -32,3 +33,15 @@ def test_line_fused_prefers_stripped_reading():
     assert line.fused == "Search"
     unc = Line(id="l2", marks=["l2"], bbox=(0, 0, 1, 1), ocr="maln", ocr_conf=1.0, vlm="main", agree=False, in_churn=False)
     assert unc.fused == "maln" and unc.uncertain
+
+
+def test_group_only_perception_converts_to_the_usual_shape():
+    from scry.schemas import VlmPerception, VlmPerceptionGroupOnly, VlmRegion, VlmRegionGroupOnly, perception_from_group_only
+    r = VlmRegionGroupOnly(id="r1", kind="window", name="Terminal", app="T", parent=None, conf=0.9, occludes=["r2"], rows=[["l1", "l2"], ["l3"], []])
+    out = VlmPerceptionGroupOnly(regions=[r], focused_region="r1", focused_conf=0.8, focused_cues=["caret"], description="d", unassigned_line_ids=["l4"])
+    conv = perception_from_group_only(out)
+    assert isinstance(conv, VlmPerception) and conv.regions[0].vlm_lines == ["", "", ""]  # one empty entry per row, [] included
+    assert conv.regions[0].model_dump(exclude={"vlm_lines"}) == r.model_dump()
+    assert conv.model_dump(exclude={"regions"}) == out.model_dump(exclude={"regions"})
+    assert "vlm_lines" not in VlmRegionGroupOnly.model_json_schema()["properties"]
+    assert list(VlmRegion.model_json_schema()["properties"])[-1] == "vlm_lines"
