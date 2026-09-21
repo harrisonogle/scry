@@ -9,7 +9,8 @@ from typing import Protocol
 
 from pydantic import BaseModel
 
-from scry.config import IndexConfig
+from scry.config import Config, IndexConfig, config_hash
+from scry.run import Run
 
 log = logging.getLogger(__name__)
 
@@ -185,3 +186,22 @@ def search(db: sqlite3.Connection, query: str, cfg: IndexConfig, embedder: Embed
                         "t": [row[6], row[7]], "apps": json.loads(row[8]), "containers": json.loads(row[9]), "text": row[10],
                         "payload": json.loads(row[11]), "score": round(score, 5)})
     return out
+
+
+# ---------- the stage ----------
+def build_index(run: Run, cfg: Config) -> None:
+    """index.sqlite, rebuilt from scratch from whatever records the run has."""
+    inputs = [run.frames, run.boxes, run.changes, run.lifetimes, run.annotations, run.interpretations, run.steps, run.sections,
+              run.video, run.outline]
+    ch = config_hash(cfg, "index")
+    if run.stage_up_to_date("index", inputs, ch):
+        log.info("index up to date")
+        return
+    from scry.nodes import extract_nodes  # nodes imports Node from here
+
+    nodes, stats = extract_nodes(run)
+    run.index_db.unlink(missing_ok=True)
+    db = open_db(run.index_db)
+    index_nodes(db, nodes, get_embedder(cfg.index))
+    db.close()
+    run.stage_done("index", inputs, ch, **stats, embedder=cfg.index.embedder)

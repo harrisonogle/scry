@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable
 
-from scry.changetext import text_of
+from scry.changetext import PAIR_KINDS, text_of
 from scry.index import Node
 from scry.run import Run
-from scry.schemas import Frame, FrameBoxes, Lifetime, box_ref, link_members
+from scry.schemas import Change, Frame, FrameBoxes, HierNode, Interpretation, Lifetime, box_ref, link_members
 
 if TYPE_CHECKING:
     from scry.annotate.join import Labels, LifetimeLink
@@ -127,3 +127,75 @@ def lifetime_nodes(run: Run, lifetimes: list[Lifetime], labels: Labels | None) -
                      "container": {"app": container.app, "name": container.name, "kind": container.kind} if container is not None else None,
                      "links": links}))
     return nodes
+
+
+def _parent_of(parents: list[HierNode], child_ids: list[str]) -> dict[str, str]:
+    """child id → the id of the parent whose `children` range holds it."""
+    out: dict[str, str] = {}
+    for n in parents:
+        first, last = n.children
+        inside = False
+        for cid in child_ids:
+            inside = inside or cid == first
+            if inside:
+                out[cid] = n.id
+            if cid == last:
+                inside = False
+    return out
+
+
+def transition_nodes(run: Run, changes: list[Change], interps: dict[str, Interpretation], labels: Labels | None,
+                     steps: list[HierNode], sections: list[HierNode]) -> list[Node]:
+    """One entry for every change. `submitted` is not index text (yes and no match everything); it is in the payload."""
+    vid = run.video_id
+    step_of = _parent_of(steps, [c.id for c in changes])
+    section_of = _parent_of(sections, [s.id for s in steps])
+    nodes = []
+    for c in changes:
+        ip = interps.get(c.id)
+        lines = [ip.entered_text, ip.action, ip.result] if ip is not None else []
+        for r in c.records:
+            if r.kind in PAIR_KINDS:
+                lines += [r.before.text, r.after.text]
+        if not any(lines):  # not widened: with appeared texts always listed, a page load would be a second whole-screen entry
+            lines = [r.after.text for r in c.records if r.kind == "appeared"] + [r.before.text for r in c.records if r.kind == "removed"]
+        text = "\n".join(line for line in lines if line)
+        if not text:
+            continue
+        containers = labels.frame(c.to_frame).containers if labels is not None else []
+        step_id = step_of.get(c.id)
+        nodes.append(Node(node_id=f"{vid}:{c.id}", video_id=vid, level="transition", item_id=c.id, frames=(c.from_frame, c.to_frame),
+                          t=c.t, apps=sorted({k.app for k in containers if k.app}), step_id=step_id,
+                          section_id=section_of.get(step_id) if step_id is not None else None, chapter_id=_chapter_id(run, c.t[1]),
+                          text=text, payload={"change": c.model_dump(), "interpretation": ip.model_dump() if ip is not None else None}))
+    return nodes
+
+
+def summary_nodes(run: Run, steps: list[HierNode], sections: list[HierNode], video: HierNode | None) -> list[Node]:
+    """Steps, sections, the video and the outline's chapters."""
+    vid = run.video_id
+    section_of = _parent_of(sections, [s.id for s in steps])
+    nodes = [Node(node_id=f"{vid}:{s.id}", video_id=vid, level="step", item_id=s.id, frames=s.frames, t=s.t, step_id=s.id,
+                  section_id=section_of.get(s.id), text=f"{s.label}\n{s.description}", payload=s.model_dump()) for s in steps]
+    nodes += [Node(node_id=f"{vid}:{c.id}", video_id=vid, level="section", item_id=c.id, frames=c.frames, t=c.t, section_id=c.id,
+                   text=f"{c.label}\n{c.description}", payload=c.model_dump()) for c in sections]
+    if video is not None:
+        nodes.append(Node(node_id=f"{vid}:V", video_id=vid, level="video", item_id="V", frames=video.frames, t=video.t,
+                          text=f"{video.label}\n{video.description}", payload=video.model_dump()))
+    nodes += [Node(node_id=f"{vid}:{c.id}", video_id=vid, level="chapter", item_id=c.id, frames=(0, 0), t=(c.start_s, c.end_s),
+                   chapter_id=c.id, text=f"{c.title}\n{c.gist}", payload=c.model_dump()) for c in run.load_outline()]
+    return nodes
+
+
+def extract_nodes(run: Run) -> tuple[list[Node], dict]:
+    """Every entry of a run, and what was extracted. It runs with any of the model stages' files absent."""
+    labels, lifetimes = run.load_labels(), run.load_lifetimes()
+    steps, sections = run.load_steps(), run.load_sections()
+    nodes = frame_nodes(run, run.load_frames(), {fb.frame: fb for fb in run.load_boxes()}, lifetimes, labels)
+    nodes += lifetime_nodes(run, lifetimes, labels)
+    nodes += transition_nodes(run, run.load_changes(), run.load_interpretations(), labels, steps, sections)
+    nodes += summary_nodes(run, steps, sections, run.load_video())
+    by_level: dict[str, int] = {}
+    for n in nodes:
+        by_level[n.level] = by_level.get(n.level, 0) + 1
+    return nodes, {"nodes": len(nodes), "by_level": by_level, "labels": labels is not None}

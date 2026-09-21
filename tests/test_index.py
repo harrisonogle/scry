@@ -1,5 +1,9 @@
-from scry.config import IndexConfig
-from scry.index import Node, fts_query, index_nodes, open_db, rrf, search, trigram_query
+from pathlib import Path
+
+from minirun import mini_interpretations, mini_run
+
+from scry.config import Config, IndexConfig
+from scry.index import Node, build_index, fts_query, index_nodes, open_db, rrf, search, trigram_query
 
 
 def node(i, text, level="transition", t=(0.0, 1.0), apps=("Windows Terminal",)):
@@ -35,3 +39,18 @@ def test_index_and_search_exact_identifiers_and_substrings(tmp_path):
     assert [h["node_id"] for h in hits] == ["n3"]
     hits = search(db, "kubectl", cfg, t_from=0, t_to=25)
     assert hits == []
+
+
+def test_build_index_stats_and_rerun(tmp_path: Path):
+    run = mini_run(tmp_path, labels=True)
+    mini_interpretations(run)
+    build_index(run, Config())
+    stats = run.manifest_read()["stages"]["index"]
+    assert stats["by_level"] == {"frame": 4, "lifetime": 7, "transition": 3}
+    assert (stats["nodes"], stats["labels"], stats["embedder"]) == (14, True, "none")
+    built = run.index_db.stat()
+    build_index(run, Config())  # up to date: nothing is rebuilt
+    assert run.index_db.stat().st_mtime_ns == built.st_mtime_ns
+    run.interpretations.unlink()
+    build_index(run, Config())  # an input changed
+    assert run.index_db.stat().st_mtime_ns != built.st_mtime_ns

@@ -75,6 +75,14 @@ def summarize(run_dir: Path, config: Path | None = None, verbose: bool = False):
 
 
 @app.command()
+def index(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """index: build index.sqlite: a whole-screen entry per frame, an entry per lifetime and per transition, the summaries."""
+    _setup_logging(verbose)
+    from scry.index import build_index
+    build_index(Run(run_dir), load_config(config))
+
+
+@app.command()
 def report(run_dir: Path, frames: str | None = typer.Option(None, "--frames", help="inclusive frame range, e.g. 155-187"),
            ground_truth: Path | None = typer.Option(None, "--ground-truth", help="a command list in the format of docs/ground-truth/span2-commands.md"),
            out: str = typer.Option("report.md", "--out", help="file name inside the run directory"),

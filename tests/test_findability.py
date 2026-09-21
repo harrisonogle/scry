@@ -5,8 +5,8 @@ from pathlib import Path
 
 from minirun import mini_run
 
-from scry.config import IndexConfig
-from scry.index import fts_query, index_nodes, open_db, search, trigram_query
+from scry.config import Config, IndexConfig
+from scry.index import build_index, fts_query, index_nodes, open_db, search, trigram_query
 from scry.jsonl import write_jsonl
 from scry.nodes import frame_nodes, lifetime_nodes
 from scry.run import Run
@@ -94,3 +94,13 @@ def test_every_reading_and_both_joins_are_searchable(tmp_path: Path):
     index_nodes(db, list(lifetimes.values()), None)
     for query in ("--no-edit", '"--no-ed it"', "comit"):
         assert search(db, query, IndexConfig())[0]["node_id"] == "v:L1", query
+
+
+def test_index_without_annotations_holds_every_ocr_text(tmp_path: Path):
+    run = mini_run(tmp_path)  # no labels, no interpretations
+    build_index(run, Config())
+    db = open_db(run.index_db)
+    for fb in run.load_boxes():
+        for b in fb.boxes:
+            hits = search(db, '"' + b.text + '"', IndexConfig(k=50))
+            assert any(h["frames"][0] <= fb.frame <= h["frames"][1] for h in hits), (fb.frame, b.id)

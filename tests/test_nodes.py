@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from minirun import mini_run
+from minirun import mini_interpretations, mini_run
 
-from scry.nodes import frame_nodes, lifetime_nodes, link_anchor, link_lines
-from scry.schemas import PairLink, RecordLink, RunLink
+from scry.nodes import frame_nodes, lifetime_nodes, link_anchor, link_lines, summary_nodes, transition_nodes
+from scry.schemas import HierNode, PairLink, RecordLink, RunLink
 
 
 def _frame_nodes(run):
@@ -74,3 +74,41 @@ def test_lifetime_nodes_without_labels(tmp_path: Path):
     payload = nodes["v:L5"].payload
     assert (payload["readers"]["vlm"], payload["agree"], payload["non_text"], payload["container"]) == (None, None, False, None)
     assert nodes["v:L5"].apps == []
+
+
+def _transition_nodes(run, steps=(), sections=()):
+    nodes = transition_nodes(run, run.load_changes(), run.load_interpretations(), run.load_labels(), list(steps), list(sections))
+    return {n.node_id: n for n in nodes}
+
+
+def test_transition_nodes(tmp_path: Path):
+    run = mini_run(tmp_path)
+    mini_interpretations(run)
+    nodes = _transition_nodes(run)
+    assert nodes["v:T1"].text == ('git st\nThe user typed " st" in the terminal; the shell offers "atus" as a completion.\n'
+                                  'The command line now reads git st with a greyed suggestion.\nC:\\src> git\nC:\\src> git status')
+    t2 = nodes["v:T2"]  # its records are `appeared` and the interpretation left something, so the fallback does not apply
+    assert t2.text == 'git status\nThe user pressed Enter.\nGit printed "On branch main" and a new prompt appeared.'
+    assert (t2.level, t2.item_id, t2.frames, t2.t) == ("transition", "T2", (11, 12), (26.0, 26.4))
+    assert t2.payload["interpretation"]["submitted"] == "yes"
+    assert t2.payload["change"]["id"] == "T2"
+    assert nodes["v:T3"].text.endswith("\nCreating\nSucceeded")
+
+
+def test_transition_node_without_interpretation(tmp_path: Path):
+    nodes = _transition_nodes(mini_run(tmp_path))
+    assert nodes["v:T1"].text == "C:\\src> git\nC:\\src> git status"
+    assert nodes["v:T2"].text == "On branch main\nC:\\src>"  # the appeared records
+    assert nodes["v:T2"].payload["interpretation"] is None
+
+
+def test_step_and_section_ids_on_transitions(tmp_path: Path):
+    run = mini_run(tmp_path)
+    steps = [HierNode(id="S1", level="step", children=("T1", "T2"), frames=(10, 12), t=(24.0, 26.4), label="a", description="b"),
+             HierNode(id="S2", level="step", children=("T3", "T3"), frames=(12, 13), t=(30.0, 30.4), label="c", description="d")]
+    sections = [HierNode(id="C1", level="section", children=("S1", "S2"), frames=(10, 13), t=(24.0, 30.4), label="e", description="f")]
+    nodes = _transition_nodes(run, steps, sections)
+    assert (nodes["v:T2"].step_id, nodes["v:T3"].step_id) == ("S1", "S2")
+    assert (nodes["v:T2"].section_id, nodes["v:T3"].section_id) == ("C1", "C1")
+    summaries = {n.node_id: n for n in summary_nodes(run, steps, sections, None)}
+    assert (summaries["v:S1"].section_id, summaries["v:S2"].section_id, summaries["v:S1"].text) == ("C1", "C1", "a\nb")
