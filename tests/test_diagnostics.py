@@ -34,3 +34,15 @@ def test_mark_match_counts_rows_whose_text_matches_the_named_marks():
                     rows=[["l1"], ["l2"], [], ["l1"]], vlm_lines=["az login", "Storage", "missed line", ""])
     per = [PerceptionRecord(frame=0, model="m", prompt_version="v", output=VlmPerception(regions=[reg], focused_region=None, focused_conf=0, description="", unassigned_line_ids=[]))]
     assert mark_match(ocr, per) == (1, 2)  # row 1 matches, row 2 does not; the empty row and the empty text are skipped
+
+
+def test_pixel_gate_counts_vetoed_ops_and_gated_transitions():
+    from scry.diagnostics import pixel_gate_counts
+    from scry.schemas import PixelChange, Transition
+
+    def t(pixels):
+        return Transition(id="T", from_frame=1, to_frame=2, t=(1, 2), kind="single", pixels=pixels)
+
+    ts = [t(PixelChange(changed_fraction=0.001, vetoed=4)), t(PixelChange(changed_fraction=0.05, vetoed=1)),
+          t(PixelChange(changed_fraction=0.3, vetoed=0)), t(None)]
+    assert pixel_gate_counts(ts, 0.05) == (5, 2)

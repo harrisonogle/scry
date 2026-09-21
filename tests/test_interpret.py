@@ -1,5 +1,5 @@
 from scry.interpret import render_diff, render_transition_line, validate_refs
-from scry.schemas import DiffOp, Event, FrameRecord, Line, Region, RegionDiff, Transition
+from scry.schemas import DiffOp, Event, FrameRecord, Line, PixelChange, Region, RegionDiff, Transition
 
 
 def ln(i, text, y, agree=True, vlm=None):
@@ -37,6 +37,15 @@ def test_render_diff_names_the_pane_an_op_came_from():
     assert '  insert: "Node pools" [pane: left navigation]' in text
     assert '  delete: "gone" [pane: r7]' in text  # an id the from-frame does not know is shown as is
     assert "readings disagree" not in text
+
+
+def test_render_diff_ends_the_ops_with_the_changed_pixel_line():
+    a, b = frame(1, [ln(1, "x", 40)]), frame(2, [ln(1, "x", 40)])
+    t = Transition(id="T1", from_frame=1, to_frame=2, t=(2.0, 2.1), kind="single",
+                   pixels=PixelChange(changed_fraction=0.000227, components=[(1, 2, 3, 4), (5, 6, 7, 8)], vetoed=3))
+    text = render_diff(t, {1: a, 2: b})
+    assert text == "No text changes were computed; look for non-textual change.\nPixels changed: 0.02% of the screen in 2 areas"
+    assert "Pixels changed" not in render_diff(Transition(id="T1", from_frame=1, to_frame=2, t=(2.0, 2.1), kind="single"), {1: a, 2: b})
 
 
 def test_validate_refs_drops_unknown_frames_and_lines():

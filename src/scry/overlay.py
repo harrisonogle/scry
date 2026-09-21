@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -45,21 +46,34 @@ def _font(cfg: OverlayConfig):
         return ImageFont.load_default()
 
 
+def scale_image(img: Image.Image, scale: float) -> Image.Image:
+    """The frame downscaled by `scale` (LANCZOS); unchanged at 1.0. Stage 2c scales the clean frame the same way, so
+    the two images the model sees stay the same size."""
+    if scale == 1.0:
+        return img
+    return img.resize((round(img.width * scale), round(img.height * scale)), Image.LANCZOS)
+
+
+def _scale_box(box: BBox, scale: float) -> BBox:
+    x0, y0, x1, y1 = box  # rounded outward so the box still encloses its text
+    return (math.floor(x0 * scale), math.floor(y0 * scale), math.ceil(x1 * scale), math.ceil(y1 * scale))
+
+
 def draw_overlay(png_in: Path, lines: list[OcrLine], png_out: Path, cfg: OverlayConfig) -> int:
-    img = Image.open(png_in).convert("RGBA")
+    img = scale_image(Image.open(png_in).convert("RGBA"), cfg.scale)
     W, H = img.size
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer)
-    font = _font(cfg)
-    boxes = [ln.bbox for ln in lines]
+    font = _font(cfg)  # font_size is not scaled: the tags stay legible when the frame shrinks
+    boxes = [_scale_box(ln.bbox, cfg.scale) for ln in lines]
     clashes = 0
-    for ln in lines:
-        x0, y0, x1, y1 = ln.bbox
+    for ln, box in zip(lines, boxes):
+        x0, y0, x1, y1 = box
         draw.rectangle((x0, y0, max(x1 - 1, x0), max(y1 - 1, y0)), outline=COLOR, width=1)
         label = ln.id[1:]  # "l17" → "17"
         l, t, r, b = font.getbbox(label)
         lw, lh = (r - l) + 2 * PAD, (b - t) + 2 * PAD
-        x, y, clash = place_label(ln.bbox, lw, lh, boxes, W, H)
+        x, y, clash = place_label(box, lw, lh, boxes, W, H)
         clashes += int(clash)
         draw.rectangle((x, y, x + lw - 1, y + lh - 1), fill=LABEL_BG)
         draw.text((x + PAD - l, y + PAD - t), label, fill=LABEL_FG, font=font)

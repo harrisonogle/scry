@@ -224,6 +224,7 @@ class DiffOp(BaseModel):
     clock: bool = False
     in_churn: bool = False
     pane: str | None = None  # region the new line (old line for a delete) came from, when it is not the unit itself (§11.1)
+    under_change: bool | None = None  # the line's box meets a changed-pixel component (§11.2 pixel gate); None when the line has no box
 
 
 class RegionDiff(BaseModel):
@@ -253,6 +254,13 @@ class TransientInfo(BaseModel):
     hold_s: float
 
 
+class PixelChange(BaseModel):
+    """Changed pixels between the two frames' PNGs, by Stage 1's rule (§11.2 pixel gate)."""
+    changed_fraction: float  # changed pixels / screen
+    components: list[BBox] = []  # tight boxes of the changed components
+    vetoed: int = 0  # ops dropped by the gate
+
+
 class Transition(BaseModel):
     id: str
     from_frame: int
@@ -264,6 +272,7 @@ class Transition(BaseModel):
     computed_diff: dict[str, RegionDiff] = {}
     events: list[Event] = []
     transient: TransientInfo | None = None
+    pixels: PixelChange | None = None
 
 
 class FocusRecord(BaseModel):

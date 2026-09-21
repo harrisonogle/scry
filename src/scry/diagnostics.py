@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from scry.config import Config
 from scry.run import Run
-from scry.schemas import OcrFrame, PerceptionRecord
+from scry.schemas import OcrFrame, PerceptionRecord, Transition
 from scry.textdiff import norm, similarity
 
 PRICES = {  # $ per million tokens, input / output / cache read (2026-09-13 list prices)
@@ -68,7 +69,13 @@ def mark_match(ocr_frames: list[OcrFrame], perception: list[PerceptionRecord], t
     return hit, total
 
 
-def diagnostics(run: Run) -> dict:
+def pixel_gate_counts(ts: list[Transition], max_fraction: float) -> tuple[int, int]:
+    """(ops vetoed by the §11.2 pixel gate, transitions whose changed_fraction is at or below the gate's threshold)."""
+    with_pixels = [t for t in ts if t.pixels is not None]
+    return sum(t.pixels.vetoed for t in with_pixels), sum(1 for t in with_pixels if t.pixels.changed_fraction <= max_fraction)
+
+
+def diagnostics(run: Run, cfg: Config) -> dict:
     frames = run.load_frames()
     flat = [{"settled": f.settled, "lines": [{"agree": l.agree, "ocr": l.ocr} for r in f.regions for l in r.lines]} for f in frames]
     d = summarize(flat)
@@ -80,6 +87,7 @@ def diagnostics(run: Run) -> dict:
     ts = run.load_transitions()
     d["transitions"] = {k: sum(1 for t in ts if t.kind == k) for k in ("single", "coalesced", "transient_merged", "unsettled", "trivial")}
     d["fragment_stability"] = fragment_stability(frames, ts)
+    d["ops_vetoed"], d["pixel_gated_transitions"] = pixel_gate_counts(ts, cfg.diff.pixel_gate_max_fraction)
     interps = run.load_interpretations()
     d["invalid_refs"] = sum(i.invalid_refs for i in interps.values())
     m = run.manifest_read()

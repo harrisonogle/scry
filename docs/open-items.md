@@ -42,6 +42,11 @@ design's §21. This list is the short "what next" view across all three.
       and 3 in frame 155), so panes "appeared" and "disappeared" and their lines showed up as deleted and inserted
       noise while the windows were stable in all 11 frames. Correspondence and the diff now run over window-level
       units (parent-null regions plus popups); panes are labels only (ledger L31, design §11.1 revision 5.5).
+- [x] **Most structural ops on near-static transitions were OCR jitter.** On the five smoke transitions with
+      < 0.3 % of the screen changed, 90 of 96 ops sat on lines with no changed pixel. Stage 4 now gates those ops with
+      Stage 1's pixel rule (`[diff] pixel_gate_max_fraction = 0.05`): 81 ops vetoed on `runs/smoke-pixelgate`, T9
+      reduced to the one PowerShell prompt op. On a gated transition the typed and output rules need an op under
+      changed pixels; no-box VLM-only rows ride along but are not evidence (ledger L32, design §11.2–§11.3 revision 5.7).
 
 ## Needs the owner (hand-made ground truth, design §18.1)
 

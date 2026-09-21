@@ -1,7 +1,7 @@
 from scry.coalesce import coalesce, merge_transients, retrospective_focus, tag_trivial
 from scry.config import DiffConfig
 from scry.diff import diff_pair
-from scry.schemas import FrameRecord, Line, Region
+from scry.schemas import FrameRecord, Line, PixelChange, Region
 
 CFG = DiffConfig()
 
@@ -75,6 +75,32 @@ def test_clock_only_transition_is_trivial():
     frames = [frame(0, [term([ln(1, "Tue 14:02", 40)])]), frame(1, [term([ln(1, "Tue 14:03", 40)])])]
     t = tag_trivial(singles(frames)[0])
     assert t.kind == "trivial"
+
+
+def test_output_rule_on_a_gated_transition_needs_a_boxed_insert_under_changed_pixels():
+    frames = [frame(0, [term([ln(1, "PS> ls", 40)])]), frame(1, [term([ln(1, "PS> ls", 40), ln(2, "a.txt", 60), ln(3, "b.txt", 80)])])]
+    t = singles(frames)[0]
+    t.pixels = PixelChange(changed_fraction=0.001)  # gated
+    ins = t.computed_diff["r1"].ops
+    ins[0].under_change = ins[1].under_change = None  # VLM-only rows without a box: never vetoed, never evidence
+    assert coalesce(frames, [t], CFG)[0].events == []
+    ins[0].under_change = True  # one boxed insert under changed pixels carries the no-box one along
+    out = coalesce(frames, [t], CFG)
+    assert [e.type for e in out[0].events] == ["output_appended"] and out[0].events[0].lines == 2
+    for pixels in (PixelChange(changed_fraction=0.3), None):  # above the threshold, or no pixel evidence: the old rule
+        t.events, t.pixels, ins[0].under_change = [], pixels, None
+        assert [e.type for e in coalesce(frames, [t], CFG)[0].events] == ["output_appended"]
+
+
+def test_typed_rule_on_a_gated_transition_needs_the_modify_under_changed_pixels():
+    # a modify can sit on a no-box line: _ys carries the last boxed y forward, so two adjacent VLM-only rows pair by y
+    frames = [frame(0, [term([ln(1, "PS> ", 40)])]), frame(1, [term([ln(1, "PS> ls", 40)])])]
+    t = singles(frames)[0]
+    t.pixels = PixelChange(changed_fraction=0.001)
+    t.computed_diff["r1"].ops[0].under_change = None
+    assert coalesce(frames, [t], CFG)[0].events == []
+    t.computed_diff["r1"].ops[0].under_change = True
+    assert [e.type for e in coalesce(frames, [t], CFG)[0].events] == ["typed"]
 
 
 def test_retrospective_focus_attributes_typing_to_from_frame():

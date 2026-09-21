@@ -45,3 +45,10 @@ def test_group_only_perception_converts_to_the_usual_shape():
     assert conv.model_dump(exclude={"regions"}) == out.model_dump(exclude={"regions"})
     assert "vlm_lines" not in VlmRegionGroupOnly.model_json_schema()["properties"]
     assert list(VlmRegion.model_json_schema()["properties"])[-1] == "vlm_lines"
+
+
+def test_transition_without_pixels_still_loads():
+    old = ('{"id": "T1", "from_frame": 1, "to_frame": 2, "t": [1.0, 2.0], "kind": "single", '
+           '"computed_diff": {"r1": {"from_region": "r1", "ops": [{"op": "insert", "new": "x", "new_index": 0}]}}}')
+    t = Transition.model_validate_json(old)
+    assert t.pixels is None and t.computed_diff["r1"].ops[0].under_change is None

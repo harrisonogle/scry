@@ -60,6 +60,7 @@ class OcrConfig(BaseModel):
 class OverlayConfig(BaseModel):
     font_size: int = 12
     font_path: str = "/System/Library/Fonts/Menlo.ttc"
+    scale: float = Field(1.0, gt=0, le=1)  # < 1 sends both Stage 2c images downscaled by this factor; tags keep font_size
 
 
 Effort = Literal["low", "medium", "high", "xhigh", "max"]
@@ -98,6 +99,7 @@ class DiffConfig(BaseModel):
     corr_w_app: float = 0.1
     corr_w_name: float = 0.1
     corr_accept: float = 0.3
+    pixel_gate_max_fraction: float = 0.05  # §11.2 pixel gate: veto ops on unchanged lines when this fraction of the screen or less changed; 0 = off
 
 
 class HierarchyConfig(BaseModel):

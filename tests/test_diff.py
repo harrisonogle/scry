@@ -1,5 +1,11 @@
-from scry.config import DiffConfig
-from scry.diff import diff_pair, diff_region
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+
+from scry.coalesce import tag_trivial
+from scry.config import DetectParams, DiffConfig
+from scry.diff import PixelSource, diff_pair, diff_region
 from scry.schemas import FrameRecord, Line, Region
 
 
@@ -46,3 +52,51 @@ def test_ops_carry_the_pane_a_line_came_from():
     assert [(o.op, o.new, o.new_index, o.pane) for o in diff_pair(a, b, DiffConfig()).computed_diff["r1"].ops] == [("insert", "Node pools", 2, "r2")]
     ops = diff_pair(b, c, DiffConfig()).computed_diff["r1"].ops  # a delete names the from-frame pane; the unit's own line none
     assert [(o.op, o.old, o.pane) for o in ops] == [("modify", "title", None), ("delete", "Node pools", "r2")]
+
+
+# ---------- §11.2 pixel gate: synthetic PNG pairs, 320×120 white frames with black boxes ----------
+def write_png(path: Path, dark: list[tuple[int, int, int, int]]) -> None:
+    img = np.full((120, 320), 255, np.uint8)
+    for x0, y0, x1, y1 in dark:
+        img[y0:y1, x0:x1] = 0
+    Image.fromarray(img).convert("RGB").save(path)
+
+
+def pixel_pair(tmp_path: Path, a_lines, b_lines, b_dark):
+    """Frame a is blank; frame b has the given boxes painted. Line boxes are (10, y, 300, y + 18); an unchanged line
+    between two changed ones keeps Myers from emitting delete, delete, insert, insert, which pair_modifies does not pair."""
+    write_png(tmp_path / "a.png", [])
+    write_png(tmp_path / "b.png", b_dark)
+    a, b = frame(1, [reg("r1", a_lines)]), frame(2, [reg("r1", b_lines)])
+    a.png, b.png = "a.png", "b.png"
+    return a, b, PixelSource(tmp_path, DetectParams())
+
+
+def test_pixel_gate_keeps_the_op_under_changed_pixels_and_vetoes_the_jitter(tmp_path: Path):
+    # line 1's box gains 600 px of ink (1.56 % of the frame); line 3 is pixel-identical but OCR read it differently
+    a, b, px = pixel_pair(tmp_path, [ln(1, "PS> ", 40), ln(2, "keep", 60), ln(3, "old", 80)], [ln(1, "PS> git", 40), ln(2, "keep", 60), ln(3, "o1d", 80)], [(20, 44, 80, 54)])
+    t = diff_pair(a, b, DiffConfig(), px)
+    assert t.pixels.changed_fraction == 600 / 38400 and t.pixels.components == [(20, 44, 80, 54)] and t.pixels.vetoed == 1
+    assert [(o.op, o.new, o.under_change) for o in t.computed_diff["r1"].ops] == [("modify", "PS> git", True)]
+    assert diff_pair(a, b, DiffConfig()).pixels is None  # without a pixel source nothing is measured or vetoed
+
+
+def test_pixel_gate_leaves_a_transition_above_the_threshold_alone(tmp_path: Path):
+    a, b, px = pixel_pair(tmp_path, [ln(1, "PS> ", 40), ln(2, "keep", 60), ln(3, "old", 80)], [ln(1, "PS> git", 40), ln(2, "keep", 60), ln(3, "o1d", 80)],
+                          [(20, 44, 80, 54), (0, 100, 320, 120)])  # 18.2 % of the frame changed, below every line
+    t = diff_pair(a, b, DiffConfig(), px)
+    assert t.pixels.changed_fraction > 0.05 and len(t.pixels.components) == 2 and t.pixels.vetoed == 0
+    assert [(o.new, o.under_change) for o in t.computed_diff["r1"].ops] == [("PS> git", True), ("o1d", False)]
+
+
+def test_pixel_gate_off_still_marks_under_change(tmp_path: Path):
+    a, b, px = pixel_pair(tmp_path, [ln(1, "PS> ", 40), ln(2, "keep", 60), ln(3, "old", 80)], [ln(1, "PS> git", 40), ln(2, "keep", 60), ln(3, "o1d", 80)], [(20, 44, 80, 54)])
+    t = diff_pair(a, b, DiffConfig(pixel_gate_max_fraction=0), px)
+    assert t.pixels.vetoed == 0 and [o.under_change for o in t.computed_diff["r1"].ops] == [True, False]
+
+
+def test_transition_with_every_op_vetoed_is_not_trivial(tmp_path: Path):
+    a, b, px = pixel_pair(tmp_path, [ln(1, "old", 40)], [ln(1, "o1d", 40)], [(0, 100, 60, 110)])  # ink below every line
+    t = tag_trivial(diff_pair(a, b, DiffConfig(), px))
+    assert t.computed_diff == {} and t.pixels.vetoed == 1 and t.pixels.changed_fraction > 0
+    assert t.kind == "single"  # something visual changed; Stage 5 still looks

@@ -104,3 +104,67 @@ def test_perceive_group_only_mode_sends_the_grouping_prompt_and_schema(tmp_path)
     assert call["system"] == stage2c.SYSTEM_GROUP_ONLY and call["output_model"] is VlmPerceptionGroupOnly
     assert call["prompt_version"] == rec.prompt_version == prompt_version(False, transcribe=False)
     assert rec.output.regions[0].rows == [["l1", "l2"]] and rec.output.regions[0].vlm_lines == [""] and rec.repairs == 0
+
+
+def test_build_blocks_scale_downscales_the_clean_frame_in_memory(tmp_path):
+    import base64
+    import io
+
+    from PIL import Image
+
+    from scry.perceive import build_blocks, prompt_version
+    from scry.schemas import OcrFrame, OcrLine, Stage1Record
+    png, ov = tmp_path / "f.png", tmp_path / "o.png"
+    Image.new("RGB", (16, 8), (7, 7, 7)).save(png)
+    Image.new("RGB", (8, 4)).save(ov)  # the overlay stage already wrote it at the scaled size
+    rec = Stage1Record(video_id="v", frame=3, t_change=0, t_settled=1.0, t_end=2, settled=True, width=16, height=8, sha256="x", png="f.png")
+    ocr = OcrFrame(frame=3, engine="e", settings={}, seconds=0, lines=[OcrLine(id="l1", bbox=(1, 2, 3, 4), text="a", conf=1.0)])
+    blocks = build_blocks(rec, ocr, png, ov, coords=True, scale=0.5)
+    frame, overlay = [Image.open(io.BytesIO(base64.b64decode(b["source"]["data"]))) for b in blocks if b["type"] == "image"]
+    assert frame.size == (8, 4) and overlay.size == (8, 4)
+    assert frame.convert("RGB").getpixel((0, 0)) == (7, 7, 7)
+    assert sorted(q.name for q in tmp_path.iterdir()) == ["f.png", "o.png"] and Image.open(png).size == (16, 8)  # nothing written
+    [marks] = [b["text"] for b in blocks if b["type"] == "text" and b["text"].startswith("Marks present")]
+    assert "l1: 1,2,3,4" in marks and "original 16x8 frame; the images are scaled by 0.5" in marks  # boxes stay in frame pixels
+    [plain] = [b["text"] for b in build_blocks(rec, ocr, png, png, coords=True) if b["type"] == "text" and b["text"].startswith("Marks present")]
+    assert "scaled" not in plain and "pixels in Image 1" in plain
+    # the scale is part of the cache key only when it is not 1.0
+    assert prompt_version(False, scale=1.0) == prompt_version(False)
+    assert prompt_version(False, scale=0.5) == prompt_version(False) + "+s0.5"
+    assert prompt_version(True, transcribe=False, scale=0.5) == prompt_version(True) + "+grouponly+s0.5"
+
+
+def test_perceive_threads_the_overlay_scale_into_the_call(tmp_path):
+    import asyncio
+    import base64
+    import io
+
+    from PIL import Image
+
+    from scry.config import Config, ModelConfig, OverlayConfig
+    from scry.jsonl import write_jsonl
+    from scry.perceive import _perceive_all, prompt_version
+    from scry.providers.base import VlmResult
+    from scry.run import Run
+    from scry.schemas import OcrFrame, OcrLine, Stage1Record
+
+    run = Run(tmp_path)
+    Image.new("RGB", (16, 8)).save(run.frames_dir / "00003.png")
+    Image.new("RGB", (8, 4)).save(run.overlays_dir / "00003.png")
+    write_jsonl(run.stage1, [Stage1Record(video_id="v", frame=3, t_change=0, t_settled=1.0, t_end=2, settled=True, width=16, height=8, sha256="x", png="frames/00003.png")])
+    write_jsonl(run.ocr, [OcrFrame(frame=3, engine="e", lines=[OcrLine(id="l1", bbox=(1, 2, 3, 4), text="a", conf=1.0)])])
+
+    class Fake:
+        model = "fake"
+        calls: list[dict] = []
+
+        async def complete(self, **kw):
+            self.calls.append(kw)
+            return VlmResult(None, "skipped", {})
+
+    cfg = Config(overlay=OverlayConfig(scale=0.5), model=ModelConfig(stage2c_transcribe=False))
+    [rec] = asyncio.run(_perceive_all(run, cfg, Fake()))
+    [call] = Fake.calls
+    assert call["prompt_version"] == rec.prompt_version == prompt_version(False, transcribe=False, scale=0.5)
+    sizes = [Image.open(io.BytesIO(base64.b64decode(b["source"]["data"]))).size for b in call["blocks"] if b["type"] == "image"]
+    assert sizes == [(8, 4), (8, 4)]

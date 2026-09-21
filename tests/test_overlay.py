@@ -55,3 +55,34 @@ def test_labels_are_opaque_high_contrast_tags(tmp_path: Path):
     tag = {im.getpixel((x, y)) for x in range(122, 140) for y in range(6, 34)}  # the label sits right of the box
     assert (255, 255, 0) in tag  # opaque backing, not blended with the frame
     assert min(sum(c) for c in tag) < 250  # dark digit pixels on it
+
+
+def _tag_rows(im: Image.Image, xs: range, ys: range) -> set[int]:
+    return {y for x in xs for y in ys if im.getpixel((x, y)) == (255, 255, 0)}
+
+
+def test_draw_overlay_scale_halves_the_image_and_boxes_but_not_the_tags(tmp_path: Path):
+    src = tmp_path / "f.png"
+    Image.new("RGB", (320, 120), (200, 200, 200)).save(src)
+    lines = [OcrLine(id="l7", bbox=(10, 11, 121, 29), text="a", conf=1.0)]
+    full, half = tmp_path / "full.png", tmp_path / "half.png"
+    draw_overlay(src, lines, full, OverlayConfig())
+    clashes = draw_overlay(src, lines, half, OverlayConfig(scale=0.5))
+    im = Image.open(half).convert("RGB")
+    assert im.size == (160, 60) and clashes == 0
+    # the box is scaled outward: (10,11,121,29) → (5,5,61,15), drawn as an outline through (5,5) and (60,14)
+    assert im.getpixel((5, 5)) == (255, 0, 255) and im.getpixel((60, 14)) == (255, 0, 255)
+    assert im.getpixel((30, 10)) == (200, 200, 200)  # interior untouched
+    # the tag still sits right of the (scaled) box, and it is as tall as at full size: font_size is not scaled
+    half_rows = _tag_rows(im, range(63, 90), range(0, 30))
+    full_rows = _tag_rows(Image.open(full).convert("RGB"), range(123, 150), range(0, 50))
+    assert half_rows and len(half_rows) == len(full_rows)
+
+
+def test_overlay_scale_is_bounded():
+    import pytest
+    from pydantic import ValidationError
+    assert OverlayConfig().scale == 1.0
+    for bad in (0, -0.5, 1.5):
+        with pytest.raises(ValidationError):
+            OverlayConfig(scale=bad)

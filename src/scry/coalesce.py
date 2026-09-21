@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 
 from scry.config import Config, DiffConfig, config_hash
-from scry.diff import diff_pair
+from scry.diff import PixelSource, diff_pair, is_gated
 from scry.jsonl import write_jsonl
 from scry.merge import caret_region, combine_focus
 from scry.run import Run
@@ -28,13 +28,15 @@ def _typed_op(t: Transition, region: str, cfg: DiffConfig) -> DiffOp | None:
     if rd is None or len(rd.ops) != 1 or rd.ops[0].op != "modify":
         return None
     o = rd.ops[0]
+    if is_gated(t, cfg) and o.under_change is not True:  # on a gated transition a no-box line is not evidence (§11.2)
+        return None
     a, b = norm(o.old or ""), norm(o.new or "")
     if lcp_len(a, b) >= len(a) - cfg.typed_tolerance and len(b) >= len(a) - cfg.typed_tolerance and _other_ops_ok(t, region):
         return o
     return None
 
 
-def _output_ops(t: Transition, region: str, prev_count: int, cur_count: int) -> list[DiffOp] | None:
+def _output_ops(t: Transition, region: str, prev_count: int, cur_count: int, cfg: DiffConfig) -> list[DiffOp] | None:
     rd = t.computed_diff.get(region)
     if rd is None or not rd.ops:
         return None
@@ -45,6 +47,8 @@ def _output_ops(t: Transition, region: str, prev_count: int, cur_count: int) -> 
     if any(o.old_index != k for k, o in enumerate(dels)):
         return None
     if any(o.new_index < cur_count - len(ins) for o in ins):
+        return None
+    if is_gated(t, cfg) and not any(o.under_change for o in ins):  # no-box inserts ride along but cannot be the only evidence (§11.2)
         return None
     if not _other_ops_ok(t, region):
         return None
@@ -64,9 +68,10 @@ def _kind(members: list[Transition]) -> str:
     return "coalesced"
 
 
-def _build(frames_by_id: dict[int, FrameRecord], members: list[Transition], events: list[Event], cfg: DiffConfig) -> Transition:
+def _build(frames_by_id: dict[int, FrameRecord], members: list[Transition], events: list[Event], cfg: DiffConfig,
+           pixels: PixelSource | None = None) -> Transition:
     first, last = members[0], members[-1]
-    t = diff_pair(frames_by_id[first.from_frame], frames_by_id[last.to_frame], cfg)
+    t = diff_pair(frames_by_id[first.from_frame], frames_by_id[last.to_frame], cfg, pixels)
     t.intermediate_frames = [m.from_frame for m in members[1:]] if len(members) > 1 else []
     t.intermediate_frames = sorted(set(t.intermediate_frames) | {f for m in members for f in m.intermediate_frames})
     t.kind = _kind(members)
@@ -78,7 +83,7 @@ def _build(frames_by_id: dict[int, FrameRecord], members: list[Transition], even
 
 
 # ---------- §11.4 transients ----------
-def merge_transients(frames: list[FrameRecord], singles: list[Transition], cfg: DiffConfig) -> list[Transition]:
+def merge_transients(frames: list[FrameRecord], singles: list[Transition], cfg: DiffConfig, pixels: PixelSource | None = None) -> list[Transition]:
     by_id = {f.frame: f for f in frames}
     out: list[Transition] = []
     i = 0
@@ -98,7 +103,7 @@ def merge_transients(frames: list[FrameRecord], singles: list[Transition], cfg: 
                         continue
                     hold = nxt.t_change - mid.t_change
                     if hold < cfg.transient_max_s:
-                        merged = diff_pair(by_id[t1.from_frame], nxt, cfg)
+                        merged = diff_pair(by_id[t1.from_frame], nxt, cfg, pixels)
                         merged.kind = "transient_merged"
                         merged.intermediate_frames = [mid.frame]
                         merged.transient = TransientInfo(frame=mid.frame, region=rid, name=region.name, hold_s=round(hold, 3))
@@ -113,7 +118,7 @@ def merge_transients(frames: list[FrameRecord], singles: list[Transition], cfg: 
 
 
 # ---------- §11.3 coalescing ----------
-def coalesce(frames: list[FrameRecord], transitions: list[Transition], cfg: DiffConfig) -> list[Transition]:
+def coalesce(frames: list[FrameRecord], transitions: list[Transition], cfg: DiffConfig, pixels: PixelSource | None = None) -> list[Transition]:
     by_id = {f.frame: f for f in frames}
     out: list[Transition] = []
     i = 0
@@ -160,7 +165,7 @@ def coalesce(frames: list[FrameRecord], transitions: list[Transition], cfg: Diff
                     continue
                 prev_f, cur_f = by_id[nxt.from_frame], by_id[nxt.to_frame]
                 from_rid = nxt.computed_diff[rid].from_region
-                ins = _output_ops(nxt, rid, len(prev_f.unit_lines(from_rid)) if from_rid else 0, len(cur_f.unit_lines(rid)))
+                ins = _output_ops(nxt, rid, len(prev_f.unit_lines(from_rid)) if from_rid else 0, len(cur_f.unit_lines(rid)), cfg)
                 if ins is not None:
                     found = (rid, ins)
                     break
@@ -189,7 +194,7 @@ def coalesce(frames: list[FrameRecord], transitions: list[Transition], cfg: Diff
                 t1.events = events
                 out.append(t1)
             else:
-                out.append(_build(by_id, members, events, cfg))
+                out.append(_build(by_id, members, events, cfg, pixels))
             i = k
             continue
         out.append(t)
@@ -249,17 +254,19 @@ def assign_ids(transitions: list[Transition]) -> None:
 
 def run_diff(run: Run, cfg: Config) -> None:
     inputs = [run.frames]
-    ch = config_hash(cfg, "diff")
+    ch = config_hash(cfg, "diff", "stage1")  # the pixel gate reads the PNGs with the [stage1.detect] parameters
     if run.stage_up_to_date("diff", inputs, ch):
         log.info("diff up to date")
         return
     frames = run.load_frames()
-    singles = [diff_pair(a, b, cfg.diff) for a, b in zip(frames, frames[1:])]
-    ts = merge_transients(frames, singles, cfg.diff)
-    ts = coalesce(frames, ts, cfg.diff)
+    pixels = PixelSource(run.root, cfg.stage1.detect)
+    singles = [diff_pair(a, b, cfg.diff, pixels) for a, b in zip(frames, frames[1:])]
+    ts = merge_transients(frames, singles, cfg.diff, pixels)
+    ts = coalesce(frames, ts, cfg.diff, pixels)
     ts = [tag_trivial(t) for t in ts]
     assign_ids(ts)
     write_jsonl(run.transitions, ts)
     write_jsonl(run.focus, retrospective_focus(frames, ts))
     run.stage_done("diff", inputs, ch, transitions=len(ts), trivial=sum(t.kind == "trivial" for t in ts),
-                   coalesced=sum(t.kind == "coalesced" for t in ts), transient=sum(t.kind == "transient_merged" for t in ts))
+                   coalesced=sum(t.kind == "coalesced" for t in ts), transient=sum(t.kind == "transient_merged" for t in ts),
+                   vetoed=sum(t.pixels.vetoed for t in ts if t.pixels is not None))

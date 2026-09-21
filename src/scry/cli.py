@@ -163,7 +163,7 @@ def run(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None
             if keys.get(name) in st:  # per-stage wall time (§18.4)
                 st[keys[name]]["seconds"] = round(time.perf_counter() - t0, 1)
                 r.manifest_update(stages=st)
-    r.manifest_update(diagnostics=diagnostics(r))
+    r.manifest_update(diagnostics=diagnostics(r, cfg))
     typer.echo(json.dumps(r.manifest_read().get("diagnostics", {}), indent=2))
 
 

@@ -67,6 +67,7 @@ corr_w_iou = 0.3
 corr_w_app = 0.1
 corr_w_name = 0.1
 corr_accept = 0.3
+pixel_gate_max_fraction = 0.05
 
 [hierarchy]
 window = 2000

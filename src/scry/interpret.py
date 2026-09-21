@@ -68,6 +68,10 @@ def render_diff(t: Transition, frames: dict[int, FrameRecord]) -> str:
                 src = lines[o.new_index]
             if src is not None and src.agree is False and src.ocr and src.vlm:
                 out.append(f"    readings disagree — OCR: {src.ocr} | VLM: {src.vlm}")
+    if not out:
+        out.append("No text changes were computed; look for non-textual change.")
+    if t.pixels is not None:
+        out.append(f"Pixels changed: {100 * t.pixels.changed_fraction:.2f}% of the screen in {len(t.pixels.components)} areas")
     for e in t.events:
         if e.type == "typed":
             out.append(f'Coalesced event: typed "{e.text}" (line now: "{e.line}") over frames {e.frames[0]}→{e.frames[1]}')
@@ -75,7 +79,7 @@ def render_diff(t: Transition, frames: dict[int, FrameRecord]) -> str:
             out.append(f"Coalesced event: {e.lines} output lines appended over frames {e.frames[0]}→{e.frames[1]}")
     if t.kind == "unsettled":
         out.append("One of these frames was captured while the screen was still changing.")
-    return "\n".join(out) if out else "No text changes were computed; look for non-textual change."
+    return "\n".join(out)
 
 
 def build_blocks(t: Transition, frames: dict[int, FrameRecord], run: Run, chapter: OutlineChapter | None, previous: list[Transition]) -> list[dict]:
