@@ -61,6 +61,15 @@ def test_annotate_section_loads_and_rejects_bad_values(tmp_path: Path):
             load_config(_toml(tmp_path, f"[annotate]\n{bad}\n"))
 
 
+def test_arm_key(tmp_path: Path):
+    assert Config().annotate.arm == "A" and load_config(REPO / "scry.toml").annotate.arm == "A"
+    cfg = load_config(_toml(tmp_path, '[annotate]\narm = "D"\n'))
+    assert (cfg.annotate.arm, cfg.annotate.mode) == ("D", "incremental")  # arm D answers by box id, as arm A does: every mode works
+    for letter in ("B", "C", "E", "d"):
+        with pytest.raises(pydantic.ValidationError):
+            load_config(_toml(tmp_path, f'[annotate]\narm = "{letter}"\n'))
+
+
 def test_incremental_mode(tmp_path: Path):
     assert load_config(_toml(tmp_path, '[annotate]\nmode = "incremental"\n')).annotate.mode == "incremental"
     cfg = load_config(_toml(tmp_path, '[annotate]\nmode = "incremental"\n\n[model]\nmode = "batch"\n'))
