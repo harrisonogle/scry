@@ -61,6 +61,12 @@ def test_annotate_section_loads_and_rejects_bad_values(tmp_path: Path):
             load_config(_toml(tmp_path, f"[annotate]\n{bad}\n"))
 
 
+def test_incremental_mode(tmp_path: Path):
+    assert load_config(_toml(tmp_path, '[annotate]\nmode = "incremental"\n')).annotate.mode == "incremental"
+    cfg = load_config(_toml(tmp_path, '[annotate]\nmode = "incremental"\n\n[model]\nmode = "batch"\n'))
+    assert (cfg.annotate.mode, cfg.model.mode) == ("incremental", "batch")  # calls are independent, so batch mode works
+
+
 def test_config_hash_is_stable_per_section(tmp_path: Path):
     cfg = load_config(tmp_path / "missing.toml")
     assert cfg.decode.detect.theta_comp == 24

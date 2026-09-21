@@ -1,5 +1,4 @@
-from scry.metrics import (box_stability, fragmentation, incremental_projection, select, targets, totals,
-                          touched_share_low_half)
+from scry.metrics import box_stability, fragmentation, incremental_projection, select, totals, touched_share_low_half
 from scry.schemas import Box, BoxChange, BoxText, Change, FrameBoxes, FrameTime, Lifetime, PixelStats
 
 
@@ -48,11 +47,6 @@ def test_fragmentation():
     assert fragmentation([])["per_text"] is None
 
 
-def test_targets():
-    c = change(1, records=[rec("appended", "1:b2"), rec("reread", "1:b4"), rec("appeared", "1:b7"), rec("removed")], flicker_new=["1:b9"])
-    assert targets(c) == ["1:b2", "1:b7", "1:b9"]
-
-
 def test_incremental_projection():
     def fb(frame: int, n: int) -> FrameBoxes:
         return FrameBoxes(frame=frame, png="", engine={}, boxes=[Box(id=f"b{i}", bbox=(0, 0, 1, 1), text="x", conf=1.0) for i in range(1, n + 1)])
@@ -60,10 +54,12 @@ def test_incremental_projection():
     boxes = [fb(0, 100), fb(1, 101), fb(2, 101), fb(3, 113)]
     changes = [change(1, pixels=px(), records=[rec("appended", "1:b5")]), change(2, pixels=px()),
                change(3, pixels=px(), records=[rec("appeared", f"3:b{i}") for i in range(1, 13)])]
-    assert incremental_projection(boxes, changes) == {"frames": 4, "boxes": 415, "calls": 4, "calls_without_targets": 1, "target_boxes": 113,
-                                                      "share_of_boxes": 0.2723, "targets_per_call": 28.25, "boxes_per_frame": 103.75}
+    # a lifetime starts at the after box of each record; every box of the first frame is a target by rule
+    lifetimes = [life(1, "y", ["1:b5"])] + [life(1 + i, "y", [f"3:b{i}"]) for i in range(1, 13)]
+    assert incremental_projection(boxes, changes, lifetimes) == {"frames": 4, "boxes": 415, "calls": 4, "calls_without_targets": 1, "target_boxes": 113,
+                                                                 "share_of_boxes": 0.2723, "targets_per_call": 28.25, "boxes_per_frame": 103.75}
     changes[1].pixels.components = 0
-    p = incremental_projection(boxes, changes)
+    p = incremental_projection(boxes, changes, lifetimes)
     assert (p["calls"], p["calls_without_targets"], p["target_boxes"], p["targets_per_call"]) == (3, 0, 113, 37.67)
 
 

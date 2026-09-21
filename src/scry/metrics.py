@@ -5,6 +5,7 @@ import math
 import statistics
 from collections import Counter
 
+from scry.annotate.targets import plan_calls
 from scry.schemas import Change, FrameBoxes, Lifetime, parse_box_ref
 
 
@@ -56,21 +57,15 @@ def fragmentation(lifetimes: list[Lifetime], top: int = 20) -> dict:
             "top": sorted(per_text.items(), key=lambda kv: (-kv[1], kv[0]))[:top]}
 
 
-def targets(change: Change) -> list[str]:
-    """The boxes whose lifetime starts in the later frame: what an incremental labelling call would have to label.
-    A reread continues its lifetime and is not a target."""
-    return [r.after.box for r in change.records if r.kind in ("appended", "truncated", "changed", "appeared")] + list(change.flicker_new)
-
-
-def incremental_projection(boxes: list[FrameBoxes], changes: list[Change]) -> dict:
-    """The calls and target boxes incremental annotation would make: one call for the first frame, with every box a
-    target, and one for every transition in which pixels changed (or that has no pixel data), even if no box did,
-    because the screen description must be refreshed. What it saves is boxes per call, not calls."""
-    calling = [c for c in changes if c.pixels is None or c.pixels.components >= 1]
+def incremental_projection(boxes: list[FrameBoxes], changes: list[Change], lifetimes: list[Lifetime]) -> dict:
+    """The calls and target boxes incremental annotation would make, taken from the stage's own planner so the price
+    and the stage cannot drift apart: one call for the first frame, with every box a target, and one for every
+    transition in which pixels changed (or that has no pixel data), even if no lifetime starts there, because the
+    screen description must be refreshed. What it saves is boxes per call, not calls."""
+    plans = plan_calls(boxes, changes, lifetimes, "incremental")
     n_frames, n_boxes = len(boxes), sum(len(b.boxes) for b in boxes)
-    calls = (1 if n_frames else 0) + len(calling)
-    target_boxes = (len(boxes[0].boxes) if boxes else 0) + sum(len(targets(c)) for c in calling)
-    return {"frames": n_frames, "boxes": n_boxes, "calls": calls, "calls_without_targets": sum(1 for c in calling if not targets(c)),
+    calls, target_boxes = len(plans), sum(len(p.targets) for p in plans)
+    return {"frames": n_frames, "boxes": n_boxes, "calls": calls, "calls_without_targets": sum(1 for p in plans if not p.targets),
             "target_boxes": target_boxes, "share_of_boxes": round(target_boxes / n_boxes, 4) if n_boxes else None,
             "targets_per_call": round(target_boxes / calls, 2) if calls else None,
             "boxes_per_frame": round(n_boxes / n_frames, 2) if n_frames else None}

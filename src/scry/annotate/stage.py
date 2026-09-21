@@ -1,6 +1,11 @@
 """The annotate stage: one model call per frame that proposes labels for OCR boxes (containers, typed links,
 optionally a second reading, a screen description) → annotations.jsonl. Labels are proposals: nothing here alters or
-gates a measured record, and every request is built from measured records only, so no call depends on another."""
+gates a measured record, and every request is built from measured records only, so no call depends on another.
+
+An incremental call is the every-frame call with a shorter target list: the same system prompt, schema, images and
+prompt version, with only the `Targets:` line of the user turn naming fewer boxes. Which frames get a call and which
+boxes are targets is `plan_calls`' answer, read from track's records alone; what the labels mean at a later frame is
+the join's (`scry.annotate.join`)."""
 from __future__ import annotations
 
 import asyncio
@@ -79,7 +84,7 @@ async def _annotate_all(run: Run, cfg: Config, provider: VlmProvider, frames: di
 
 def run_annotate(run: Run, cfg: Config, provider: VlmProvider | None = None) -> None:
     a = cfg.annotate
-    inputs = [run.frames, run.boxes]
+    inputs = [run.frames, run.boxes] + ([run.changes, run.lifetimes] if a.mode == "incremental" else [])
     version = prompt_version(ARM, a.transcribe, PANE, a.scale)
     ch = config_hash(cfg, "annotate", "model", "overlay", "track") + version
     frames = run.load_frames()
@@ -97,7 +102,13 @@ def run_annotate(run: Run, cfg: Config, provider: VlmProvider | None = None) -> 
         if f.frame not in boxes:
             raise ValueError(f"frame {f.frame} has no record in {run.boxes.name}: run `scry read` first")
     frame_boxes = [boxes[f.frame] for f in frames]
-    plans = plan_calls(frame_boxes, [], [], "every_frame")
+    changes, lifetimes = [], []
+    if a.mode == "incremental":  # the call frames and the targets come from track's records
+        for path in (run.changes, run.lifetimes):
+            if not path.exists():
+                raise ValueError(f"{path.name} is missing: run `scry track` first")
+        changes, lifetimes = run.load_changes(), run.load_lifetimes()
+    plans = plan_calls(frame_boxes, changes, lifetimes, a.mode)
     provider = provider or get_provider(cfg, run)
 
     async def stage_fn(run: Run, cfg: Config, provider: VlmProvider) -> list[Annotation]:
@@ -116,7 +127,7 @@ def run_annotate(run: Run, cfg: Config, provider: VlmProvider | None = None) -> 
     hits, total = mark_match(records, frame_boxes) if a.transcribe else (0, 0)
     cost = estimate_cost(usage, provider.model, batch=cfg.model.mode == "batch")  # one figure, at the price paid (L52)
     run.stage_done("annotate", inputs, ch, mode=a.mode, arm=ARM, transcribe=a.transcribe, prompt_version=version,
-                   model=provider.model, frames=len(frames), calls=len(records),
+                   model=provider.model, frames=len(frames), calls=len(records), skipped_frames=len(frames) - len(records),
                    boxes=sum(len(boxes[r.frame].boxes) for r in records), targets=sum(len(r.targets) for r in records),
                    errors=len(failed), transient_errors=sum(is_transient(r.error) for r in failed),
                    failed_targets=sum(len(r.targets) for r in failed), repairs=sum(r.repairs for r in records),

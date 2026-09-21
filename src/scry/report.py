@@ -101,7 +101,7 @@ def build_report(run: Run, cfg: Config, frames: tuple[int, int] | None = None, g
 
     L += ["## Incremental annotation projection", "",
           "A labelling call for the first frame and for every transition in which pixels changed; the targets are the boxes whose lifetime starts.",
-          "", *_dict_lines(incremental_projection(boxes, changes)), ""]
+          "", *_dict_lines(incremental_projection(boxes, changes, lifetimes)), ""]
 
     L += ["## Text changes", ""]
     for c in changes:
