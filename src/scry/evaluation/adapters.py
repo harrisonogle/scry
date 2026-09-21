@@ -1,0 +1,46 @@
+"""Plain functions, and the only module of the harness that touches the pipeline's loaders, its search index and `ask`:
+a renamed loader costs one function here, never a metric. Pipeline modules are imported inside the functions."""
+from __future__ import annotations
+
+from contextlib import closing
+from typing import Callable
+
+from scry.config import Config
+from scry.run import Run
+from scry.schemas import Change, Interpretation, Lifetime
+
+
+def lifetimes(run: Run) -> list[Lifetime]:
+    return run.load_lifetimes()
+
+
+def changes(run: Run) -> list[Change]:
+    return run.load_changes()
+
+
+def interpretations(run: Run) -> dict[str, Interpretation]:
+    """By change id; `{}` when interpretations.jsonl is absent."""
+    return run.load_interpretations()
+
+
+def vlm_majority(run: Run) -> dict[str, str]:
+    """Lifetime id → the model's majority reading, where there is one; `{}` without labels or without transcription."""
+    labels = run.load_labels()
+    if labels is None:
+        return {}
+    labelled = ((l.id, labels.lifetime(l.id)) for l in run.load_lifetimes())
+    return {i: label.vlm for i, label in labelled if label is not None and label.vlm is not None}
+
+
+def search_fn(run: Run, cfg: Config) -> Callable[[str], list[dict]] | None:
+    """The agent's lexical search with no filter and no embedder; None when the run has no index.sqlite (never created
+    here). Each hit carries `node_id`, `level` and `frames` (first and last frame)."""
+    if not run.index_db.exists():
+        return None
+    from scry.index import open_db, search
+
+    def hits_for(query: str) -> list[dict]:
+        with closing(open_db(run.index_db)) as db:
+            return search(db, query, cfg.index, embedder=None)
+
+    return hits_for
