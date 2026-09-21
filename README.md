@@ -5,7 +5,8 @@ timestamped, queryable "visual transcript": every distinct screen state with its
 every change between states with what the user did, a step/section hierarchy, and a searchable index.
 
 - Design: `docs/visual-transcript-pipeline-design.md` (revision 3)
-- Implementation plan: `docs/superpowers/plans/2026-09-13-visual-transcript-pipeline.md`
+- Implementation plans: `docs/superpowers/plans/` (the v1 plan of 2026-09-13; the re-base plans `2026-09-21-rebase-boxes-1` to `-4`)
+- Evaluation results: `docs/results/`
 - Decisions made without the owner present: `docs/decision-ledger.md`
 - Design reviews: `docs/reviews/`
 - Contributing: `CONTRIBUTING.md`
@@ -24,35 +25,30 @@ it in); `scry` loads `.env` at startup and a variable already in the environment
     uv run scry run assets/create-aks-cluster-tutorial.mp4 --out runs/aks
     uv run scry ask runs/aks "what command created the cluster?"
 
-Each stage can be run alone (`scry decode|ocr|overlay|perceive|merge|diff|interpret|hierarchy|index <run-dir>`);
-every stage is idempotent and skips itself when its inputs and configuration are unchanged. To exercise the model
-stages on a few frames before paying for a whole video, derive a subset run from an existing Stage 1 output:
-`scry subset runs/aks --out runs/smoke --frames 145-155`, then `scry run <video> --out runs/smoke` (Stage 1 is
-marked done; the subset shares the source run's call cache, so those calls are free again in the full run).
+The stages, in order: `decode, outline, read, track, annotate, interpret, summarize, index`; then `ask` answers a
+question over the index. `decode` and `outline` take the video and `--out`; every other stage takes the run directory
+(`scry read runs/aks`), is idempotent and skips itself when its inputs and configuration are unchanged; `scry run … --stages
+read,track` runs a selection. Beside the stages:
+
+- `scry subset runs/aks --out runs/smoke --frames 145-155` derives a small run from decoded frames, for cheap live checks;
+- `scry report <run-dir> [--frames 155-187] [--ground-truth <list>]` writes what `track` measured, with evidence sheets;
+- `scry eval run|judge|report <matrix.toml>` runs an evaluation matrix cold (costs money; `--dry-run` spends nothing), has a
+  judge model score the answers, and writes `docs/results/<phase>/report.md`.
 
 ## Tests
 
     uv run pytest
 
-## Status (2026-09-13)
+## Status (2026-09-21)
 
-Every stage of the design is implemented and unit-tested (76 tests over synthetic frames, hand-written records and a
-fake model client; no test touches the sample video or the network). What has and has not been exercised for real:
+The pipeline was re-based on OCR boxes (branch `rebase-boxes`): `read` detects and reads text boxes, `track` follows them
+across frames into lifetimes and transitions, `annotate` has a model group and label them, `interpret` says what the user
+did at each transition, `summarize` builds steps and sections, `index` makes it all searchable for `ask`. Every stage is
+unit-tested over synthetic frames, hand-written records and fake model clients; no test touches the sample video or the
+network. The first paid evaluation (P1, frames 155 to 187 of the sample video, 18 cold runs) is in `docs/results/p1/`;
+what it showed and what follows is ledger row L57; open items are in `docs/open-items.md`.
 
-| Stage | Verified on the sample video | Notes |
-|---|---|---|
-| 1 decode / detect / settle | yes — 221 frames emitted (192 settled) from 14.2 min of 1080p/30 fps in ~4 min 40 s | median 2.7 s between states; carets found on 29 frames (the sample's terminal cursor does not blink, so terminal frames have none) |
-| 2a OCR (Apple Vision) | yes — 13.3k lines, ~53 per frame, 33 s total | Vision reports confidence 1.0 almost everywhere; `agree` (Stage 3) is the real signal |
-| 2b overlays | yes — 6 s, ~1 % of labels could not avoid every box | |
-| 2c perception, 5 interpretation, 6 hierarchy, 7 agent | **no live calls** — no Anthropic key on the build machine | exercised on a synthetic run without credentials: errors are recorded per record, nothing is cached, later stages fall back and complete |
-| 3 merge, 4/4b diff + coalescing, 7 index + search | on the synthetic run | with OCR-only regions (the perception fallback) |
-| 0 outline (Gemini) | no | optional; `--import` a JSON outline instead |
-
-To run the model stages: set `ANTHROPIC_API_KEY` (or log in with the `ant` CLI) and re-run `uv run scry run … --out runs/aks`;
-finished stages are skipped and the ≈ 221 frames go through perception and interpretation (design §19.6 estimates
-$18–45 on `claude-opus-5`; halve it with `[model] mode = "batch"` in `scry.toml`). Retrieval is lexical-only until an
-embedder is configured (`[index] embedder`). A stage re-runs only when its inputs or its configuration section change;
-after a code change to a stage, delete its entry from `runs/<id>/manifest.json` (or the run directory).
-
-Known limitations worth knowing before the first real run are listed in the design's §22 (open questions) and in the
-decision ledger (L23–L26).
+Model calls use `claude-opus-5`; `[model] mode = "batch"` in `scry.toml` halves the price of `annotate` and `interpret`.
+Retrieval is lexical-only until an embedder is configured (`[index] embedder`). A stage re-runs only when its inputs or
+its configuration section change; after a code change to a stage, delete its entry from `runs/<id>/manifest.json` (or
+the run directory).
