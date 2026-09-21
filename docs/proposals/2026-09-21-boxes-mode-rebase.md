@@ -1,335 +1,414 @@
 # Proposal: re-base the pipeline on boxes mode
 
-Status: **draft for the owner's review, 2026-09-21. No code has been written against it.** If accepted it becomes
-design revision 7 and replaces §4 (parts), §8.3, §9, §10.1–10.2, §10.6, §11, §15.1–15.2 and the affected rows of
-§14, §16, §17 and §18 of `docs/visual-transcript-pipeline-design.md`. Stage 0, Stage 1, Stage 2a, Stage 6, the
-provider, the call cache and the `subset` tool are untouched.
+Status: **revision 2, 2026-09-21, for the owner's review. No code has been written against it.** Revision 1 is commit
+`0a3135e`; its two reviews are `docs/reviews/2026-09-21-boxes-mode-rebase-review-{fork,fresh}.md` (both: accept with
+changes; both prototyped Stage 4 on existing OCR and frames). If accepted this becomes design revision 7 and replaces
+§4 (parts), §8.3, §9, §10.1–10.2, §10.6, §11, §12 (inputs and outputs), §13.2–13.3 (rendering), §14, §15.1–15.4 and the
+affected rows of §16–§18 of `docs/visual-transcript-pipeline-design.md`. Stage 0, Stage 1, Stage 2a, the provider, the
+call cache and `subset` are untouched. Stage 6 and the answering agent are **not** untouched (revision 1 said they were).
+
+## 0. Revision 2: what changed and why
+
+| Change | Source |
+|---|---|
+| The unit of a change record is the **box**, not an area's joined string. Same-place same-text pairs drop out, equal texts cancel across the whole transition as moves, the rest group by rectangle intersection. Labels compare with whitespace removed; recorded strings stay exact. | Both reviews, blocking (fork F1–F4, fresh B1): 4 of 9 `appended` records were artifacts, 3 of 6 real entries were missed, and on scrolls 72 of 213 moved texts (55 of 64 on page scrolls) land in different areas. Owner approved the whitespace-blind label. |
+| One record shape for every size of change: a few counterpart groups plus lists of appeared and removed box ids. No large-change threshold. | Fork F6 (35, 67, 47 areas on 181→184). |
+| Chaining no longer merges Stage 5 calls. Each group records `continues`, an exact link through a shared box. | Both prototypes: chaining saved 1 call in 32. |
+| `container_events` cut. Containers are **flat**: windows and popups, no nesting; a popup may name its owner window; "pane" is at most a label string, tested once. Phase E4 reduced to that. | Fresh S3 (3 of 5 firings false); owner decision. |
+| Transients are per area and the time gate goes; `hold_s` is recorded. | Fork F7, fresh S4.7; the 2.8 s tooltip the gate missed. |
+| The index unit is a **box lifetime** with a majority reading; no per-frame copies; both joins of a run indexed; pairs as fields. | Owner discussion; fresh S7 (`"az account show"`: 20 near-duplicate hits, no transition) and S5; L43 (majority 7/7 against first sighting 4/7). |
+| Transcription stays **on** in the base; group-only becomes a cost ablation. A new option is added: transcribe only changed boxes. | L43: the model is the best reader of live command lines (12/16 against 8/16) and its disagreement flags 9 of 9 OCR misreads; OCR confidence flags none. |
+| §22 #15 (which reading is recorded) gets options, evidence and a recommendation (§6). | Fork Q-B; L43. |
+| Stage 5 gains `entered_text` and `submitted`, is handed the box ids it may cite, and the agent prompt gives guidance, not a prohibition. Persistence is evidence, never a gate. | Owner decisions; span-2 baseline: 5 predicted commands never ran; 53 invalid citations in 30 transitions. |
+| Build order: Stage 4 and lifetimes first, free, on all 221 frames; new files live beside the old until the last step; Stage 6, the agent and both prompts get entries. | Both reviews (fork should-fix 1–2, fresh S1–S2). |
+| Evaluation rebuilt on ground truth (the span-2 command list, negatives included); evidence rules instead of thresholds; arms are not eliminated before the scale sweep; paired by frame; repeats go to finalists. | Fresh B2, fork should-fix 3–4, owner decisions, L42. |
+| Every undefined case the reviews listed is now defined (§5 Stage 4), and the constants that remain are named (§10). | Fresh S4, S6. |
+| Engine settings `use_cls` off and `rec_batch_num` 1 are part of the base. | L43. |
 
 ## 1. Purpose and evidence
 
-The pipeline rebuilds every frame from scratch and then diffs two independent reconstructions, so instability in
-the reconstruction reads as change. Every fix since the first live run has been a patch on that seam. The evidence:
+The pipeline rebuilds every frame from scratch and diffs two independent reconstructions, so instability in the
+reconstruction reads as change. Every fix since the first live run has patched that seam.
 
-| Finding | Ledger |
+| Finding | Source |
 |---|---|
-| The model split one page into 8 panes in one frame and 3 in the next; panes "appeared" on a static page. Fixed by demoting panes to labels. | L31 |
-| On near-static transitions 90 of 96 structural ops sat on lines with no changed pixel. Fixed by a pixel veto. | L32, L38 |
-| One knob, the row gap cap, moved agreement from 0.365 to 0.752 on the same data; it rejected 116 real rows. Turned off. | L37, L41 |
-| A window whose only line is rewritten and grows scores just under the 0.3 correspondence threshold and is reported as gone. Documented, not fixed. | L31 |
-| The typed event was blocked twice: by OCR whitespace jitter, then by a phantom box-less line in another window through the nothing-else-changed clause. | L29, L35, L41 |
-| Each OCR box as its own unit with model-proposed associations works end to end: 31 groups on frame 150, the pairs checked were correct, zero rejected rows, +20 % Stage 2c cost. | L41 |
-| RapidOCR boxes are stable: on unchanged pixels 96.5 % of boxes recur with the same rectangle and text (Vision 88.5 %). | `scratchpad/box-stability/result.txt` |
-| Identical cold runs differ: repairs 5–13, one tooltip comes and goes. Single-run differences of a few percent are noise. | L42 |
+| Panes split 8 against 3 on one page and "appeared" on a static screen. | L31 |
+| On near-static transitions 90 of 96 structural ops sat on lines with no changed pixel. | L32, L38 |
+| One knob, the row gap cap, moved agreement from 0.365 to 0.752 on the same Rapid-box data. | L37, L41 |
+| A one-line window that is rewritten and grows falls under the 0.3 correspondence threshold. | L31 |
+| The typed event was blocked by whitespace jitter, then by a phantom box-less line in another window. | L29, L35, L41 |
+| Boxes as units with model-proposed associations work end to end. | L41 |
+| **The veto is sound:** on 35 near-static pairs 4,199 boxes touch no changed component; 176 read differently in the next frame and every one is an OCR re-read, none a real change. Box stability 96.7 % (smoke), 95.6 % (span 2). | fresh review, measured |
+| **Today's pipeline on span 2** (frames 155–187, cold, $4.59): the typed rule captured 1 of about 8 commands and recorded it wrong from its first sighting (`azconfigure --defaultsgroup=…`); Stage 5 narrated most commands correctly from the frames; 53 invalid citations over 30 transitions. | `runs/span2-before` |
+| **OCR is reliable on settled text and unreliable on a live input line:** scrollback rows 52/53 exact, live rows 8/16, 3/11 when the shell's predicted text is on the line; five live "commands" were predictions that never ran; the majority reading over a text's sightings is right for 7 of 7 executed commands. | L43 |
+| Identical cold runs differ: repairs 5–13, a tooltip comes and goes, container-name consistency 0.39, 0.79, 1.00. | L42, fresh review |
 
-The common cause is that **model-proposed structure carries identity**: rows are the unit of the diff, windows
-scope it and are matched across frames by a score. The re-base moves identity onto what is measured.
+The common cause is that **model-proposed structure carries identity**. The re-base moves identity onto what is measured.
 
 ## 2. Vocabulary
 
-One name for the mode: **boxes mode**. It replaces "rows-as-boxes", "boxes plus associations" and the config value
-`stage2c_rows = "boxes"`.
+One name: **boxes mode**.
 
 | Term | Meaning | Source |
 |---|---|---|
-| **Box** | One OCR detection: text and a rectangle. The unit of identity, diffing, citation and agreement. | measured |
-| **Container** | A window or popup, optionally a pane inside a window. Every box belongs to one innermost container. A label. | model |
+| **Box** | One OCR detection: text and a rectangle. Unit of identity, change, citation and agreement. | measured |
+| **Reading** | A text for a box from one reader: `ocr`, or `vlm` when Stage 2c transcribes. | measured / model |
+| **Lifetime** | A box followed across consecutive frames while it stays the same text: on unchanged pixels, moved, or re-read with only whitespace differing. It has a majority reading per reader, the variants, and first and last frame and time. The index unit. | measured |
+| **Container** | A window or a popup. Flat: containers do not nest. A popup may name an owner window. A label. | model |
 | **Link** | A typed relation among boxes of one container: `run`, `pair`, `record`. A label. | model |
-| **Changed area** | A rectangle where pixels differ between two emitted frames (Stage 1's rule), joined with the boxes touching it. The "location" of a change. | measured |
-| **Text change** | Before text and after text of one changed area, with a character diff. | measured |
+| **Changed component / area** | A connected set of changed pixels of at least θmin (Stage 1's rule), and its rectangle. The location of a change. | measured |
+| **Change group** | A small set of before and after boxes that overlap each other under changed pixels, with a kind and a character diff. | measured |
 
 | Old | New |
 |---|---|
 | mark, OCR line, `l<n>` | box, `b<n>` |
 | row, row line, line, `Line` | box (a split text is a `run` link) |
-| region, unit, `Region`, `r<n>` | container, `Container`, `c<n>` |
+| region, unit, pane, `Region`, `r<n>` | container `c<n>` (window or popup); pane is at most `box.pane`, a string |
 | association | link |
 | `rows`, `vlm_lines` | `containers[].boxes`, `texts` |
-| VLM-only line `v<n>` | missed text `m<n>` (never has a rectangle) |
-| `computed_diff`, `DiffOp`, `RegionDiff` | `changes`, `Change` |
-| `typed`, `output_appended` events | `text_appended` (chained); everything else is a plain text change |
-| region correspondence, `matched` | removed |
-| `rows_rejected`, `fragment_stability`, `layout_conf` | removed; `box_stability`, `link_consistency` |
+| VLM-only line `v<n>` | missed text `m<n>` (no rectangle; citable, never in a change) |
+| `computed_diff`, `DiffOp`, `RegionDiff`, unit line lists, row banding | `groups`, `appeared`, `removed`, `moved` |
+| `typed`, `output_appended`, `coalesced` | kinds `appended` … on groups; `continues`; Stage 5's `entered_text`, `submitted` |
+| region correspondence, `matched`, `container_events` | removed |
+| per-frame region and frame index nodes | lifetime nodes |
+| `rows_rejected`, `fragment_stability`, `layout_conf` | removed; `box_stability`, `unstable`, `touched_share` |
 | citation `"<frame>:<line_id>"` | `"<frame>:<box_id>"` |
 
-"Line" survives only as a plain-English word for what a person sees in a terminal. "Cell", "visual line" and "row"
-leave the design.
+"Line" survives only as a plain word for what a person sees in a terminal. "Row", "cell" and "visual line" leave the design.
 
 ## 3. Principles
 
-1. **Measured things carry identity; model-proposed things are labels.** Boxes and pixels decide what exists and
-   what changed. Containers and links never gate, are never diffed, and never alter recorded text. A wrong label
-   costs an enrichment, never a fake change.
-2. **A box with no changed pixel under it is unchanged**, at any changed fraction. The 5 % limit on the veto
-   (`pixel_gate_max_fraction`) was needless and goes.
-3. **Honest text-change contract.** The mechanical layer reports that text appeared, changed or was removed at a
-   location, with before, after and a character diff. It does not claim "typed". It makes no attempt to separate
-   ghost text, program output or paste. Stage 5, which sees the frames, may say "typed".
-4. **Two levels of screen structure, no more:** container and box, plus links. A UI element tree in the
-   accessibility sense stays a non-goal (§1.4). The temporal hierarchy (video, sections, steps, transitions,
-   frames) is unchanged.
-5. **No constants from the sample video.** Geometric parameters are relative to box height or screen size and the
-   evaluation sets their values. No logic for edge cases until evidence shows the case (§9 watch list).
-6. **Cold runs for anything that judges a model call**, with repeats; cached model outputs only when comparing
-   code downstream of a fixed output.
+1. **Measured things carry identity; model-proposed things are labels.** Boxes and pixels decide what exists and what
+   changed. Containers and links never gate, are never diffed, never alter recorded text. A wrong label costs an
+   enrichment, never a fake change.
+2. **A box with no changed component under it is unchanged**, at any changed fraction.
+3. **Honest text-change contract.** The mechanical layer reports that text appeared, changed, moved or was removed at a
+   location, with before, after and a character diff. It does not say "typed" and does not separate suggestions,
+   program output or paste. No cursor or suggestion locating, no brightness thresholds, no caret attribution.
+4. **Whether something was done is interpretation.** Stage 5 sees the frames and says what the user entered and whether
+   it was submitted. How long a text stayed on screen is evidence shown to the agent, never a rule: a command can be
+   entered and the window minimised, and a one-line terminal has no scrollback.
+5. **Record, do not pick.** Every reading is kept with its counts. Exact agreement between independent readers is the
+   only "quote this verbatim" signal.
+6. **Two levels of screen structure:** container and box, plus links. No UI element tree (§1.4). The temporal
+   hierarchy is unchanged.
+7. **No constants from the sample video**, and no logic for a case until evidence shows it. The constants that remain
+   are listed in §10 with how each is checked.
+8. **Evidence rules, not success thresholds.** How each metric is computed is fixed before spending; the noise floor is
+   measured first; a difference inside the noise is no difference; every phase is reviewed before the next is planned.
+   Cold runs with repeats for anything that judges a model call; cached outputs only downstream of a fixed output.
 
 ## 4. Data model
 
-`frames.jsonl`, one record per emitted frame (Stage 1 fields unchanged and elided):
+New files live beside the old ones until the last build step (§9).
+
+`boxes.jsonl`, one record per emitted frame:
 
 ```json
-{"frame": 155, "png": "frames/00155.png", "width": 1920, "height": 1080,
- "boxes": [
-   {"id": "b33", "bbox": [659, 352, 904, 371], "text": "PS C:\\Users\\msadmin> az login", "conf": 0.98,
-    "container": "c2", "vlm": "PS C:\\Users\\msadmin> a login", "agree": false, "in_churn": false}],
- "containers": [
-   {"id": "c1", "kind": "window", "app": "Browser", "name": "Edge — Azure portal", "parent": null,
-    "rect": [0, 0, 1920, 1040], "rect_source": "hull", "conf": 0.9, "occludes": []},
-   {"id": "c2", "kind": "window", "app": "PowerShell", "name": "Administrator: PowerShell 7-preview (x64)",
-    "parent": null, "rect": [658, 320, 1680, 853], "rect_source": "model", "conf": 0.95, "occludes": ["c1"]}],
- "links": [
-   {"kind": "pair", "key": ["b28"], "value": ["b29"]},
-   {"kind": "run", "boxes": ["b61", "b62"], "joiner": ""},
-   {"kind": "record", "members": [["b70"], ["b71"], ["b72"]]}],
+{"frame": 155, "png": "frames/00155.png",
+ "boxes": [{"id": "b33", "bbox": [659, 352, 904, 371], "ocr": "PS C:\\Users\\msadmin> az login", "conf": 0.98,
+            "vlm": "PS C:\\Users\\msadmin> a login", "agree": false, "non_text": false,
+            "container": "c2", "pane": null, "in_churn": false, "lifetime": "L388"}],
+ "containers": [{"id": "c1", "kind": "window", "app": "Browser", "name": "Edge — Azure portal", "owner": null,
+                 "rect": [0, 0, 1920, 1040], "rect_source": "hull", "covers": []},
+                {"id": "c2", "kind": "window", "app": "PowerShell", "name": "Administrator: PowerShell 7-preview (x64)",
+                 "owner": null, "rect": [658, 320, 1680, 853], "rect_source": "model", "covers": ["c1"]}],
+ "links": [{"kind": "pair", "key": ["b28"], "value": ["b29"]},
+           {"kind": "run", "boxes": ["b61", "b62"], "joiner": ""},
+           {"kind": "record", "members": [["b70"], ["b71"], ["b72"]], "header": ["b64", "b65", "b66"]}],
  "missed": [{"id": "m1", "text": "Networking", "container": "c1"}],
- "unassigned": ["b9"], "focused_container": "c2", "focused_conf": 0.8, "description": "…",
- "repairs": 0, "model": "claude-opus-5", "prompt_version": "s2c-v2", "error": null}
+ "unassigned": ["b9"], "focused_container": "c2", "description": "…", "repairs": 0,
+ "model": "claude-opus-5", "prompt_version": "s2c-v2", "error": null}
 ```
 
-- `text` is the OCR reading. `vlm` and `agree` exist only when Stage 2c transcribes. Which reading is recorded on
-  disagreement stays design open question §22 #15.
-- `rect_source` is `hull` (union of the container's boxes, today's rule) or `model` (drawn by the model, arms B
-  and C of §7).
-- `missed` entries have no rectangle, so they can never enter a change record. They are index text only. This is
-  what removes the phantom-line failure of L41.
-- A side of a `pair` and a member of a `record` are lists of box ids, which is an implicit run. A box appears in
-  at most one link.
+- `non_text` is set when the model returns `""` for a box (an icon glyph such as `口`): the box leaves agreement
+  denominators and index text. This closes the open item on empty transcriptions.
+- A key and value that OCR put in one box (`Subscription ID :3e6b…`) can never be a pair; pairs are an enrichment, not
+  a complete table of properties.
+- A link whose boxes sit in two containers is dropped and counted. A box is in at most one link.
 
-`transitions.jsonl`:
+`changes.jsonl`, one record per transition:
 
 ```json
 {"id": "T9", "from_frame": 154, "to_frame": 155, "t": [598.7, 620.7], "kind": "single",
- "pixels": {"changed_fraction": 0.0002, "areas": 1},
- "changes": [
-   {"rect": [659, 350, 904, 373], "kind": "appended",
-    "before": ["PS C:\\Users\\msadmin>"], "after": ["PS C:\\Users\\msadmin> az login"],
-    "char_diff": [["=", "PS C:\\Users\\msadmin>"], ["+", " az login"]],
-    "before_boxes": ["154:b31"], "after_boxes": ["155:b33"], "uncertain": true,
-    "labels": {"container": "PowerShell: Administrator: PowerShell 7-preview (x64)", "link": null}}],
- "container_events": [],
- "events": [{"type": "text_appended", "rect": [659, 350, 904, 373], "text": " az login",
-             "result": "PS C:\\Users\\msadmin> az login", "frames": [154, 155]}],
- "transient": null}
+ "pixels": {"changed_fraction": 0.0002, "components": 2, "textless": 1, "touched_share": 0.01},
+ "groups": [{"kind": "appended", "rect": [659, 350, 904, 373],
+             "before": [{"box": "154:b31", "text": "PS C:\\Users\\msadmin>"}],
+             "after": [{"box": "155:b33", "text": "PS C:\\Users\\msadmin> az login"}],
+             "char_diff": [["=", "PS C:\\Users\\msadmin>"], ["+", " az login"]],
+             "uncertain": true, "continues": null, "transient": false,
+             "labels": {"container": "PowerShell: Administrator: PowerShell 7-preview (x64)", "link": null}}],
+ "appeared": [], "removed": [], "moved": 0, "same_place": 1, "transient": null}
 ```
 
-- `kind` of a change: `appeared` (nothing before), `removed` (nothing after), `appended` (joined before is a prefix
-  of joined after), `truncated` (the reverse), `changed` (otherwise), `visual_only` (the before and after texts
-  are the same multiset: a highlight, a cursor, a hover). The labels are conveniences; before, after and the diff
-  are the record.
-- When an area touches many boxes (a window switch, a scroll) `before` and `after` are the two box-text lists in
-  reading order and the record also carries `ops`, the existing Myers alignment over those lists, so moved
-  identical texts align as equal. A delete and insert whose boxes overlap vertically by half the smaller height
-  pair as a modify; the 0.6 similarity pairing is dropped.
+- One shape for every size. A keystroke is one group. A page load is a few groups plus long `appeared` and `removed`
+  lists of box ids (texts live in `boxes.jsonl`). A scroll is mostly `moved`. There is no "large change" mode.
+- `text` in a group is the OCR reading of that frame; `uncertain` means the readers disagree on one of its boxes.
 - `labels.link` names the key when a changed box is the value of a pair ("value of Status").
-- `container_events` are annotation-level: a container of the later frame most of whose boxes are after-only is
-  `appeared`, with `pixel_support`, the share of its rectangle under changed pixels. The reverse is `disappeared`.
+- Transition kinds: `single`, `transient_merged`, `unsettled`, `trivial`. `coalesced` goes.
+
+`lifetimes.jsonl`:
+
+```json
+{"id": "L412", "ocr": "PS C:\\Users\\msadmin> az configure --defaults group=RG1-KodeKloud-AKS",
+ "readings": {"ocr": {"PS C:\\Users\\msadmin> az configure --defaults group=RG1-KodeKloud-AKS": 25,
+                      "PS C:\\Users\\msadmin>azconfigure --defaultsgroup=RG1-KodeKloud-AKS": 1},
+              "vlm": {"PS C:\\Users\\msadmin> az configure --defaults group=RG1-KodeKloud-AKS": 26}},
+ "agree": true, "unstable": true, "sightings": 26,
+ "first": {"frame": 161, "t": 649.2}, "last": {"frame": 187, "t": 721.0},
+ "moved": true, "container": "PowerShell: Administrator: PowerShell 7-preview (x64)", "boxes": ["161:b40", "…"]}
+```
+
+`ocr` and `vlm` at the top level are each reader's majority reading; `agree` compares the two majorities; `unstable`
+means a reader gave more than one reading of the same pixels (3.3 % of boxes on the smoke span, 4.4 % on span 2), a
+measured fact the agent can hedge on even without a second reader.
+
+Stage 5 output gains two fields: `entered_text` (what the user entered in this transition as far as the frames show,
+excluding anything the application suggested; null when nothing was entered) and `submitted` (`yes`, `no`, `unclear`:
+whether what was entered took effect, for example Enter pressed and output or a new prompt appearing).
 
 ## 5. Stage by stage
 
-**Stage 2a, 2b.** Unchanged. The overlay exists only for referencing arms A and B (§7).
+**Stage 2a.** RapidOCR 3.9 with `use_cls` off and `rec_batch_num` 1 (L43). No second pass, upscale, normalisation,
+English model or OCR ensemble. **Stage 2b.** Unchanged; the overlay exists only for referencing arms A and B.
 
-**Stage 2c.** One call per frame. Draft system prompt, arm A, with the transcription paragraph optional:
+**Stage 2c.** One call per frame, transcribing. Draft system prompt, arm A:
 
 ```
-You structure screenshots of computer tutorials (terminals, code editors, browsers, dialogs).
+You structure and transcribe screenshots of computer tutorials (terminals, code editors, browsers, dialogs).
 
-You are shown the same screenshot twice. Image 1 is the clean frame. Image 2 is the same frame with a numbered
-box around every piece of text an OCR engine detected; each number sits beside its box and is NOT part of the
-screen. A number is written as a box id: b1, b2, ...
+You are shown the same screenshot twice. Image 1 is the clean frame. Image 2 is the same frame with a numbered box
+around every piece of text an OCR engine detected; each number sits beside its box and is NOT part of the screen.
+A number is written as a box id: b1, b2, ... Read text from Image 1; use Image 2 only to know which id is which box.
 
-Produce a JSON object with these fields.
+containers: the windows (top-level application windows) and popups (menus, dialogs, tooltips, toasts) on screen.
+Containers do not nest. Anything drawn over a window is its own popup, never part of what it covers; a popup may name
+the window it belongs to as owner. Give each container's application and name, the containers it covers, and the ids
+of the boxes it contains. Every box id appears in exactly one container, or in unassigned.
 
-containers: the windows (top-level application windows) and popups (menus, dialogs, tooltips, toasts) on screen
-and, inside a window, its panes (editor, terminal pane, navigation, content area, toolbar, title bar). Anything
-drawn over a window is its own popup, never part of what it covers. Name each container and its application,
-give its parent (null for a window or a free-floating popup), the containers it covers, and the ids of the boxes
-it directly contains. Every box id appears in exactly one container, or in unassigned.
+links: relations between boxes of one container.
+  run: boxes that are one continuous piece of text which the OCR engine split or the screen wrapped onto the next
+    line, in reading order. joiner is "" when a word was cut in two by the wrap, " " otherwise.
+  pair: a label and its value (a property and its value, a form field and its content). key and value are lists of
+    box ids. A two-column grid of labels and values is pairs, not records.
+  record: one row of a table with three or more columns: members, left to right, each a list of box ids; header,
+    the box ids of the column headings when they are visible.
+Boxes that merely sit side by side stand alone: tabs, toolbar buttons, menu items, breadcrumbs.
 
-links: relations between boxes of one container. Three kinds.
-  run: boxes that are one continuous piece of text which the OCR engine split or the screen wrapped onto the
-    next line, in reading order. joiner is "" when the text was cut by a hard wrap, as in a terminal, and " "
-    otherwise.
-  pair: a label and its value (a property and its value, a form field and its content). Give key and value,
-    each a list of box ids in reading order.
-  record: the members of one table row, left to right, each a list of box ids.
-Boxes that merely sit side by side stand alone: tabs, toolbar buttons, menu items, breadcrumbs. A box appears
-in at most one link.
-
-[transcribing only] texts: for every box id, the verbatim text inside that box. Preserve case, punctuation,
-whitespace and symbols. Never correct, complete or normalize commands, code, paths or identifiers. Use ? for a
-character you cannot resolve. An icon is not text: give "". missed: text no box covers, with its container.
+texts: for every box id, {id, text}: the verbatim text inside that box. Preserve case, punctuation, whitespace and
+symbols. Never correct, complete or normalize commands, code, paths or identifiers. Use ? for a character you cannot
+resolve. An icon is not text: give "". missed: text no box covers, with its container.
 
 focused_container, focused_conf, focused_cues; description: as today.
 ```
 
-Validation stays repair, never abort: an unknown id is dropped, a box in two containers keeps the first, a link
-naming an unknown or already-linked box is dropped, a box in no container goes to `unassigned`; all counted.
-Group-only mode is legal (the current validator forbidding it is an artifact of how L41 was wired).
+The output schema is fixed in the build step, not here, but two choices are made: `texts` is a list of `{id, text}`,
+not an array parallel to the id list (about 330 more output tokens per frame, in exchange for no positional
+misalignment), and structured outputs allow no free-key maps. Validation is repair, never abort: an unknown id is
+dropped, a box in two containers keeps the first, a link naming an unknown, already-linked or cross-container box is
+dropped, a box in no container goes to `unassigned`; all counted. Group-only mode and changed-boxes-only transcription
+(§8, P3) are legal variants of the same prompt.
 
-**Stage 3 (merge).** Shrinks to: attach each box's container, attach links, and when transcribing attach `vlm`
-and `agree` per box (exact equality after `norm`, with the icon-glyph strip rule kept). Nothing geometric remains.
+**Stage 3.** Attach each box's container and links, and `vlm`, `agree` and `non_text` per box (exact equality after
+`norm`, with the icon-glyph strip rule kept). Under arms B–D readings are assigned to boxes by position and similarity
+jointly. Nothing geometric remains.
 
-**Stage 4 (changes).** For each consecutive frame pair:
-1. Changed components by Stage 1's rule over the two PNGs (`PixelSource`, as today), each grown by
-   `pixel_gate_margin_lines` × the median box height.
-2. A changed area is a component joined with the boxes of either frame that touch it; areas sharing a box merge.
-3. Every box touching no area is unchanged. No op can exist on it.
-4. Per area: `before` and `after` are the touching boxes' texts in reading order (boxes whose vertical extents
-   overlap by at least half the smaller height are on one line, left to right; lines top to bottom). If the two
-   multisets are equal the change is `visual_only`, which makes an ordering flip harmless. Otherwise compare the
-   joined strings, which is invariant to OCR re-splitting, then align the lists with Myers when either has more
-   than one entry.
-5. **Transients by pixels.** Frame *i* is a transient when an area changed at *i* shows no change between frames
-   *i−1* and *i+1* under the same rule, and the hold is under `transient_max_s`. The model no longer has to
-   recognise the tooltip for the rule to fire, which removes the scale sensitivity seen in L33 and L42.
-6. **Chaining.** Consecutive transitions chain into one `text_appended` event when each has an `appended` change,
-   the rectangles intersect, and one's joined after text equals the next one's joined before text. The event
-   carries the full appended string. Stage 5 is called once on the first and last frames, as today.
-7. `trivial` keeps the clock rule on `char_diff`.
+**Stage 4.** Needs only `ocr.jsonl` and the PNGs. For each consecutive pair of emitted frames *a*, *b*:
 
-**Focus.** Caret attribution and retrospective focus are dropped. `focused_container` is the model's self-report,
-a label. Stage 1's blink tracker stays: its job is keeping a blinking cursor from emitting frames.
+1. **Changed components** by Stage 1's rule over the two PNGs: pixels above θpix, connected components of at least θmin
+   pixels. Pixels above θpix outside any such component are noise and are ignored everywhere (there are a median of 2
+   to 11 per pair, and the known-good tooltip leaves 13).
+2. **Touched boxes.** A box is touched when a pixel of some component lies inside the box grown by the margin
+   (`pixel_gate_margin_lines` × the median box height over both frames). The test is on component pixels, not on the
+   component's bounding rectangle, so a window border does not touch everything inside it. If a PNG is missing there is
+   no pixel evidence: every box is treated as touched and the record says `pixels: null`.
+3. **Untouched boxes are unchanged.** Each untouched box of *b* continues the lifetime of the untouched box of *a* it
+   overlaps most; a differing OCR text there is a variant reading, not a change.
+4. **Same place, same text.** Among touched boxes, a before box and an after box whose rectangles intersect and whose
+   texts are equal drop out (counted in `same_place`): something visual changed over unchanged text. They continue
+   the lifetime.
+5. **Moved.** Texts equal on both sides anywhere in the transition cancel as a multiset, paired in reading order, and
+   are counted in `moved`; they continue the lifetime. This is what handles scrolls and window moves, whose lines land
+   in different areas.
+6. **Groups.** What is left is grouped by rectangle intersection between before and after boxes (connected components
+   of the intersection graph; a growing line intersects its shorter self). Each group is classified with whitespace
+   removed from both sides: `reread` (equal), `appended` (before is a prefix of after), `truncated` (the reverse),
+   `changed` (otherwise). The recorded strings and `char_diff` are exact. A `reread` continues the lifetime and the
+   differing text is a variant; the other kinds end one lifetime and start another.
+7. **Appeared, removed.** After boxes in no group are `appeared`; before boxes in no group are `removed`.
+8. **Textless components** (touching no box in either frame) are counted in `pixels.textless` with their area; they
+   yield no record. A transition with only these is what `visual_only` meant in revision 1.
+9. **Transients, per area.** A group or appeared box of *a*→*b* is `transient` when, comparing frames *a* and *c* (the
+   frame after *b*) directly, no component lies inside its rectangle. When every text-bearing change of *a*→*b* is
+   transient, frame *b* is folded: one `transient_merged` transition *a*→*c* whose changes are recomputed between its end
+   frames, carrying `transient: {frame, hold_s, texts}`. There is no time gate; `hold_s` is data for Stage 5.
+10. **Continues.** A group whose before box is the after box of a group of the previous transition records
+    `continues`. It is an exact identity through a shared box, asserts nothing, and merges no Stage 5 calls. Program
+    output arrives as new boxes (`appeared`), so it cannot chain with a growing input line by geometry.
+11. `trivial` keeps the clock rule on `char_diff`. Boxes flagged `in_churn` by Stage 1 keep the flag on their groups.
 
-**Stage 5.** Half-scale frames (L39). The change text is rendered per area with its labels, for example
-`PowerShell window: appended " az login" to "PS C:\Users\msadmin>"` or `Browser, value of Status: "Creating" →
-"Succeeded"`. Citations are `"<frame>:<box_id>"`. The §15.2 contract is reworded to boxes and areas.
+Both prototypes of this shape exist (`scratchpad/rebase-prototype/variant.py`, `rebase-review-fresh/boxlevel.py`): five
+of six commands entered on an empty prompt come out `appended` (156→157, where OCR drops `PS `, stays an honest
+`changed`), the Cloud Shell tooltip becomes `appeared` then `removed`, output is `appeared`, and the 186→187 terminal
+scroll cancels 26 moved texts leaving 11 records. Reading order within an area and modify pairing by vertical overlap,
+the two geometric rules revision 1 kept, are gone.
 
-**Stage 7.** Correction to the record: today's frame-level node holds only the model's description, so a
-multi-term query depends on the model's container assignment. New nodes: one **frame node holding every box's
-text**, independent of containers; one node per container (its box texts, run texts joined with their joiner,
-both readings of a disagreeing box); pairs stored as `key` and `value` fields in the payload and indexed as
-`key value` tokens, independent of the on-screen delimiter and whitespace; transitions indexed by their change
-text and interpretation. A `get_pairs(key_like, t_from, t_to)` tool for the agent is a follow-on, not part of the
-re-base.
+**Focus.** Caret attribution and retrospective focus are dropped. `focused_container` is the model's self-report.
+Stage 1's blink tracker stays: its job is keeping a blinking cursor from emitting frames.
 
-## 6. What is deleted and what stays
+**Stage 5.** Half-scale frames (L39), one call per non-trivial transition as today (30 for 32 on span 2). The change
+text is rendered per group with labels and **the box ids the model may cite**, for example
+`[155:b33] PowerShell window: "PS C:\Users\msadmin>" → appended " az login" (readers disagree: OCR "…az login", model
+"…a login")`; appeared and removed texts are listed with their ids; moved and textless counts are one line each.
+Citations are validated against those ids. The prompt asks for `entered_text` and `submitted` and says that an input
+line may show a suggestion the user did not enter. §15.2 is reworded.
 
-| Module | Deleted | Stays |
+**Stage 6.** `hierarchy.py` renders each transition from its Stage 5 action, `entered_text` and `submitted` and its
+group texts (today: `typed` and `output_appended` events, `computed_diff`, `regions.appeared`), and each frame's state
+line from flat containers and `focused_container` (today: `units()`). §15.3 is unchanged in intent.
+
+**Stage 7 and the agent.** Nodes: one per **lifetime** (both readers' majority texts, every variant, run texts joined
+both with `""` and with `" "`, pair text as `key value` tokens with `key` and `value` as fields, first and last time,
+container label); one per transition (Stage 5 action and result, `entered_text`, `submitted`, group texts); steps,
+sections, video as today. No per-frame copies, so a command on screen for 27 frames is one hit with its first
+appearance, and "when did they run X" has an answer. A multi-term query with no single-node match falls back to
+per-term hits whose lifetimes overlap in time ("on screen together from … to …"); a deduplicated screen node is added
+only if the question set shows that is not enough. `layout_conf` leaves the index columns; the level `region` becomes
+`text`. `agent.py` tools return lifetimes, changes and Stage 5 judgments. The agent prompt (§15.4) is reworded from
+"quote exact text only from lines marked agree=true" to guidance: quote verbatim where readers agree; where they
+differ, or a text is `unstable` or seen once, say so or look at the frame; text on an input line may include a
+suggestion; Stage 5's `submitted` is the primary evidence that a command ran, and without it say what was seen and how
+sure; time on screen is one piece of evidence. A `get_pairs(key_like, t_from, t_to)` tool is a follow-on.
+
+## 6. Which reading is recorded when the readers disagree (§22 #15)
+
+Span-2 evidence (L43): OCR is right on 52/53 settled rows and 8/16 live rows; the model on 48/53 settled rows (its
+errors are off-by-one assignments to boxes, plus `get-credentials` for the displayed `get-Credentials` on 2 of 16
+sightings) and 12/16 live rows; disagreement flags 9 of 9 OCR misreads with 10 false alarms in 71; no ensemble was ever
+right when no member was; the majority reading over a text's sightings is right for 7 of 7 executed commands for both
+readers.
+
+| Option | For | Against |
 |---|---|---|
-| `merge.py` | `_row_plausible`, `build_region_lines`, `align_repair`, `_matches`, `region_associations`, `layout_conf` with `_related`, `_ancestors`, `_children`, `_descendant_lines`, `caret_region`, `combine_focus`, `_root` | `agreement` (per box, only when transcribing), `union`, a small `merge_frame` |
-| `correspond.py` | the whole module: `score`, `correspond`, the 0.5/0.3/0.1/0.1 weights and the 0.3 threshold, and with it the single-line-window gap | — |
-| `diff.py` | `diff_region`, `_ys`, `_line_h`, `is_gated`, `pixel_gate` as a veto over structural ops | `PixelSource`, `_overlaps`, `_dilate`, `_margin`; Myers in `textdiff.py` |
-| `coalesce.py` | `_other_ops_ok`, `_typed_op`, `_output_ops`, `_follow`, `retrospective_focus`, `_vlm_focus`; Rules 1, 1b, 2 | `tag_trivial`, `assign_ids`, `_kind`, `run_diff`; `merge_transients` and `coalesce` rewritten |
-| `schemas.py` | `Line`, `Region`, `FrameRecord.unit_of/units/unit_line_sources/unit_lines`, `Correspondence`, `RegionDiff`, `DiffOp`, `FocusRecord`, the eight `VlmRegion*`/`VlmPerception*` variants | Stage 1 and OCR records, `PixelChange`, `Transition` reshaped, hierarchy records |
-| `index.py` | `region_text` | everything else; `extract_nodes` gains the frame node and pair fields |
-| `diagnostics.py` | `fragment_stability`, `rows_rejected`, `grouping_repairs` | `mark_match` (when transcribing), costs; new metrics of §7 |
-| config | `row_y_tol`, `row_gap_lines`, `align_*`, `modify_sim`, `typed_tolerance`, `corr_*`, `pixel_gate_max_fraction`, `stage2c_panes`, `stage2c_rows` | `pixel_gate_margin_lines`, `transient_max_s`, `glyph_max_len` |
+| OCR always (today) | No model normalisation can enter the record | The live command line is recorded wrong half the time, on the core deliverable |
+| Model always | Best on live lines | Off-by-one assignment and quiet case normalisation enter the record; undoes R1's guard |
+| Pick by rule (near-identical → model) | Cleaner text | A rule that hides exactly where a model "completion" would sit |
+| **Record both, pick neither** | Honest; both searchable; agreement stays meaningful; majority per reader fixes first-sighting errors | Two strings to carry; the agent must handle disagreement |
 
-Files `focus.jsonl` and the row-banding rule of L31 go with them. Existing run directories stop loading; the
-commit before the re-base gets a tag so the evidence behind L28–L42 stays reproducible.
+**Recommendation: record both.** A lifetime carries each reader's majority and variants; both are indexed; `agree`
+compares majorities; change records show OCR's text of that frame and the model's beside it when they differ. For
+commands there is a third, interpretive reading: Stage 5's `entered_text`. The assignment weakness is what arms B–D and
+position-and-similarity assignment are for. Google Cloud Vision works with the owner's key and stays an optional third
+reader outside the base: it cuts the flag's false alarms from 10 to 4 in 71 but misreads `group=` on all 21 sightings
+and must be clipped to a window.
 
-**OCR coordinates in code after the re-base:** id assignment in reading order (2a); overlay drawing (2b); the
-optional input list (arm D; L30, L42); box-to-container assignment by centre-inside (arms B, C); snapping the
-model's points to boxes (arm C); the container hull (arm A); changed-area construction and the veto (Stage 4);
-modify pairing by vertical overlap; reading order within an area; the spacing guard's word gaps (Rapid adapter);
-the box-stability metric; Stage 5 crops mode; a future citation highlight.
+## 7. What is deleted and what stays
 
-## 7. Evaluation plan
+| Module | Deleted at the last step | Stays or is new |
+|---|---|---|
+| `merge.py` | `_row_plausible`, `build_region_lines`, `_make_line`, `align_repair`, `_matches`, `region_associations`, `region_bbox`, `_h`, `_median_h`, `layout_conf` and helpers, `caret_region`, `combine_focus`, `_root` | `agreement` per box, `union`, a small merge writing `boxes.jsonl` |
+| `correspond.py` | the whole module, its weights and the 0.3 threshold | — |
+| `diff.py` | `diff_region`, `diff_pair`, `_ys`, `_line_h`, `is_gated`, `pixel_gate` | `PixelSource`, `_margin`; new `changes.py` (Stage 4 above) and `lifetimes.py`; Myers stays in `textdiff.py` for `char_diff` |
+| `coalesce.py` | `_other_ops_ok`, `_typed_op`, `_output_ops`, `_follow`, `_build`, `retrospective_focus`, `_vlm_focus`, Rules 1, 1b, 2, `merge_transients` as written | `tag_trivial`, `assign_ids`, `_kind` |
+| `schemas.py` | `Line`, `Region`, `FrameRecord` unit helpers, `Correspondence`, `RegionDiff`, `DiffOp`, `Event`, `FocusRecord`, the `VlmRegion*`/`VlmPerception*` variants | Stage 1 and OCR records, `PixelChange`; new `Box`, `Container`, `Link`, `Change`, `Lifetime`; `VlmInterpretation` gains two fields |
+| `interpret.py` | `render_diff`, `render_transition_line`, `validate_refs` over `line_ids()` | rewritten over groups and box ids |
+| `hierarchy.py` | `_state_line` over `units()`, item lines over events | rewritten (§5) |
+| `index.py`, `agent.py`, `prompts/agent.py` | region and frame nodes, `region_text`, the `layout_conf` column, the `agree=true` quoting rule | lifetime and transition nodes, the co-occurrence fallback, reworded prompt |
+| `prompts/stage2c.py`, `prompts/stage5.py` | the row-mode prompt and its four variants | the prompt of §5; Stage 5 with ids, `entered_text`, `submitted` |
+| `diagnostics.py` | `fragment_stability`; the `rows_rejected` and `grouping_repairs` keys | `mark_match` (now per box), costs; `box_stability`, `unstable`, `touched_share` |
+| config | `row_y_tol`, `row_gap_lines`, `align_*`, `modify_sim`, `typed_tolerance`, `transient_max_s`, `corr_*`, `pixel_gate_max_fraction`, `stage2c_panes`, `stage2c_rows` | `pixel_gate_margin_lines`, `glyph_max_len` |
 
-**Spans.** The smoke span, frames 145–155 (11 frames: title slide, portal, tooltips, a window switch, one
-keystroke). A second span, frames 155–187 (33 frames: `az login`, `az account show` with output, `az configure`,
-`az aks get-credentials` with output, `kubectl` commands with output, a cut around 182–184). The current
-pipeline's cold before-run of span 2 is `runs/span2-before` (in progress at the time of writing).
+`focus.jsonl`, `frames.jsonl` and `transitions.jsonl` go at the last step; existing run directories stop loading; the
+commit before the re-base is tagged so L28–L43 stay reproducible.
 
-**Reference-free metrics.**
+## 8. Evaluation
 
-| Metric | Definition |
-|---|---|
-| `box_stability` | On frame pairs, the share of boxes on unchanged pixels that recur with the same rectangle (IoU ≥ 0.8) and text |
-| `link_consistency` | On frame pairs with no changed pixel under a link's boxes, the share of links proposed identically in both frames, per kind |
-| container coverage | Boxes in exactly one container; in none; in several (arms B, C) |
-| popups found | Frames 149 and 151 of the smoke span, and any in span 2, per run |
-| container-name consistency | Share of static frame pairs where a container keeps its app and name |
-| snap failures | Arm C: model points that land on no box within half a box height |
-| text-change events | Changes per transition by kind; `text_appended` chains found; Stage 5 calls |
-| agreement, `mark_match_fraction` | Only when transcribing |
-| repairs, unassigned, cost, wall time | As today |
+**Ground truth, a precondition of any paid phase.** G1: the owner-corrected command list of span 2; the candidate is
+`scratchpad/ocr-ensemble/span2-commands-candidate.md` (9 executed commands with frames and times, including `Y` and `y`
+at two prompts; 5 predictions that were shown and never run). It moves into `docs/ground-truth/` once corrected. G2,
+small and optional: the links of frame 150 (about 31) and the windows and popups of the 11 smoke frames (about 25
+entries), drafted from existing runs for the owner to correct. Q: about fifteen questions written from G1, with
+negatives ("did they roll back the deployment?", "did they scale the cluster?", "did they run `az login`?" must be
+answered no).
 
-**Needs the owner's ground truth:** whether recorded text is right (CER on commands), link precision and recall,
-container assignment accuracy, and event precision and recall. The cheapest useful piece is a hand list of the
-commands in span 2 with their times, about a dozen lines.
+**Primary metrics, scored without a model call.** Per executed command: *found* (a lexical search for its exact text
+returns a node covering its time); *exact* (some lifetime's majority reading contains it exactly, per reader);
+*time error* of first appearance and of submission; and *false run* (never-run predictions that any `submitted: yes`
+covers). Then the question set through the agent. **Guards, not rankers:** `box_stability`, `unstable` rate,
+`touched_share` on near-static pairs (the per-video alarm for θpix and θmin), boxes in exactly one container, popups
+found on frames 149 and 151, repairs, link and container precision and recall against G2, cost. `link_consistency` and
+container-name consistency are reported but decide nothing: the first is at its ceiling (194 of 194) and scores 1.0 for
+a link that is wrong in every frame, the second ranges 0.39 to 1.00 across identical runs.
 
-**Referencing arms.**
-
-| Arm | Images | The model returns | Code does |
-|---|---|---|---|
-| A | clean + overlay | box ids per container and per link | hull rectangle per container |
-| B | clean + overlay | a rectangle per container; links by id | assigns boxes by centre-inside, front-most container wins |
-| C | clean only | a rectangle per container; links as points | assigns by centre-inside; snaps each point to the nearest box |
-| D | clean only, plus OCR's box coordinates as a text list | box ids | as A |
-
-If transcriptions are kept under B, C or D they are assigned to boxes by position and similarity jointly, so an
-id shuffle of the kind seen in L41 cannot occur. Arm A's labels will clash at small scales; `label_clashes` shows
-where it stops being viable.
-
-**Phases.** Screen one factor at a time; the only factorial is scale × arm, in group-only mode. All runs cold.
-Costs use the measured per-frame figures: Stage 2c transcribing in boxes mode $0.117, group-only $0.063 at full
-scale (measured in row mode) falling to about $0.031 at scale 0.2, Stage 5 at half scale $0.019 per transition.
+**Evidence rules.** Metrics are computed by committed scripts before a phase runs. Comparisons are paired by frame
+over the same frames. P1 sets the noise floor; a difference inside it is no difference. Screening uses two repeats;
+repeats are added only to finalists, until a difference clears the noise or is declared none. No threshold is
+pre-committed: after each phase the results come to the owner and the next phase is planned then.
 
 | Phase | What | Runs | Estimate |
 |---|---|---|---|
-| E0 | One boxes-mode run of each span to develop Stages 3–7 against fixed model outputs | 2 | $5 |
-| E1 | Noise floor: arm A, transcribing, full scale, 3 repeats, both spans, Stage 5 included | 6 | $18 |
-| E2 | Arms A–D, group-only, full scale, 3 repeats on the smoke span; the best two confirmed on span 2 | 12 + 6 | $17 |
-| E3 | Transcription on or off with the winning arm at full scale, 3 repeats, both spans (reuses E1 if A wins) | 0–6 | $0–15 |
-| E4 | Pane labels on or off (L41's finding was specific to rows), 3 repeats, smoke span | 6 | $4 |
-| E5 | Scale 0.67, 0.5, 0.4, 0.3, 0.25, 0.2 × the best two arms, group-only, 3 repeats, smoke span (1.0 from E2); the chosen point confirmed on span 2 | 36 + 3 | $17 |
-| E6 | Stage 5 on the new change text, 3 repeats, both spans | 3 | $3 |
+| P0 | **Free.** Stage 4 and lifetimes on OCR alone over all 221 frames and both spans; primary metrics for the OCR reader against G1; margin 0, 0.25, 0.5, 1.0 for sensitivity; how many lifetimes the pointer or an occluding window splits; the 96.5 % result into a ledger row | — | $0 |
+| P1 | Base: arm A, transcribing, full scale, both spans, Stages 5–7 and the question set; 3 repeats. Noise floor; side by side with `runs/span2-before`; per-kind link quality against G2 (the cut of link kinds is made here) | 6 | $25 |
+| P2a | Referencing arms B, C, D, transcribing, full scale, smoke span, 2 repeats (A from P1): assignment of readings to boxes, containers and links against G2, cost | 6 | $7 |
+| P2b | Arms A–D × scale 1.0, 0.5, 0.25, group-only, smoke span, 2 repeats; then refinement around what looks good (0.67, 0.4, 0.3, 0.2 as warranted) with every arm still alive; the chosen point on span 2, 3 repeats | 24 + about 12 + 3 | $26 |
+| P3 | Where the second reading is spent: every box (base, from P1), **only boxes under changed pixels or newly appeared** (read from full-resolution crops; unchanged boxes keep their lifetime's readings), or none; both spans, 3 repeats each | 12 | $20–27 |
+| P4 | Pane as a label, on or off, smoke span, 2 repeats: does it change link quality or search-hit usefulness | 4 | $5 |
+| P5 | Stage 5 `entered_text` and `submitted` against G1 with half-scale frames (from P1) and with crops (L39: crops kept the suggestion detail); agent prompt wording on the negatives | 3 + agent calls | $5 |
 
-About 75 runs and $65–80 of the $491. Then the full sample, sync and batch.
+About $90–110 of the $491 if every phase runs as listed; each is reviewed before the next, so later phases may shrink
+or vanish. P2b is a cost ablation now that transcription stays on: it prices a Stage 2c that only groups, which P3's
+changed-boxes option would make usable, since grouping could then run at a low scale and reading at full resolution on
+a handful of crops. Costs: Stage 2c transcribing in boxes mode $0.117 per smoke frame (L41) and about $0.139 on span 2
+(more text); group-only about $0.08 at full scale (row mode measured $0.063, plus ids and links), falling with scale;
+Stage 5 $0.019 per transition; a question about $0.10. Then a hold-out check (question 4 below), then the full sample,
+sync and batch.
 
-## 8. Build order
+## 9. Build order
 
-Each step lands with synthetic-fixture tests and its own commit; steps 3–6 develop against E0's cached outputs.
+Each step lands with synthetic-fixture tests and its own commit. The old pipeline keeps running until step 10.
 
-1. Schemas and loaders: `Box`, `Container`, `Link`, `Change`; tag the pre-re-base commit.
-2. Stage 2c arm A: prompt, schema, typed links, repair rules, group-only legal.
-3. Stage 3 shrink.
-4. Stage 4: areas, veto at any fraction, change records, transients by pixels, chaining, clock rule.
-5. Stage 5 rendering and the §15.2 contract; citations by box.
-6. Stage 7: frame node with all box texts, container nodes, run and pair text, pair fields.
-7. Diagnostics: `box_stability`, `link_consistency`, coverage, name consistency.
-8. Arms B, C, D as evaluation-only switches; run §7; delete the losing arms.
-9. Delete the row machinery and its config keys; fold this document into the design as revision 7; ledger rows.
+0. Tag the pre-re-base commit. Commit the evaluation scripts for the primary metrics.
+1. **Stage 4** (`changes.py`) writing `changes.jsonl` from `ocr.jsonl` and the PNGs. Validate free (P0).
+2. **Lifetimes** (`lifetimes.py`), majority readings. Validate free (P0).
+3. Schemas `Box`, `Container`, `Link`, `Lifetime`, `Change` beside the old ones; Stage 2c arm A prompt, schema, repair.
+4. Stage 3 writing `boxes.jsonl`; labels joined onto changes and lifetimes.
+5. Stage 5: rendering with box ids, `entered_text`, `submitted`, citation validation; §15.2.
+6. Stage 6 rendering over the new records.
+7. Stage 7: lifetime and transition nodes, both joins, pair fields, co-occurrence fallback; agent tools and prompt; §15.4.
+8. Diagnostics. P1.
+9. Arms B, C, D, group-only, changed-boxes-only transcription and the pane label as evaluation switches. P2–P5.
+10. With the owner's go-ahead after P1 is laid beside `runs/span2-before`: switch the CLI to the new path, delete the row
+    machinery, its config keys and the losing switches, fold this document into the design as revision 7, ledger rows.
 
-## 9. Risks and watch list
+## 10. Risks, remaining constants, watch list
 
-- **Containers lose their scoping role.** The per-window diff protected against interleaved text of overlapping
-  windows. The veto at any fraction and area-local lists should make that moot; a scroll inside a partly covered
-  window is the case to watch.
-- **No window identity across frames.** Names vary from call to call, so "the same window" is only a label.
-  Nothing mechanical depends on it after the re-base; the name-consistency metric says how much the UX suffers.
-- **One geometric rule remains:** reading order within an area. It is scale-free, and the multiset check makes a
-  flip harmless on near-static transitions.
-- **Areas can merge** a keystroke with a simultaneous large change; the ops list still carries both, labelled.
-- **Output bursts no longer coalesce** (Rule 2 goes). Span 2 will show how many Stage 5 calls that costs.
-- **Links are unproven beyond one frame of one run:** consistency per kind, joiner correctness on a wrapped
-  command, and the id shuffle on dense strips are all open. A kind that fails `link_consistency` is dropped.
-- **Arm C's localisation error** relative to box height is unknown; snap failures measure it.
-- **The spacing guard or the engine flips** `SubscriptionID` and `Subscription ID` on unchanged pixels. The veto
-  hides it from the diff; the index still sees both. Check which component flips.
-- **Watch list, no logic until evidence:** a growing line (needs none: box identity is only used on unchanged
-  pixels, where overlap matching measured 96.5 %), cursor glyphs read as text, the pointer clipping a box,
-  low-contrast flicker, scrolls and window moves, occlusion clipping, duplicate strings, re-wrap on resize.
+- **θpix and θmin now carry identity for the whole pipeline and were calibrated on this one video** (§7.2, §22 #3).
+  The failure is graceful: a noisier encode means fewer vetoes and more OCR jitter reported as change; the index is
+  unaffected. `touched_share` on near-static pairs is the per-video alarm.
+- **Remaining constants:** the margin (0.5 box heights; P0 varies it), "overlaps most" and "rectangles intersect"
+  (no threshold), whitespace-blind labels, reading order only to pair duplicate moved texts. `transient_max_s`, IoU
+  cut-offs and the vertical-overlap pairing are gone.
+- **No window identity across frames.** Names vary by call; nothing mechanical depends on them.
+- **A lifetime ends when its text changes under changed pixels,** so a pointer passing over a box (`891c` ⇒ ` c`), a
+  cursor glyph read as text (`(y/n):■`), or an occluding window edge (`Identit` ⇒ `Identity`) splits it and produces
+  honest `changed` records. The reviews saw each once. P0 counts them; logic only if the count matters.
+- **Moves pair duplicates arbitrarily.** Harmless for text; a lifetime may hop between two identical strings.
+- **Links are unproven beyond one frame of one run**, the joiner is a model judgement (hence both joins in the index),
+  and pair against record will flip without the tie-break sentence.
+- **The changed-boxes-only reading is new in this revision** and unmeasured.
+- **Everything measured so far comes from one 14-minute video.**
+- **Watch list, no logic until evidence:** low-contrast flicker, re-wrap on resize, text that changes inside an
+  unchanged rectangle at sub-threshold contrast, duplicate strings under a scroll, the spacing guard's 0.25 ratio
+  (it fired on none of span 2's dropped spaces; `rec_batch_num` 1 may have made it moot).
 
-## 10. Questions for the owner
+## 11. Questions for the owner
 
-1. **Is a second reading wanted at all?** E3 measures its cost and what it catches; the threshold for "worth it"
-   is yours. It also decides whether "index both readings" and joint position-and-similarity assignment exist.
-2. **Delete row mode outright** once the re-base is validated, behind a tag, or keep it as a switch? Recommended:
-   delete.
-3. **Are pane labels wanted** in search hits and descriptions if E4 shows they cost tokens and change nothing
-   mechanical?
-4. **Is "which window had focus" a deliverable?** If not, the model's self-report can go too.
-5. **Will you write the span 2 command list** (about a dozen commands with times)? It turns the text-change
-   contract from reference-free to measured.
-6. **Budget:** about $65–80 for §7, before the full sample run.
+1. **Correct the command list** (`span2-commands-candidate.md`): it gates every paid phase.
+2. **Record both readings and pick neither** (§6): agreed?
+3. **The time gate on transients is dropped** in favour of "the pixels came back" plus a recorded `hold_s`. A window
+   opened and closed with nothing else happening folds into one transition however long it stayed. Acceptable?
+4. **A hold-out recording:** ten frames of a different video (an editor, a dark terminal) for the final check of the
+   prompt and of θpix and θmin. Can you supply one?
+5. **Is "which window had focus" a deliverable?** If not, the model's self-report goes too.
+6. **Delete row mode outright** at step 10, behind the tag? Recommended.
+7. **Budget:** about $90–110 for §8, phase by phase, before the full sample run.
