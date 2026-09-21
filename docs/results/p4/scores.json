@@ -1041,7 +1041,6 @@
     "frames": 221,
     "projection_frames": 221,
     "dollars": 17.7736,
-    "dollars_batch": 8.8868,
     "per_frame": 0.0804,
     "per_video": 17.77,
     "seconds": 1857.0,
@@ -1051,7 +1050,6 @@
     "by_stage": {
      "annotate": {
       "dollars": 12.178,
-      "dollars_batch": 6.089,
       "per_frame": 0.0551,
       "per_video": 12.18,
       "seconds": 742.2,
@@ -1066,7 +1064,6 @@
      },
      "decode": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 0.0,
@@ -1076,7 +1073,6 @@
      },
      "index": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 0.5,
@@ -1086,7 +1082,6 @@
      },
      "interpret": {
       "dollars": 4.6515,
-      "dollars_batch": 2.3258,
       "per_frame": 0.021,
       "per_video": 4.65,
       "seconds": 251.0,
@@ -1101,7 +1096,6 @@
      },
      "read": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 762.5,
@@ -1111,7 +1105,6 @@
      },
      "summarize": {
       "dollars": 0.9441,
-      "dollars_batch": 0.4721,
       "per_frame": 0.0043,
       "per_video": 0.94,
       "seconds": 85.3,
@@ -1126,7 +1119,6 @@
      },
      "track": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 15.5,
@@ -2316,7 +2308,6 @@
     "frames": 221,
     "projection_frames": 221,
     "dollars": 17.9202,
-    "dollars_batch": 8.9601,
     "per_frame": 0.0811,
     "per_video": 17.92,
     "seconds": 1846.0,
@@ -2326,7 +2317,6 @@
     "by_stage": {
      "annotate": {
       "dollars": 12.2579,
-      "dollars_batch": 6.1289,
       "per_frame": 0.0555,
       "per_video": 12.26,
       "seconds": 734.9,
@@ -2341,7 +2331,6 @@
      },
      "decode": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 0.0,
@@ -2351,7 +2340,6 @@
      },
      "index": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 0.5,
@@ -2361,7 +2349,6 @@
      },
      "interpret": {
       "dollars": 4.7205,
-      "dollars_batch": 2.3603,
       "per_frame": 0.0214,
       "per_video": 4.72,
       "seconds": 252.5,
@@ -2376,7 +2363,6 @@
      },
      "read": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 763.5,
@@ -2386,7 +2372,6 @@
      },
      "summarize": {
       "dollars": 0.9418,
-      "dollars_batch": 0.4709,
       "per_frame": 0.0043,
       "per_video": 0.94,
       "seconds": 79.5,
@@ -2401,7 +2386,6 @@
      },
      "track": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 15.1,
@@ -3529,7 +3513,6 @@
     "frames": 221,
     "projection_frames": 221,
     "dollars": 4.6469,
-    "dollars_batch": 2.3234,
     "per_frame": 0.021,
     "per_video": 4.65,
     "seconds": 1093.5,
@@ -3539,7 +3522,6 @@
     "by_stage": {
      "annotate": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 0.0,
@@ -3554,7 +3536,6 @@
      },
      "decode": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 0.0,
@@ -3564,7 +3545,6 @@
      },
      "index": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 0.2,
@@ -3574,7 +3554,6 @@
      },
      "interpret": {
       "dollars": 3.8389,
-      "dollars_batch": 1.9195,
       "per_frame": 0.0174,
       "per_video": 3.84,
       "seconds": 258.3,
@@ -3589,7 +3568,6 @@
      },
      "read": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 760.9,
@@ -3599,7 +3577,6 @@
      },
      "summarize": {
       "dollars": 0.808,
-      "dollars_batch": 0.404,
       "per_frame": 0.0037,
       "per_video": 0.81,
       "seconds": 57.4,
@@ -3614,7 +3591,6 @@
      },
      "track": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 16.7,
@@ -4736,7 +4712,6 @@
     "frames": 221,
     "projection_frames": 221,
     "dollars": 4.5927,
-    "dollars_batch": 2.2963,
     "per_frame": 0.0208,
     "per_video": 4.59,
     "seconds": 456.7,
@@ -4746,7 +4721,6 @@
     "by_stage": {
      "annotate": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 0.0,
@@ -4761,7 +4735,6 @@
      },
      "decode": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 0.0,
@@ -4771,7 +4744,6 @@
      },
      "index": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 0.2,
@@ -4781,7 +4753,6 @@
      },
      "interpret": {
       "dollars": 3.7695,
-      "dollars_batch": 1.8847,
       "per_frame": 0.0171,
       "per_video": 3.77,
       "seconds": 247.3,
@@ -4796,7 +4767,6 @@
      },
      "read": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 127.8,
@@ -4806,7 +4776,6 @@
      },
      "summarize": {
       "dollars": 0.8232,
-      "dollars_batch": 0.4116,
       "per_frame": 0.0037,
       "per_video": 0.82,
       "seconds": 67.3,
@@ -4821,7 +4790,6 @@
      },
      "track": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 14.1,

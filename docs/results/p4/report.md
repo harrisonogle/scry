@@ -6,7 +6,7 @@ Runs by status: done 4.
 Commits the runs started on: `6ac8d6300add` (4 runs).
 Runs that started on a dirty tree: none.
 
-$ / video = $ / frame × 221 frames, a linear projection from this span to the whole source video. Dollars are what a cold run pays at the synchronous list price, from the stages' manifest usage (an answer served from a call cache is priced as if paid); the batch price is half. The question set's dollars are per question and outside $ / video; the judge's dollars are apart from both.
+$ / video = $ / frame × 221 frames, a linear projection from this span to the whole source video. Dollars are the price each stage's manifest records as paid (`cost_usd`): the synchronous list price, or the Batches price for a stage that ran in batch mode; an answer served from a call cache is priced as if paid. The question set's dollars are per question and outside $ / video; the judge's dollars are apart from both.
 
 An `outside` row means only that the difference is larger than the largest difference seen between identical cold runs of the two configurations, scaled for means of repeats. With three repeats a side that floor is a range of three values: by a normal approximation about one row in eight reads `outside` when nothing differs [estimated], and this report has dozens of rows. One `outside` row is weak evidence. Nothing here is a verdict, and no row decides anything by itself.
 
@@ -41,23 +41,23 @@ The stages' own counters, reported, never compared:
 
 ## Cost
 
-Means over a configuration's repeats, per stage. One figure per stage, at the synchronous list price; the batch columns are half of it. s / frame is the wall time of the stages the dollars cover (the pipeline through `index`); answering the questions is timed per question, below.
+Means over a configuration's repeats, per stage. One figure per stage: the price its manifest records as paid. s / frame is the wall time of the stages the dollars cover (the pipeline through `index`); answering the questions is timed per question, below.
 
-| configuration | stage | $ | $ / frame | $ / video | batch $ | batch $ / frame | batch $ / video | s / frame |
-|---|---|---|---|---|---|---|---|---|
-| full-inc-transcribing | annotate | $12.2180 | $0.0553 | $12.22 | $6.1090 | $0.0277 | $6.11 | 3.3 |
-| full-inc-transcribing | index | $0.0000 | $0.0000 | $0.00 | $0.0000 | $0.0000 | $0.00 | 0.0 |
-| full-inc-transcribing | interpret | $4.6860 | $0.0212 | $4.69 | $2.3430 | $0.0106 | $2.35 | 1.1 |
-| full-inc-transcribing | read | $0.0000 | $0.0000 | $0.00 | $0.0000 | $0.0000 | $0.00 | 3.5 |
-| full-inc-transcribing | summarize | $0.9429 | $0.0043 | $0.94 | $0.4714 | $0.0022 | $0.47 | 0.4 |
-| full-inc-transcribing | track | $0.0000 | $0.0000 | $0.00 | $0.0000 | $0.0000 | $0.00 | 0.1 |
-| full-inc-transcribing | all stages | $17.8469 | $0.0808 | $17.84 | $8.9235 | $0.0404 | $8.92 | 8.4 |
-| full-none | index | $0.0000 | $0.0000 | $0.00 | $0.0000 | $0.0000 | $0.00 | 0.0 |
-| full-none | interpret | $3.8042 | $0.0173 | $3.80 | $1.9021 | $0.0086 | $1.90 | 1.1 |
-| full-none | read | $0.0000 | $0.0000 | $0.00 | $0.0000 | $0.0000 | $0.00 | 2.0 |
-| full-none | summarize | $0.8156 | $0.0037 | $0.81 | $0.4078 | $0.0019 | $0.41 | 0.3 |
-| full-none | track | $0.0000 | $0.0000 | $0.00 | $0.0000 | $0.0000 | $0.00 | 0.1 |
-| full-none | all stages | $4.6198 | $0.0209 | $4.62 | $2.3099 | $0.0104 | $2.31 | 3.5 |
+| configuration | stage | $ | $ / frame | $ / video | s / frame |
+|---|---|---|---|---|---|
+| full-inc-transcribing | annotate | $12.2180 | $0.0553 | $12.22 | 3.3 |
+| full-inc-transcribing | index | $0.0000 | $0.0000 | $0.00 | 0.0 |
+| full-inc-transcribing | interpret | $4.6860 | $0.0212 | $4.69 | 1.1 |
+| full-inc-transcribing | read | $0.0000 | $0.0000 | $0.00 | 3.5 |
+| full-inc-transcribing | summarize | $0.9429 | $0.0043 | $0.94 | 0.4 |
+| full-inc-transcribing | track | $0.0000 | $0.0000 | $0.00 | 0.1 |
+| full-inc-transcribing | all stages | $17.8469 | $0.0808 | $17.84 | 8.4 |
+| full-none | index | $0.0000 | $0.0000 | $0.00 | 0.0 |
+| full-none | interpret | $3.8042 | $0.0173 | $3.80 | 1.1 |
+| full-none | read | $0.0000 | $0.0000 | $0.00 | 2.0 |
+| full-none | summarize | $0.8156 | $0.0037 | $0.81 | 0.3 |
+| full-none | track | $0.0000 | $0.0000 | $0.00 | 0.1 |
+| full-none | all stages | $4.6198 | $0.0209 | $4.62 | 3.5 |
 
 The question set, outside $ / video, and the judge, apart (means per run):
 

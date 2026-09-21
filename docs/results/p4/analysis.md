@@ -26,8 +26,8 @@ Every base ties at the ceiling: 135 of 135 answers judged correct, and the 7 com
 - The batch run paid 0.68 of the sync price for the pipeline (annotate 0.64, interpret 0.71), not 0.5. Batched requests mostly wrote the prompt cache instead of reading it: about 161 of 221 annotate calls and 120 of 220 interpret calls were cache writes. `summarize` is never batched.
 - Wall time: annotate took half the time (two batches of 172 and 49 requests, about 5 minutes; interpret's one batch of 220 took 3 minutes).
 - Outputs are equivalent: 0 errors, the same command metrics, 27 of 27 questions, output tokens 3 % higher.
-- **Known error in `../p4b/report.md` as generated:** it prices the batch run at $23.28 (cache writes at sync rates) and shows $11.64 in the batch column (halving `summarize`, which is not batched). The manifest's `cost_usd`, $12.11, is the price paid. `report.md` here projects $8.92 per video for batch from the sync runs, 36 % below what was measured. Both are fixed in code after this phase; the reports are regenerated then.
-- The P4b report's warnings of 221 and 220 cache hits are false: they come from the batch path's second pass, which reads results from the call cache by design.
+- The reports here and in `../p4b/` were regenerated after the pricing fix (ledger L62): a stage's dollars are the price its manifest records as paid, and the projected batch price is gone (as first generated, the P4b report priced the batch run at $23.28, and the P4 report projected $8.92 per video for batch, 36 % below what was measured).
+- The regenerated P4b report still warns of 221 and 220 cache hits. They are false: they are the batch path's second pass reading its own answers out of the call cache, counted as hits by the code of that day and recorded in the run's manifest. Runs made after the fix do not record them.
 
 ## Commands against the whole-video index
 

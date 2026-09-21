@@ -1040,20 +1040,18 @@
    "cost": {
     "frames": 221,
     "projection_frames": 221,
-    "dollars": 23.2843,
-    "dollars_batch": 11.6422,
-    "per_frame": 0.1054,
-    "per_video": 23.28,
+    "dollars": 12.1094,
+    "per_frame": 0.0548,
+    "per_video": 12.11,
     "seconds": 1423.3,
     "seconds_per_frame": 6.4,
     "question_seconds": 592.8,
     "cache_hits": 441,
     "by_stage": {
      "annotate": {
-      "dollars": 15.7133,
-      "dollars_batch": 7.8567,
-      "per_frame": 0.0711,
-      "per_video": 15.71,
+      "dollars": 7.8566,
+      "per_frame": 0.0356,
+      "per_video": 7.86,
       "seconds": 355.2,
       "calls": 221,
       "model": "claude-opus-5",
@@ -1066,7 +1064,6 @@
      },
      "decode": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 0.0,
@@ -1076,7 +1073,6 @@
      },
      "index": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 0.4,
@@ -1085,10 +1081,9 @@
       "usage": null
      },
      "interpret": {
-      "dollars": 6.6364,
-      "dollars_batch": 3.3182,
-      "per_frame": 0.03,
-      "per_video": 6.64,
+      "dollars": 3.3182,
+      "per_frame": 0.015,
+      "per_video": 3.32,
       "seconds": 208.9,
       "calls": 0,
       "model": "claude-opus-5",
@@ -1101,7 +1096,6 @@
      },
      "read": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 762.5,
@@ -1111,7 +1105,6 @@
      },
      "summarize": {
       "dollars": 0.9346,
-      "dollars_batch": 0.4673,
       "per_frame": 0.0042,
       "per_video": 0.93,
       "seconds": 80.8,
@@ -1126,7 +1119,6 @@
      },
      "track": {
       "dollars": 0.0,
-      "dollars_batch": 0.0,
       "per_frame": 0.0,
       "per_video": 0.0,
       "seconds": 15.5,
@@ -1272,7 +1264,7 @@
      "Q27@622b26": 1.0
     },
     "cost.per_frame": {
-     "run": 0.1054
+     "run": 0.0548
     },
     "seconds.per_frame": {
      "run": 6.4
