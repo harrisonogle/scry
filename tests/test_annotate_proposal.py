@@ -1,3 +1,4 @@
+import pytest
 from annotate_fixtures import mk
 
 from scry.annotate.output import output_model
@@ -30,3 +31,10 @@ def test_arm_a_copy():
     assert p.description == "d"
     group, _ = to_proposal("A", output_model("A", False).model_validate(_answer(False)), BOXES, (400, 200), 8)
     assert group.texts is None and group.missed == []
+
+
+def test_arm_d_takes_the_arm_a_path():
+    out = output_model("D", True).model_validate(_answer(True))
+    assert to_proposal("D", out, BOXES, (400, 200), 8) == to_proposal("A", out, BOXES, (400, 200), 8)
+    with pytest.raises(ValueError):
+        to_proposal("B", out, BOXES, (400, 200), 8)

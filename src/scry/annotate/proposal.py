@@ -20,8 +20,9 @@ class Proposal:
 
 
 def to_proposal(arm: str, out: BaseModel, boxes: list[Box], frame_size: tuple[int, int], margin_px: int) -> tuple[Proposal, dict[str, int]]:
-    """The proposal and the counts raised during conversion (none for arm A, which is a field-for-field copy)."""
-    if arm != "A":
+    """The proposal and the counts raised during conversion (none for arms A and D, whose answers name boxes by id: a
+    field-for-field copy)."""
+    if arm not in ("A", "D"):
         raise ValueError(f"no conversion for arm {arm!r}")
     links: list[Link] = ([RunLink(boxes=r.boxes, joiner=r.joiner) for r in out.runs]
                          + [PairLink(key=p.key, value=p.value) for p in out.pairs]

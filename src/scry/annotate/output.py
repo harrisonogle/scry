@@ -53,7 +53,10 @@ _MODELS: dict[tuple[str, bool, bool], type[BaseModel]] = {}
 
 def output_model(arm: str = "A", transcribe: bool = True, pane: bool = False) -> type[BaseModel]:
     """The answer class of a variant, built once: equal arguments return the same class, and each variant has its own
-    name, so its own JSON-schema title and schema hash in the call-cache key."""
+    name, so its own JSON-schema title and schema hash in the call-cache key. Arm D asks for exactly what arm A asks
+    for, so it has arm A's classes; its calls are kept apart in the call cache by the prompt version and the user turn."""
+    if arm == "D":
+        arm = "A"
     if arm != "A":
         raise ValueError(f"no output schema for arm {arm!r}")
     if pane:
