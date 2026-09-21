@@ -15,7 +15,8 @@ _ROOT = typer.Option(Path("runs/eval"), "--root", help="run directories go under
 def run(matrix: Path, dry_run: bool = typer.Option(False, "--dry-run", help="list the runs and validate every config; create and spend nothing"),
         only: str | None = typer.Option(None, "--only", help="the one run with this name"), root: Path = _ROOT):
     """Execute the matrix's runs, each cold in its own directory. Costs money. Safe to re-issue: finished runs are
-    skipped, an unfinished one is finished and flagged as resumed."""
+    skipped, an unfinished one is finished and flagged as resumed. A matrix with a [copy] table builds nothing: each
+    run's pipeline is copied from a finished run and only the questions are asked, so only they are paid for."""
     from scry.evaluation.matrix import check, load_matrix
     from scry.evaluation.runner import run_matrix
     try:
@@ -26,7 +27,7 @@ def run(matrix: Path, dry_run: bool = typer.Option(False, "--dry-run", help="lis
         raise typer.Exit(code=1)
     if dry_run:
         for spec in specs:
-            typer.echo(f"{spec.name}: {', '.join(spec.stages)}")
+            typer.echo(f"{spec.name}: {', '.join(spec.stages)}" + (f" (pipeline copied from {spec.copy_from})" if spec.copy_from else ""))
         typer.echo(f"{len(specs)} runs")
         return
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")

@@ -103,3 +103,51 @@ def test_run_and_report_end_to_end_with_fake_stages(tmp_path: Path, monkeypatch)
     runs_table = report[report.index("## Runs"):report.index("## Cost")]
     assert "$ / frame" in runs_table and "$ / video" in runs_table
     assert "| configuration | $ / question | s / question | question set $ | judge $ |" in report
+
+
+def test_asking_again_over_copied_pipelines_end_to_end(tmp_path: Path, monkeypatch):
+    """The shape of P6: the pipelines of a finished phase are copied, the questions are asked again without frames, and
+    judge and report work on the result. The copied manifest carries the pipeline's dollars; the questions' are new."""
+    src = source_run(tmp_path)
+    built, root, results = _matrix(tmp_path, src), tmp_path / "eval", tmp_path / "results"
+    stages = {"read": _stage("read"), "annotate": _stage("annotate")}
+    asked: list[bool] = []
+
+    def fake_ask(run, cfg, question, client=None):
+        asked.append(cfg.ask.frames)
+        return SimpleNamespace(text="It ran at frame 2.", turns=2, tool_calls=["search"], tool_log=[], usage={"input_tokens": 1_000},
+                               cost_usd=0.05 if cfg.ask.frames else 0.02, stop="end_turn", prompt="ask-v1" if cfg.ask.frames else "ask-v1+noframes")
+
+    monkeypatch.setattr("scry.evaluation.runner.resolve", lambda stage: stages[stage])
+    monkeypatch.setattr("scry.ask.ask", fake_ask)
+    monkeypatch.setattr("scry.evaluation.judge.judge_provider", lambda cfg, cache_dir: _Judge())
+    cli = CliRunner()
+    assert cli.invoke(app, ["eval", "run", str(built), "--root", str(root)]).exit_code == 0
+    manifests = {name: (root / "p9" / name / "manifest.json").read_bytes() for name in ("smoke-r1", "smoke-r2")}
+
+    again = tmp_path / "p10.toml"
+    again.write_text(f'phase = "p10"\nsource = "{src.root}"\nbase_config = "{tmp_path / "base.toml"}"\nstages = ["ask"]\nrepeats = 2\n'
+                     f'[spans.smoke]\nframes = "1-2"\nquestions = "{tmp_path / "q.md"}"\n[axis.ask.indexonly]\n"ask.frames" = false\n'
+                     f'[copy]\nsmoke-indexonly-r1 = "{root / "p9" / "smoke-r1"}"\nsmoke-indexonly-r2 = "{root / "p9" / "smoke-r2"}"\n')
+    dry = cli.invoke(app, ["eval", "run", str(again), "--dry-run", "--root", str(root)])
+    assert dry.exit_code == 0 and f"smoke-indexonly-r1: ask (pipeline copied from {root / 'p9' / 'smoke-r1'})" in dry.output
+    assert "2 runs" in dry.output and not (root / "p10").exists()
+    (tmp_path / "p11.toml").write_text(again.read_text().replace('phase = "p10"', 'phase = "p11"').replace("smoke-r2", "smoke-r3"))
+    missing = cli.invoke(app, ["eval", "run", str(tmp_path / "p11.toml"), "--dry-run", "--root", str(root)])  # refused before a cent is spent
+    assert missing.exit_code == 1 and "smoke-r3 is not a run of the harness" in missing.output
+
+    asked.clear()
+    done = cli.invoke(app, ["eval", "run", str(again), "--root", str(root)])
+    assert done.exit_code == 0, done.output
+    assert asked == [False] * 4  # two questions a run, every one without frames
+    for name, origin in (("smoke-indexonly-r1", "smoke-r1"), ("smoke-indexonly-r2", "smoke-r2")):
+        assert (root / "p10" / name / "manifest.json").read_bytes() == manifests[origin] == (root / "p9" / origin / "manifest.json").read_bytes()
+    assert cli.invoke(app, ["eval", "judge", str(again), "--root", str(root)]).exit_code == 0
+    reported = cli.invoke(app, ["eval", "report", str(again), "--root", str(root), "--results", str(results)])
+    assert reported.exit_code == 0, reported.output
+    card = json.loads((root / "p10" / "smoke-indexonly-r1" / "scorecard.json").read_text())
+    assert card["run"]["cold"] is False and "run is not cold" in card["warnings"]  # how the report shows that nothing was built here
+    assert card["cost"]["dollars"] == 0.15 and card["cost"]["seconds"] == 0  # the pipeline's dollars are the copied manifest's
+    assert card["questions"]["ask_dollars"] == 0.04 and card["questions"]["positive"]["correct"] == 1  # the questions' are this phase's
+    report = (results / "p10" / "report.md").read_text()
+    assert "# p10 evaluation report" in report and "smoke-indexonly" in report and "run is not cold" in report

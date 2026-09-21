@@ -1,13 +1,16 @@
 import itertools
 import json
+import shutil
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+from eval_fixtures import QUESTIONS
 from eval_fixtures import source_run as _source
 
 from scry.evaluation.matrix import expand, load_matrix
-from scry.evaluation.runner import execute, materialise, run_matrix
+from scry.evaluation.runner import check_copy, execute, materialise, run_matrix
 from scry.run import Run
 
 IDENTITY = {"git_commit": "abc", "git_dirty": True}
@@ -86,3 +89,91 @@ def test_failed_run_is_resumed_and_finished_runs_are_skipped(tmp_path):
     assert state["seconds"] == {"read": 3.0, "track": 1.5}
     assert state["finished"]
     assert json.loads((root / "p9" / "smoke-r2" / "evalrun.json").read_text())["resumed"] is False
+
+
+def _files(root: Path) -> dict[str, bytes]:
+    return {str(p.relative_to(root)): p.read_bytes() for p in sorted(root.rglob("*")) if p.is_file()}
+
+
+def _copying(tmp_path: Path, src: Run, origin: Path):
+    """Phase p10: the questions again, without frames, over the pipeline of the finished run `origin`."""
+    (tmp_path / "q.md").write_text(QUESTIONS)
+    path = tmp_path / "p10.toml"
+    path.write_text(f'phase = "p10"\nsource = "{src.root}"\nbase_config = "{tmp_path / "base.toml"}"\nstages = ["ask"]\nrepeats = 1\n'
+                    f'[spans.smoke]\nframes = "1-2"\nquestions = "{tmp_path / "q.md"}"\n[axis.ask.indexonly]\n"ask.frames" = false\n'
+                    f'[copy]\nsmoke-indexonly-r1 = "{origin}"\n')
+    return load_matrix(path)
+
+
+def test_a_copied_pipeline_is_byte_identical_and_only_the_questions_are_asked(tmp_path, monkeypatch):
+    src = _source(tmp_path)
+    root = tmp_path / "eval"
+
+    def read(run, cfg):  # the pipeline of the run that is copied: a record, a paid call in its cache, a manifest entry
+        (run.root / "boxes.jsonl").write_text("boxes\n")
+        (run.cache_dir / "paid.json").write_text("{}")
+        run.stage_done("read", [run.frames], "cfg", usage={"input_tokens": 1000})
+
+    [built] = run_matrix(_matrix(tmp_path, src, '["read"]', 1), root, stage_funcs={"read": read}, clock=_clock(), identity=IDENTITY)
+    origin = root / "p9" / "smoke-r1"
+    assert built.status == "done"
+    for name in ("answers.jsonl", "judgments.jsonl", "scorecard.json", "redecode/000001.000.png"):  # what came after its pipeline
+        (origin / name).parent.mkdir(exist_ok=True)
+        (origin / name).write_text("theirs\n")
+    before = _files(origin)
+
+    m = _copying(tmp_path, src, origin)
+    [spec] = expand(m)
+    run = materialise(m, spec, root, IDENTITY)
+    assert run.root == root / "p10" / "smoke-indexonly-r1"
+    mine = ("evalrun.json", "config.json")  # the harness's state and the run's config are this run's own
+    left_behind = (*mine, "answers.jsonl", "judgments.jsonl", "scorecard.json", "redecode/000001.000.png")
+    pipeline = {name: data for name, data in before.items() if name not in left_behind}
+    assert {"boxes.jsonl", "manifest.json", "frames.jsonl", "frames/00001.png", "cache/paid.json"} <= set(pipeline)
+    assert {name: data for name, data in _files(run.root).items() if name not in mine} == pipeline  # every byte, and nothing else
+    assert _files(origin) == before  # nothing is written under the run it copies
+    state = json.loads((run.root / "evalrun.json").read_text())
+    assert (state["copied_from"], state["cold"], state["status"], state["seconds"]) == (str(origin), False, "new", {})
+    assert (state["phase"], state["name"], state["overrides"]) == ("p10", "smoke-indexonly-r1", {"ask.frames": False})
+    assert json.loads((run.root / "config.json").read_text())["ask"]["frames"] is False
+
+    seen = []
+
+    def fake_ask(run, cfg, question, client=None):
+        seen.append(cfg.ask.frames)
+        return SimpleNamespace(text="It ran.", turns=1, tool_calls=[], tool_log=[], usage={"input_tokens": 1}, cost_usd=0.01,
+                               stop="end_turn", prompt="ask-v1+noframes")
+
+    monkeypatch.setattr("scry.ask.ask", fake_ask)
+    outcome = execute(m, spec, root, IDENTITY, clock=_clock())
+    assert (outcome.status, outcome.seconds) == ("done", {"ask": 1.5})  # no pipeline stage ran; the time is the questions'
+    assert seen == [False, False]
+    answers = (run.root / "answers.jsonl").read_text()
+    assert "theirs" not in answers and answers.count("ask-v1+noframes") == 2  # asked anew, never carried over
+    assert {name: data for name, data in _files(run.root).items() if name not in (*mine, "answers.jsonl")} == pipeline
+    assert _files(origin) == before
+    assert "copied_from" not in json.loads((origin / "evalrun.json").read_text())  # a built run has no such key
+
+    def altered(name: str, file: str, change) -> Path:
+        other = tmp_path / name
+        shutil.copytree(origin, other)
+        data = json.loads((other / file).read_text())
+        change(data)
+        (other / file).write_text(json.dumps(data))
+        return other
+
+    refusals = {"not finished": altered("failed", "evalrun.json", lambda d: d.update(status="failed")),
+                "frames": altered("longer", "evalrun.json", lambda d: d["span"].update(frames=[0, 3])),
+                r"\[track\]": altered("margin", "config.json", lambda d: d["track"].update(margin=0.25)),
+                "evalrun.json": tmp_path / "nowhere"}
+    for message, other in refusals.items():  # a copy must not mislabel what it holds; refused before anything is created
+        with pytest.raises(ValueError, match=message):
+            check_copy(m, replace(spec, copy_from=other))
+        with pytest.raises(ValueError, match=message):
+            materialise(m, replace(spec, name="smoke-indexonly-r2", copy_from=other), root, IDENTITY)
+    assert not (root / "p10" / "smoke-indexonly-r2").exists()
+    # [ask] is what such a phase changes, and a config written before a key existed holds that key's default
+    older = altered("older", "config.json", lambda d: (d["ask"].update(max_turns=3), d["ask"].pop("frames"), d["annotate"].pop("arm")))
+    assert check_copy(m, replace(spec, copy_from=older))["status"] == "done"
+    with pytest.raises(ValueError, match="different spec"):  # the table changed under a run that exists
+        materialise(m, replace(spec, copy_from=older), root, IDENTITY)

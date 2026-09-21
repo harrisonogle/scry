@@ -33,7 +33,8 @@ read,track` runs a selection. Beside the stages:
 - `scry subset runs/aks --out runs/smoke --frames 145-155` derives a small run from decoded frames, for cheap live checks;
 - `scry report <run-dir> [--frames 155-187] [--ground-truth <list>]` writes what `track` measured, with evidence sheets;
 - `scry eval run|judge|report <matrix.toml>` runs an evaluation matrix cold (costs money; `--dry-run` spends nothing), has a
-  judge model score the answers, and writes `docs/results/<phase>/report.md`.
+  judge model score the answers, and writes `docs/results/<phase>/report.md`. A matrix with a `[copy]` table builds
+  nothing: it copies the pipelines of finished runs and only asks the questions again (`evals/p6.toml`).
 
 ## Tests
 
