@@ -4,32 +4,13 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from eval_fixtures import QUESTIONS
 
 from scry.config import Config
 from scry.evaluation import adapters
 from scry.evaluation.adapters import AskOutcome
 from scry.evaluation.questions import load_answers, parse_questions, run_questions
 from scry.run import Run
-
-QUESTIONS = """Intro that is ignored.
-## Positive questions
-### Q1 (positive, exact-string lookup)
-- **Question:** Where does `git status` get run?
-- **Reference answer:** At frame 2 (0:02.5),
-  submitted by frame 3.
-- **Rubric:**
-  - M1: says `git status` was executed.
-  - M2: gives frame 2 or 3.
-  - X1: says it was not run.
-- **Evidence:** executed row 1; frames 2-3
-## Negative questions (secondary)
-### Q2 (negative, did they)
-- **Question:** Did they push?
-- **Reference answer:** No.
-- **Rubric:**
-  - M1: says nothing was pushed.
-  - X1: says `git push` was executed.
-"""
 
 
 def test_parse_questions():
