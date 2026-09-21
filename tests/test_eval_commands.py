@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from eval_fixtures import GROUND_TRUTH
 from minirun import mini_interpretations, mini_run
 
 from scry.config import Config
@@ -143,20 +144,6 @@ def test_command_scores_rates_and_units():
     assert bare["rates"]["found"] is None and bare["rates"]["submitted"] is None and bare["rates"]["false_run"] is None
     assert not {"found", "submitted", "submit_frame_error_abs", "false_run"} & bare["units"].keys()
     assert bare["entries"][0]["found"] is None and bare["entries"][0]["submitted"] is None
-
-
-GROUND_TRUTH = """## Executed, in order
-
-| # | Text as displayed | First fully visible (frame, t) | Submitted (frame, t) | Confidence note |
-|---|---|---|---|---|
-| 1 | `git status` | 11, 24.40 | 12, 26.40 | High |
-
-## Appeared on screen but was never run
-
-| Text as displayed | Frames (t) | What the presenter had actually entered | What happened next |
-|---|---|---|---|
-| `git stash` | 11 (24.40) | `git st` | replaced |
-"""
 
 
 def test_score_commands_on_the_mini_run(tmp_path: Path):

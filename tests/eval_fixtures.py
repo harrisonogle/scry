@@ -20,3 +20,17 @@ QUESTIONS = """Intro that is ignored.
   - M1: says nothing was pushed.
   - X1: says `git push` was executed.
 """
+
+# Task 4's command list over plan 3's Fixture M, in the format of docs/ground-truth/span2-commands.md
+GROUND_TRUTH = """## Executed, in order
+
+| # | Text as displayed | First fully visible (frame, t) | Submitted (frame, t) | Confidence note |
+|---|---|---|---|---|
+| 1 | `git status` | 11, 24.40 | 12, 26.40 | High |
+
+## Appeared on screen but was never run
+
+| Text as displayed | Frames (t) | What the presenter had actually entered | What happened next |
+|---|---|---|---|
+| `git stash` | 11 (24.40) | `git st` | replaced |
+"""

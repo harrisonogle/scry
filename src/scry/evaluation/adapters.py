@@ -11,6 +11,10 @@ from scry.run import Run
 from scry.schemas import Change, Interpretation, Lifetime
 
 
+def frame_count(run: Run) -> int:
+    return len(run.load_frames())
+
+
 def lifetimes(run: Run) -> list[Lifetime]:
     return run.load_lifetimes()
 
