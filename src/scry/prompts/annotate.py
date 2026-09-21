@@ -4,7 +4,7 @@ The call cache keys on the version, not on the prompt's text: ANY edit to a para
 comes from an evaluated video: every example is invented."""
 from __future__ import annotations
 
-VERSION = "annotate-v1"
+VERSION = "annotate-v2"  # v2: a box id in at most one link; a wrapped side of a pair goes inside the pair (ledger L53)
 
 ROLE = """You label screenshots of computer tutorials (terminals, code editors, browsers, dialogs)."""
 
@@ -14,9 +14,9 @@ CONTAINERS = """containers: the windows (top-level application windows) and popu
 
 ASSIGN = """assign: for every target box id, the container it belongs to. Every target appears exactly once, or in unassigned."""
 
-LINKS = """links: relations between boxes of one container, given as three lists. A link must include at least one target; it may also include boxes that are not targets. A box belongs to at most one run, pair or record; column headings are the exception and may be named by every record of their table.
+LINKS = """links: relations between boxes of one container, given as three lists. A link must include at least one target; it may also include boxes that are not targets. A box id may appear in at most one link: a box that is in a run, a pair or a record appears in no other link of any of the three lists; column headings are the exception and may be named by every record of their table.
   runs: boxes that are one continuous piece of text which the OCR engine split or the screen wrapped onto the next line, in reading order. joiner is "" when a word was cut in two by the wrap, " " otherwise.
-  pairs: a label and its value (a property and its value, a form field and its content). key and value are lists of box ids. A two-column grid of labels and values is pairs, not records.
+  pairs: a label and its value (a property and its value, a form field and its content). key and value are lists of box ids. When a label or a value that wrapped onto two boxes is one side of a pair, list its boxes together, in reading order, inside that pair's key or value and give no separate run for them: a label on b4 and b5 whose value is b6 is the one pair with key [b4, b5] and value [b6]. A two-column grid of labels and values is pairs, not records.
   records: one row of a table with three or more columns: members, left to right, each a list of box ids; header, the box ids of the column headings when they are visible, otherwise [].
 Boxes that merely sit side by side stand alone: tabs, toolbar buttons, menu items, breadcrumbs."""
 

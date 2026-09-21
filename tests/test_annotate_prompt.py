@@ -9,6 +9,10 @@ def test_arm_a_paragraphs():
     starts = ["You label ", "You are shown the same screenshot twice.", "containers:", "assign:", "links:", "texts:", "description:"]
     assert len(paras) == 7 and all(p.startswith(s) for p, s in zip(paras, starts))
     assert all(part in paras[4] for part in ("  runs:", "  pairs:", "  records:")) and paras[4].endswith("breadcrumbs.")
+    # a box id is in one link only, and a wrapped side of a pair goes inside the pair (ledger L53)
+    head, pairs = paras[4].split("\n")[0], next(line for line in paras[4].split("\n") if line.startswith("  pairs:"))
+    assert "A box id may appear in at most one link" in head
+    assert "inside that pair's key or value and give no separate run" in pairs and "key [b4, b5] and value [b6]" in pairs
 
 
 def test_group_only_differs_in_one_paragraph():
@@ -20,10 +24,10 @@ def test_group_only_differs_in_one_paragraph():
 
 
 def test_versions():
-    assert prompt_version() == "annotate-v1"
-    assert prompt_version(transcribe=False) == "annotate-v1+grouponly"
-    assert prompt_version(scale=0.5) == "annotate-v1+s0.5"
-    assert prompt_version(transcribe=False, scale=0.67) == "annotate-v1+grouponly+s0.67"
+    assert prompt_version() == "annotate-v2"
+    assert prompt_version(transcribe=False) == "annotate-v2+grouponly"
+    assert prompt_version(scale=0.5) == "annotate-v2+s0.5"
+    assert prompt_version(transcribe=False, scale=0.67) == "annotate-v2+grouponly+s0.67"
 
 
 def test_no_sample_video_content():
