@@ -363,8 +363,8 @@ Existing run directories do not load on the branch; `decode`'s output is reused 
 
 **Ground truth.** G1, the precondition of every paid phase: the command list of span 2,
 `docs/ground-truth/span2-commands.md` (9 executed entries with frames and times, accepted by the owner on
-2026-09-21, and 5 suggestions that appeared on screen and were never run, kept as a scoring key only). G2, small: the links of frame 150 and the windows and popups of the 11
-smoke frames, drafted from existing runs for the owner to correct. Q: about fifteen questions written from G1, with
+2026-09-21, and 5 suggestions that appeared on screen and were never run, kept as a scoring key only). G2: label quality (links, windows and popups) is judged by eye on samples, per the owner; if it comes to matter the
+owner will correct a drafted list later and the numbers are re-run against it. Q: about fifteen questions written from G1, with
 negatives ("did they roll back the deployment?", "did they run `az login`?" must be answered no). The owner is
 preparing a second, different video as a hold-out.
 
@@ -439,11 +439,16 @@ Each step lands with synthetic-fixture tests and its own commit. The order is th
 
 ## 12. Questions for the owner
 
-1. **G2:** will you correct about 55 drafted entries (links of frame 150, windows and popups of the smoke frames), or
-   should label quality be judged by eye on samples instead?
-2. **If two readings survive, record both and pick neither** (§7): agreed?
-3. **The draft omits the per-frame prose `description`:** it has no home once per-frame index nodes go, and
-   non-textual state is `interpret`'s job. Keep it out (recommended), or index it once per run of unchanged frames?
-4. **Stage and command names** (`decode`, `read`, `track`, `annotate`, `interpret`, `summarize`, `index`, `ask`):
-   acceptable?
-5. **The hold-out video:** will you also list its commands, so P6 can score the command metrics and not only the guards?
+Answered on 2026-09-21: label quality is judged by eye (G2 above); if two readings survive, both are recorded and
+neither is picked, which does not pre-decide transcribing against group-only; the stage and command names are accepted;
+the hold-out video is dealt with when it arrives. No drafter or reviewer writes a prototype, at all: documents are
+written by reading and reasoning, and code exists only as the real implementation on the branch with its tests.
+
+Still open:
+
+1. **The per-frame prose `description`** that today's model call returns (selections, highlights, icons, diagrams:
+   what the text boxes cannot express) and that today's index stores as the frame-level node. The draft drops it:
+   per-frame nodes go, and `interpret` already describes non-textual change when it happens. Keep it out
+   (recommended), or keep the field and index it once per run of unchanged frames?
+2. **The "no annotation" base in P1** is the drafter's addition, not the owner's: cheap, and it prices what
+   annotation buys, but it widens P1 from 12 runs to 18. Keep, or drop?
