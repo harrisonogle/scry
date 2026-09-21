@@ -13,7 +13,7 @@ from scry.changetext import PAIR_KINDS, render_change_line
 from scry.config import Config, config_hash
 from scry.costs import add_usage, estimate_cost
 from scry.jsonl import sha256_obj, write_jsonl
-from scry.prompts.summarize import BOUNDARY_SYSTEM, ELABORATE_SYSTEM, VERSION
+from scry.prompts.summarize import BOUNDARY_SYSTEM, ELABORATE_LEVEL, ELABORATE_SYSTEM, VERSION
 from scry.providers import VlmProvider, get_provider, text_block
 from scry.run import Run
 from scry.schemas import Change, Frame, HierNode, Interpretation, ModelBoundaries, ModelElaboration, SegmentStart
@@ -144,7 +144,7 @@ async def _boundaries(provider: VlmProvider, cfg: Config, level: str, lines: lis
 
 async def _elaborate(provider: VlmProvider, cfg: Config, level: str, seg_id: str, items_text: str, start_state: str, end_state: str,
                      meter: dict) -> ModelElaboration:
-    text = f"Segment {seg_id}\nStart state: {start_state}\nEnd state: {end_state}\n\nItems:\n{items_text}"
+    text = f"Segment {seg_id}\nStart state: {start_state}\nEnd state: {end_state}\n\n{ELABORATE_LEVEL[level]}\n\nItems:\n{items_text}"
     res = await _complete(provider, meter, stage=f"summarize-elaborate-{level}", system=ELABORATE_SYSTEM, blocks=[text_block(text)],
                           output_model=ModelElaboration, effort=cfg.model.effort_summarize, prompt_version=VERSION,
                           input_hashes=[sha256_obj(text)])

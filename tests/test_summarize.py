@@ -104,7 +104,12 @@ def test_run_summarize_builds_three_levels(tmp_path: Path):
         by_stage.setdefault(kw["stage"], []).append(call_text(kw))
     assert by_stage["summarize-boundary-step"] == ["\n".join([LINE_T1, LINE_T2, LINE_T3])]
     first = next(t for t in by_stage["summarize-elaborate-step"] if t.startswith("Segment S1\n"))
-    assert first.startswith("Segment S1\nStart state: frame 10 (t=20.4s)\nEnd state: frame 12 (t=26.4s)\n\nItems:\nT1 [f10→f11")
+    assert first.startswith("Segment S1\nStart state: frame 10 (t=20.4s)\nEnd state: frame 12 (t=26.4s)\n\nThis segment is a step. Its items "
+                            "are transitions: cite transition ids (T...) only.\n\nItems:\nT1 [f10→f11")
+    # each level is told which ids are valid in it: a section cites step ids, not the T ids in its items (ledger L57)
+    section = by_stage["summarize-elaborate-section"][0]
+    assert "\n\nThis segment is a section. Its items are steps: cite step ids (S...) only, never the transition ids" in section
+    assert "[T1]" in section.split("Items:\n")[1]
     assert by_stage["summarize-elaborate-video"][0].startswith("Segment V\n")
     stats = run.manifest_read()["stages"]["summarize"]
     assert (stats["steps"], stats["sections"], stats["low_conf"], stats["invalid_refs"], stats["calls"]) == (2, 1, 0, 1, 6)
