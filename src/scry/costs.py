@@ -36,8 +36,9 @@ def estimate_cost(usage: dict, model: str, batch: bool = False) -> float:
 
 def run_costs(manifest: dict) -> dict:
     """One dollar figure per stage that recorded usage, their total, and dollars per emitted frame. A stage's usage
-    counts answers served from the call cache, so this is what a cold run would pay at the synchronous price; a report
-    that wants the batch price halves it."""
+    counts answers served from the call cache, so this is what a cold run would pay at the synchronous price. Halving
+    it is no batch price: batched requests mostly write the prompt cache where synchronous ones read it (P4b), and a
+    stage that ran in batch mode records what it paid as its own `cost_usd`."""
     entries = manifest.get("stages", {})
     stages = {name: {"usage": e["usage"], "cost_usd": estimate_cost(e["usage"], e.get("model", ""))}
               for name, e in entries.items() if isinstance(e.get("usage"), dict)}
