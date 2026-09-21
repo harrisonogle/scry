@@ -72,8 +72,8 @@ class AnnotateConfig(BaseModel):
     # "incremental": the first frame and every frame whose incoming transition changed pixels, the targets being the
     # boxes whose lifetime starts there or continues there by a move; "off": the "no annotation" base. [model] mode =
     # "batch" works with each.
-    # Incremental annotation is built for the id-based arms only: when the `arm` key arrives, a validator here refuses
-    # mode = "incremental" with arm B or C ("incremental annotation needs arm A or D").
+    # There is no `arm` key: the only referencing arm is A, the tagged overlay. Arm D was evaluated and removed behind the
+    # tag `arm-d-evaluated` (ledger L63); arms B and C, which incremental annotation does not serve, were never built.
     # The default is the working default of ledger L59 (incremental, transcribing), for the owner to confirm.
     mode: Literal["every_frame", "incremental", "off"] = "incremental"
     transcribe: bool = True  # true: the call also returns a second reading (texts, missed); false: group-only

@@ -31,7 +31,9 @@ from scry.textdiff import similarity
 from scry.track.pixels import margin_px
 
 log = logging.getLogger(__name__)
-ARM, PANE = "A", False  # the referencing arm and the pane label are evaluation switches that have not landed
+# The only referencing arm is A, the tagged overlay: arm D was evaluated and removed behind the tag `arm-d-evaluated`
+# (ledger L63); arms B and C were never built. The pane label is an evaluation switch that has not landed.
+ARM, PANE = "A", False
 
 
 def mark_match(annotations: list[Annotation], frames: list[FrameBoxes], threshold: float = 0.8) -> tuple[int, int]:
