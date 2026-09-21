@@ -76,13 +76,8 @@ class AnnotateConfig(BaseModel):
 
 class OverlayConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    font_size: int = 12
+    font_size: int = 12  # px, not scaled with the image
     font_path: str = "/System/Library/Fonts/Menlo.ttc"
-    scale: float = Field(1.0, gt=0, le=1)  # < 1 sends both Stage 2c images downscaled by this factor; tags keep font_size
-    # Stage 2c masking experiment (group-only mode): cover every OCR box in both images. opaque = light grey fill, tag
-    # outside as usual; opaque_label = grey fill with the tag inside the box; rendered = white fill with the OCR text
-    # re-set in font_path at the box height. none = the frame as is.
-    mask: Literal["none", "opaque", "opaque_label", "rendered"] = "none"
 
 
 Effort = Literal["low", "medium", "high", "xhigh", "max"]

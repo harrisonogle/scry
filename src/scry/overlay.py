@@ -1,3 +1,4 @@
+"""The numbered-box overlay: every OCR box outlined, with its number on an opaque tag beside it."""
 from __future__ import annotations
 
 import logging
@@ -14,10 +15,6 @@ COLOR = (255, 0, 255, 255)   # box outline
 LABEL_BG = (255, 255, 0, 255)  # opaque yellow tag with black digits: the first live run showed the model could not read
 LABEL_FG = (0, 0, 0, 255)      # magenta digits on a translucent dark backing and guessed the ids (ledger L29)
 PAD = 2
-MASK_FILL = (204, 204, 204, 255)  # [overlay] mask = opaque / opaque_label: the light grey covering each OCR box
-RENDER_BG = (255, 255, 255, 255)  # [overlay] mask = rendered: white box with the OCR text re-set in the tag font
-RENDER_FG = (0, 0, 0, 255)
-RENDER_MIN_PT = 6                 # rendered: the text shrinks to fit the box width down to this size, then is clipped
 
 
 def _overlap(a: BBox, b: BBox) -> int:
@@ -25,6 +22,8 @@ def _overlap(a: BBox, b: BBox) -> int:
 
 
 def place_label(box: BBox, lw: int, lh: int, boxes: list[BBox], W: int, H: int) -> tuple[int, int, bool]:
+    """Where a box's tag goes: right of the box, else the left gutter, above, below, each clamped into the image; the
+    first slot that intersects no box, else the least-overlapping one (the earliest among equals) and a clash."""
     x0, y0, x1, y1 = box
     cy = (y0 + y1) // 2 - lh // 2
     slots = [(x1 + 2, cy), (x0 - lw - 2, cy), (x0, y0 - lh - 1), (x0, y1 + 1)]
@@ -42,82 +41,43 @@ def place_label(box: BBox, lw: int, lh: int, boxes: list[BBox], W: int, H: int) 
     return best[0], best[1], True
 
 
-def _font(cfg: OverlayConfig, size: int | None = None):
-    size = cfg.font_size if size is None else size
+def _font(cfg: OverlayConfig):
     try:
-        return ImageFont.truetype(cfg.font_path, size)
+        return ImageFont.truetype(cfg.font_path, cfg.font_size)
     except OSError:
-        return ImageFont.load_default(size)
-
-
-def _fit_text(text: str, w: int, h: int, cfg: OverlayConfig, fonts: dict) -> tuple[ImageFont.FreeTypeFont, int]:
-    """The tag font at the largest size whose ascent + descent fit the box height and whose rendering of `text` fits
-    the box width, never below RENDER_MIN_PT (past that the caller clips); with the y offset that centres its line box."""
-    size = max(RENDER_MIN_PT, h)
-    while True:
-        font = fonts.get(size) or fonts.setdefault(size, _font(cfg, size))
-        asc, desc = font.getmetrics()
-        if size <= RENDER_MIN_PT or (asc + desc <= h and font.getlength(text) <= w):
-            return font, (h - asc - desc) // 2
-        size -= 1
-
-
-def mask_image(img: Image.Image, lines: list[Box], cfg: OverlayConfig) -> Image.Image:
-    """[overlay] mask: `img` (the frame, already scaled by cfg.scale) with every OCR box covered, in place. opaque and
-    opaque_label fill the box MASK_FILL grey; rendered fills it white and re-sets the OCR text inside it (left-aligned,
-    vertically centred, see _fit_text). No tags: draw_overlay adds them afterwards, and perceive.frame_block applies the
-    same masking to the clean frame in memory so both Stage 2c images cover the same rectangles. none returns img as is."""
-    if cfg.mask == "none":
-        return img
-    draw = ImageDraw.Draw(img)
-    fonts: dict[int, ImageFont.FreeTypeFont] = {}
-    for ln in lines:
-        x0, y0, x1, y1 = _scale_box(ln.bbox, cfg.scale)
-        if x1 <= x0 or y1 <= y0:
-            continue
-        if cfg.mask != "rendered":
-            draw.rectangle((x0, y0, x1 - 1, y1 - 1), fill=MASK_FILL)
-            continue
-        w, h = x1 - x0, y1 - y0
-        font, top = _fit_text(ln.text, w, h, cfg, fonts)
-        tile = Image.new("RGBA", (w, h), RENDER_BG)  # text past the box edge is clipped by the tile
-        ImageDraw.Draw(tile).text((0, top), ln.text, fill=RENDER_FG, font=font, anchor="la")
-        img.paste(tile, (x0, y0))
-    return img
+        return ImageFont.load_default(cfg.font_size)
 
 
 def scale_image(img: Image.Image, scale: float) -> Image.Image:
-    """The frame downscaled by `scale` (LANCZOS); unchanged at 1.0. Stage 2c scales the clean frame the same way, so
-    the two images the model sees stay the same size."""
+    """The frame downscaled by `scale` (LANCZOS); unchanged at 1.0. The clean frame is scaled the same way, so the two
+    images the model sees stay the same size."""
     if scale == 1.0:
         return img
     return img.resize((round(img.width * scale), round(img.height * scale)), Image.LANCZOS)
 
 
 def _scale_box(box: BBox, scale: float) -> BBox:
-    x0, y0, x1, y1 = box  # rounded outward so the box still encloses its text
+    x0, y0, x1, y1 = box  # rounded outward so the rectangle still encloses its text
     return (math.floor(x0 * scale), math.floor(y0 * scale), math.ceil(x1 * scale), math.ceil(y1 * scale))
 
 
-def draw_overlay(png_in: Path, lines: list[Box], png_out: Path, cfg: OverlayConfig) -> int:
-    img = mask_image(scale_image(Image.open(png_in).convert("RGBA"), cfg.scale), lines, cfg)
+def draw_overlay(png_in: Path, boxes: list[Box], png_out: Path, cfg: OverlayConfig, scale: float = 1.0) -> int:
+    """Write the frame with every box outlined and numbered; returns the number of label clashes. With scale < 1 the
+    frame and the rectangles shrink; the tag font does not, so the tags stay legible."""
+    img = scale_image(Image.open(png_in).convert("RGBA"), scale)
     W, H = img.size
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer)
-    font = _font(cfg)  # font_size is not scaled: the tags stay legible when the frame shrinks
-    boxes = [_scale_box(ln.bbox, cfg.scale) for ln in lines]
+    font = _font(cfg)
+    rects = [_scale_box(b.bbox, scale) for b in boxes]
     clashes = 0
-    for ln, box in zip(lines, boxes):
-        x0, y0, x1, y1 = box
+    for box, rect in zip(boxes, rects):
+        x0, y0, x1, y1 = rect
         draw.rectangle((x0, y0, max(x1 - 1, x0), max(y1 - 1, y0)), outline=COLOR, width=1)
-        label = ln.id[1:]  # "b17" → "17"
+        label = box.id[1:]  # "b17" → "17"
         l, t, r, b = font.getbbox(label)
         lw, lh = (r - l) + 2 * PAD, (b - t) + 2 * PAD
-        if cfg.mask == "opaque_label":  # the tag sits inside the covered box: left-aligned, vertically centred, black on the grey
-            y = y0 + (y1 - y0 - lh) // 2
-            draw.text((x0 + PAD - l, y + PAD - t), label, fill=LABEL_FG, font=font)
-            continue
-        x, y, clash = place_label(box, lw, lh, boxes, W, H)
+        x, y, clash = place_label(rect, lw, lh, rects, W, H)
         clashes += int(clash)
         draw.rectangle((x, y, x + lw - 1, y + lh - 1), fill=LABEL_BG)
         draw.text((x + PAD - l, y + PAD - t), label, fill=LABEL_FG, font=font)
