@@ -73,7 +73,9 @@ What the order makes possible, as options the evaluation prices:
 - **`track` is free**, so it is built first and run over all 221 frames before any money is spent (§9, P0): the
   pipeline's order, not a build trick.
 - **Incremental annotation.** `annotate` labels only boxes that are new or changed; an unchanged box carries its
-  labels along its lifetime; a transition with no such box makes no call. The first frame and a cut are the same
+  labels along its lifetime. A call is made whenever pixels changed, even if no box did, because the screen
+  `description` (below) must be refreshed when a toggle, a selection or an icon changes; a transition with no
+  changed pixel makes no call and the previous description carries over. The first frame and a cut are the same
   rule with every box new, so no threshold separates "full" from "incremental".
 - **No annotation.** `interpret` sees the frames and the change records, so the pipeline runs end to end without
   `annotate`: no containers, links or second reading, and none of the $25. It is the cost floor and the measure of
@@ -203,6 +205,7 @@ fact the agent can hedge on with no second reader.
            {"kind": "record", "members": [["b70"], ["b71"], ["b72"]], "header": ["b64", "b65", "b66"]}],
  "texts": [{"box": "b33", "text": "PS C:\\Users\\msadmin> a login"}],
  "missed": [{"id": "m1", "text": "Networking", "container": "c1"}], "unassigned": [],
+ "description": "The Overview item is highlighted in the left navigation; the Properties tab is selected; …",
  "repairs": 0, "model": "claude-opus-5", "prompt_version": "annotate-v1", "usage": {}, "error": null}
 ```
 
@@ -278,7 +281,14 @@ Boxes that merely sit side by side stand alone: tabs, toolbar buttons, menu item
 [transcribing] texts: for every target box id, the verbatim text inside that box, read from Image 1. Preserve case,
 punctuation, whitespace and symbols. Never correct, complete or normalize commands, code, paths or identifiers. Use ?
 for a character you cannot resolve. An icon is not text: give "". missed: text no box covers, with its container.
+
+description: what the boxes cannot express about this screen: selections, highlights, toggles, checked boxes,
+icons, diagrams and their relationships, dialogs, progress indicators, anything animating. Plain prose.
 ```
+
+The `description` is kept from today's prompt at the owner's instruction (2026-09-21): it is purely additive, costs
+about half a cent per frame, and is the only place non-textual screen state becomes searchable at moments when
+nothing changes. Revision 3's draft dropped it without cause.
 
 When incremental, the call also carries the known containers and the target boxes' neighbours, and a link may join a
 target to a known box. Output lists are lists of objects, never arrays parallel to an id list. Validation is repair,
@@ -316,7 +326,9 @@ texts, and a frame's state from its containers when annotations exist. Intent un
 **`index` and `ask`.** Nodes: one per **lifetime** (the majority reading of each reader, every variant, run texts
 joined both with `""` and with `" "` so a wrong joiner cannot hide a command, pair text as `key value` tokens with
 `key` and `value` as fields, first and last time, container label when there is one); one per transition (action,
-result, `entered_text`, `submitted`, group texts); steps, sections and the video as today. There are no per-frame
+result, `entered_text`, `submitted`, group texts); one per **screen description**, spanning the frames from the call
+that produced it to the next description, so an unchanged screen is described once and not once per frame; steps,
+sections and the video as today. There are no per-frame
 copies: a text on screen for many frames is one hit with its first and last time (today's smoke index holds 67
 region nodes for 11 frames of three screens). A multi-term query with no single-node match falls back to per-term
 hits whose lifetimes overlap in time; a deduplicated whole-screen node is added only if the question set shows the
@@ -444,11 +456,5 @@ neither is picked, which does not pre-decide transcribing against group-only; th
 the hold-out video is dealt with when it arrives. No drafter or reviewer writes a prototype, at all: documents are
 written by reading and reasoning, and code exists only as the real implementation on the branch with its tests.
 
-Still open:
-
-1. **The per-frame prose `description`** that today's model call returns (selections, highlights, icons, diagrams:
-   what the text boxes cannot express) and that today's index stores as the frame-level node. The draft drops it:
-   per-frame nodes go, and `interpret` already describes non-textual change when it happens. Keep it out
-   (recommended), or keep the field and index it once per run of unchanged frames?
-2. **The "no annotation" base in P1** is the drafter's addition, not the owner's: cheap, and it prices what
-   annotation buys, but it widens P1 from 12 runs to 18. Keep, or drop?
+Also answered on 2026-09-21: the screen `description` stays (§6); the "no annotation" base stays in P1. In that base
+there is no description, which is part of what it prices.
