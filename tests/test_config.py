@@ -25,6 +25,26 @@ def test_sections_and_unknown_keys(tmp_path: Path):
 def test_repo_toml_loads():
     cfg = load_config(REPO / "scry.toml")
     assert cfg.read.engine == "rapid"
+    assert cfg.annotate.mode == "every_frame"
+    assert cfg.model.effort_annotate == "low"
+
+
+def test_annotate_defaults():
+    cfg = Config()
+    assert cfg.annotate.mode == "every_frame"
+    assert cfg.annotate.transcribe is True
+    assert cfg.annotate.scale == 1.0
+    assert cfg.model.effort_annotate == "low"
+
+
+def test_annotate_section_loads_and_rejects_bad_values(tmp_path: Path):
+    cfg = load_config(_toml(tmp_path, '[annotate]\nmode = "off"\ntranscribe = false\nscale = 0.5\n'))
+    assert cfg.annotate.mode == "off"
+    assert cfg.annotate.transcribe is False
+    assert cfg.annotate.scale == 0.5
+    for bad in ("scale = 0", "scale = 1.5", 'mode = "sometimes"', 'stage2c_rows = "boxes"'):
+        with pytest.raises(pydantic.ValidationError):
+            load_config(_toml(tmp_path, f"[annotate]\n{bad}\n"))
 
 
 def test_config_hash_is_stable_per_section(tmp_path: Path):

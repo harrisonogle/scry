@@ -35,6 +35,11 @@ gap_ratio = 0.25
 [track]
 margin = 0.5
 
+[annotate]
+mode = "every_frame"
+transcribe = true
+scale = 1.0
+
 [overlay]
 font_size = 12
 font_path = "/System/Library/Fonts/Menlo.ttc"
@@ -46,6 +51,7 @@ max_tokens = 16000
 retry_max_tokens = 32000
 concurrency = 4
 mode = "sync"
+effort_annotate = "low"
 
 [index]
 embedder = "none"

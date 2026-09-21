@@ -66,6 +66,14 @@ class TrackConfig(BaseModel):
     margin: float = 0.5  # × the median box height of the two frames; 0 = exact touch
 
 
+class AnnotateConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    # which frames get a call and which boxes are targets; "off" is the "no annotation" base (spec §2)
+    mode: Literal["every_frame", "off"] = "every_frame"
+    transcribe: bool = True  # true: the call also returns a second reading (texts, missed); false: group-only
+    scale: float = Field(1.0, gt=0, le=1)  # factor applied to every image sent; tags keep their pixel size
+
+
 class OverlayConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     font_size: int = 12
@@ -88,6 +96,7 @@ class ModelConfig(BaseModel):
     retry_max_tokens: int = 32000
     concurrency: int = 4
     mode: Literal["sync", "batch"] = "sync"
+    effort_annotate: Effort = "low"
 
 
 class IndexConfig(BaseModel):
@@ -109,6 +118,7 @@ class Config(BaseModel):
     decode: DecodeConfig = DecodeConfig()
     read: ReadConfig = ReadConfig()
     track: TrackConfig = TrackConfig()
+    annotate: AnnotateConfig = AnnotateConfig()
     overlay: OverlayConfig = OverlayConfig()
     model: ModelConfig = ModelConfig()
     index: IndexConfig = IndexConfig()
