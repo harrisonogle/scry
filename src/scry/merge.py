@@ -64,9 +64,10 @@ def _row_plausible(ms: list[OcrLine], med_h: float, cfg: MergeConfig) -> bool:
     ycs = [(m.bbox[1] + m.bbox[3]) / 2 for m in ms]
     if max(ycs) - min(ycs) > cfg.row_y_tol * med_h:
         return False
-    for a, b in zip(ms, ms[1:]):
-        if b.bbox[0] - a.bbox[2] > cfg.row_gap_lines * med_h:
-            return False
+    if cfg.row_gap_lines > 0:  # the horizontal-gap test is off at 0 (ledger L37); the vertical test above always runs
+        for a, b in zip(ms, ms[1:]):
+            if b.bbox[0] - a.bbox[2] > cfg.row_gap_lines * med_h:
+                return False
     return True
 
 

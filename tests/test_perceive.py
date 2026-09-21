@@ -112,6 +112,7 @@ def test_build_blocks_scale_downscales_the_clean_frame_in_memory(tmp_path):
 
     from PIL import Image
 
+    from scry.config import OverlayConfig
     from scry.perceive import build_blocks, prompt_version
     from scry.schemas import OcrFrame, OcrLine, Stage1Record
     png, ov = tmp_path / "f.png", tmp_path / "o.png"
@@ -119,7 +120,7 @@ def test_build_blocks_scale_downscales_the_clean_frame_in_memory(tmp_path):
     Image.new("RGB", (8, 4)).save(ov)  # the overlay stage already wrote it at the scaled size
     rec = Stage1Record(video_id="v", frame=3, t_change=0, t_settled=1.0, t_end=2, settled=True, width=16, height=8, sha256="x", png="f.png")
     ocr = OcrFrame(frame=3, engine="e", settings={}, seconds=0, lines=[OcrLine(id="l1", bbox=(1, 2, 3, 4), text="a", conf=1.0)])
-    blocks = build_blocks(rec, ocr, png, ov, coords=True, scale=0.5)
+    blocks = build_blocks(rec, ocr, png, ov, coords=True, overlay=OverlayConfig(scale=0.5))
     frame, overlay = [Image.open(io.BytesIO(base64.b64decode(b["source"]["data"]))) for b in blocks if b["type"] == "image"]
     assert frame.size == (8, 4) and overlay.size == (8, 4)
     assert frame.convert("RGB").getpixel((0, 0)) == (7, 7, 7)
@@ -168,3 +169,94 @@ def test_perceive_threads_the_overlay_scale_into_the_call(tmp_path):
     assert call["prompt_version"] == rec.prompt_version == prompt_version(False, transcribe=False, scale=0.5)
     sizes = [Image.open(io.BytesIO(base64.b64decode(b["source"]["data"]))).size for b in call["blocks"] if b["type"] == "image"]
     assert sizes == [(8, 4), (8, 4)]
+
+
+def _mask_fixture(tmp_path):
+    from PIL import Image
+
+    from scry.schemas import OcrFrame, OcrLine, Stage1Record
+    png, ov = tmp_path / "f.png", tmp_path / "o.png"
+    Image.new("RGB", (32, 16), (7, 7, 7)).save(png)
+    Image.new("RGB", (32, 16)).save(ov)
+    rec = Stage1Record(video_id="v", frame=3, t_change=0, t_settled=1.0, t_end=2, settled=True, width=32, height=16, sha256="x", png="f.png")
+    ocr = OcrFrame(frame=3, engine="e", settings={}, seconds=0, lines=[OcrLine(id="l1", bbox=(4, 2, 28, 14), text="ab", conf=1.0)])
+    return png, ov, rec, ocr
+
+
+def _frame_image(blocks):
+    import base64
+    import io
+
+    from PIL import Image
+    [frame, _] = [Image.open(io.BytesIO(base64.b64decode(b["source"]["data"]))) for b in blocks if b["type"] == "image"]
+    return frame.convert("RGB")
+
+
+def test_prompt_version_carries_the_mask_mode():
+    from scry.perceive import prompt_version
+    base = prompt_version(False)
+    assert prompt_version(False, mask="none") == base
+    assert prompt_version(False, mask="opaque") == base + "+mopaque"
+    assert prompt_version(False, mask="opaque_label") == base + "+mopaque_label"
+    assert prompt_version(False, transcribe=False, scale=0.5, mask="rendered") == base + "+grouponly+s0.5+mrendered"
+
+
+def test_build_blocks_masks_the_clean_frame_in_memory_and_adds_one_sentence(tmp_path):
+    from scry.config import OverlayConfig
+    from scry.overlay import MASK_FILL
+    from scry.perceive import MASK_NOTE, build_blocks
+    png, ov, rec, ocr = _mask_fixture(tmp_path)
+    texts = lambda blocks: [b["text"] for b in blocks if b["type"] == "text"]  # noqa: E731
+
+    plain = build_blocks(rec, ocr, png, ov)
+    assert _frame_image(plain).getpixel((16, 8)) == (7, 7, 7) and not any(t in MASK_NOTE.values() for t in texts(plain))
+
+    for mode in ("opaque", "opaque_label"):
+        blocks = build_blocks(rec, ocr, png, ov, overlay=OverlayConfig(mask=mode))
+        frame = _frame_image(blocks)
+        assert frame.getpixel((16, 8)) == MASK_FILL[:3] and frame.getpixel((4, 2)) == MASK_FILL[:3]  # the box is covered
+        assert frame.getpixel((3, 8)) == (7, 7, 7) and frame.getpixel((28, 8)) == (7, 7, 7)           # up to its edges
+        assert frame.getpixel((0, 0)) == (7, 7, 7)
+        assert texts(blocks)[-2:] == [MASK_NOTE[mode], "Return the JSON object."]
+    assert "group them by layout and position" in MASK_NOTE["opaque"]
+
+    blocks = build_blocks(rec, ocr, png, ov, overlay=OverlayConfig(mask="rendered"))
+    frame = _frame_image(blocks)
+    box = {frame.getpixel((x, y)) for x in range(4, 28) for y in range(2, 14)}
+    assert (255, 255, 255) in box and min(sum(c) for c in box) < 150 and frame.getpixel((0, 0)) == (7, 7, 7)
+    assert texts(blocks)[-2:] == ["Text has been re-rendered inside its boxes.", "Return the JSON object."]
+    assert sorted(q.name for q in tmp_path.iterdir()) == ["f.png", "o.png"]  # nothing written
+
+
+def test_perceive_threads_the_mask_into_the_version_and_the_user_turn(tmp_path):
+    import asyncio
+
+    from PIL import Image
+
+    from scry.config import Config, ModelConfig, OverlayConfig
+    from scry.jsonl import write_jsonl
+    from scry.perceive import MASK_NOTE, _perceive_all, prompt_version
+    from scry.providers.base import VlmResult
+    from scry.run import Run
+    from scry.schemas import OcrFrame, OcrLine, Stage1Record
+
+    run = Run(tmp_path)
+    Image.new("RGB", (16, 8)).save(run.frames_dir / "00003.png")
+    Image.new("RGB", (16, 8)).save(run.overlays_dir / "00003.png")
+    write_jsonl(run.stage1, [Stage1Record(video_id="v", frame=3, t_change=0, t_settled=1.0, t_end=2, settled=True, width=16, height=8, sha256="x", png="frames/00003.png")])
+    write_jsonl(run.ocr, [OcrFrame(frame=3, engine="e", lines=[OcrLine(id="l1", bbox=(1, 2, 3, 4), text="a", conf=1.0)])])
+
+    class Fake:
+        model = "fake"
+        calls: list[dict] = []
+
+        async def complete(self, **kw):
+            self.calls.append(kw)
+            return VlmResult(None, "skipped", {})
+
+    cfg = Config(overlay=OverlayConfig(mask="opaque_label"), model=ModelConfig(stage2c_transcribe=False))
+    [rec] = asyncio.run(_perceive_all(run, cfg, Fake()))
+    [call] = Fake.calls
+    assert call["prompt_version"] == rec.prompt_version == prompt_version(False, transcribe=False, mask="opaque_label")
+    assert call["prompt_version"].endswith("+grouponly+mopaque_label")
+    assert MASK_NOTE["opaque_label"] in [b["text"] for b in call["blocks"] if b["type"] == "text"]

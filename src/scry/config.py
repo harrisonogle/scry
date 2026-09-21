@@ -51,7 +51,7 @@ class Stage1Config(BaseModel):
 
 
 class OcrConfig(BaseModel):
-    engine: Literal["vision", "rapid"] = "vision"
+    engine: Literal["vision", "rapid"] = "rapid"  # rapidocr 3.9 by default (ledger L36); vision is optional on macOS
     languages: list[str] = ["en-US"]
     language_correction: bool = False
     minimum_text_height: float = 0.0
@@ -61,6 +61,10 @@ class OverlayConfig(BaseModel):
     font_size: int = 12
     font_path: str = "/System/Library/Fonts/Menlo.ttc"
     scale: float = Field(1.0, gt=0, le=1)  # < 1 sends both Stage 2c images downscaled by this factor; tags keep font_size
+    # Stage 2c masking experiment (group-only mode): cover every OCR box in both images. opaque = light grey fill, tag
+    # outside as usual; opaque_label = grey fill with the tag inside the box; rendered = white fill with the OCR text
+    # re-set in font_path at the box height. none = the frame as is.
+    mask: Literal["none", "opaque", "opaque_label", "rendered"] = "none"
 
 
 Effort = Literal["low", "medium", "high", "xhigh", "max"]
@@ -81,9 +85,18 @@ class ModelConfig(BaseModel):
     mode: Literal["sync", "batch"] = "sync"
 
 
+class Stage5Config(BaseModel):
+    """Which images each Stage 5 call carries (§12 sends both frames at native resolution; the other modes are the image-cost experiment)."""
+    images: Literal["full", "scaled", "crops", "text"] = "scaled"  # owner's decision 2026-09-21, ledger L39
+    scale: float = Field(0.5, gt=0, le=1)  # scaled: both frames by this factor; crops: the after-frame context image
+    crop_pad: int = 40  # crops: each changed-pixel component grows by this many pixels before overlapping ones merge
+    crop_max: int = 4  # crops: at most this many crop rectangles per frame; the nearest pair merges until it holds
+    crop_max_fraction: float = 0.25  # crops: a transition without pixel data, or with more of the screen changed, is sent scaled instead
+
+
 class MergeConfig(BaseModel):
     row_y_tol: float = 0.5
-    row_gap_lines: float = 3.0
+    row_gap_lines: float = 0.0  # §9.0 horizontal-gap test: reject a row whose neighbouring marks are further apart than this × the median line height; 0 = off (ledger L37)
     align_sim: float = 0.8
     align_short_len: int = 8
     align_short_lev: int = 1
@@ -100,6 +113,7 @@ class DiffConfig(BaseModel):
     corr_w_name: float = 0.1
     corr_accept: float = 0.3
     pixel_gate_max_fraction: float = 0.05  # §11.2 pixel gate: veto ops on unchanged lines when this fraction of the screen or less changed; 0 = off
+    pixel_gate_margin_lines: float = 0.5  # §11.2: each changed-pixel component grows by this × the unit's median line height (8 px with no boxed lines) before the intersection test; 0 = exact (ledger L38)
 
 
 class HierarchyConfig(BaseModel):
@@ -126,6 +140,7 @@ class Config(BaseModel):
     ocr: OcrConfig = OcrConfig()
     overlay: OverlayConfig = OverlayConfig()
     model: ModelConfig = ModelConfig()
+    stage5: Stage5Config = Stage5Config()
     merge: MergeConfig = MergeConfig()
     diff: DiffConfig = DiffConfig()
     hierarchy: HierarchyConfig = HierarchyConfig()

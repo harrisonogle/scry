@@ -8,22 +8,28 @@ from pathlib import Path
 
 from PIL import Image
 
-from scry.config import Config, config_hash
+from scry.config import Config, OverlayConfig, config_hash
 from scry.jsonl import sha256_file, write_jsonl
-from scry.overlay import scale_image
+from scry.overlay import mask_image, scale_image
 from scry.prompts import stage2c
 from scry.providers import get_provider, image_block, text_block
 from scry.providers.base import VlmProvider
 from scry.run import Run
-from scry.schemas import (OcrFrame, PerceptionRecord, Stage1Record, VlmPerception, VlmPerceptionGroupOnly,
+from scry.schemas import (OcrFrame, OcrLine, PerceptionRecord, Stage1Record, VlmPerception, VlmPerceptionGroupOnly,
                           perception_from_group_only)
 
 log = logging.getLogger(__name__)
 
+# One user-turn sentence per [overlay] mask mode (the system prompts are unchanged): what the boxes now show.
+MASK_NOTE = {"opaque": "Text areas are covered by boxes; group them by layout and position.",
+             "opaque_label": "Text areas are covered by boxes with their numbers written inside; group them by layout and position.",
+             "rendered": "Text has been re-rendered inside its boxes."}
 
-def prompt_version(coords: bool, transcribe: bool = True, scale: float = 1.0) -> str:
+
+def prompt_version(coords: bool, transcribe: bool = True, scale: float = 1.0, mask: str = "none") -> str:
     return (stage2c.VERSION + ("+coords" if coords else "") + ("" if transcribe else "+grouponly")
-            + ("" if scale == 1.0 else f"+s{scale:g}"))  # scaled runs never hit full-resolution cache entries
+            + ("" if scale == 1.0 else f"+s{scale:g}")  # scaled or masked runs never hit the plain cache entries
+            + ("" if mask == "none" else f"+m{mask}"))
 
 
 def system_prompt(transcribe: bool) -> str:
@@ -43,28 +49,33 @@ def marks_text(ocr: OcrFrame, coords: bool, scale: float = 1.0, frame_size: tupl
             f"order: {boxes}. Use these boxes together with Image 2 to tell which number belongs to which line.")
 
 
-def frame_block(frame_png: Path, scale: float) -> dict:
-    """The clean frame as an image block, downscaled in memory to the overlay's size when scale < 1 (never written)."""
-    if scale == 1.0:
+def frame_block(frame_png: Path, overlay: OverlayConfig, lines: list[OcrLine] = ()) -> dict:
+    """The clean frame as an image block: the file as is at scale 1 with no mask; otherwise downscaled to the overlay's
+    size and/or masked over the OCR boxes (overlay.mask, the same rectangles as the overlay) in memory, never written."""
+    if overlay.scale == 1.0 and overlay.mask == "none":
         return image_block(frame_png)
+    img = mask_image(scale_image(Image.open(frame_png).convert("RGBA"), overlay.scale), list(lines), overlay)
     buf = io.BytesIO()
-    scale_image(Image.open(frame_png).convert("RGB"), scale).save(buf, format="PNG", compress_level=1)
+    img.convert("RGB").save(buf, format="PNG", compress_level=1)
     data = base64.standard_b64encode(buf.getvalue()).decode()
     return {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": data}}
 
 
 def build_blocks(rec: Stage1Record, ocr: OcrFrame, frame_png: Path, overlay_png: Path, coords: bool = False,
-                 scale: float = 1.0) -> list[dict]:
+                 overlay: OverlayConfig | None = None) -> list[dict]:
+    overlay = overlay or OverlayConfig()
     animating = [ln.id for ln in ocr.lines if ln.in_churn]
     blocks = [
-        text_block(f"Image 1 (clean frame {rec.frame}, t={rec.t_settled:.2f}s):"), frame_block(frame_png, scale),
+        text_block(f"Image 1 (clean frame {rec.frame}, t={rec.t_settled:.2f}s):"), frame_block(frame_png, overlay, ocr.lines),
         text_block("Image 2 (same frame with numbered boxes):"), image_block(overlay_png),
-        text_block(marks_text(ocr, coords, scale, (rec.width, rec.height))),
+        text_block(marks_text(ocr, coords, overlay.scale, (rec.width, rec.height))),
     ]
     if animating:
         blocks.append(text_block(f"Marks inside animating regions (low confidence): {', '.join(animating)}."))
     if not rec.settled:
         blocks.append(text_block("This frame was captured while the screen was still changing (not settled)."))
+    if overlay.mask != "none":
+        blocks.append(text_block(MASK_NOTE[overlay.mask]))
     blocks.append(text_block("Return the JSON object."))
     return blocks
 
@@ -126,15 +137,15 @@ async def _perceive_all(run: Run, cfg: Config, provider: VlmProvider) -> list[Pe
     s1 = {r.frame: r for r in run.load_stage1()}
     clashes = run.manifest_read().get("overlay_clashes", {})
     sem = asyncio.Semaphore(cfg.model.concurrency * 2)  # bound the fan-out: image payloads are built lazily
-    coords, transcribe, scale = cfg.model.stage2c_mark_coords, cfg.model.stage2c_transcribe, cfg.overlay.scale
-    version = prompt_version(coords, transcribe, scale)
+    coords, transcribe, ov = cfg.model.stage2c_mark_coords, cfg.model.stage2c_transcribe, cfg.overlay
+    version = prompt_version(coords, transcribe, ov.scale, ov.mask)
 
     async def one(of: OcrFrame) -> PerceptionRecord:
         async with sem:
             rec = s1[of.frame]
             frame_png = run.root / rec.png
             overlay_png = run.overlays_dir / f"{of.frame:05d}.png"
-            blocks = build_blocks(rec, of, frame_png, overlay_png, coords=coords, scale=scale)
+            blocks = build_blocks(rec, of, frame_png, overlay_png, coords=coords, overlay=ov)
             res = await provider.complete(stage="stage2c", system=system_prompt(transcribe), blocks=blocks,
                                           output_model=VlmPerception if transcribe else VlmPerceptionGroupOnly,
                                           effort=cfg.model.effort_stage2c, prompt_version=version,
@@ -159,7 +170,8 @@ async def _run_with_batches(run: Run, cfg: Config, provider: VlmProvider, stage_
 
 def run_perceive(run: Run, cfg: Config, provider: VlmProvider | None = None) -> None:
     inputs = [run.ocr]
-    ch = config_hash(cfg, "model", "overlay") + prompt_version(cfg.model.stage2c_mark_coords, cfg.model.stage2c_transcribe, cfg.overlay.scale)
+    ch = config_hash(cfg, "model", "overlay") + prompt_version(cfg.model.stage2c_mark_coords, cfg.model.stage2c_transcribe,
+                                                               cfg.overlay.scale, cfg.overlay.mask)
     if run.stage_up_to_date("perceive", inputs, ch):
         log.info("perceive up to date")
         return

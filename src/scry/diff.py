@@ -81,6 +81,19 @@ def _overlaps(a: BBox, b: BBox) -> bool:
     return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
 
 
+def _margin(lines: list[Line], cfg: DiffConfig) -> float:
+    """Pixels each changed component grows by before the intersection test (§11.2): pixel_gate_margin_lines × the unit's
+    median line height, a fixed 8 px when the unit has no boxed lines, 0 (the exact test) when the margin is off."""
+    if cfg.pixel_gate_margin_lines <= 0:
+        return 0.0
+    hs = [l.bbox[3] - l.bbox[1] for l in lines if l.bbox]
+    return cfg.pixel_gate_margin_lines * float(statistics.median(hs)) if hs else 8.0
+
+
+def _dilate(b: BBox, m: float) -> BBox:
+    return (b[0] - m, b[1] - m, b[2] + m, b[3] + m) if m else b
+
+
 def is_gated(t: Transition, cfg: DiffConfig) -> bool:
     """The transition has pixel evidence and is near-static enough for the gate to apply (§11.2)."""
     return t.pixels is not None and 0 < cfg.pixel_gate_max_fraction and t.pixels.changed_fraction <= cfg.pixel_gate_max_fraction
@@ -88,17 +101,19 @@ def is_gated(t: Transition, cfg: DiffConfig) -> bool:
 
 def pixel_gate(t: Transition, prev: FrameRecord, cur: FrameRecord, cfg: DiffConfig) -> None:
     """Mark every op with whether its line's box (the new line for insert/modify, the old line for a delete) meets a
-    changed-pixel component; on a near-static pair (changed_fraction ≤ pixel_gate_max_fraction) drop the ops that do not.
-    Lines without a box are never vetoed. Runs inside diff_pair, so transients, coalescing and trivial tagging see the
-    gated ops."""
+    changed-pixel component, each component dilated by pixel_gate_margin_lines × the unit's median line height (ledger
+    L38); on a near-static pair (changed_fraction ≤ pixel_gate_max_fraction) drop the ops that do not. Lines without a
+    box are never vetoed. Runs inside diff_pair, so transients, coalescing and trivial tagging see the gated ops."""
     comps = t.pixels.components
     gate = is_gated(t, cfg)
     for unit, rd in list(t.computed_diff.items()):
         lb = cur.unassigned_lines if unit == "r0" else cur.unit_lines(unit)
         la = prev.unassigned_lines if unit == "r0" else prev.unit_lines(rd.from_region or unit)
+        m = _margin(la + lb, cfg)
+        boxes = [_dilate(c, m) for c in comps]
         for o in rd.ops:
             line = lb[o.new_index] if o.new_index is not None else la[o.old_index]
-            o.under_change = None if line.bbox is None else any(_overlaps(line.bbox, c) for c in comps)
+            o.under_change = None if line.bbox is None else any(_overlaps(line.bbox, c) for c in boxes)
         if gate:
             kept = [o for o in rd.ops if o.under_change is not False]
             t.pixels.vetoed += len(rd.ops) - len(kept)

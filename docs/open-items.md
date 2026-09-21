@@ -12,7 +12,7 @@ design's §21. This list is the short "what next" view across all three.
       measured cost ≈ $0.076 per frame for Stage 2c and ≈ $0.042 per transition for Stage 5.
 - [ ] **First full run on the sample** (`uv run scry run assets/create-aks-cluster-tutorial.mp4 --out runs/aks`;
       projected ≈ $27 sync or ≈ $14 with `[model] mode = "batch"`, ~25 min wall; the 11 smoke frames are cache hits).
-      Decide the two tuning items below first, since they shape everything downstream and merge is free to re-run.
+      The two tuning items below are decided (ledger L36–L37); merge is free to re-run if either is revisited.
       Read `manifest.json` → `diagnostics` afterwards: `agree_fraction`, `rows_rejected`, `invalid_refs`, refusals, cost.
 - [ ] **Revisit the embedder default.** Retrieval is lexical-only (`[index] embedder = "none"`) because the local ONNX
       model could not be downloaded during a transient network fault (ledger L9). With the network working, try
@@ -20,10 +20,11 @@ design's §21. This list is the short "what next" view across all three.
 
 ## Findings from the smoke run (ledger L28–L29)
 
-- [ ] **`[merge] row_gap_lines = 3` rejects the rows the prompt asks for.** 135 of the 165 rejected rows on the
+- [x] **`[merge] row_gap_lines = 3` rejects the rows the prompt asks for.** 135 of the 165 rejected rows on the
       smoke are label/value pairs and table rows whose column gap is 7–25 line heights; the y-spread test already
       catches marks from different lines. Re-merging the cached data in memory: 10 → 75 rejected, `agree_fraction`
-      0.495; 30 → 58, 0.518; off → 30, 0.553. Pick a value (§16) before the full run.
+      0.495; 30 → 58, 0.518; off → 30, 0.553. Off since 2026-09-21 (`row_gap_lines = 0`, ledger L37): the owner calls
+      the cap a finicky heuristic, the diff runs per unit since L31, and rows-as-boxes (below) may retire rows entirely.
 - [ ] **The typed-command rule missed the `az login` keystroke (T9 on the smoke).** OCR read `Users \msadmin` with a
       space on frame 154 and `Users\msadmin` on 155; the fused text is the OCR reading whenever the readers disagree,
       so the longest-common-prefix test failed (§22 #15, second occurrence; L24 said to prefer the VLM reading if it
@@ -47,6 +48,8 @@ design's §21. This list is the short "what next" view across all three.
       Stage 1's pixel rule (`[diff] pixel_gate_max_fraction = 0.05`): 81 ops vetoed on `runs/smoke-pixelgate`, T9
       reduced to the one PowerShell prompt op. On a gated transition the typed and output rules need an op under
       changed pixels; no-box VLM-only rows ride along but are not evidence (ledger L32, design §11.2–§11.3 revision 5.7).
+      Since L38 each component is grown by half a line height (`pixel_gate_margin_lines = 0.5`) before the test; on
+      `runs/smoke-rapid-margin` that changed no op and no veto.
 
 ## Proposed after the smoke runs (owner's call)
 
@@ -56,15 +59,16 @@ design's §21. This list is the short "what next" view across all three.
 - [ ] **Typed rule: compare either reading** (§22 #15, third option). Preferred over a whitespace-blind prefix test,
       which would loosen what counts as typing; making the model's reading the fused text (L24's suggestion) is held
       for ground truth because near-identical readings are where a model "completion" hides.
-- [ ] **Default OCR engine: recommend `rapid`.** Measured (L35): mark match 0.726 → 0.920, disagreeing lines 19.5 % → 4.7 %,
-      the typed event fires, at +1.1 s OCR per frame and +29 % Stage 2c output tokens. Pair it with a wider
-      `row_gap_lines` (30 gives `agree_fraction` 0.630 on Rapid boxes). Owner's call; one line in `scry.toml` each.
+- [x] **Default OCR engine: `rapid`** (owner, 2026-09-21; ledger L36). Measured (L35): mark match 0.726 → 0.920, disagreeing
+      lines 19.5 % → 4.7 %, the typed event fires, at +1.1 s OCR per frame and +29 % Stage 2c output tokens. The row gap
+      test went off rather than wider (L37). Vision stays selectable on macOS.
 - [ ] **Rows as OCR boxes plus model-proposed associations.** If rows exist to pair labels with values, ask the model
       for the associations between box ids and drop the row geometry checks and the repair pass; the diff no longer
       needs rows as its unit once the pixel gate (L32) and box-level matching carry it. Decide after the engine change.
 - [ ] **Windows and popups only in the Stage 2c schema.** Panes are labels since L31; asking for them still costs
       output tokens and is where the model's grouping churns.
-- [ ] **Stage 5 image scale.** Untested cost lever (L33); Stage 5 reads the diff as text and may not need 1080p.
+- [x] **Stage 5 image scale.** Measured (L39): half scale keeps the descriptions at 47 % of the cost; now the default.
+- [x] **Masking the text for Stage 2c** (owner's three variants plus re-rendered text at half scale): not adopted (L40).
 - [x] **Vision misses the grey label column** on portal pages; addressed by the engine change (L34).
 
 ## Needs the owner (hand-made ground truth, design §18.1)

@@ -83,7 +83,7 @@ def test_pixel_gate_keeps_the_op_under_changed_pixels_and_vetoes_the_jitter(tmp_
 
 def test_pixel_gate_leaves_a_transition_above_the_threshold_alone(tmp_path: Path):
     a, b, px = pixel_pair(tmp_path, [ln(1, "PS> ", 40), ln(2, "keep", 60), ln(3, "old", 80)], [ln(1, "PS> git", 40), ln(2, "keep", 60), ln(3, "o1d", 80)],
-                          [(20, 44, 80, 54), (0, 100, 320, 120)])  # 18.2 % of the frame changed, below every line
+                          [(20, 44, 80, 54), (0, 110, 320, 120)])  # 9.9 % of the frame changed, 12 px below the last line (outside the 9-px margin)
     t = diff_pair(a, b, DiffConfig(), px)
     assert t.pixels.changed_fraction > 0.05 and len(t.pixels.components) == 2 and t.pixels.vetoed == 0
     assert [(o.new, o.under_change) for o in t.computed_diff["r1"].ops] == [("PS> git", True), ("o1d", False)]
@@ -100,3 +100,14 @@ def test_transition_with_every_op_vetoed_is_not_trivial(tmp_path: Path):
     t = tag_trivial(diff_pair(a, b, DiffConfig(), px))
     assert t.computed_diff == {} and t.pixels.vetoed == 1 and t.pixels.changed_fraction > 0
     assert t.kind == "single"  # something visual changed; Stage 5 still looks
+
+
+def test_pixel_gate_margin_counts_a_change_just_outside_the_line_box(tmp_path: Path):
+    """§11.2 (ledger L38): ink 2 px below the line's box (10, 40, 300, 58) is within half a line height (9 px) with the
+    default margin and outside it at 0."""
+    a, b, px = pixel_pair(tmp_path, [ln(1, "old", 40)], [ln(1, "o1d", 40)], [(20, 60, 80, 64)])
+    t = diff_pair(a, b, DiffConfig(), px)
+    assert t.pixels.components == [(20, 60, 80, 64)] and t.pixels.vetoed == 0
+    assert [(o.op, o.under_change) for o in t.computed_diff["r1"].ops] == [("modify", True)]
+    t = diff_pair(a, b, DiffConfig(pixel_gate_margin_lines=0), px)
+    assert t.pixels.vetoed == 1 and t.computed_diff == {}

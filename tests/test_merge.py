@@ -102,3 +102,18 @@ def test_empty_vlm_text_is_no_reading():
     fr = merge_frame(s1, OcrFrame(frame=3, engine="e", lines=list(by_id.values())), perc, CFG)
     assert fr.prompt_version == "s2c-v1+grouponly" and fr.description == "d"
     assert [l.id for l in fr.regions[0].lines] == ["l1", "l3", "l4"] and all(l.vlm is None for l in fr.regions[0].lines)
+
+
+def test_row_gap_test_is_off_at_zero_and_rejects_wide_rows_at_three():
+    """§9.0 (ledger L37): a label/value row 19 line heights apart joins at row_gap_lines = 0 and splits at 3; the vertical
+    half-line-height test runs either way."""
+    by_id = {l.id: l for l in [ocr("l1", 10, 40, 60, 58, "Status"), ocr("l2", 400, 40, 500, 58, "Succeeded"),
+                                ocr("l3", 10, 60, 120, 78, "Location"), ocr("l4", 130, 80, 200, 98, "East US")]}
+    vr = VlmRegion(id="r1", kind="pane", name="Properties", app="Portal", parent=None, conf=0.9,
+                   rows=[["l1", "l2"], ["l3", "l4"]], vlm_lines=["Status Succeeded", "Location East US"])
+    lines, rejected, pending = build_region_lines(vr, by_id, MergeConfig(row_gap_lines=0))
+    assert lines[0].marks == ["l1", "l2"] and lines[0].agree is True and rejected == 1  # only the y-spread row splits
+    assert [l.row_rejected for l in lines] == [False, True, True] and pending == [(1, "Location East US")]
+    lines, rejected, pending = build_region_lines(vr, by_id, MergeConfig(row_gap_lines=3))
+    assert [l.marks for l in lines] == [["l1"], ["l2"], ["l3"], ["l4"]] and rejected == 2 and all(l.row_rejected for l in lines)
+    assert MergeConfig().row_gap_lines == 0

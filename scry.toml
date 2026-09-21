@@ -29,7 +29,7 @@ expiry_s = 2.0
 iou = 0.5
 
 [ocr]
-engine = "vision"
+engine = "rapid"
 languages = ["en-US"]
 language_correction = false
 minimum_text_height = 0.0
@@ -52,7 +52,7 @@ mode = "sync"
 
 [merge]
 row_y_tol = 0.5
-row_gap_lines = 3.0
+row_gap_lines = 0
 align_sim = 0.8
 align_short_len = 8
 align_short_lev = 1
@@ -68,6 +68,7 @@ corr_w_app = 0.1
 corr_w_name = 0.1
 corr_accept = 0.3
 pixel_gate_max_fraction = 0.05
+pixel_gate_margin_lines = 0.5
 
 [hierarchy]
 window = 2000
@@ -84,3 +85,7 @@ rrf = 60
 [outline]
 enabled = false
 model = "gemini-3.8-flash"
+
+[stage5]
+images = "scaled"
+scale = 0.5
