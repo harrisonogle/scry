@@ -27,7 +27,9 @@ def frame_block(frame_png: Path, scale: float) -> dict:
 
 def build_blocks(frame: Frame, fb: FrameBoxes, plan: CallPlan, arm: str, scale: float, frame_png: Path,
                  overlay_png: Path | None) -> list[dict]:
-    if arm != "A":
+    """Arm A: the clean frame, the overlay with every box numbered, the box ids. Arm D: the clean frame alone, and every
+    box as its id and rectangle, always in pixels of the unscaled frame. From the targets on, the two turns are the same."""
+    if arm not in ("A", "D"):
         raise ValueError(f"no user turn for arm {arm!r}")
     ids = [b.id for b in fb.boxes]
     if not plan.targets:
@@ -36,12 +38,24 @@ def build_blocks(frame: Frame, fb: FrameBoxes, plan: CallPlan, arm: str, scale: 
         targets = "Targets: all boxes."
     else:
         targets = f"Targets: {', '.join(plan.targets)}."
-    blocks = [
-        text_block(f"Image 1 (clean frame {frame.frame}, t={frame.t_settled:.2f}s):"), frame_block(frame_png, scale),
-        text_block("Image 2 (same frame with numbered boxes):"), image_block(overlay_png),
-        text_block(f"Boxes: {', '.join(ids)}." if ids else "Boxes: none."),
-        text_block(targets),
-    ]
+    if arm == "A":
+        blocks = [
+            text_block(f"Image 1 (clean frame {frame.frame}, t={frame.t_settled:.2f}s):"), frame_block(frame_png, scale),
+            text_block("Image 2 (same frame with numbered boxes):"), image_block(overlay_png),
+            text_block(f"Boxes: {', '.join(ids)}." if ids else "Boxes: none."),
+        ]
+    else:
+        size = f"{frame.width}x{frame.height}"
+        coords = f"Coordinates are pixels of the {size} frame: top-left origin, x1 and y1 exclusive."
+        if scale != 1.0:
+            coords += f" The image is scaled by {scale:g}; give and read every coordinate in the unscaled {size} frame."
+        listed = "; ".join(f"{b.id}: {','.join(map(str, b.bbox))}" for b in fb.boxes)
+        blocks = [
+            text_block(f"Screenshot (frame {frame.frame}, t={frame.t_settled:.2f}s):"), frame_block(frame_png, scale),
+            text_block(coords),
+            text_block(f"Boxes, as id: x0,y0,x1,y1 in reading order: {listed}." if ids else "Boxes: none."),
+        ]
+    blocks.append(text_block(targets))
     animating = [b.id for b in fb.boxes if b.in_churn]
     if animating:
         blocks.append(text_block(f"Boxes inside animating areas (low confidence): {', '.join(animating)}."))
@@ -52,7 +66,7 @@ def build_blocks(frame: Frame, fb: FrameBoxes, plan: CallPlan, arm: str, scale: 
 
 
 def input_hashes(frame: Frame, overlay_png: Path | None, blocks: list[dict]) -> list[str]:
-    """Every byte of the user turn is covered: the frame's hash, the overlay's hash, the text (the scale is in the
-    prompt version)."""
+    """Every byte of the user turn is covered: the frame's hash, the overlay's hash ("-" under arm D, which sends
+    none), the text, which under arm D holds the rectangles (the scale is in the prompt version)."""
     return [frame.sha256, sha256_file(overlay_png) if overlay_png else "-",
             sha256_obj([b["text"] for b in blocks if b["type"] == "text"])]
