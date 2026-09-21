@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from annotate_fixtures import fixture_t, record_a10, record_a11, write_run
 
-from scry.annotate.join import BoxLink, FrameLabel, agreement, build_labels
+from scry.annotate.join import BoxLink, FrameLabel, LifetimeLink, agreement, build_labels
 from scry.jsonl import write_jsonl
 from scry.schemas import Annotation, Assign, Container, PairLink, RunLink, TextReading
 
@@ -115,3 +115,58 @@ def test_load_labels(tmp_path: Path):
     assert labels.box("12:b5").source == "11:b5"
     with pytest.raises(KeyError):
         labels.box("99:b1")
+
+
+# ---------- labels per lifetime ----------
+def _full(n: int, texts: dict[str, str]) -> Annotation:
+    """A record of frame 11 or 12 with every box a target: one window holding every box, the pair over b2 and b3, and
+    the given text per box."""
+    ids = ["b1", "b2", "b3", "b4", "b5"]
+    return Annotation(frame=n, targets=ids, containers=[Container(id="c1", kind="window", app="Desktop", name="all")],
+                      assign=[Assign(box=b, container="c1") for b in ids], links=[PairLink(key=["b2"], value=["b3"])],
+                      texts=[TextReading(box=b, text=t) for b, t in texts.items()], description=f"d{n}", model="fake-model",
+                      prompt_version="annotate-v1")
+
+
+OCR_11 = {"b1": "Banner", "b2": "Resource group", "b3": "RG1", "b4": "PowerShell 7", "b5": "PS C:\\> az login"}
+
+
+def test_lifetime_labels_incremental():
+    labels = _labels([record_a10(), record_a11()])
+    l2 = labels.lifetime("L2")
+    assert (l2.vlm, l2.vlm_readings, l2.agree, l2.non_text, l2.container.app) == ("RG1", {"RG1": 1}, True, False, "Browser")
+    assert l2.links == [LifetimeLink(kind="pair", key=["L1"], value=["L2"], records=1, first_frame=10)]
+    assert (labels.lifetime("L4").vlm, labels.lifetime("L4").agree) == ("PS C:\\> a", False)
+    assert labels.lifetime("L6").links == [LifetimeLink(kind="run", boxes=["L3", "L6"], joiner=" ", records=1, first_frame=11)]
+    assert labels.lifetime("L3").links == labels.lifetime("L6").links
+    assert labels.lifetime("L5").links == [] and labels.lifetime("L5").vlm == "Banner"  # its pair was refused
+
+
+def test_majority_over_every_frame_records():
+    labels = _labels([record_a10(), _full(11, OCR_11), _full(12, OCR_11 | {"b3": "RGl"})])
+    l2 = labels.lifetime("L2")
+    assert (l2.vlm_readings, l2.vlm, l2.agree) == ({"RG1": 2, "RGl": 1}, "RG1", True)
+    assert (l2.links[0].records, l2.links[0].first_frame) == (3, 10)
+
+
+def test_tie_goes_to_the_reading_seen_first():
+    a10 = record_a10()
+    a10.texts[1] = TextReading(box="b2", text="x")
+    assert _labels([a10, _full(11, OCR_11 | {"b3": "y"})]).lifetime("L2").vlm == "x"
+
+
+def test_non_text_needs_every_reading_empty():
+    a10 = record_a10()
+    a10.texts[1] = TextReading(box="b2", text="")
+    icon = _labels([a10, _full(11, OCR_11 | {"b3": ""})]).lifetime("L2")
+    assert (icon.non_text, icon.vlm, icon.agree) == (True, None, None)
+    mixed = _labels([a10, _full(11, OCR_11 | {"b3": "X"})]).lifetime("L2")
+    assert (mixed.non_text, mixed.vlm) == (False, "X")
+
+
+def test_unlabelled_lifetime_is_none():
+    failed = Annotation(frame=10, targets=["b1", "b2", "b3", "b4"], model="fake-model", prompt_version="annotate-v1", error="refusal")
+    labels = _labels([failed])
+    assert labels.lifetime("L1") is None
+    with pytest.raises(KeyError):
+        labels.lifetime("L99")

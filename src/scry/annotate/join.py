@@ -60,6 +60,29 @@ class FrameLabel(BaseModel):
     missed: list[Missed] = []
 
 
+class LifetimeLink(BaseModel):
+    """A relation between lifetimes, as the records proposed it; every id is a lifetime id. Nothing is picked: a
+    lifetime that was paired in 20 records and put in a run in 1 has both, with their counts."""
+    kind: Literal["run", "pair", "record"]
+    boxes: list[str] = []
+    joiner: str | None = None
+    key: list[str] = []
+    value: list[str] = []
+    members: list[list[str]] = []
+    header: list[str] = []
+    records: int  # how many records proposed it
+    first_frame: int  # the frame of the first
+
+
+class LifetimeLabel(BaseModel):
+    vlm: str | None  # the model's majority reading; a tie goes to the reading seen first
+    vlm_readings: dict[str, int]  # every reading exactly as returned → how many records gave it
+    agree: bool | None  # the two majority readings compared
+    non_text: bool
+    container: Container | None  # that of the lifetime's latest labelled box
+    links: list[LifetimeLink] = []
+
+
 def _renamed(link: Link, name: dict[str, str]) -> Link:
     """The link with every id replaced through `name`."""
     if link.kind == "run":
@@ -76,8 +99,8 @@ def _role(link: Link, ref: str) -> str:
 
 
 class Labels:
-    """Labels per box and per frame. `relinked` counts the links refused because one of their boxes already had a link
-    in force."""
+    """Labels per box, per frame and per lifetime. `relinked` counts the links refused because one of their boxes
+    already had a link in force."""
 
     def __init__(self, annotations: list[Annotation], frames: list[FrameBoxes], lifetimes: list[Lifetime]):
         frames = sorted(frames, key=lambda fb: fb.frame)
@@ -88,8 +111,11 @@ class Labels:
         self._box_at = {l.id: {parse_box_ref(ref)[0]: ref for ref in l.boxes} for l in lifetimes}
         self._source = self._sources(lifetimes)
         self.relinked = 0
+        self._accepted: list[tuple[int, Link]] = []  # (record frame, link), record order then stored order
         self._links = self._links_in_force(frames)
         self._boxes = {ref: self._box_label(ref) for ref in self._ocr}
+        lifetime_links = self._lifetime_links()
+        self._lifetimes = {l.id: self._lifetime_label(l, lifetime_links.get(l.id, [])) for l in lifetimes}
 
     # ---- rule 1: a box's labels are resolved through its lifetime to the record that labelled it
     def _sources(self, lifetimes: list[Lifetime]) -> dict[str, str]:
@@ -143,6 +169,7 @@ class Labels:
                         self.relinked += 1  # the earlier link stands; this one is refused for good
                     else:
                         active.append((f, link))
+                        self._accepted.append((f, link))
                         here.append(at)
             in_force[f] = here
         return in_force
@@ -173,6 +200,50 @@ class Labels:
         """The labels of a box, None when no record labelled it or an earlier box of its lifetime. A ref that is not
         in boxes.jsonl raises KeyError."""
         return self._boxes[ref]
+
+    # ---- labels per lifetime
+    def _lifetime_links(self) -> dict[str, list[LifetimeLink]]:
+        """Every accepted link with its ids as lifetime ids; relations equal in kind, joiner and structure are one
+        LifetimeLink. Per lifetime, all those naming it, header included, by first frame then stored order."""
+        merged: dict[str, LifetimeLink] = {}
+        per_lifetime: dict[str, list[LifetimeLink]] = {}
+        for g, link in self._accepted:
+            lives = {y: self._life_of.get(box_ref(g, y)) for y in link_refs(link)}
+            if any(l is None for l in lives.values()):
+                continue
+            relation = _renamed(link, {y: l.id for y, l in lives.items()})
+            key = relation.model_dump_json()
+            if key in merged:
+                merged[key].records += 1
+            else:
+                merged[key] = LifetimeLink(**relation.model_dump(), records=1, first_frame=g)
+                for lifetime_id in link_refs(relation):
+                    per_lifetime.setdefault(lifetime_id, []).append(merged[key])
+        return per_lifetime
+
+    def _lifetime_label(self, life: Lifetime, links: list[LifetimeLink]) -> LifetimeLabel | None:
+        readings: dict[str, int] = {}  # in frame order, so the first key is the reading seen first
+        for ref in life.boxes:
+            frame, box = parse_box_ref(ref)
+            record = self._records.get(frame)
+            if record is not None and box in record.targets and record.texts is not None:
+                for t in record.texts:
+                    if t.box == box:
+                        readings[t.text] = readings.get(t.text, 0) + 1
+        latest = self._boxes.get(life.boxes[-1])  # the last box draws its labels from the latest labelled box
+        if latest is None and not links:
+            return None
+        vlm = None
+        for text, n in readings.items():
+            if text.strip() and (vlm is None or n > readings[vlm]):
+                vlm = text
+        return LifetimeLabel(vlm=vlm, vlm_readings=readings, agree=None if vlm is None else agreement(life.text, vlm),
+                             non_text=bool(readings) and vlm is None, container=latest.container if latest is not None else None,
+                             links=links)
+
+    def lifetime(self, lifetime_id: str) -> LifetimeLabel | None:
+        """The labels of a lifetime, None when it has no labelled box and no link. An unknown id raises KeyError."""
+        return self._lifetimes[lifetime_id]
 
     # ---- rule 6: screen-level labels are those of the latest successful record at or before the frame
     def frame(self, frame: int) -> FrameLabel:
