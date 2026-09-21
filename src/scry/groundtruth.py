@@ -98,7 +98,7 @@ def score_exact(entries: list[Entry], lifetimes: list[Lifetime]) -> list[dict]:
         rows.append({"n": e.n, "text": e.text, "scorable": scorable(e), "exact": bool(found), "matches": len(found),
                      "lifetime": best.id if best else None, "first_frame": best.first.frame if best else None,
                      "frame_error": best.first.frame - e.first_frame if timed else None,
-                     "t_error": round(best.first.t - e.first_t, 2) if timed else None})
+                     "t_error": round(best.first.t - e.first_t, 2) + 0.0 if timed else None})  # + 0.0: never "-0.0"
     return rows
 
 
