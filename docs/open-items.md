@@ -48,6 +48,25 @@ design's §21. This list is the short "what next" view across all three.
       reduced to the one PowerShell prompt op. On a gated transition the typed and output rules need an op under
       changed pixels; no-box VLM-only rows ride along but are not evidence (ledger L32, design §11.2–§11.3 revision 5.7).
 
+## Proposed after the smoke runs (owner's call)
+
+- [ ] **Index both readings.** Findability is the top UX priority and today only the fused text is searchable, which is
+      OCR's reading on any disagreement (`inttooliction o azure kunerneras sorwice` for a line the model read cleanly).
+      Adding the model's reading to the region node text in Stage 7 is small and needs no model calls.
+- [ ] **Typed rule: compare either reading** (§22 #15, third option). Preferred over a whitespace-blind prefix test,
+      which would loosen what counts as typing; making the model's reading the fused text (L24's suggestion) is held
+      for ground truth because near-identical readings are where a model "completion" hides.
+- [ ] **Default OCR engine.** After the rapidocr 3.9 adapter lands (L34), re-run the smoke on Rapid boxes
+      (Stage 2c ≈ $0.85) and compare `agree_fraction` and `mark_match_fraction` with Vision's 0.363 / 0.726, then
+      decide the default.
+- [ ] **Rows as OCR boxes plus model-proposed associations.** If rows exist to pair labels with values, ask the model
+      for the associations between box ids and drop the row geometry checks and the repair pass; the diff no longer
+      needs rows as its unit once the pixel gate (L32) and box-level matching carry it. Decide after the engine change.
+- [ ] **Windows and popups only in the Stage 2c schema.** Panes are labels since L31; asking for them still costs
+      output tokens and is where the model's grouping churns.
+- [ ] **Stage 5 image scale.** Untested cost lever (L33); Stage 5 reads the diff as text and may not need 1080p.
+- [x] **Vision misses the grey label column** on portal pages; addressed by the engine change (L34).
+
 ## Needs the owner (hand-made ground truth, design §18.1)
 
 - [ ] Two fully annotated videos, the 20-frame calibration set, the question set. Everything in §18.2 is unmeasurable
