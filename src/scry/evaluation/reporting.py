@@ -9,7 +9,6 @@ from collections import Counter
 from pathlib import Path
 from statistics import mean
 
-from scry.evaluation.accounting import BATCH_PRICE_SHARE
 from scry.evaluation.compare import Row
 from scry.evaluation.matrix import Matrix, expand
 
@@ -127,9 +126,9 @@ def _header(m: Matrix, cards: list[dict], today: str) -> list[str]:
             "Commits the runs started on: " + (", ".join(f"`{commit[:12]}` ({n} runs)" for commit, n in commits.items()) or "none") + ".",
             "Runs that started on a dirty tree: " + (", ".join(dirty) or "none") + ".", "",
             f"$ / video = $ / frame × {frames} frames, a linear projection from this span to the whole source video. Dollars are "
-            "what a cold run pays at the synchronous list price, from the stages' manifest usage (an answer served from a call cache "
-            "is priced as if paid); the batch price is half. The question set's dollars are per question and outside $ / video; "
-            "the judge's dollars are apart from both.", "", WEAK_EVIDENCE, ""]
+            "the price each stage's manifest records as paid (`cost_usd`): the synchronous list price, or the Batches price for a "
+            "stage that ran in batch mode; an answer served from a call cache is priced as if paid. The question set's dollars are "
+            "per question and outside $ / video; the judge's dollars are apart from both.", "", WEAK_EVIDENCE, ""]
 
 
 def _runs(cards: list[dict]) -> list[str]:
@@ -153,14 +152,13 @@ def _cost_section(configs: list[dict], cards: list[dict]) -> list[str]:
                 continue  # decode: carried by subset, neither paid nor timed here
             dollars, per_frame = _mean([s["dollars"] for s, _ in mine], 4), _mean([s["per_frame"] for s, _ in mine], 4)
             per_video = _mean([s["per_video"] for s, _ in mine], 2)
-            rows.append([cfg["config_id"], stage, _usd(dollars), _usd(per_frame), _usd(per_video, 2), *_batch(dollars, per_frame, per_video),
+            rows.append([cfg["config_id"], stage, _usd(dollars), _usd(per_frame), _usd(per_video, 2),
                          _mean([s["seconds"] / n for s, n in mine if n], 1)])
-        rows.append([cfg["config_id"], "all stages", _usd(cfg["dollars"]), *_cost(cfg), *_batch(cfg["dollars"], cfg["per_frame"], cfg["per_video"]),
-                     cfg["seconds_per_frame"]])
-    out = ["## Cost", "", "Means over a configuration's repeats, per stage. One figure per stage, at the synchronous list price; the batch "
-           "columns are half of it. s / frame is the wall time of the stages the dollars cover (the pipeline through `index`); "
+        rows.append([cfg["config_id"], "all stages", _usd(cfg["dollars"]), *_cost(cfg), cfg["seconds_per_frame"]])
+    out = ["## Cost", "", "Means over a configuration's repeats, per stage. One figure per stage: the price its manifest records as "
+           "paid. s / frame is the wall time of the stages the dollars cover (the pipeline through `index`); "
            "answering the questions is timed per question, below.", "",
-           table(["configuration", "stage", "$", *COST_HEADERS, "batch $", "batch $ / frame", "batch $ / video", "s / frame"], rows), ""]
+           table(["configuration", "stage", "$", *COST_HEADERS, "s / frame"], rows), ""]
     asked = [cfg for cfg in configs if cfg["questions"] is not None]
     if asked:
         out += ["The question set, outside $ / video, and the judge, apart (means per run):", "",
@@ -172,11 +170,6 @@ def _cost_section(configs: list[dict], cards: list[dict]) -> list[str]:
             f"{_usd(sum(q['ask_dollars'] for q in judged))}; judge {_usd(sum(q['judge_dollars'] for q in judged))} "
             "(what the last pass of `scry eval judge` paid: a verdict served from the judge's cache costs nothing).", ""]
     return out
-
-
-def _batch(dollars: float | None, per_frame: float | None, per_video: float | None) -> list[str]:
-    half = [None if x is None else x * BATCH_PRICE_SHARE for x in (dollars, per_frame, per_video)]
-    return [_usd(half[0]), _usd(half[1]), _usd(half[2], 2)]
 
 
 def _commands(configs: list[dict]) -> list[str]:

@@ -29,6 +29,7 @@ class AnthropicProvider:
         self.usage_by_stage: dict[str, dict] = {}
         self.collecting = False   # batch mode: record cache misses instead of calling (Task 19)
         self.pending: list = []
+        self.batched: set[str] = set()  # the keys this provider's own batches answered
 
     def _account(self, stage: str, usage: dict) -> None:
         acc = self.usage_by_stage.setdefault(stage, {})
@@ -41,7 +42,9 @@ class AnthropicProvider:
         key = CallCache.key(stage, self.model, effort, self.cfg.max_tokens, prompt_version, schema_hash, input_hashes)
         hit = self.cache.get(key)
         if hit is not None:
-            self.stats["hits"] += 1
+            if not self.collecting:  # the collecting pass counts nothing: the second pass meets every key again
+                # an answer of this run's own batch is read out of the call cache by design: it was paid for here, no hit
+                self.stats["misses" if key in self.batched else "hits"] += 1
             resp = hit["response"]
             parsed = output_model.model_validate(resp["parsed"]) if resp.get("parsed") is not None else None
             return VlmResult(parsed, resp.get("error"), resp.get("usage", {}), resp.get("text"), True, resp.get("stop_reason"))
@@ -78,6 +81,7 @@ class AnthropicProvider:
         from scry.providers.batch import BatchRunner
 
         await BatchRunner(self.client, self.cache, run).run_pending(self.pending)
+        self.batched |= {p.key for p in self.pending}
         self.pending = []
 
     async def _call(self, system: str, blocks: list[dict], output_model: type[BaseModel], effort: str, max_tokens: int) -> VlmResult:

@@ -110,17 +110,16 @@ class BatchRunner:
                     self.cache.put(p.key, {"batch": b["batch_id"]}, {"parsed": parsed, "error": error, "usage": usage, "text": text, "stop_reason": msg.stop_reason})
                 elif res.result.type == "errored" and getattr(getattr(res.result.error, "error", None), "type", "") == "invalid_request_error":
                     self.cache.put(p.key, {"batch": b["batch_id"]}, {"parsed": None, "error": f"invalid_request: {res.result.error}", "usage": {}, "text": None, "stop_reason": None})
-                else:
+                elif sum(p.key in x["custom_ids"] for x in st["batches"]) < 2:  # errored, expired or canceled, for the first time
                     requeue.append(p)
+                    continue  # not done: it goes into one more batch
+                else:  # failed twice: record it so the synchronous pass does not silently re-issue the call
+                    self.cache.put(p.key, {"batch": b["batch_id"]}, {"parsed": None, "error": f"batch: failed twice, last result {res.result.type}", "usage": {}, "text": None, "stop_reason": None})
                 b["done"].append(res.custom_id)
             b["status"] = "ended"
             self._save(st)
-        if requeue and not getattr(self, "_retried", False):
-            self._retried = True
+        if requeue:  # once: batches.json holds each submission, so a request's second failure is final, also after a restart
             await self.run_pending(requeue)
-        elif requeue:
-            for p in requeue:  # failed twice: record it so the synchronous pass does not silently re-issue the call
-                self.cache.put(p.key, {"batch": "failed-twice"}, {"parsed": None, "error": "batch: errored twice", "usage": {}, "text": None, "stop_reason": None})
 
 
 async def run_with_batches(run: Run, cfg, provider, stage_fn) -> list:

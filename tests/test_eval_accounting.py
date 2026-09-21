@@ -18,17 +18,14 @@ def test_cost_per_stage_frame_and_video():
     c = cost_summary(MANIFEST, SECONDS, frames=10, projection=200, default_model="claude-opus-5")
     a = c["by_stage"]["annotate"]
     assert a["dollars"] == 1.07  # 0.50 + 0.50 + 0.05 + 0.02
-    assert a["dollars_batch"] == 0.535
     assert a["per_frame"] == 0.107
     assert a["per_video"] == 21.4
     assert a["calls"] == 10
     i = c["by_stage"]["interpret"]
     assert i["dollars"] == 0.25  # 0.15 + 0.10
-    assert i["dollars_batch"] == 0.125
     assert i["calls"] == 9
     assert c["by_stage"]["read"]["dollars"] == 0.0
     assert c["dollars"] == 1.32
-    assert c["dollars_batch"] == 0.66
     assert c["per_frame"] == 0.132
     assert c["per_video"] == 26.4
     assert c["seconds"] == 200.0
@@ -36,6 +33,20 @@ def test_cost_per_stage_frame_and_video():
     assert c["cache_hits"] == 0
     assert c["warnings"] == []
     assert c["frames"] == 10 and c["projection_frames"] == 200
+
+
+def test_a_stage_costs_what_its_manifest_says_was_paid():
+    # ledger L52: one cost_usd per stage, at the price paid. A stage run in batch mode paid half the list price, and
+    # for cache writes where a synchronous run reads: its usage priced again at the synchronous rates is not its cost.
+    m = copy.deepcopy(MANIFEST)
+    m["stages"]["annotate"]["cost_usd"] = 0.4321
+    c = cost_summary(m, SECONDS, frames=10, projection=200, default_model="claude-opus-5")
+    a = c["by_stage"]["annotate"]
+    assert (a["dollars"], a["per_frame"], a["per_video"]) == (0.4321, 0.0432, 8.64)
+    assert c["by_stage"]["interpret"]["dollars"] == 0.25  # a manifest without cost_usd: priced from its usage
+    assert (c["dollars"], c["per_frame"], c["per_video"]) == (0.6821, 0.0682, 13.64)
+    # no projected batch price: only a run made in batch mode has one, and it is its `dollars`
+    assert not any("batch" in key for row in (c, *c["by_stage"].values()) for key in row)
 
 
 def test_question_seconds_stay_out_of_seconds_per_frame():

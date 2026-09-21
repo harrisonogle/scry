@@ -102,3 +102,5 @@ def test_run_and_report_end_to_end_with_fake_stages(tmp_path: Path, monkeypatch)
     runs_table = report[report.index("## Runs"):report.index("## Cost")]
     assert "$ / frame" in runs_table and "$ / video" in runs_table
     assert "| configuration | $ / question | s / question | question set $ | judge $ |" in report
+    assert "| configuration | stage | $ | $ / frame | $ / video | s / frame |" in report  # no projected batch price
+    assert "batch $" not in report and "half" not in report
