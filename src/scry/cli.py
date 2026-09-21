@@ -48,6 +48,15 @@ def track(run_dir: Path, config: Path | None = None, verbose: bool = False):
 
 
 @app.command()
+def annotate(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """annotate: one model call per frame proposing labels for the boxes (containers, links, optionally a second
+    reading, a description) → annotations.jsonl. Costs money unless every call is already in the run's cache."""
+    _setup_logging(verbose)
+    from scry.annotate import run_annotate
+    run_annotate(Run(run_dir), load_config(config))
+
+
+@app.command()
 def report(run_dir: Path, frames: str | None = typer.Option(None, "--frames", help="inclusive frame range, e.g. 155-187"),
            ground_truth: Path | None = typer.Option(None, "--ground-truth", help="a command list in the format of docs/ground-truth/span2-commands.md"),
            out: str = typer.Option("report.md", "--out", help="file name inside the run directory"),
@@ -77,7 +86,7 @@ def subset(src: Path, out: Path = typer.Option(..., "--out"),
     typer.echo(f"{out}: {len(dst.load_frames())} frames; {rest}")
 
 
-STAGES = ["outline", "decode", "read", "track"]
+STAGES = ["decode", "outline", "read", "track", "annotate"]
 
 
 @app.command()
@@ -88,6 +97,7 @@ def run(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None
     r = Run(out)
     wanted = stages.split(",") if stages else STAGES
     import time
+    from scry.annotate import run_annotate
     from scry.decode import run_decode
     from scry.read import run_read
     from scry.track.stage import run_track
@@ -97,7 +107,7 @@ def run(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None
         run_outline(r, cfg, video)
 
     steps = {"outline": _outline, "decode": lambda: run_decode(r, cfg, video), "read": lambda: run_read(r, cfg),
-             "track": lambda: run_track(r, cfg)}
+             "track": lambda: run_track(r, cfg), "annotate": lambda: run_annotate(r, cfg)}
     for name in STAGES:
         if name in wanted:
             typer.echo(f"== {name}")
