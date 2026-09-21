@@ -1,0 +1,22 @@
+# P2b (ledger L57): incremental annotation on the command span, frames 155 to 187, under the same harness as P1, whose
+# every-frame and no-annotation bases on this span are already measured (docs/results/p1/); two bases, three cold
+# repeats: 6 runs.
+phase = "p2b"
+source = "runs/p0"
+stages = ["read", "track", "annotate", "interpret", "summarize", "index", "ask"]
+repeats = 3
+
+[spans.span2]
+frames = "155-187"
+ground_truth = "docs/ground-truth/span2-commands.md"
+questions = "docs/ground-truth/span2-questions.md"
+
+[axis.base.inc-transcribing]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 1.0
+
+[axis.base.inc-grouponly]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.scale" = 1.0

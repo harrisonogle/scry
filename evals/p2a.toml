@@ -1,0 +1,34 @@
+# P2a (ledger L57): what does annotation buy on GRAPHICAL content? Frames 145 to 155 with the graphical question set
+# (docs/ground-truth/smoke-questions.md, a draft for the owner to correct); five bases: every-frame transcribing and
+# group-only, no annotation, incremental transcribing and group-only; arm A, full scale; three cold repeats: 15 runs.
+phase = "p2a"
+source = "runs/p0"
+stages = ["read", "track", "annotate", "interpret", "summarize", "index", "ask"]
+repeats = 3
+
+[spans.smoke]
+frames = "145-155"
+questions = "docs/ground-truth/smoke-questions.md"
+
+[axis.base.transcribing]
+"annotate.mode" = "every_frame"
+"annotate.transcribe" = true
+"annotate.scale" = 1.0
+
+[axis.base.grouponly]
+"annotate.mode" = "every_frame"
+"annotate.transcribe" = false
+"annotate.scale" = 1.0
+
+[axis.base.none]
+"annotate.mode" = "off"
+
+[axis.base.inc-transcribing]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 1.0
+
+[axis.base.inc-grouponly]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.scale" = 1.0
