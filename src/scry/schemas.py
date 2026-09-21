@@ -212,6 +212,20 @@ def link_refs(link: RunLink | PairLink | RecordLink) -> list[str]:
 Submitted = Literal["yes", "no", "unclear"]
 
 
+class ModelInterpretation(BaseModel):
+    """What the model returns for one transition; the field descriptions are part of the prompt contract."""
+    action: str = Field(description="The single user action that best explains the change, or that no user action is evident.")
+    result: str = Field(description="What visibly changed as a consequence, including changes that are not text.")
+    description: str = Field(description="Anything else visible and relevant: a suggestion an input field showed, a disagreement "
+                                         "between your reading and the listed strings.")
+    confidence: float = Field(description="0 to 1: confidence in action, entered_text and submitted together.")
+    entered_text: str | None = Field(description="The text the user has entered in the input being edited, as it stands in Frame b, "
+                                                 "without anything the application suggested; the whole submitted text when this "
+                                                 "transition shows a submission; null when the user entered nothing.")
+    submitted: Submitted = Field(description="yes, no or unclear: whether what was entered took effect, judged only from these frames.")
+    citations: list[str] = Field(default_factory=list, description="Ids copied exactly from the square brackets in Changes, e.g. '41:b17'.")
+
+
 class Interpretation(BaseModel):
     """One record per change. A record without a call or without an answer has `error` set and no model fields."""
     id: str  # the change's id
