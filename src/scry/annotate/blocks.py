@@ -40,8 +40,11 @@ def build_blocks(frame: Frame, fb: FrameBoxes, plan: CallPlan, arm: str, scale: 
         text_block(f"Image 1 (clean frame {frame.frame}, t={frame.t_settled:.2f}s):"), frame_block(frame_png, scale),
         text_block("Image 2 (same frame with numbered boxes):"), image_block(overlay_png),
         text_block(f"Boxes: {', '.join(ids)}." if ids else "Boxes: none."),
-        text_block(targets),  # the only thing an incremental call changes
+        text_block(targets),
     ]
+    if list(plan.targets) != ids:  # an incremental call: the every-frame call, whose text keys paid answers, is untouched
+        blocks.append(text_block("The description is about the whole screen, as a person looking at it would describe it, and "
+                                 "must never mention box numbers, box ids, targets, or what was or was not requested."))
     animating = [b.id for b in fb.boxes if b.in_churn]
     if animating:
         blocks.append(text_block(f"Boxes inside animating areas (low confidence): {', '.join(animating)}."))

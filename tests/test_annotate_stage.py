@@ -200,6 +200,8 @@ def test_incremental_run(tmp_path: Path):
         assert kw["system"] == system_prompt() and kw["output_model"] is output_model("A", True)
         assert kw["prompt_version"] == "annotate-v2" and len(_image_sizes(kw)) == 2
     assert "Targets: all boxes." in _texts(calls[10]) and "Targets: b1, b5." in _texts(calls[11])
+    # only the call with fewer targets carries the sentence about the description (ledger L56)
+    assert [sum("never mention" in t for t in _texts(calls[n])) for n in (10, 11)] == [0, 1]
     records = run.load_annotations()
     assert [r.frame for r in records] == [10, 11]
     for got in records:
