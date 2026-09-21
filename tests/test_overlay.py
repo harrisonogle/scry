@@ -86,3 +86,37 @@ def test_overlay_of_a_frame_without_boxes_is_the_frame(tmp_path: Path):
     im = Image.open(out).convert("RGB")
     assert im.size == (64, 32)
     assert {im.getpixel((x, y)) for x in range(64) for y in range(32)} == {(9, 9, 9)}
+
+
+def _tags_overlap(a, b, lw, lh) -> bool:
+    return a[0] < b[0] + lw and b[0] < a[0] + lw and a[1] < b[1] + lh and b[1] < a[1] + lh
+
+
+def test_place_label_avoids_the_tags_already_placed():
+    W, H, lw, lh = 400, 200, 14, 10
+    a, b = (100, 50, 200, 66), (218, 50, 300, 66)  # b's left gutter is where a's tag sits: right of a
+    ta = place_label(a, lw, lh, [a, b], W, H)
+    assert ta == (202, 53, False)
+    wall = (302, 40, 380, 76)  # b cannot go right, so without `placed` it takes the left gutter, on top of a's tag
+    assert place_label(b, lw, lh, [a, b, wall], W, H)[:2] == (202, 53)
+    tb = place_label(b, lw, lh, [a, b, wall], W, H, [(ta[0], ta[1], ta[0] + lw, ta[1] + lh)])
+    assert tb == (218, 39, False)  # above instead, and no clash
+    assert not _tags_overlap(ta, tb, lw, lh)
+
+
+def test_draw_overlay_hands_each_tag_the_tags_before_it(tmp_path: Path):
+    src, out = tmp_path / "f.png", tmp_path / "o.png"
+    Image.new("RGB", (480, 120), (200, 200, 200)).save(src)
+    boxes = [Box(id=f"b{i}", bbox=bb, text="t", conf=1.0)  # the same arrangement as above
+             for i, bb in enumerate([(100, 50, 200, 66), (218, 50, 300, 66), (302, 40, 380, 76)], start=1)]
+    assert draw_overlay(src, boxes, out, OverlayConfig()) == 0
+    im = Image.open(out).convert("RGB")
+    assert im.getpixel((218, 48)) == (255, 255, 0)  # b2's tag went above its box, not onto b1's tag in the gutter
+
+
+def test_a_tag_that_can_only_sit_on_another_tag_is_a_clash():
+    W, H, lw, lh = 400, 200, 14, 10
+    box = (100, 50, 200, 66)
+    placed = [(202, 53, 216, 63), (84, 53, 98, 63), (100, 39, 114, 49), (100, 67, 114, 77)]  # a tag in every slot
+    x, y, clash = place_label(box, lw, lh, [box], W, H, placed)
+    assert clash is True and (x, y) == (202, 53)  # the earliest among equally bad slots

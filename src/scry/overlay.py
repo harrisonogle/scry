@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import math
+from collections.abc import Sequence
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -21,13 +22,16 @@ def _overlap(a: BBox, b: BBox) -> int:
     return max(0, min(a[2], b[2]) - max(a[0], b[0])) * max(0, min(a[3], b[3]) - max(a[1], b[1]))
 
 
-def place_label(box: BBox, lw: int, lh: int, boxes: list[BBox], W: int, H: int) -> tuple[int, int, bool]:
+def place_label(box: BBox, lw: int, lh: int, boxes: list[BBox], W: int, H: int,
+                placed: Sequence[BBox] = ()) -> tuple[int, int, bool]:
     """Where a box's tag goes: right of the box, else the left gutter, above, below, each clamped into the image; the
-    first slot that intersects no box, else the least-overlapping one (the earliest among equals) and a clash."""
+    first slot that intersects no box and no tag already placed on this frame (`placed`), else the least-overlapping
+    one (the earliest among equals) and a clash. Dense boxes once put tag 22 under tag 28, which the model read as
+    "282" and so attached its readings to the wrong boxes (ledger L53)."""
     x0, y0, x1, y1 = box
     cy = (y0 + y1) // 2 - lh // 2
     slots = [(x1 + 2, cy), (x0 - lw - 2, cy), (x0, y0 - lh - 1), (x0, y1 + 1)]
-    others = [b for b in boxes if b != box]
+    others = [b for b in boxes if b != box] + list(placed)
     best, best_ov = None, None
     for sx, sy in slots:
         sx = min(max(sx, 0), W - lw)
@@ -62,14 +66,16 @@ def _scale_box(box: BBox, scale: float) -> BBox:
 
 
 def draw_overlay(png_in: Path, boxes: list[Box], png_out: Path, cfg: OverlayConfig, scale: float = 1.0) -> int:
-    """Write the frame with every box outlined and numbered; returns the number of label clashes. With scale < 1 the
-    frame and the rectangles shrink; the tag font does not, so the tags stay legible."""
+    """Write the frame with every box outlined and numbered; returns the number of label clashes (tags that found no
+    slot free of every box and of every tag placed before them). With scale < 1 the frame and the rectangles shrink;
+    the tag font does not, so the tags stay legible."""
     img = scale_image(Image.open(png_in).convert("RGBA"), scale)
     W, H = img.size
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer)
     font = _font(cfg)
     rects = [_scale_box(b.bbox, scale) for b in boxes]
+    tags: list[BBox] = []  # the tags placed so far on this frame: a later tag avoids them as it avoids the boxes
     clashes = 0
     for box, rect in zip(boxes, rects):
         x0, y0, x1, y1 = rect
@@ -77,7 +83,8 @@ def draw_overlay(png_in: Path, boxes: list[Box], png_out: Path, cfg: OverlayConf
         label = box.id[1:]  # "b17" → "17"
         l, t, r, b = font.getbbox(label)
         lw, lh = (r - l) + 2 * PAD, (b - t) + 2 * PAD
-        x, y, clash = place_label(rect, lw, lh, rects, W, H)
+        x, y, clash = place_label(rect, lw, lh, rects, W, H, tags)
+        tags.append((x, y, x + lw, y + lh))
         clashes += int(clash)
         draw.rectangle((x, y, x + lw - 1, y + lh - 1), fill=LABEL_BG)
         draw.text((x + PAD - l, y + PAD - t), label, fill=LABEL_FG, font=font)
