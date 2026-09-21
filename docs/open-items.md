@@ -36,6 +36,7 @@ design's §21. This list is the short "what next" view across all three.
 - [ ] **Usage accounting.** `run_perceive` sums only three usage keys, dropping `cache_creation_input_tokens` from the
       manifest; `estimate_cost` ignores cache-creation tokens (billed at 1.25× input). ≈ $0.05 on the smoke.
 - [ ] **Batch mode** (`[model] mode = "batch"`) is still unexercised live.
+- [x] **Coordinates at reduced scale** (L42): the list restores grouping at 0.67 scale but costs as much as the pixels it replaces; Stage 2c stays at full resolution. Three repeats per condition put run-to-run noise at a few percent of rows and one small popup.
 - [x] **Overlay A/B** (ledger L30): a per-mark coordinate list and 16-px labels are within noise of the 12-px opaque
       tags; both stay off. Residual id errors (6 % of rows) are identical lines on one screen, e.g. two 'Node pools';
       per-pane crops (design §21) are the literature's answer if that ever matters.
