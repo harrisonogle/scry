@@ -1,40 +1,10 @@
-from pathlib import Path
-
 import numpy as np
 import pytest
-from PIL import Image
-from track_fixtures import SHAPE, frame, mk
+from track_fixtures import black, frame, lit, make_run, mk, typing_run
 
 from scry.config import Config
-from scry.jsonl import write_jsonl
-from scry.run import Run
-from scry.schemas import FrameBoxes, Revert
+from scry.schemas import Revert
 from scry.track.stage import run_track, transition_kind
-
-
-def black() -> np.ndarray:
-    return np.zeros(SHAPE, np.uint8)
-
-
-def lit(*blocks, v=200) -> np.ndarray:
-    img = black()
-    for y0, y1, x0, x1 in blocks:
-        img[y0:y1, x0:x1] = v
-    return img
-
-
-def make_run(root: Path, images: list, boxes: list[list], t_change: list[float] | None = None, settled: list[bool] | None = None) -> Run:
-    """A run directory written by hand: L-mode PNGs from arrays (None = no file), frames.jsonl and boxes.jsonl."""
-    run = Run(root)
-    frames = []
-    for n, img in enumerate(images):
-        f = frame(n, t_change=None if t_change is None else t_change[n], settled=True if settled is None else settled[n])
-        if img is not None:
-            Image.fromarray(img, "L").save(run.root / f.png)
-        frames.append(f)
-    write_jsonl(run.frames, frames)
-    write_jsonl(run.boxes, [FrameBoxes(frame=n, png=frames[n].png, engine={"engine": "fake"}, boxes=bs) for n, bs in enumerate(boxes)])
-    return run
 
 
 TOOLTIP = (100, 120, 300, 380)
@@ -72,9 +42,7 @@ def test_partial_return_is_not_a_revert(tmp_path):
 
 
 def test_continues_links_consecutive_growth(tmp_path):
-    images = [black(), lit((52, 66, 140, 168), v=255), lit((52, 66, 140, 168), (52, 66, 176, 228), v=255)]
-    boxes = [[mk("b1", 10, 50, 130, 68, "PS>")], [mk("b1", 10, 50, 170, 68, "PS> git")], [mk("b1", 10, 50, 230, 68, "PS> git status")]]
-    run = make_run(tmp_path / "r", images, boxes)
+    run = typing_run(tmp_path / "r")
     run_track(run, Config())
     t1, t2 = run.load_changes()
     assert t1.records[0].kind == "appended" and t1.records[0].continues is None

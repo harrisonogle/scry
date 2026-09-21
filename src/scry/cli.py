@@ -48,6 +48,20 @@ def track(run_dir: Path, config: Path | None = None, verbose: bool = False):
 
 
 @app.command()
+def report(run_dir: Path, frames: str | None = typer.Option(None, "--frames", help="inclusive frame range, e.g. 155-187"),
+           ground_truth: Path | None = typer.Option(None, "--ground-truth", help="a command list in the format of docs/ground-truth/span2-commands.md"),
+           out: str = typer.Option("report.md", "--out", help="file name inside the run directory"),
+           sheets: bool = typer.Option(True, "--sheets/--no-sheets", help="write evidence sheets to <out stem>-sheets/"),
+           per_kind: int = typer.Option(30, "--per-kind"), seed: int = typer.Option(0, "--seed"), config: Path | None = None):
+    """What track measured, as Markdown, with evidence sheets to read against the frames. Not a stage; always regenerated."""
+    from scry.report import write_report
+    from scry.subset import parse_frames
+    path, written = write_report(Run(run_dir), load_config(config), out, parse_frames(frames) if frames else None, ground_truth, sheets,
+                                 per_kind, seed)
+    typer.echo(f"{path}" + (f"; {len(written)} sheets in {path.parent / (path.stem + '-sheets')}" if sheets else ""))
+
+
+@app.command()
 def subset(src: Path, out: Path = typer.Option(..., "--out"),
            frames: str = typer.Option(..., "--frames", help="inclusive frame range, e.g. 145-155"),
            share_cache: bool = typer.Option(True, "--share-cache/--no-share-cache", help="symlink the source run's call cache"),

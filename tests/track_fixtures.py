@@ -1,9 +1,14 @@
 """Shared fixtures for the track tests (plan 1, Tasks 8-10). Frame shape (200, 400); every box is 18 px tall unless a
 test says otherwise, so margin 0.5 gives m = 9."""
+from pathlib import Path
+
 import numpy as np
+from PIL import Image
 
 from scry.detect import Component
-from scry.schemas import Box, Frame
+from scry.jsonl import write_jsonl
+from scry.run import Run
+from scry.schemas import Box, Frame, FrameBoxes
 from scry.track.pixels import PixelDiff
 
 SHAPE = (200, 400)
@@ -39,3 +44,35 @@ def fixture_k() -> tuple[list[Box], list[Box], PixelDiff]:
     labels = new_labels()
     comps = [block(labels, 1, 52, 66, 140, 228)]
     return a, b, diff_of(labels, comps)
+
+
+def black() -> np.ndarray:
+    return np.zeros(SHAPE, np.uint8)
+
+
+def lit(*blocks, v=200) -> np.ndarray:
+    img = black()
+    for y0, y1, x0, x1 in blocks:
+        img[y0:y1, x0:x1] = v
+    return img
+
+
+def make_run(root: Path, images: list, boxes: list[list], t_change: list[float] | None = None, settled: list[bool] | None = None) -> Run:
+    """A run directory written by hand: L-mode PNGs from arrays (None = no file), frames.jsonl and boxes.jsonl."""
+    run = Run(root)
+    frames = []
+    for n, img in enumerate(images):
+        f = frame(n, t_change=None if t_change is None else t_change[n], settled=True if settled is None else settled[n])
+        if img is not None:
+            Image.fromarray(img, "L").save(run.root / f.png)
+        frames.append(f)
+    write_jsonl(run.frames, frames)
+    write_jsonl(run.boxes, [FrameBoxes(frame=n, png=frames[n].png, engine={"engine": "fake"}, boxes=bs) for n, bs in enumerate(boxes)])
+    return run
+
+
+def typing_run(root: Path) -> Run:
+    """Three frames in which a prompt grows: "PS>", "PS> git", "PS> git status" (Task 12's typing fixture)."""
+    images = [black(), lit((52, 66, 140, 168), v=255), lit((52, 66, 140, 168), (52, 66, 176, 228), v=255)]
+    boxes = [[mk("b1", 10, 50, 130, 68, "PS>")], [mk("b1", 10, 50, 170, 68, "PS> git")], [mk("b1", 10, 50, 230, 68, "PS> git status")]]
+    return make_run(root, images, boxes)
