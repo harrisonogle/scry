@@ -3,6 +3,7 @@ a renamed loader costs one function here, never a metric. Pipeline modules are i
 from __future__ import annotations
 
 from contextlib import closing
+from dataclasses import dataclass
 from typing import Callable
 
 from scry.config import Config
@@ -44,3 +45,24 @@ def search_fn(run: Run, cfg: Config) -> Callable[[str], list[dict]] | None:
             return search(db, query, cfg.index, embedder=None)
 
     return hits_for
+
+
+@dataclass
+class AskOutcome:
+    """One answered question, as the harness records it."""
+    text: str
+    usage: dict
+    dollars: float
+    model: str
+    turns: int
+    tools: list[str]
+    stop: str
+
+
+def answer_fn(run: Run, cfg: Config, question: str) -> AskOutcome:
+    """One call of `ask`: a fresh conversation, no call cache. A failed API call comes back with `stop "api_error"`."""
+    from scry.ask import ask
+
+    r = ask(run, cfg, question)
+    return AskOutcome(text=r.text, usage=dict(r.usage), dollars=r.cost_usd, model=cfg.model.model, turns=r.turns,
+                      tools=list(r.tool_calls), stop=r.stop)
