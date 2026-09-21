@@ -17,7 +17,7 @@ from __future__ import annotations
 from importlib import metadata
 from pathlib import Path
 
-from scry.config import OcrConfig
+from scry.config import ReadConfig
 from scry.ocr.base import RawLine
 from scry.schemas import BBox, RawWord
 
@@ -105,7 +105,7 @@ def models_available() -> bool:
 class RapidEngine:
     name = "rapidocr"
 
-    def __init__(self, cfg: OcrConfig, gap_ratio: float | None = None):
+    def __init__(self, cfg: ReadConfig, gap_ratio: float | None = None):
         from rapidocr import RapidOCR
 
         self.cfg = cfg

@@ -15,6 +15,8 @@ def test_old_machinery_is_gone():
         assert importlib.util.find_spec("scry." + name) is None, name
     for attr in GONE_SCHEMAS:
         assert not hasattr(scry.schemas, attr), attr
+    assert importlib.util.find_spec("scry.stage1") is None
+    assert not hasattr(scry.schemas, "Stage1Record")
 
 
 def test_every_module_imports():

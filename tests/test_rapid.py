@@ -44,7 +44,7 @@ def test_regroup_words_merges_pieces_into_tokens():
 
 @pytest.mark.skipif(not models_available(), reason="rapidocr or its bundled default models are not available offline")
 def test_rapid_reads_terminal_text_with_spaces_and_word_boxes(tmp_path: Path):
-    from scry.config import OcrConfig
+    from scry.config import ReadConfig
     from scry.ocr.rapid import RapidEngine
 
     img = Image.new("RGB", (1920, 200), (12, 12, 12))
@@ -54,7 +54,7 @@ def test_rapid_reads_terminal_text_with_spaces_and_word_boxes(tmp_path: Path):
     png = tmp_path / "t.png"
     img.save(png)
 
-    eng = RapidEngine(OcrConfig(engine="rapid"))
+    eng = RapidEngine(ReadConfig(engine="rapid"))
     lines = eng.recognize(png)
     hits = [ln for ln in lines if "az login" in ln.text]
     assert hits, [ln.text for ln in lines]
@@ -72,20 +72,20 @@ def test_rapid_reads_terminal_text_with_spaces_and_word_boxes(tmp_path: Path):
 def test_get_engine_knows_only_rapid():
     import pydantic
 
-    from scry.config import OcrConfig
+    from scry.config import ReadConfig
     from scry.ocr import get_engine
     from scry.ocr.rapid import RapidEngine
 
     with pytest.raises(pydantic.ValidationError):
-        OcrConfig(engine="vision")
+        ReadConfig(engine="vision")
     if not models_available():
         pytest.skip("rapidocr or its bundled default models are not available offline")
-    assert isinstance(get_engine(OcrConfig()), RapidEngine)
+    assert isinstance(get_engine(ReadConfig()), RapidEngine)
 
 
 @pytest.mark.skipif(not models_available(), reason="rapidocr or its bundled default models are not available offline")
 def test_gap_ratio_comes_from_config():
-    from scry.config import OcrConfig
+    from scry.config import ReadConfig
     from scry.ocr.rapid import RapidEngine
 
-    assert RapidEngine(OcrConfig(gap_ratio=0.4)).gap_ratio == 0.4
+    assert RapidEngine(ReadConfig(gap_ratio=0.4)).gap_ratio == 0.4

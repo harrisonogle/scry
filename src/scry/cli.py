@@ -25,22 +25,22 @@ def _setup_logging(verbose: bool) -> None:
 
 @app.command()
 def decode(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None = None, verbose: bool = False):
-    """Stage 1: decode, detect changes, settle, write frames/ and stage1.jsonl."""
+    """decode: detect changes, settle, write frames/ and frames.jsonl."""
     _setup_logging(verbose)
-    from scry.stage1 import run_stage1
-    run_stage1(Run(out), load_config(config), video)
+    from scry.decode import run_decode
+    run_decode(Run(out), load_config(config), video)
 
 
 @app.command()
 def subset(src: Path, out: Path = typer.Option(..., "--out"),
-           frames: str = typer.Option(..., "--frames", help="inclusive Stage 1 frame range, e.g. 145-155"),
+           frames: str = typer.Option(..., "--frames", help="inclusive frame range, e.g. 145-155"),
            share_cache: bool = typer.Option(True, "--share-cache/--no-share-cache", help="symlink the source run's call cache"),
            verbose: bool = False):
-    """Derive a small run directory from an existing run's Stage 1 frames, for cheap live checks of the model stages."""
+    """Derive a small run directory from an existing run's decoded frames, for cheap live checks of the later stages."""
     _setup_logging(verbose)
     from scry.subset import make_subset, parse_frames
     dst = make_subset(Run(src), out, parse_frames(frames), share_cache)
-    typer.echo(f"{out}: {len(dst.load_stage1())} frames; Stage 1 is marked done, so `scry run <video> --out {out}` runs the rest")
+    typer.echo(f"{out}: {len(dst.load_frames())} frames; decode is marked done, so `scry run <video> --out {out}` runs the rest")
 
 
 STAGES = ["outline", "decode"]
@@ -54,22 +54,21 @@ def run(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None
     r = Run(out)
     wanted = stages.split(",") if stages else STAGES
     import time
-    from scry import stage1
+    from scry.decode import run_decode
 
     def _outline():
         from scry.outline import run_outline
         run_outline(r, cfg, video)
 
-    steps = {"outline": _outline, "decode": lambda: stage1.run_stage1(r, cfg, video)}
-    keys = {"decode": "stage1"}
+    steps = {"outline": _outline, "decode": lambda: run_decode(r, cfg, video)}
     for name in STAGES:
         if name in wanted:
             typer.echo(f"== {name}")
             t0 = time.perf_counter()
             steps[name]()
             st = r.manifest_read().get("stages", {})
-            if keys.get(name) in st:  # per-stage wall time
-                st[keys[name]]["seconds"] = round(time.perf_counter() - t0, 1)
+            if name in st:  # per-stage wall time; the step name is the manifest key
+                st[name]["seconds"] = round(time.perf_counter() - t0, 1)
                 r.manifest_update(stages=st)
 
 
@@ -81,11 +80,11 @@ def setup(config: Path | None = None):
     ok = True
     try:
         from scry.ocr import get_engine
-        get_engine(cfg.ocr)
-        typer.echo(f"ocr engine {cfg.ocr.engine}: ok")
+        get_engine(cfg.read)
+        typer.echo(f"ocr engine {cfg.read.engine}: ok")
     except Exception as e:
         ok = False
-        typer.echo(f"ocr engine {cfg.ocr.engine}: FAILED ({e})")
+        typer.echo(f"ocr engine {cfg.read.engine}: FAILED ({e})")
     try:
         sqlite3.connect(":memory:").execute("create virtual table t using fts5(x)")
         typer.echo("sqlite fts5: ok")

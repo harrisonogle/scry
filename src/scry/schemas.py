@@ -6,7 +6,7 @@ BBox = tuple[int, int, int, int]  # x0, y0, x1, y1 in original-frame pixels; x1/
 
 
 # ---------- decode ----------
-class Stage1Record(BaseModel):
+class Frame(BaseModel):
     video_id: str
     frame: int
     t_change: float

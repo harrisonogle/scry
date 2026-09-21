@@ -6,10 +6,11 @@ import tomllib
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DetectParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     theta_pix: int = 12
     theta_min: int = 8
     theta_comp: int = 24
@@ -21,11 +22,13 @@ class DetectParams(BaseModel):
 
 
 class SettleParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     still_s: float = 0.4
     max_hold_s: float = 3.0
 
 
 class ChurnParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     window_s: float = 5.0
     rho_on: float = 0.5
     rho_off: float = 0.2
@@ -33,6 +36,7 @@ class ChurnParams(BaseModel):
 
 
 class BlinkParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     max_w: int = 12
     max_h: int = 32
     min_period_s: float = 0.15
@@ -43,19 +47,22 @@ class BlinkParams(BaseModel):
     iou: float = 0.5
 
 
-class Stage1Config(BaseModel):
+class DecodeConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     detect: DetectParams = DetectParams()
     settle: SettleParams = SettleParams()
     churn: ChurnParams = ChurnParams()
     blink: BlinkParams = BlinkParams()
 
 
-class OcrConfig(BaseModel):
+class ReadConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     engine: Literal["rapid"] = "rapid"  # RapidOCR 3.9 is the only reader (ledger L36, L43)
     gap_ratio: float = 0.25  # spacing guard: a gap of at least this × the box height between two words is a space
 
 
 class OverlayConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     font_size: int = 12
     font_path: str = "/System/Library/Fonts/Menlo.ttc"
     scale: float = Field(1.0, gt=0, le=1)  # < 1 sends both Stage 2c images downscaled by this factor; tags keep font_size
@@ -69,6 +76,7 @@ Effort = Literal["low", "medium", "high", "xhigh", "max"]
 
 
 class ModelConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     provider: Literal["anthropic"] = "anthropic"
     model: str = "claude-opus-5"
     max_tokens: int = 16000
@@ -78,6 +86,7 @@ class ModelConfig(BaseModel):
 
 
 class IndexConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     embedder: Literal["none", "fastembed"] = "none"
     k: int = 20
     k_filtered: int = 50
@@ -85,13 +94,15 @@ class IndexConfig(BaseModel):
 
 
 class OutlineConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     enabled: bool = False
     model: str = "gemini-3.8-flash"
 
 
 class Config(BaseModel):
-    stage1: Stage1Config = Stage1Config()
-    ocr: OcrConfig = OcrConfig()
+    model_config = ConfigDict(extra="forbid")
+    decode: DecodeConfig = DecodeConfig()
+    read: ReadConfig = ReadConfig()
     overlay: OverlayConfig = OverlayConfig()
     model: ModelConfig = ModelConfig()
     index: IndexConfig = IndexConfig()

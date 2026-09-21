@@ -1,4 +1,4 @@
-[stage1.detect]
+[decode.detect]
 theta_pix = 12
 theta_min = 8
 theta_comp = 24
@@ -8,17 +8,17 @@ bar_min_height = 8
 bar_max_height = 30
 downsample = 1
 
-[stage1.settle]
+[decode.settle]
 still_s = 0.4
 max_hold_s = 3.0
 
-[stage1.churn]
+[decode.churn]
 window_s = 5.0
 rho_on = 0.5
 rho_off = 0.2
 min_area = 400
 
-[stage1.blink]
+[decode.blink]
 max_w = 12
 max_h = 32
 min_period_s = 0.15
@@ -28,7 +28,7 @@ confirm_window_s = 3.0
 expiry_s = 2.0
 iou = 0.5
 
-[ocr]
+[read]
 engine = "rapid"
 gap_ratio = 0.25
 
