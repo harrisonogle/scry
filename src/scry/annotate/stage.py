@@ -6,7 +6,11 @@ An incremental call is the every-frame call with a shorter target list: the same
 prompt version; in the user turn only the `Targets:` line differs, naming fewer boxes (the sentence that keeps the
 description about the screen is in the shared system prompt, ledger L59). Which frames get a call and which boxes are
 targets is `plan_calls`' answer, read from track's records alone; what the labels mean at a later frame is the join's
-(`scry.annotate.join`)."""
+(`scry.annotate.join`).
+
+`[annotate] arm` says how the model is told which box is which: "A" sends a second image with every box numbered, "D"
+sends the clean frame alone and lists every box as id and rectangle (ledger L61). Both answer by box id, so the stored
+records, the repair and the join do not know the arm."""
 from __future__ import annotations
 
 import asyncio
@@ -31,7 +35,7 @@ from scry.textdiff import similarity
 from scry.track.pixels import margin_px
 
 log = logging.getLogger(__name__)
-ARM, PANE = "A", False  # the referencing arm and the pane label are evaluation switches that have not landed
+PANE = False  # the pane label is an evaluation switch that has not landed
 
 
 def mark_match(annotations: list[Annotation], frames: list[FrameBoxes], threshold: float = 0.8) -> tuple[int, int]:
@@ -53,8 +57,8 @@ def mark_match(annotations: list[Annotation], frames: list[FrameBoxes], threshol
 async def _annotate_all(run: Run, cfg: Config, provider: VlmProvider, frames: dict[int, Frame], boxes: dict[int, FrameBoxes],
                         plans: list[CallPlan]) -> list[Annotation]:
     a = cfg.annotate
-    version = prompt_version(ARM, a.transcribe, PANE, a.scale)
-    system, model = system_prompt(ARM, a.transcribe, PANE), output_model(ARM, a.transcribe, PANE)
+    version = prompt_version(a.arm, a.transcribe, PANE, a.scale)
+    system, model = system_prompt(a.arm, a.transcribe, PANE), output_model(a.arm, a.transcribe, PANE)
     sem = asyncio.Semaphore(cfg.model.concurrency * 2)  # bounds the frames in flight: image payloads are built inside it
 
     async def one(plan: CallPlan) -> Annotation:
@@ -64,15 +68,17 @@ async def _annotate_all(run: Run, cfg: Config, provider: VlmProvider, frames: di
             frame_png = run.root / frame.png
             if not frame_png.exists():
                 return Annotation(**base, error="missing_png")
-            overlay_png = run.overlays_dir / f"{plan.frame:05d}.png"
-            clashes = draw_overlay(frame_png, fb.boxes, overlay_png, cfg.overlay, scale=a.scale)  # every box numbered
-            blocks = build_blocks(frame, fb, plan, ARM, a.scale, frame_png, overlay_png)
+            overlay_png, clashes = None, 0  # arm D: no overlay is drawn, so no tag can clash
+            if a.arm == "A":
+                overlay_png = run.overlays_dir / f"{plan.frame:05d}.png"
+                clashes = draw_overlay(frame_png, fb.boxes, overlay_png, cfg.overlay, scale=a.scale)  # every box numbered
+            blocks = build_blocks(frame, fb, plan, a.arm, a.scale, frame_png, overlay_png)
             res = await provider.complete(stage="annotate", system=system, blocks=blocks, output_model=model,
                                           effort=cfg.model.effort_annotate, prompt_version=version,
                                           input_hashes=input_hashes(frame, overlay_png, blocks))
         if res.parsed is None:
             return Annotation(**base, label_clashes=clashes, usage=res.usage, error=res.error)
-        proposal, converted = to_proposal(ARM, res.parsed, fb.boxes, (frame.width, frame.height),
+        proposal, converted = to_proposal(a.arm, res.parsed, fb.boxes, (frame.width, frame.height),
                                           margin_px(fb.boxes, [], cfg.track.margin))
         fixed = repair(proposal, plan.targets, [b.id for b in fb.boxes])
         counts = Counter(converted) + Counter(fixed.counts)
@@ -86,7 +92,7 @@ async def _annotate_all(run: Run, cfg: Config, provider: VlmProvider, frames: di
 def run_annotate(run: Run, cfg: Config, provider: VlmProvider | None = None) -> None:
     a = cfg.annotate
     inputs = [run.frames, run.boxes] + ([run.changes, run.lifetimes] if a.mode == "incremental" else [])
-    version = prompt_version(ARM, a.transcribe, PANE, a.scale)
+    version = prompt_version(a.arm, a.transcribe, PANE, a.scale)
     ch = config_hash(cfg, "annotate", "model", "overlay", "track") + version
     frames = run.load_frames()
     if a.mode == "off":  # the "no annotation" base: no stale labels to read; the call cache keeps every paid answer
@@ -127,7 +133,7 @@ def run_annotate(run: Run, cfg: Config, provider: VlmProvider | None = None) -> 
     failed = [r for r in records if r.error is not None]
     hits, total = mark_match(records, frame_boxes) if a.transcribe else (0, 0)
     cost = estimate_cost(usage, provider.model, batch=cfg.model.mode == "batch")  # one figure, at the price paid (L52)
-    run.stage_done("annotate", inputs, ch, mode=a.mode, arm=ARM, transcribe=a.transcribe, prompt_version=version,
+    run.stage_done("annotate", inputs, ch, mode=a.mode, arm=a.arm, transcribe=a.transcribe, prompt_version=version,
                    model=provider.model, frames=len(frames), calls=len(records), skipped_frames=len(frames) - len(records),
                    boxes=sum(len(boxes[r.frame].boxes) for r in records), targets=sum(len(r.targets) for r in records),
                    errors=len(failed), transient_errors=sum(is_transient(r.error) for r in failed),

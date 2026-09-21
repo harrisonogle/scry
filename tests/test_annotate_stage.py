@@ -75,7 +75,7 @@ def test_every_frame_arm_a_end_to_end(tmp_path: Path):
     for n in (0, 1):
         assert Image.open(run.overlays_dir / f"{n:05d}.png").size == (128, 64)
     m = _entry(run)
-    assert (m["frames"], m["calls"], m["boxes"], m["targets"]) == (2, 2, 4, 4)
+    assert (m["arm"], m["frames"], m["calls"], m["boxes"], m["targets"]) == ("A", 2, 2, 4, 4)
     assert (m["errors"], m["transient_errors"], m["usage_lost"]) == (0, 0, 0)
     assert m["mark_match"] == {"hits": 2, "total": 4}  # "a" against "a" is 1.0; "B" against "b" is 0.0
     assert m["usage"] == {"input_tokens": 200, "output_tokens": 40, "cache_read_input_tokens": 2000, "cache_creation_input_tokens": 800}
@@ -220,6 +220,41 @@ def test_incremental_run(tmp_path: Path):
     first = next(kw for kw in every.calls if call_frame(kw) == 10)
     assert _texts(first) == _texts(calls[10])
     assert (first["prompt_version"], first["input_hashes"]) == (calls[10]["prompt_version"], calls[10]["input_hashes"])
+
+
+def test_arm_d_incremental_end_to_end(tmp_path: Path):
+    stored = {10: record_a10(), 11: record_a11()}
+    run, provider = write_run(tmp_path, *fixture_t()), AnswerProvider(lambda kw: answer_from(stored[call_frame(kw)], kw))
+    run_annotate(run, Config.model_validate({"annotate": {"arm": "D"}}), provider)  # the config's own mode: incremental
+    calls = {call_frame(kw): kw for kw in provider.calls}
+    assert sorted(calls) == [10, 11]
+    for kw in calls.values():  # arm A's answer class; the clean frame alone, and no overlay among the hashes
+        assert kw["system"] == system_prompt("D") and kw["output_model"] is output_model("A", True)
+        assert kw["prompt_version"] == "annotate-v4+D" and _image_sizes(kw) == [(400, 200)] and kw["input_hashes"][1] == "-"
+    assert _texts(calls[11])[2:4] == ["Boxes, as id: x0,y0,x1,y1 in reading order: b1: 10,10,110,26; b2: 10,40,110,56; "
+                                     "b3: 130,40,200,56; b4: 10,80,110,96; b5: 10,100,200,116.", "Targets: b1, b5."]
+    assert list(run.overlays_dir.iterdir()) == []  # no overlay is drawn
+    records = run.load_annotations()
+    assert [r.frame for r in records] == [10, 11]
+    for got in records:
+        want = stored[got.frame]
+        for field in ("targets", "containers", "assign", "links", "texts", "missed", "description", "repairs"):
+            assert getattr(got, field) == getattr(want, field), (got.frame, field)
+        assert (got.prompt_version, got.label_clashes, got.error) == ("annotate-v4+D", 0, None)
+    m = _entry(run)
+    assert (m["arm"], m["mode"], m["prompt_version"], m["calls"], m["targets"], m["label_clashes"]) == \
+        ("D", "incremental", "annotate-v4+D", 2, 6, 0)
+    labels = run.load_labels()  # the stored records do not know the arm, so the join reads them as it reads arm A's
+    assert labels.frame(12).links == [PairLink(key=["12:b2"], value=["12:b3"]), RunLink(boxes=["12:b4", "12:b5"], joiner=" ")]
+
+
+def test_arm_d_every_frame_group_only_scaled(tmp_path: Path):
+    run, provider = _run(tmp_path), AnswerProvider(standard)
+    run_annotate(run, _cfg(arm="D", transcribe=False, scale=0.5), provider)
+    kw = provider.calls[0]
+    assert kw["system"] == system_prompt("D", transcribe=False) and kw["output_model"] is output_model("A", False)
+    assert kw["prompt_version"] == "annotate-v4+D+grouponly+s0.5" and _image_sizes(kw) == [(64, 32)]
+    assert [r.error for r in run.load_annotations()] == [None, None] and list(run.overlays_dir.iterdir()) == []
 
 
 def test_incremental_needs_track(tmp_path: Path):
