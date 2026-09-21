@@ -208,6 +208,55 @@ def link_refs(link: RunLink | PairLink | RecordLink) -> list[str]:
     return link_members(link) + (link.header if link.kind == "record" else [])
 
 
+# ---------- interpret: interpretations.jsonl (a model's judgement of one transition, never a measurement) ----------
+Submitted = Literal["yes", "no", "unclear"]
+
+
+class Interpretation(BaseModel):
+    """One record per change. A record without a call or without an answer has `error` set and no model fields."""
+    id: str  # the change's id
+    action: str | None = None
+    result: str | None = None
+    description: str | None = None
+    confidence: float | None = None
+    entered_text: str | None = None  # the user's input as the later frame shows it; the whole submitted text on a submission
+    submitted: Submitted | None = None
+    citations: list[str] = []  # box refs "<frame>:<box id>", validated against the ids the call was handed
+    invalid_citations: int = 0  # cited entries that were not among them
+    usage: dict = {}  # of the call that produced the record, served from the call cache or not
+    model: str | None = None
+    prompt_version: str | None = None  # names the image mode too
+    error: str | None = None
+
+
+# ---------- summarize: steps.jsonl, sections.jsonl, video.json ----------
+class SegmentStart(BaseModel):
+    start_id: str = Field(description="Id of the first item of a new segment, exactly as listed.")
+    label: str = Field(description="Short label for the segment that starts here.")
+
+
+class ModelBoundaries(BaseModel):
+    segments: list[SegmentStart]
+
+
+class ModelElaboration(BaseModel):
+    label: str = Field(description="Short label for this segment.")
+    description: str = Field(description="Description for a reader who will follow it. Every sentence carries the child ids it rests on in brackets, e.g. [T13]. Quote commands exactly.")
+    refs: list[str] = Field(default_factory=list, description="Every child id cited in description.")
+
+
+class HierNode(BaseModel):
+    id: str  # "S<n>" a step, "C<n>" a section, "V" the video
+    level: Literal["step", "section", "video"]
+    children: tuple[str, str]  # first and last child id
+    frames: tuple[int, int]
+    t: tuple[float, float]
+    label: str
+    description: str
+    refs: list[str] = []
+    segmentation_conf: Literal["high", "low"] = "high"
+
+
 # ---------- outline ----------
 class OutlineChapter(BaseModel):
     id: str

@@ -27,6 +27,20 @@ def test_repo_toml_loads():
     assert cfg.read.engine == "rapid"
     assert cfg.annotate.mode == "every_frame"
     assert cfg.model.effort_annotate == "low"
+    assert cfg.interpret.images == "scaled"
+    assert cfg.ask.max_turns == 12
+
+
+def test_stage_sections_defaults():
+    cfg = Config()
+    assert (cfg.interpret.images, cfg.interpret.scale, cfg.interpret.context_transitions) == ("scaled", 0.5, 3)
+    assert cfg.summarize.window == 2000
+    assert cfg.index.collapse is True
+    assert cfg.ask.max_turns == 12
+    assert (cfg.model.effort_interpret, cfg.model.effort_summarize, cfg.model.effort_ask) == ("low", "medium", "high")
+    for mode in ("text", "crops"):
+        with pytest.raises(pydantic.ValidationError):
+            Config.model_validate({"interpret": {"images": mode}})
 
 
 def test_annotate_defaults():

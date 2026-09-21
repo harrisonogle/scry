@@ -40,6 +40,17 @@ mode = "every_frame"
 transcribe = true
 scale = 1.0
 
+[interpret]
+images = "scaled"
+scale = 0.5
+context_transitions = 3
+
+[summarize]
+window = 2000
+overlap = 200
+fallback_step_transitions = 20
+fallback_section_steps = 8
+
 [overlay]
 font_size = 12
 font_path = "/System/Library/Fonts/Menlo.ttc"
@@ -52,12 +63,21 @@ retry_max_tokens = 32000
 concurrency = 4
 mode = "sync"
 effort_annotate = "low"
+effort_interpret = "low"
+effort_summarize = "medium"
+effort_ask = "high"
 
 [index]
 embedder = "none"
 k = 20
 k_filtered = 50
 rrf = 60
+collapse = true
+
+[ask]
+max_turns = 12
+max_tool_result_chars = 60000
+redecode_max_frames = 6
 
 [outline]
 enabled = false

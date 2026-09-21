@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from scry.jsonl import read_jsonl, sha256_file
-from scry.schemas import Annotation, Change, Frame, FrameBoxes, Lifetime, OutlineChapter
+from scry.schemas import Annotation, Change, Frame, FrameBoxes, HierNode, Interpretation, Lifetime, OutlineChapter
 
 if TYPE_CHECKING:
     from scry.annotate.join import Labels
@@ -23,6 +23,11 @@ class Run:
         self.changes = self.root / "changes.jsonl"
         self.lifetimes = self.root / "lifetimes.jsonl"
         self.annotations = self.root / "annotations.jsonl"
+        self.interpretations = self.root / "interpretations.jsonl"
+        self.steps = self.root / "steps.jsonl"
+        self.sections = self.root / "sections.jsonl"
+        self.video = self.root / "video.json"
+        self.index_db = self.root / "index.sqlite"
         self.outline = self.root / "outline.json"
         self.manifest = self.root / "manifest.json"
         self.batches = self.root / "batches.json"
@@ -80,6 +85,18 @@ class Run:
             return None
         from scry.annotate.join import build_labels
         return build_labels(annotations, self.load_boxes(), self.load_lifetimes())
+
+    def load_interpretations(self) -> dict[str, Interpretation]:
+        return {r.id: r for r in read_jsonl(self.interpretations, Interpretation)}
+
+    def load_steps(self) -> list[HierNode]:
+        return read_jsonl(self.steps, HierNode)
+
+    def load_sections(self) -> list[HierNode]:
+        return read_jsonl(self.sections, HierNode)
+
+    def load_video(self) -> HierNode | None:
+        return HierNode.model_validate_json(self.video.read_text()) if self.video.exists() else None
 
     def load_outline(self) -> list[OutlineChapter]:
         if not self.outline.exists():

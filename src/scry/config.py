@@ -92,6 +92,24 @@ class ModelConfig(BaseModel):
     concurrency: int = 4
     mode: Literal["sync", "batch"] = "sync"
     effort_annotate: Effort = "low"
+    effort_interpret: Effort = "low"
+    effort_summarize: Effort = "medium"
+    effort_ask: Effort = "high"
+
+
+class InterpretConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    images: Literal["scaled", "full"] = "scaled"  # how the two frames are sent (ledger L39)
+    scale: float = Field(0.5, gt=0, le=1)  # factor; scaled: both frames downscaled by it
+    context_transitions: int = 3  # transitions; the preceding ones rendered one line each
+
+
+class SummarizeConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    window: int = 2000  # items per boundary call
+    overlap: int = 200  # items shared by two consecutive windows
+    fallback_step_transitions: int = 20  # transitions per step when the boundary call fails
+    fallback_section_steps: int = 8  # steps per section when the boundary call fails and there is no outline
 
 
 class IndexConfig(BaseModel):
@@ -100,6 +118,14 @@ class IndexConfig(BaseModel):
     k: int = 20
     k_filtered: int = 50
     rrf: int = 60
+    collapse: bool = True  # collapse identical consecutive frame hits in the result list
+
+
+class AskConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    max_turns: int = 12  # model turns before the loop gives up
+    max_tool_result_chars: int = 60000  # characters; a JSON tool result longer than this is cut
+    redecode_max_frames: int = 6  # frames one redecode call may return
 
 
 class OutlineConfig(BaseModel):
@@ -114,9 +140,12 @@ class Config(BaseModel):
     read: ReadConfig = ReadConfig()
     track: TrackConfig = TrackConfig()
     annotate: AnnotateConfig = AnnotateConfig()
+    interpret: InterpretConfig = InterpretConfig()
+    summarize: SummarizeConfig = SummarizeConfig()
     overlay: OverlayConfig = OverlayConfig()
     model: ModelConfig = ModelConfig()
     index: IndexConfig = IndexConfig()
+    ask: AskConfig = AskConfig()
     outline: OutlineConfig = OutlineConfig()
 
 

@@ -1,12 +1,13 @@
 from pathlib import Path
 
+import pydantic
 import pytest
 
 from scry.jsonl import read_jsonl, write_jsonl
 from scry.run import Run
-from scry.schemas import (Annotation, Box, BoxChange, BoxText, Change, Container, FrameBoxes, FrameTime, Lifetime,
-                          Missed, PairLink, RawWord, RecordLink, Revert, RunLink, TextReading, box_ref, link_members,
-                          link_refs, parse_box_ref)
+from scry.schemas import (Annotation, Box, BoxChange, BoxText, Change, Container, FrameBoxes, FrameTime, Interpretation,
+                          Lifetime, Missed, PairLink, RawWord, RecordLink, Revert, RunLink, TextReading, box_ref,
+                          link_members, link_refs, parse_box_ref)
 
 
 def test_records_round_trip_unicode(tmp_path: Path):
@@ -87,3 +88,12 @@ def test_link_members_and_refs():
     assert link_members(rec) == ["b70", "b71", "b73", "b72"]
     assert link_refs(rec) == ["b70", "b71", "b73", "b72", "b64"]
     assert link_members(PairLink(key=["b1"], value=["b2", "b3"])) == ["b1", "b2", "b3"]
+
+
+def test_interpretation_round_trip(tmp_path: Path):
+    rec = Interpretation(id="T2", action="a", result="r", description="", confidence=0.9, entered_text="git status",
+                         submitted="yes", citations=["12:b4"], invalid_citations=2, usage={"input_tokens": 1})
+    write_jsonl(tmp_path / "interpretations.jsonl", [rec])
+    assert read_jsonl(tmp_path / "interpretations.jsonl", Interpretation) == [rec]
+    with pytest.raises(pydantic.ValidationError):
+        Interpretation(id="T9", submitted="maybe")

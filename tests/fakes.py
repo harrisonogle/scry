@@ -54,3 +54,36 @@ def call_frame(kw: dict) -> int:
     """The frame a call is about: the number after the word `frame` in its first text block."""
     first = next(b["text"] for b in kw["blocks"] if b["type"] == "text")
     return int(re.search(r"frame (\d+)", first).group(1))
+
+
+class FakeSyncMessages:
+    """Stands in for the synchronous `client.messages` that `ask` drives: each `create` pops the next script item; an
+    exception is raised, anything else is returned as the response."""
+
+    def __init__(self, script):
+        self.script = list(script)
+        self.calls = []
+
+    def create(self, **kw):
+        self.calls.append(kw)
+        item = self.script.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+
+def fake_sync_client(script):
+    return SimpleNamespace(messages=FakeSyncMessages(script))
+
+
+def tool_use(id: str, name: str, input: dict):
+    return SimpleNamespace(type="tool_use", id=id, name=name, input=input)
+
+
+def text(s: str):
+    return SimpleNamespace(type="text", text=s)
+
+
+def response(content: list, stop_reason: str, usage: dict | None = None):
+    usage = usage or {"input_tokens": 1000, "output_tokens": 100, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0}
+    return SimpleNamespace(content=content, stop_reason=stop_reason, usage=SimpleNamespace(**usage))
