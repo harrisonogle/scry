@@ -7,6 +7,8 @@ import pytest
 from pydantic import BaseModel
 
 from scry.config import Config
+from scry.providers.anthropic_ import AnthropicProvider
+from scry.providers.base import text_block
 from scry.providers.batch import BatchRunner, PendingRequest, chunk_requests, run_with_batches, strict_schema
 from scry.providers.cache import CallCache
 from scry.run import Run
@@ -151,3 +153,23 @@ def test_run_with_batches_runs_twice_in_batch_mode(tmp_path: Path):
 
     assert events_of("batch") == [True, "batches", False]
     assert events_of("sync") == [False]
+
+
+def test_answers_of_the_runs_own_batches_are_not_cache_hits(tmp_path: Path):
+    cfg = Config()
+    cfg.model.mode = "batch"
+
+    async def stage_fn(run, cfg, provider):
+        return [await provider.complete(stage="s", system="sys", blocks=[text_block("q")], output_model=Out, effort="low",
+                                        prompt_version="v1", input_hashes=[h]) for h in ("a", "b")]
+
+    def stats_of(name: str) -> dict:
+        provider = AnthropicProvider(cfg.model, CallCache(tmp_path / "c"), client=batch_client())
+        results = asyncio.run(run_with_batches(Run(tmp_path / name), cfg, provider, stage_fn))
+        assert [r.parsed for r in results] == [Out(answer="a")] * 2
+        return provider.stats
+
+    # the second pass reads every batch result out of the call cache by design: those calls were paid for in this run
+    assert stats_of("cold") == {"hits": 0, "misses": 2, "usage_lost": 0}
+    # the same calls again, now answered by what the cold run left: a run that is not cold is flagged, each hit once
+    assert stats_of("warm") == {"hits": 2, "misses": 0, "usage_lost": 0}
