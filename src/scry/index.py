@@ -163,9 +163,19 @@ def matched_lines(text: str, terms: list[str]) -> tuple[str, ...]:
     return lines or (text,)
 
 
+def collapse_key(text: str, box_texts: list[str], terms: list[str]) -> tuple[str, ...]:
+    """What consecutive frame hits must share to be one hit: the OCR texts of the frame's boxes that hold a query term,
+    whitespace-collapsed and case-folded. Measured text only: a second reading, a link line or a description sentence
+    differs from frame to frame over a screen that did not change. When no box text holds a term (the hit matched only
+    label-derived text), the matched lines of the entry."""
+    folded = [" ".join(t.split()).casefold() for t in terms]
+    measured = tuple(b for b in (" ".join(x.split()).casefold() for x in box_texts) if any(t in b for t in folded))
+    return ("boxes", *measured) if measured else ("lines", *matched_lines(text, terms))
+
+
 def collapse_runs(hits: list[tuple[str, int, tuple[str, ...]]]) -> list[list[str]]:
-    """(node id, ordinal, matched lines) in; runs of node ids out, each in frame order: a run is a maximal sequence of
-    consecutive emitted frames whose matched lines are identical."""
+    """(node id, ordinal, collapse key) in; runs of node ids out, each in frame order: a run is a maximal sequence of
+    consecutive emitted frames whose keys are identical."""
     runs: list[list[str]] = []
     prev: tuple[int, tuple[str, ...]] | None = None
     for node_id, ordinal, matched in sorted(hits, key=lambda h: h[1]):
@@ -177,14 +187,21 @@ def collapse_runs(hits: list[tuple[str, int, tuple[str, ...]]]) -> list[list[str
     return runs
 
 
-_FRAME_COLUMNS = "n.node_id, n.text, json_extract(n.payload, '$.ordinal'), n.frame_start, n.t_start, n.t_end"
+_FRAME_COLUMNS = ("n.node_id, n.text, json_extract(n.payload, '$.ordinal'), n.frame_start, n.t_start, n.t_end, "
+                  "json_extract(n.payload, '$.boxes')")
+
+
+def _box_texts(boxes_json: str | None) -> list[str]:
+    """The OCR texts of a frame entry's boxes, from its payload; [] for an entry that is not a frame's."""
+    return [b["text"] for b in json.loads(boxes_json)] if boxes_json else []
 
 
 def search(db: sqlite3.Connection, query: str, cfg: IndexConfig, embedder: Embedder | None = None, video_id: str | None = None,
            level: str | None = None, t_from: float | None = None, t_to: float | None = None, app: str | None = None,
            collapse: bool | None = None) -> list[dict]:
-    """Ranked hits. Identical consecutive frame hits are collapsed into one hit with a frame range and a time range, in
-    this result list only: every entry stays in the index. It never raises for a query."""
+    """Ranked hits. Consecutive frame hits whose matched measured text is identical (`collapse_key`) are collapsed into
+    one hit with a frame range and a time range, in this result list only: every entry stays in the index and keeps its
+    whole text. It never raises for a query."""
     if level is not None and level not in _FAMILY_OF:  # no family holds it (the old `region`, say)
         return []
     filtered = any(v is not None for v in (video_id, level, t_from, t_to, app))
@@ -194,7 +211,7 @@ def search(db: sqlite3.Connection, query: str, cfg: IndexConfig, embedder: Embed
     terms = _terms(query)
     rankings: list[list[str]] = []
     frame_rankings: list[list[str]] = []
-    frame_info: dict[str, tuple] = {}  # node id -> (text, ordinal, frame, t_start, t_end)
+    frame_info: dict[str, tuple] = {}  # node id -> (text, ordinal, frame, t_start, t_end, the boxes of the payload as JSON)
     for family, levels in FAMILIES:
         if level is not None and level not in levels:
             continue
@@ -233,7 +250,8 @@ def search(db: sqlite3.Connection, query: str, cfg: IndexConfig, embedder: Embed
                     frame_info[node_id] = row[1:]
     members = {node_id: [node_id] for node_id in frame_info}
     if collapse:
-        runs = collapse_runs([(node_id, info[1], matched_lines(info[0], terms)) for node_id, info in frame_info.items()])
+        runs = collapse_runs([(node_id, info[1], collapse_key(info[0], _box_texts(info[5]), terms))
+                              for node_id, info in frame_info.items()])
         first = {node_id: run[0] for run in runs for node_id in run}  # the representative is the earliest member
         members = {run[0]: run for run in runs}
         for ranking in rankings:  # the run takes its best member's rank

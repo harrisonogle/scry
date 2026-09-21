@@ -3,7 +3,7 @@ from pathlib import Path
 from minirun import mini_interpretations, mini_run
 
 from scry.config import Config, IndexConfig
-from scry.index import Node, build_index, fts_query, index_nodes, open_db, rrf, search, trigram_query
+from scry.index import Node, build_index, collapse_key, fts_query, index_nodes, open_db, rrf, search, trigram_query
 
 
 def node(i, text, level="transition", t=(0.0, 1.0), apps=("Windows Terminal",)):
@@ -80,10 +80,25 @@ def test_search_collapses_identical_consecutive_frame_hits(tmp_path: Path):
     assert all(h.get("collapsed", 1) == 1 for h in plain)
 
 
-def test_differing_matching_text_is_not_collapsed(tmp_path: Path):
-    # frame 11 also matches the model's reading `C:\src> git st`
-    assert _frame_members(search(_mini_db(tmp_path / "labelled"), "git", IndexConfig())) == [[10], [11], [12, 13]]
+def test_differing_measured_text_is_not_collapsed_and_label_text_does_not_split(tmp_path: Path):
+    # frame 10 reads `C:\src> git`, the others `C:\src> git status`; frame 11's entry also holds the model's reading
+    # `C:\src> git st`, which is not measured text and no longer splits 11 from 12 and 13 (L54)
+    labelled = _mini_db(tmp_path / "labelled")
+    assert _frame_members(search(labelled, "git", IndexConfig())) == [[10], [11, 12, 13]]
     assert _frame_members(search(_mini_db(tmp_path / "plain", labels=False), "git", IndexConfig())) == [[10], [11, 12, 13]]
+    # frame 13's pair line `Status Succeeded` and its description sentence hold the term too: one hit all the same
+    assert _frame_members(search(labelled, "Status", IndexConfig())) == [[10], [11, 12, 13]]
+    assert [h["node_id"] for h in search(labelled, '"git st"', IndexConfig(), level="frame")] == ["v:f11"]  # still findable
+
+
+def test_a_hit_on_label_text_alone_collapses_on_its_matched_lines(tmp_path: Path):
+    db = _mini_db(tmp_path)
+    # no box reads `highlighted`: only the descriptions of frames 10 and 11 do, and they are the same sentence
+    assert _frame_members(search(db, "highlighted", IndexConfig())) == [[10, 11]]
+    # every entry holds the container line `Azure Portal Resource overview`; the two descriptions add a second line
+    assert _frame_members(search(db, "Overview", IndexConfig())) == [[10, 11], [12, 13]]
+    assert collapse_key("a\nThe Overview item", ["a"], ["overview"]) == ("lines", "The Overview item")
+    assert collapse_key("x", ["Resource  GROUP", "other"], ["resource group"]) == ("boxes", "resource group")
 
 
 def test_ocr_variant_prevents_a_collapse(tmp_path: Path):
