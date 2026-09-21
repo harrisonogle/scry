@@ -460,5 +460,13 @@ neither is picked, which does not pre-decide transcribing against group-only; th
 the hold-out video is dealt with when it arrives. No drafter or reviewer writes a prototype, at all: documents are
 written by reading and reasoning, and code exists only as the real implementation on the branch with its tests.
 
+**Simplify before repairing (owner, 2026-09-21).** Reviewers tend to answer a minor finding with more machinery. When a
+review finds a fault in a mechanism, the first question is whether the mechanism can be removed; logic is added only
+on evidence from real runs, and P0 is where that evidence comes from. Applied so far: change records pair each
+changed box with its single best-overlapping earlier box (touched or not) and nothing more, so there are no groups, no
+connected components and no pools until P0 shows that OCR re-splitting under changed pixels needs them; the
+`confusable` flag is dropped; the clock rule and the `trivial` transition kind are dropped (it never fired in any
+recorded run and would have let a transition go uninterpreted).
+
 Also answered on 2026-09-21: the screen `description` stays (§6); the "no annotation" base stays in P1. In that base
 there is no description, which is part of what it prices.
