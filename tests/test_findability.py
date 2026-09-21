@@ -3,10 +3,10 @@ may become unfindable. This file is the contract and is never weakened to make a
 import json
 from pathlib import Path
 
-from minirun import mini_run
+from minirun import mini_interpretations, mini_run
 
 from scry.config import Config, IndexConfig
-from scry.index import build_index, fts_query, index_nodes, open_db, search, trigram_query
+from scry.index import Node, build_index, fts_query, index_nodes, open_db, search, trigram_query
 from scry.jsonl import write_jsonl
 from scry.nodes import frame_nodes, lifetime_nodes
 from scry.run import Run
@@ -104,3 +104,33 @@ def test_index_without_annotations_holds_every_ocr_text(tmp_path: Path):
         for b in fb.boxes:
             hits = search(db, '"' + b.text + '"', IndexConfig(k=50))
             assert any(h["frames"][0] <= fb.frame <= h["frames"][1] for h in hits), (fb.frame, b.id)
+
+
+def test_many_lifetime_hits_do_not_displace_the_frame_hit(tmp_path: Path):
+    nodes = [Node(node_id=f"L{i:02d}", video_id="v", level="lifetime", item_id=f"L{i:02d}", frames=(0, 0), t=(i, i + 1), text="alpha")
+             for i in range(1, 31)]
+    nodes.append(Node(node_id="f0", video_id="v", level="frame", item_id="0", frames=(0, 0), t=(0.0, 1.0), text="alpha\nbeta",
+                      payload={"ordinal": 0}))
+    db = open_db(tmp_path / "i.sqlite")
+    index_nodes(db, nodes, None)
+    hits = search(db, "alpha", IndexConfig())
+    assert len(hits) == 20
+    assert hits[1]["node_id"] == "f0"  # tied with the first lifetime at 2/61; the family order breaks the tie
+
+
+def test_collapse_is_a_partition_of_the_frame_hits(tmp_path: Path):
+    run = mini_run(tmp_path, labels=True)
+    mini_interpretations(run)
+    build_index(run, Config())
+    db, cfg = open_db(run.index_db), IndexConfig()
+    times = {f.frame: (f.t_settled, f.t_end) for f in run.load_frames()}
+    for query in ("Status", "git", "branch", "Creating"):
+        before = [h["node_id"] for h in search(db, query, cfg, collapse=False, level="frame")]
+        hits = search(db, query, cfg, level="frame")
+        members = [m for h in hits for m in h["members"]]
+        assert len(before) == len(set(before)) and len(members) == len(set(members))
+        assert set(before) == {f"v:f{m}" for m in members}, query
+        for h in hits:
+            assert h["collapsed"] == len(h["members"])
+            assert h["frames"] == [h["members"][0], h["members"][-1]]
+            assert h["t"] == [times[h["members"][0]][0], times[h["members"][-1]][1]]

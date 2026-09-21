@@ -83,6 +83,30 @@ def index(run_dir: Path, config: Path | None = None, verbose: bool = False):
 
 
 @app.command()
+def search(run_dir: Path, query: str, level: str | None = typer.Option(None, "--level"),
+           t_from: float | None = typer.Option(None, "--t-from", help="seconds"), t_to: float | None = typer.Option(None, "--t-to", help="seconds"),
+           app_name: str | None = typer.Option(None, "--app", help="the window's application"),
+           no_collapse: bool = typer.Option(False, "--no-collapse", help="list identical consecutive frame hits one by one"),
+           config: Path | None = None):
+    """Search a run's index: lexical and substring, vector if configured."""
+    from scry.index import get_embedder, open_db, search as _search
+    cfg = load_config(config)
+    index_db = Run(run_dir).index_db
+    if not index_db.exists():
+        typer.echo(f"{index_db} does not exist: run `scry index {run_dir}` first")
+        raise typer.Exit(code=1)
+    hits = _search(open_db(index_db), query, cfg.index, get_embedder(cfg.index), level=level, t_from=t_from, t_to=t_to, app=app_name,
+                   collapse=False if no_collapse else None)
+    for h in hits:
+        first = h["matched"][0] if h["level"] == "frame" else h["text"].split("\n")[0]
+        times = f" x{h['collapsed']}" if h.get("collapsed", 1) > 1 else ""
+        typer.echo(f"{h['score']:.4f} {h['level']:<10} {h['item_id']:<8} f{h['frames'][0]}-{h['frames'][1]} "
+                   f"t={h['t'][0]:.1f}-{h['t'][1]:.1f}{times}  {first[:100]}")
+    if not hits:
+        typer.echo("no hits")
+
+
+@app.command()
 def report(run_dir: Path, frames: str | None = typer.Option(None, "--frames", help="inclusive frame range, e.g. 155-187"),
            ground_truth: Path | None = typer.Option(None, "--ground-truth", help="a command list in the format of docs/ground-truth/span2-commands.md"),
            out: str = typer.Option("report.md", "--out", help="file name inside the run directory"),

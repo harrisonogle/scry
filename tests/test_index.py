@@ -54,3 +54,54 @@ def test_build_index_stats_and_rerun(tmp_path: Path):
     run.interpretations.unlink()
     build_index(run, Config())  # an input changed
     assert run.index_db.stat().st_mtime_ns != built.st_mtime_ns
+
+
+def _mini_db(tmp_path: Path, labels: bool = True):
+    run = mini_run(tmp_path, labels=labels)
+    mini_interpretations(run)
+    build_index(run, Config())
+    return open_db(run.index_db)
+
+
+def _frame_members(hits: list[dict]) -> list[list[int]]:
+    return sorted(h["members"] for h in hits if h["level"] == "frame")
+
+
+def test_search_collapses_identical_consecutive_frame_hits(tmp_path: Path):
+    db = _mini_db(tmp_path)
+    hits = search(db, "Creating", IndexConfig())
+    assert [h["node_id"] for h in hits] == ["v:L2", "v:T3", "v:f10"]
+    assert [h["score"] for h in hits] == [0.03279] * 3  # rank 1 in its FTS5 and its trigram ranking: 2/61
+    frame = hits[2]
+    assert (frame["frames"], frame["t"], frame["collapsed"], frame["members"]) == ([10, 12], [20.4, 30.0], 3, [10, 11, 12])
+    assert frame["matched"] == ["Creating", "Status Creating"]
+    plain = search(db, "Creating", IndexConfig(), collapse=False)
+    assert {h["node_id"] for h in plain} == {"v:L2", "v:T3", "v:f10", "v:f11", "v:f12"}
+    assert all(h.get("collapsed", 1) == 1 for h in plain)
+
+
+def test_differing_matching_text_is_not_collapsed(tmp_path: Path):
+    # frame 11 also matches the model's reading `C:\src> git st`
+    assert _frame_members(search(_mini_db(tmp_path / "labelled"), "git", IndexConfig())) == [[10], [11], [12, 13]]
+    assert _frame_members(search(_mini_db(tmp_path / "plain", labels=False), "git", IndexConfig())) == [[10], [11, 12, 13]]
+
+
+def test_ocr_variant_prevents_a_collapse(tmp_path: Path):
+    assert _frame_members(search(_mini_db(tmp_path), "branch", IndexConfig())) == [[12], [13]]  # frame 13 reads `On branch maln`
+
+
+def test_level_and_time_filters(tmp_path: Path):
+    db, cfg = _mini_db(tmp_path), IndexConfig()
+    assert [h["node_id"] for h in search(db, "Creating", cfg, level="frame")] == ["v:f10"]
+    assert search(db, "Creating", cfg, level="region") == []
+    later = [h for h in search(db, "Creating", cfg, t_from=25.0) if h["level"] == "frame"]
+    assert [(h["members"], h["frames"]) for h in later] == [([11, 12], [11, 12])]  # frame 10 ends at 24.0
+    terminal = search(db, "Status", cfg, app="Terminal")
+    assert terminal and all("Windows Terminal" in h["apps"] for h in terminal)
+
+
+def test_search_survives_fts_syntax(tmp_path: Path):
+    db, cfg = _mini_db(tmp_path), IndexConfig()
+    for q in ("--name", "C:\\src>", '"git status', "*", "a", "git AND NOT status", "("):
+        search(db, q, cfg)
+    assert search(db, "C:\\src>", cfg)
