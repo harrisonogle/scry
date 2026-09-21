@@ -23,6 +23,13 @@ def test_incremental_plan():
         CallPlan(0, ("b1", "b2")), CallPlan(2, ("b2", "b3")), CallPlan(3, ("b1",))]
 
 
+def test_a_moved_box_is_a_target_again():
+    frames, changes, lifetimes = fixture_p()
+    changes[1].moved = [("1:b3", "2:b4")]  # "F" continues into frame 2 by a move: the model is asked where it now sits
+    assert plan_calls(frames, changes, lifetimes, "incremental") == [
+        CallPlan(0, ("b1", "b2")), CallPlan(2, ("b2", "b3", "b4")), CallPlan(3, ("b1",))]
+
+
 def test_missing_pixels_means_a_call():
     frames, changes, lifetimes = fixture_p()
     changes[0] = change("T1", 0, 1, None)
