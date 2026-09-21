@@ -1,0 +1,78 @@
+# P9 (ledger L66): THE ANSWERING AGENT ALONE ON SONNET 5. P8 put every stage on Sonnet 5: the answers tied with Opus 5's
+# at a quarter of the price per question, but the index Sonnet builds breaks the honest text-change contract (suggested
+# text recorded as typed, `submitted: yes` without evidence), and its agent repeated that index, so P8 cannot say whether
+# the agent or the index it read is at fault. P9 asks the same whole-video questions over P4's four Opus-built indexes
+# with `[ask] model = "claude-sonnet-5"` and nothing else changed: frames stay on (the default), the prompt is "ask-v1",
+# and max_tokens and the effort are [model]'s as before. Every answer records the model that answered and is priced
+# with it. The judge stays on the base config's [model] (claude-opus-5), as in every phase.
+# The other sides of the comparison: P4's own answers (the Opus agent; same indexes, same question file) in
+# docs/results/p4/scores.json, and P8's (the Sonnet agent over Sonnet-built indexes) in docs/results/p8/scores.json.
+# Scores will not settle it (P8 scored 27 of 27 while saying "retyped"): every answer that touches typing, submission
+# or a visual fact is read against the Opus answer to the same question.
+#
+# NOTHING IS BUILT. The [copy] table copies the pipeline of each finished P4 sync run into runs/eval/p9/<run>, byte for
+# byte: every record, the index, the manifest, the frames, the call cache; never its answers, verdicts, scorecard,
+# evalrun.json or config.json. The only stage is `ask` (a matrix with [copy] is refused any other), so no stage can
+# rebuild a copied pipeline. A copy is refused unless the P4 run is finished, covers frames 0 to 220 and was built with
+# this file's config in every section but [ask]. Nothing is written under runs/eval/p4. The batch run (P4b) is left out.
+#
+# How to read the report. P9's own: the question set's dollars and seconds (27 questions a run; on Opus P4 paid $0.21
+# to $0.27 a question, $5.68 to $7.34 a run; on Sonnet P8 paid $0.052 to $0.067, $1.41 to $1.80 a run) and the judge's
+# (P4 and P8: $0.15 to $0.25 a run). Copied, NOT spent again: the pipeline dollars, $ / frame and $ / video, which come
+# from the copied manifests and are what P4 paid for these indexes (so "Spend over all 4 runs: pipeline ..." restates
+# P4's spend); pipeline seconds are 0; the command metrics are P4's, recomputed from the copied records. The report says
+# the pipelines were copied and not built: every run shows `cold: no`, the warning "run is not cold" and the note
+# "pipeline copied from runs/eval/p4..., not built by this run" (evalrun.json: `copied_from`). The model that answered
+# is in each line of answers.jsonl (`model`), not in the report.
+#
+# Expected cost: about $8 (the questions about $1.50 to $2 a run at P8's price per question, the judge about $0.25 a run).
+#
+# Procedure, from the repository root. Only the steps marked PAID call a model.
+#   1. uv run scry eval run evals/p9.toml --dry-run    # 4 runs, each "ask (pipeline copied from runs/eval/p4...)"
+#   2. PAID, about $2 a run. Either all four, one after the other:
+#        uv run scry eval run evals/p9.toml
+#      or side by side, one process each:
+#        uv run scry eval run evals/p9.toml --only full-inc-transcribing-asksonnet-r1
+#        uv run scry eval run evals/p9.toml --only full-inc-transcribing-asksonnet-r2
+#        uv run scry eval run evals/p9.toml --only full-none-asksonnet-r1
+#        uv run scry eval run evals/p9.toml --only full-none-asksonnet-r2
+#      Safe to re-issue: a finished run is skipped, a failed one asks only the questions that failed.
+#   3. The copies are intact when each of these prints exactly: answers.jsonl, config.json and evalrun.json differ;
+#      judgments.jsonl and scorecard.json are only in the P4 run (after steps 4 and 5 those two differ instead). One
+#      more line is allowed, `Only in runs/eval/p9/<run>: redecode`: frames the agent decoded for an answer of its
+#      own (frames are on; no P4 or P8 answer used `redecode`), which belong to the answers and not to the pipeline:
+#        diff -rq runs/eval/p4/full-inc-transcribing-r1 runs/eval/p9/full-inc-transcribing-asksonnet-r1
+#        diff -rq runs/eval/p4/full-inc-transcribing-r2 runs/eval/p9/full-inc-transcribing-asksonnet-r2
+#        diff -rq runs/eval/p4/full-none-r1 runs/eval/p9/full-none-asksonnet-r1
+#        diff -rq runs/eval/p4/full-none-r2 runs/eval/p9/full-none-asksonnet-r2
+#   4. PAID, about $0.25 a run:  uv run scry eval judge evals/p9.toml
+#   5. uv run scry eval report evals/p9.toml           # docs/results/p9/report.md and scores.json
+phase = "p9"
+source = "runs/p0"
+stages = ["ask"]
+repeats = 2
+
+[spans.full]
+frames = "0-220"
+ground_truth = "docs/ground-truth/span2-commands.md"
+questions = "docs/ground-truth/full-questions.md"
+
+# the two bases as P4 built them: what each copied pipeline must have been built with
+[axis.base.inc-transcribing]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 1.0
+
+[axis.base.none]
+"annotate.mode" = "off"
+
+# the one change: the answering agent's model. [model] stays claude-opus-5, which the copied pipelines were built with
+[axis.ask.asksonnet]
+"ask.model" = "claude-sonnet-5"
+
+# run → the finished P4 run whose pipeline it copies. The matrix has exactly these four runs.
+[copy]
+full-inc-transcribing-asksonnet-r1 = "runs/eval/p4/full-inc-transcribing-r1"
+full-inc-transcribing-asksonnet-r2 = "runs/eval/p4/full-inc-transcribing-r2"
+full-none-asksonnet-r1 = "runs/eval/p4/full-none-r1"
+full-none-asksonnet-r2 = "runs/eval/p4/full-none-r2"

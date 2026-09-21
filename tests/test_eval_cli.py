@@ -49,6 +49,26 @@ def test_p6_matrix_asks_again_over_the_five_p4_pipelines(monkeypatch):
         assert cfg.model_dump(exclude={"ask"}) == origin.model_dump(exclude={"ask"})  # the pipeline's config, to the key
 
 
+def test_p9_matrix_asks_again_on_sonnet_over_the_four_p4_pipelines(monkeypatch):
+    """Reads the committed matrix on purpose: P9 builds nothing and changes one key, the model of the answering agent."""
+    monkeypatch.chdir(REPO)
+    m = load_matrix(Path("evals/p9.toml"))
+    specs = expand(m)
+    assert {s.name: str(s.copy_from) for s in specs} == {
+        "full-inc-transcribing-asksonnet-r1": "runs/eval/p4/full-inc-transcribing-r1",
+        "full-inc-transcribing-asksonnet-r2": "runs/eval/p4/full-inc-transcribing-r2",
+        "full-none-asksonnet-r1": "runs/eval/p4/full-none-r1", "full-none-asksonnet-r2": "runs/eval/p4/full-none-r2"}
+    assert all(s.stages == ("ask",) and s.span.frames == (0, 220) for s in specs)
+    p4m = load_matrix(Path("evals/p4.toml"))
+    by_origin = {p4.name: (p4, config_for(p4m, p4)) for p4 in expand(p4m)}
+    for s in specs:
+        cfg, (p4, origin) = config_for(m, s), by_origin[s.copy_from.name]
+        assert (s.span.questions, s.span.ground_truth) == (p4.span.questions, p4.span.ground_truth)  # the same questions and commands
+        assert (cfg.ask.model, origin.ask.model, cfg.model.model) == ("claude-sonnet-5", "", "claude-opus-5")
+        assert cfg.ask.model_dump(exclude={"model"}) == origin.ask.model_dump(exclude={"model"}) and cfg.ask.frames is True
+        assert cfg.model_dump(exclude={"ask"}) == origin.model_dump(exclude={"ask"})  # the pipeline's config, to the key
+
+
 def _stage(name: str, fail_first: bool = False):
     """A fake stage: it only adds a manifest entry with usage."""
     calls = itertools.count(1)
