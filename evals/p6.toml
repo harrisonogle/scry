@@ -18,8 +18,8 @@
 # less) and the judge's (P4: $0.15 to $0.27 a run). Copied, NOT spent again: the pipeline dollars, $ / frame and
 # $ / video, which come from the copied manifests and are what P4 paid for these indexes (so "Spend over all 5 runs:
 # pipeline ..." restates P4's spend); pipeline seconds are 0; the command metrics are P4's, recomputed from the copied
-# records. Every run shows `cold: no` and the warning "run is not cold": that is how the report says the pipelines
-# were copied and not built; each evalrun.json names its source in `copied_from`.
+# records. The report says the pipelines were copied and not built: every run shows `cold: no`, the warning "run is
+# not cold" and the note "pipeline copied from runs/eval/p4..., not built by this run" (evalrun.json: `copied_from`).
 #
 # Procedure, from the repository root. Only the steps marked PAID call a model.
 #   1. uv run scry eval run evals/p6.toml --dry-run    # 5 runs, each "ask (pipeline copied from runs/eval/p4...)"

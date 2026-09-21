@@ -170,3 +170,5 @@ def test_asking_again_over_copied_pipelines_end_to_end(tmp_path: Path, monkeypat
     assert card["questions"]["ask_dollars"] == 0.04 and card["questions"]["positive"]["correct"] == 1  # the questions' are this phase's
     report = (results / "p10" / "report.md").read_text()
     assert "# p10 evaluation report" in report and "smoke-indexonly" in report and "run is not cold" in report
+    copied = f"pipeline copied from {root / 'p9' / 'smoke-r1'}, not built by this run"  # said outright, in the card and in the report
+    assert copied in card["notes"] and f"- smoke-indexonly-r1: {copied}" in report
