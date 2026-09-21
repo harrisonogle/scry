@@ -4,12 +4,17 @@ from pathlib import Path
 
 import pydantic
 import pytest
-from minirun import mini_run
+from fakes import USAGE, AnswerProvider
+from minirun import call_text, mini_run, write_annotations
 from PIL import Image
 
-from scry.config import InterpretConfig
-from scry.interpret import build_blocks, prompt_version, validate_citations
+from scry.config import Config, InterpretConfig
+from scry.interpret import build_blocks, prompt_version, run_interpret, validate_citations
+from scry.prompts.interpret import SYSTEM
 from scry.schemas import ModelInterpretation, OutlineChapter
+
+M = ModelInterpretation(action="a", result="r", description="d", confidence=0.7, entered_text="git st", submitted="no",
+                        citations=["11:b3", "11:b9", "11:b3"])
 
 
 def _images(blocks: list[dict]) -> list[tuple[int, int]]:
@@ -72,3 +77,75 @@ def test_context_and_labels_reach_the_blocks(tmp_path: Path):
     assert _blocks(run, "T3", InterpretConfig(), chapter)[0][0]["text"].startswith("Chapter: Setup — Check the repo")
     labelled, _, _ = _blocks(mini_run(tmp_path / "labelled", labels=True), "T3", InterpretConfig())
     assert 'value of "Status"' in _texts(labelled)
+
+
+def _stats(run) -> dict:
+    return run.manifest_read()["stages"]["interpret"]
+
+
+def test_run_interpret_writes_records_and_stats(tmp_path: Path):
+    run, provider = mini_run(tmp_path), AnswerProvider(lambda kw: M)
+    run_interpret(run, Config(), provider)
+    records = run.load_interpretations()
+    assert list(records) == ["T1", "T2", "T3"]
+    assert (records["T1"].citations, records["T1"].invalid_citations) == (["11:b3"], 1)
+    assert (records["T2"].citations, records["T2"].invalid_citations) == ([], 3)
+    assert records["T3"].invalid_citations == 3
+    for r in records.values():
+        assert (r.entered_text, r.submitted, r.usage, r.prompt_version) == ("git st", "no", USAGE, "interpret-v1+scaled0.5")
+        assert (r.action, r.result, r.description, r.confidence, r.model, r.error) == ("a", "r", "d", 0.7, "fake-model", None)
+    stats = _stats(run)
+    expected = {"transitions": 3, "interpreted": 3, "errors": 0, "invalid_citations": 7, "entered": 3,
+                "submitted": {"yes": 0, "no": 3, "unclear": 0}, "images": "scaled", "labels": False,
+                "usage": {"input_tokens": 300, "output_tokens": 60, "cache_read_input_tokens": 3000, "cache_creation_input_tokens": 1200},
+                "cost_usd": 0.012, "model": "fake-model"}
+    assert {k: stats[k] for k in expected} == expected
+    assert "cost_usd_batch" not in stats
+    assert len(provider.calls) == 3
+    for kw in provider.calls:
+        assert (kw["stage"], kw["effort"], kw["system"]) == ("interpret", "low", SYSTEM)
+    t3 = next(kw for kw in provider.calls if "Transition T3:" in call_text(kw))
+    assert t3["blocks"][0]["text"].split("\n")[1:] == ['T1 [f10→f11, 24.0–24.4s] appended "C:\\src> git status"',
+                                                        "T2 [f11→f12, 26.0–26.4s] appeared 2"]
+    t1 = next(kw for kw in provider.calls if "Transition T1:" in call_text(kw))
+    assert call_text(t1).startswith("No preceding context.")
+    run_interpret(run, Config(), provider)
+    assert len(provider.calls) == 3
+    run_interpret(run, Config(interpret=InterpretConfig(images="full")), provider)
+    assert len(provider.calls) == 6
+    assert {kw["prompt_version"] for kw in provider.calls[3:]} == {"interpret-v1+full"}
+
+
+def test_missing_png_makes_no_call(tmp_path: Path):
+    run, provider = mini_run(tmp_path), AnswerProvider(lambda kw: M)
+    (run.frames_dir / "00013.png").unlink()
+    run_interpret(run, Config(), provider)
+    assert len(provider.calls) == 2
+    assert run.load_interpretations()["T3"].error == "missing_png"
+    assert (_stats(run)["interpreted"], _stats(run)["errors"]) == (2, 1)
+
+
+def test_refusal_and_blank_entered_text(tmp_path: Path):
+    def answer(kw: dict):
+        text = call_text(kw)
+        if "Transition T2:" in text:
+            return "refusal"
+        return M.model_copy(update={"entered_text": "  "}) if "Transition T3:" in text else M
+
+    run = mini_run(tmp_path)
+    run_interpret(run, Config(), AnswerProvider(answer))
+    records = run.load_interpretations()
+    assert (records["T2"].error, records["T2"].action, records["T2"].usage) == ("refusal", None, USAGE)
+    assert records["T3"].entered_text is None
+    stats = _stats(run)
+    assert (stats["errors"], stats["interpreted"], stats["entered"]) == (1, 2, 1)
+
+
+def test_labels_flag_and_rerun(tmp_path: Path):
+    run, provider = mini_run(tmp_path), AnswerProvider(lambda kw: M)
+    run_interpret(run, Config(), provider)
+    assert _stats(run)["labels"] is False
+    write_annotations(run)
+    run_interpret(run, Config(), provider)  # the inputs hash changed
+    assert len(provider.calls) == 6
+    assert _stats(run)["labels"] is True

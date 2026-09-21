@@ -57,6 +57,15 @@ def annotate(run_dir: Path, config: Path | None = None, verbose: bool = False):
 
 
 @app.command()
+def interpret(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """interpret: one model call per transition saying what the user did, with entered_text and submitted →
+    interpretations.jsonl. Costs money unless every call is already in the run's cache."""
+    _setup_logging(verbose)
+    from scry.interpret import run_interpret
+    run_interpret(Run(run_dir), load_config(config))
+
+
+@app.command()
 def report(run_dir: Path, frames: str | None = typer.Option(None, "--frames", help="inclusive frame range, e.g. 155-187"),
            ground_truth: Path | None = typer.Option(None, "--ground-truth", help="a command list in the format of docs/ground-truth/span2-commands.md"),
            out: str = typer.Option("report.md", "--out", help="file name inside the run directory"),
