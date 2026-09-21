@@ -36,7 +36,8 @@ gap_ratio = 0.25
 margin = 0.5
 
 [annotate]
-mode = "every_frame"
+# working default, for the owner to confirm: incremental transcribing (docs/decision-ledger.md, L59)
+mode = "incremental"
 transcribe = true
 scale = 1.0
 

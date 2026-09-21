@@ -74,7 +74,8 @@ class AnnotateConfig(BaseModel):
     # "batch" works with each.
     # Incremental annotation is built for the id-based arms only: when the `arm` key arrives, a validator here refuses
     # mode = "incremental" with arm B or C ("incremental annotation needs arm A or D").
-    mode: Literal["every_frame", "incremental", "off"] = "every_frame"
+    # The default is the working default of ledger L59 (incremental, transcribing), for the owner to confirm.
+    mode: Literal["every_frame", "incremental", "off"] = "incremental"
     transcribe: bool = True  # true: the call also returns a second reading (texts, missed); false: group-only
     scale: float = Field(1.0, gt=0, le=1)  # factor applied to every image sent; tags keep their pixel size
 

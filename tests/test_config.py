@@ -25,7 +25,7 @@ def test_sections_and_unknown_keys(tmp_path: Path):
 def test_repo_toml_loads():
     cfg = load_config(REPO / "scry.toml")
     assert cfg.read.engine == "rapid"
-    assert cfg.annotate.mode == "every_frame"
+    assert (cfg.annotate.mode, cfg.annotate.transcribe) == ("incremental", True)  # the working default (ledger L59)
     assert cfg.model.effort_annotate == "low"
     assert cfg.interpret.images == "scaled"
     assert cfg.ask.max_turns == 12
@@ -45,7 +45,7 @@ def test_stage_sections_defaults():
 
 def test_annotate_defaults():
     cfg = Config()
-    assert cfg.annotate.mode == "every_frame"
+    assert cfg.annotate.mode == "incremental"  # the working default: incremental transcribing (ledger L59)
     assert cfg.annotate.transcribe is True
     assert cfg.annotate.scale == 1.0
     assert cfg.model.effort_annotate == "low"

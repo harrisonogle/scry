@@ -45,7 +45,8 @@ def _run(tmp_path: Path):
 
 
 def _cfg(**annotate) -> Config:
-    return Config.model_validate({"annotate": annotate})
+    """Every-frame unless a test says otherwise: the config's own default is incremental (ledger L59)."""
+    return Config.model_validate({"annotate": {"mode": "every_frame"} | annotate})
 
 
 def _entry(run) -> dict:
@@ -58,7 +59,7 @@ def _image_sizes(kw: dict) -> list[tuple[int, int]]:
 
 def test_every_frame_arm_a_end_to_end(tmp_path: Path):
     run, provider = _run(tmp_path), AnswerProvider(standard)
-    run_annotate(run, Config(), provider)
+    run_annotate(run, _cfg(), provider)
     records = run.load_annotations()
     assert [r.frame for r in records] == [0, 1]
     r0 = records[0]
@@ -95,7 +96,7 @@ def test_group_only(tmp_path: Path):
 
 def test_repairs_are_counted_not_fatal(tmp_path: Path):
     run = _run(tmp_path)
-    run_annotate(run, Config(), AnswerProvider(lambda kw: standard(kw, second="b9")))
+    run_annotate(run, _cfg(), AnswerProvider(lambda kw: standard(kw, second="b9")))
     for record in run.load_annotations():
         assert record.unassigned == ["b2"] and record.repairs == 2
         assert record.repair_counts == {"unknown_box": 1, "unplaced": 1}
@@ -105,29 +106,29 @@ def test_repairs_are_counted_not_fatal(tmp_path: Path):
 
 def test_error_record_and_the_run_continues(tmp_path: Path):
     run = _run(tmp_path)
-    run_annotate(run, Config(), AnswerProvider(lambda kw: "refusal" if call_frame(kw) == 1 else standard(kw)))
+    run_annotate(run, _cfg(), AnswerProvider(lambda kw: "refusal" if call_frame(kw) == 1 else standard(kw)))
     whole, failed = run.load_annotations()
     assert (failed.error, failed.targets, failed.description, failed.texts, failed.links) == ("refusal", ["b1", "b2"], None, None, [])
     assert whole.error is None and whole.description == "d0"
     m = _entry(run)
     assert (m["errors"], m["transient_errors"], m["failed_targets"]) == (1, 0, 2)
     again = AnswerProvider(standard)
-    run_annotate(run, Config(), again)
+    run_annotate(run, _cfg(), again)
     assert again.calls == []  # a refusal is final
 
 
 def test_transient_error_is_retried_on_the_next_run(tmp_path: Path):
     run, error = _run(tmp_path), "api: APIConnectionError: down"
-    run_annotate(run, Config(), AnswerProvider(lambda kw: error if call_frame(kw) == 1 else standard(kw)))
+    run_annotate(run, _cfg(), AnswerProvider(lambda kw: error if call_frame(kw) == 1 else standard(kw)))
     assert run.load_annotations()[1].error == error
     assert (_entry(run)["errors"], _entry(run)["transient_errors"]) == (1, 1)
     second = AnswerProvider(standard)
-    run_annotate(run, Config(), second)
+    run_annotate(run, _cfg(), second)
     assert len(second.calls) == 2  # this fake has no call cache; the real provider would pay for frame 1 only
     assert run.load_annotations()[1].error is None and run.load_annotations()[1].description == "d1"
     assert (_entry(run)["errors"], _entry(run)["transient_errors"]) == (0, 0)
     third = AnswerProvider(standard)
-    run_annotate(run, Config(), third)
+    run_annotate(run, _cfg(), third)
     assert third.calls == []
 
 
@@ -135,7 +136,7 @@ def test_frame_without_boxes_still_gets_a_call(tmp_path: Path):
     frames, boxes = fixture_e()
     run = write_run(tmp_path, frames, [boxes[0], fb(1, [])])
     provider = AnswerProvider(lambda kw: standard(kw, empty=call_frame(kw) == 1))
-    run_annotate(run, Config(), provider)
+    run_annotate(run, _cfg(), provider)
     assert "Boxes: none." in [b["text"] for b in provider.calls[1]["blocks"] if b["type"] == "text"]
     record = run.load_annotations()[1]
     assert record.targets == [] and record.description == "d1"
@@ -144,7 +145,7 @@ def test_frame_without_boxes_still_gets_a_call(tmp_path: Path):
 def test_missing_png_is_an_error_record_without_a_call(tmp_path: Path):
     run, provider = _run(tmp_path), AnswerProvider(standard)
     (run.root / "frames" / "00001.png").unlink()
-    run_annotate(run, Config(), provider)
+    run_annotate(run, _cfg(), provider)
     assert len(provider.calls) == 1
     assert run.load_annotations()[1].error == "missing_png"
 
@@ -158,9 +159,9 @@ def test_scale_reaches_the_version_and_both_images(tmp_path: Path):
 
 def test_skips_when_up_to_date_and_reruns_on_config_change(tmp_path: Path):
     run = _run(tmp_path)
-    run_annotate(run, Config(), AnswerProvider(standard))
+    run_annotate(run, _cfg(), AnswerProvider(standard))
     again = AnswerProvider(standard)
-    run_annotate(run, Config(), again)
+    run_annotate(run, _cfg(), again)
     assert again.calls == []
     run_annotate(run, _cfg(transcribe=False), again)
     assert len(again.calls) == 2
@@ -168,7 +169,7 @@ def test_skips_when_up_to_date_and_reruns_on_config_change(tmp_path: Path):
 
 def test_mode_off_removes_the_file_and_calls_nothing(tmp_path: Path):
     run = _run(tmp_path)
-    run_annotate(run, Config(), AnswerProvider(standard))
+    run_annotate(run, _cfg(), AnswerProvider(standard))
     off = AnswerProvider(standard)
     run_annotate(run, _cfg(mode="off"), off)
     assert not run.annotations.exists() and off.calls == []
@@ -178,7 +179,7 @@ def test_mode_off_removes_the_file_and_calls_nothing(tmp_path: Path):
 def test_writes_only_its_own_files(tmp_path: Path):
     run = _run(tmp_path)
     before = (run.frames.read_bytes(), run.boxes.read_bytes())
-    run_annotate(run, Config(), AnswerProvider(standard))
+    run_annotate(run, _cfg(), AnswerProvider(standard))
     assert (run.frames.read_bytes(), run.boxes.read_bytes()) == before
 
 
@@ -215,7 +216,7 @@ def test_incremental_run(tmp_path: Path):
     assert labels.relinked == 1
     # cache-key behaviour: the call for a first frame is the every-frame call, so a paid every-frame answer is reused
     every = AnswerProvider(answer)
-    run_annotate(write_run(tmp_path / "every_frame", *fixture_t()), Config(), every)
+    run_annotate(write_run(tmp_path / "every_frame", *fixture_t()), _cfg(), every)
     first = next(kw for kw in every.calls if call_frame(kw) == 10)
     assert _texts(first) == _texts(calls[10])
     assert (first["prompt_version"], first["input_hashes"]) == (calls[10]["prompt_version"], calls[10]["input_hashes"])
