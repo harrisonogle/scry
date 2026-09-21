@@ -142,7 +142,7 @@ def test_a_copied_pipeline_is_byte_identical_and_only_the_questions_are_asked(tm
     def fake_ask(run, cfg, question, client=None):
         seen.append(cfg.ask.frames)
         return SimpleNamespace(text="It ran.", turns=1, tool_calls=[], tool_log=[], usage={"input_tokens": 1}, cost_usd=0.01,
-                               stop="end_turn", prompt="ask-v1+noframes")
+                               model="claude-opus-5", stop="end_turn", prompt="ask-v1+noframes")
 
     monkeypatch.setattr("scry.ask.ask", fake_ask)
     outcome = execute(m, spec, root, IDENTITY, clock=_clock())
@@ -173,7 +173,7 @@ def test_a_copied_pipeline_is_byte_identical_and_only_the_questions_are_asked(tm
             materialise(m, replace(spec, name="smoke-indexonly-r2", copy_from=other), root, IDENTITY)
     assert not (root / "p10" / "smoke-indexonly-r2").exists()
     # [ask] is what such a phase changes, and a config written before a key existed holds that key's default
-    older = altered("older", "config.json", lambda d: (d["ask"].update(max_turns=3), d["ask"].pop("frames")))
+    older = altered("older", "config.json", lambda d: (d["ask"].update(max_turns=3), d["ask"].pop("frames"), d["ask"].pop("model")))
     assert check_copy(m, replace(spec, copy_from=older))["status"] == "done"
     with pytest.raises(ValueError, match="different spec"):  # the table changed under a run that exists
         materialise(m, replace(spec, copy_from=older), root, IDENTITY)

@@ -133,6 +133,7 @@ class AskConfig(BaseModel):
     max_tool_result_chars: int = 60000  # characters; a JSON tool result longer than this is cut
     redecode_max_frames: int = 6  # frames one redecode call may return
     frames: bool = True  # false: no pixel reaches the agent: get_frame returns a frame's record without its image, no redecode
+    model: str = ""  # the model the answering agent runs on; empty: the pipeline's, [model] model
 
 
 class OutlineConfig(BaseModel):

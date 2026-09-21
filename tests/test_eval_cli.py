@@ -90,7 +90,8 @@ def test_asking_again_over_copied_pipelines_end_to_end(tmp_path: Path, monkeypat
     def fake_ask(run, cfg, question, client=None):
         asked.append(cfg.ask.frames)
         return SimpleNamespace(text="It ran at frame 2.", turns=2, tool_calls=["search"], tool_log=[], usage={"input_tokens": 1_000},
-                               cost_usd=0.05 if cfg.ask.frames else 0.02, stop="end_turn", prompt="ask-v1" if cfg.ask.frames else "ask-v1+noframes")
+                               cost_usd=0.05 if cfg.ask.frames else 0.02, model="claude-opus-5", stop="end_turn",
+                               prompt="ask-v1" if cfg.ask.frames else "ask-v1+noframes")
 
     monkeypatch.setattr("scry.evaluation.runner.resolve", lambda stage: stages[stage])
     monkeypatch.setattr("scry.ask.ask", fake_ask)
@@ -136,7 +137,7 @@ def test_run_and_report_end_to_end_with_fake_stages(tmp_path: Path, monkeypatch)
     monkeypatch.setattr("scry.evaluation.runner.resolve", lambda stage: stages[stage])
     monkeypatch.setattr("scry.ask.ask", lambda run, cfg, question, client=None: SimpleNamespace(
         text="It ran at frame 2.", turns=2, tool_calls=["search"], tool_log=[], usage={"input_tokens": 1_000}, cost_usd=0.05, stop="end_turn",
-        prompt="ask-v1"))
+        model="claude-opus-5", prompt="ask-v1"))
     monkeypatch.setattr("scry.evaluation.judge.judge_provider", lambda cfg, cache_dir: _Judge())
     cli = CliRunner()
 

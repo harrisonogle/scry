@@ -5,12 +5,15 @@ from types import SimpleNamespace
 
 import pytest
 from eval_fixtures import QUESTIONS
+from fakes import fake_sync_client, response, text
+from minirun import mini_interpretations, mini_run
 
 from scry.ask import ToolCall
-from scry.config import Config
+from scry.config import AskConfig, Config
 from scry.evaluation import adapters
 from scry.evaluation.adapters import AskOutcome
 from scry.evaluation.questions import load_answers, parse_questions, run_questions
+from scry.index import build_index
 from scry.run import Run
 
 
@@ -103,11 +106,38 @@ def test_answer_fn_maps_ask_result(tmp_path: Path, monkeypatch):
     def fake_ask(run, cfg, question, client=None):
         seen.append(question)
         return SimpleNamespace(text="x", turns=2, tool_calls=["search"], tool_log=[ToolCall(name="search", input={"query": "push"}, results=0)],
-                               usage={"input_tokens": 1}, cost_usd=0.0225, stop="end_turn", prompt="ask-v1+noframes")
+                               usage={"input_tokens": 1}, cost_usd=0.0225, model="claude-sonnet-5", stop="end_turn", prompt="ask-v1+noframes")
 
     monkeypatch.setattr("scry.ask.ask", fake_ask)
     cfg = Config()
     out = adapters.answer_fn(Run(tmp_path), cfg, "Did they push?")
     assert seen == ["Did they push?"]
-    assert out == AskOutcome(text="x", usage={"input_tokens": 1}, dollars=0.0225, model=cfg.model.model, turns=2, tools=["search"],
+    # the model is the one `ask` says it called, which under `[ask] model` is not the pipeline's
+    assert out == AskOutcome(text="x", usage={"input_tokens": 1}, dollars=0.0225, model="claude-sonnet-5", turns=2, tools=["search"],
                              stop="end_turn", calls=[{"name": "search", "input": {"query": "push"}, "results": 0}], prompt="ask-v1+noframes")
+    assert cfg.model.model == "claude-opus-5"
+
+
+def test_an_answer_says_which_model_answered_and_is_priced_with_it(tmp_path: Path, monkeypatch):
+    """`[ask] model` through the harness: the real `ask` over a fake client; the pipeline's model stays claude-opus-5."""
+    run = mini_run(tmp_path / "run")
+    mini_interpretations(run)
+    build_index(run, Config())
+    path = tmp_path / "q.md"
+    path.write_text(QUESTIONS)
+    clients = []
+
+    def client():  # `ask` makes one client per question
+        clients.append(fake_sync_client([response([text("It ran at frame 12.")], "end_turn")]))
+        return clients[-1]
+
+    monkeypatch.setattr("anthropic.Anthropic", client)
+    for model, asked, dollars in (("", "claude-opus-5", 0.0075), ("claude-sonnet-5", "claude-sonnet-5", 0.003)):
+        clients.clear()
+        (run.root / "answers.jsonl").unlink(missing_ok=True)
+        cfg = Config(ask=AskConfig(model=model))
+        answers = run_questions(run, cfg, path, clock=_clock())
+        assert [c.messages.calls[0]["model"] for c in clients] == [asked] * 2 and cfg.model.model == "claude-opus-5"
+        assert [a.model for a in answers] == [asked] * 2 and load_answers(run) == answers  # the record says which model answered
+        # 1000 tokens in and 100 out a question: $5 and $25 per million on claude-opus-5, $2 and $10 on claude-sonnet-5
+        assert [a.dollars for a in answers] == [dollars] * 2
