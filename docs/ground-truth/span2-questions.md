@@ -2,8 +2,10 @@
 
 Status: **DRAFT for the owner to correct. Nothing here is accepted yet.** Correct a question, a reference answer or a
 rubric line in place, delete what you do not want asked, add what is missing; the evaluation harness reads whatever
-this file holds when a phase runs (the file's hash is recorded in every scorecard, so answers scored against different
-versions are never compared).
+this file holds when a phase runs (the file's hash is recorded in every scorecard, and a reworded question never pairs
+with answers to its old wording). Corrected on 2026-09-21 after the review of build plan 4 (ledger L50): a time scope
+on Q9, Q13 and Q15; one `M` line and one `X` line on every negative question; Q5's second line loosened; and the rule
+below saying which rubric lines require an exact string. It is still a draft.
 
 Source: written only from `docs/ground-truth/span2-commands.md` (the owner-accepted list of 9 executed entries and the
 5 strings that appeared on screen and were never run). No fact below comes from anywhere else. Wording of the on-screen
@@ -14,19 +16,31 @@ printed by `kubectl get nodes`, what `kubectl get pods` printed, the portal page
 not asked about; add them to the ground-truth file first if they should be.
 
 Scope: every question is about the terminal session between 10:20.7 (frame 155) and 12:01.0 (frame 187). Where an
-unscoped question could have a different answer elsewhere in the video, the question text carries the time scope.
+unscoped question could have a different answer elsewhere in the video, the question text carries the time scope
+("between 10:20 and 12:01": Q9, Q10 and Q12 to Q15). The shell's suggestions come from its history, so a suggested
+command may well have been run earlier in the full video.
 
 Weighting (owner's ruling): the **positive** questions Q1-Q11 are the question-set score. The **negative** questions
 Q12-Q15, whose correct answer is no, are **secondary**: they are reported beside the positive score and break ties only.
 
 How an answer is scored: each rubric line is a statement about the answer. `M` lines must be true of the answer; `X`
-lines must not be. An answer is *correct* when every `M` line holds and no `X` line does, *wrong* when any `X` line
-holds or no `M` line holds, and *partial* otherwise. An exact string in an `M` line must appear in the answer character
-for character, including case. "Gives a time between A and B" is also satisfied by naming a frame in the stated range.
+lines must not be. A separate model call, which does not know which run produced the answer, decides each line, and
+code derives the label: an answer is *correct* when every `M` line holds and no `X` line does, *wrong* when any `X`
+line holds or no `M` line holds, and *partial* otherwise.
+
+Which lines require an exact string: **only a line that says "contains the exact string"** (today Q2 M1 and Q3 M1).
+There the string must appear in the answer character for character, including case. Every other line is judged on
+meaning: "names the command", "gives the output" or "says …" holds when the answer unmistakably refers to the same
+thing, whatever its spelling, spacing or case. "Gives a time between A and B" is also satisfied by naming a frame in
+the stated range.
+
+Negative questions: each has exactly one `M` line (the answer says no) and one `X` line (the precise wrong claim), so
+a plain, correct "No" is *correct*, as the owner's wording asks ("must be answered no"). The explanation in the
+reference answer (it appeared only as a suggestion) is for people and is not scored.
 
 Format (read by `scry.evaluation.questions.parse_questions`; keep it): a heading `### Q<n> (<positive|negative>,
 <style>)`, then the bullets **Question**, **Reference answer**, **Rubric** (indented `M<n>:` and `X<n>:` lines) and
-**Evidence** (`;`-separated parts; `frames A-B` and `t X-Y` are read by the harness, the rest is for people).
+**Evidence**, which is for people: the harness does not read it.
 
 ## Positive questions
 
@@ -78,7 +92,7 @@ Format (read by `scry.evaluation.questions.parse_questions`; keep it): a heading
   `Merged "AKS1-KodeKloudApp" as current context in C:\Users\msadmin\.kube\config` and a new prompt appeared.
 - **Rubric:**
   - M1: says AKS1-KodeKloudApp was merged as the current context.
-  - M2: names the file `C:\Users\msadmin\.kube\config`.
+  - M2: says the context was merged into the kube config file (`.kube\config`).
   - X1: says the merge failed or was cancelled.
 - **Evidence:** executed row 5; frames 171-171; t 664.13-664.13
 
@@ -116,7 +130,7 @@ Format (read by `scry.evaluation.questions.parse_questions`; keep it): a heading
 - **Evidence:** executed row 8; frames 185-186; t 716.53-716.90
 
 ### Q9 (positive, exact-string lookup)
-- **Question:** Is `kubectl get pods` run anywhere in this part of the video? Where?
+- **Question:** Is `kubectl get pods` run anywhere between 10:20 and 12:01? Where?
 - **Reference answer:** Yes, once, at the very end: it was submitted between frame 186 (11:56.9) and frame 187
   (12:01.0), and is first visible at frame 187 already in the scrollback with its output. The typing itself was not
   observed.
@@ -156,18 +170,16 @@ Format (read by `scry.evaluation.questions.parse_questions`; keep it): a heading
   175 the same row shows `kubectl config` with a different suggestion. It was never run.
 - **Rubric:**
   - M1: says no rollback was performed (the command was not run).
-  - M2: says the rollback command appeared only as a suggestion, or was never submitted.
   - X1: says the deployment was rolled back, or that `kubectl rollout undo` was executed.
 - **Evidence:** never-run row 3; frames 172-175; t 668.13-674.23
 
 ### Q13 (negative, did they)
-- **Question:** Did they scale the cluster in this session, to two nodes or otherwise?
+- **Question:** Between 10:20 and 12:01, did they scale the cluster, to two nodes or otherwise?
 - **Reference answer:** No. `az aks scale --resource-group RG1-KodeKloud-AKS --name AKS1-KodeKloudApp --node-count 2`
   appeared at frame 165 (10:55.0) as the shell's suggestion after the presenter had typed `az ak`. Frame 166 shows
   `az aks get` with a different suggestion on the same row. It was never run.
 - **Rubric:**
   - M1: says the cluster was not scaled (the command was not run).
-  - M2: says the scale command appeared only as a suggestion, or was never submitted.
   - X1: says the cluster was scaled, or that `az aks scale` was executed.
 - **Evidence:** never-run row 2; frames 165-166; t 655.00-656.20
 
@@ -176,17 +188,16 @@ Format (read by `scry.evaluation.questions.parse_questions`; keep it): a heading
 - **Reference answer:** No. `az login` was on screen at frame 155 (10:20.7) as the shell's suggestion after the
   presenter had typed `a`. Frame 156 shows a bare prompt on the same row: the line was cleared, not run.
 - **Rubric:**
-  - M1: says `az login` was not run in this session.
-  - M2: says it appeared only as a suggestion, or that the line was cleared.
-  - X1: says `az login` was executed, or that the presenter logged in with it here.
+  - M1: says `az login` was not run in the time asked about.
+  - X1: says `az login` was executed, or that the presenter logged in with it, in the time asked about.
 - **Evidence:** never-run row 1; frames 155-156; t 620.67-620.67
 
 ### Q15 (negative, how many times)
-- **Question:** Was `kubectl config current-context` run a second time?
-- **Reference answer:** No. It was run once (submitted by frame 177, 11:17.1). At frame 178 (11:38.1) the same text
-  re-appeared from history as a suggestion after the presenter had typed `kubect`; frame 179 (11:39.7) shows
+- **Question:** Between 10:20 and 12:01, was `kubectl config current-context` run more than once?
+- **Reference answer:** No. In that time it was run once (submitted by frame 177, 11:17.1). At frame 178 (11:38.1) the
+  same text re-appeared from history as a suggestion after the presenter had typed `kubect`; frame 179 (11:39.7) shows
   `kubectl get` with the suggestion ` svc`. It was not run a second time.
 - **Rubric:**
-  - M1: says it was run once, or not run a second time.
-  - X1: says it was run twice.
+  - M1: says it was run once in that time, or not run a second time.
+  - X1: says it was run twice or more in that time.
 - **Evidence:** executed row 6, never-run row 4; frames 177-179; t 677.13-699.70
