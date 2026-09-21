@@ -5,8 +5,12 @@ There are no groups, no connected components and no pools: a change record is on
 removed box."""
 from __future__ import annotations
 
-from scry.schemas import BBox, Box
-from scry.track.pixels import PixelDiff, touched
+from dataclasses import dataclass
+from typing import Literal
+
+from scry.schemas import BBox, Box, BoxChange, BoxText, Change, Frame, PixelStats, box_ref
+from scry.textdiff import char_diff
+from scry.track.pixels import PixelDiff, margin_px, touched, touched_by, touched_by_rect
 
 
 def intersection(a: BBox, b: BBox) -> int:
@@ -90,3 +94,104 @@ def cancel_moves(before: list[Box], after: list[Box], touched_a: set[str], touch
     in_a, in_b = {i for i, _ in matched}, {j for _, j in matched}
     return ([(before[i], after[j]) for i, j in matched], [a for i, a in enumerate(before) if i not in in_a],
             [b for j, b in enumerate(after) if j not in in_b])
+
+
+def kind_of(before: str, after: str) -> Literal["reread", "appended", "truncated", "changed"]:
+    """A convenience label computed with all whitespace removed (H4); the recorded strings stay exact."""
+    x, y = "".join(before.split()), "".join(after.split())
+    if x == y:
+        return "reread"
+    if y.startswith(x):
+        return "appended"
+    if x.startswith(y):
+        return "truncated"
+    return "changed"
+
+
+def pair_rest(before: list[Box], after: list[Box], touched_a: set[str], touched_b: set[str]) -> Pairs:
+    """Pairing (H2): every remaining before box with every remaining after box it intersects, at least one of the two
+    touched, matched one to one, so the greatest intersection wins. The partner may be untouched: a growing text's
+    shorter self usually lies outside the changed pixels, and so does a shrinking text's shorter self."""
+    return _pair_by_intersection(before, after, lambda a, b: a.id in touched_a or b.id in touched_b)
+
+
+@dataclass
+class Pairing:
+    """A box of the later frame that continues the lifetime of a box of the earlier frame."""
+    a: str  # box id in the earlier frame
+    b: str  # box id in the later frame
+    how: Literal["unchanged", "same_place", "moved", "reread"]
+
+
+@dataclass
+class PairResult:
+    change: Change
+    pairings: list[Pairing]  # by the later frame's reading order
+    starts: list[str]  # box ids of the later frame whose lifetime starts here, in reading order
+
+
+def _union(a: BBox, b: BBox) -> BBox:
+    return (min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3]))
+
+
+def track_pair(a: Frame, b: Frame, a_boxes: list[Box], b_boxes: list[Box], diff: PixelDiff | None, margin: float) -> PairResult:
+    """One transition. The returned Change has no id, kind "single", no reverts and no `continues`: the stage fills them."""
+    m = margin_px(a_boxes, b_boxes, margin)
+    ta, tb = touched_flags(a_boxes, diff, m), touched_flags(b_boxes, diff, m)
+    touched_a = {x.id for x, t in zip(a_boxes, ta) if t}
+    touched_b = {x.id for x, t in zip(b_boxes, tb) if t}
+    order_a = {x.id: i for i, x in enumerate(a_boxes)}
+    order_b = {x.id: j for j, x in enumerate(b_boxes)}
+
+    unchanged = [(a_boxes[i], b_boxes[j]) for i, j in match_unchanged(a_boxes, b_boxes, ta, tb)]
+    un_a, un_b = {x.id for x, _ in unchanged}, {y.id for _, y in unchanged}
+    before = [x for x in a_boxes if x.id not in un_a]
+    after = [y for y in b_boxes if y.id not in un_b]
+    same, before, after = same_place(before, after, touched_a, touched_b)
+    moves, before, after = cancel_moves(before, after, touched_a, touched_b)
+    pairs, before, after = pair_rest(before, after, touched_a, touched_b)
+
+    ref_a = lambda x: box_ref(a.frame, x.id)
+    ref_b = lambda y: box_ref(b.frame, y.id)
+    later: list[tuple[int, BoxChange]] = []  # pair and appeared records, keyed by the later box's reading order
+    pairings = [(order_b[y.id], Pairing(x.id, y.id, how)) for how, found in (("unchanged", unchanged), ("same_place", same), ("moved", moves))
+                for x, y in found]
+    starts: list[str] = []
+    for x, y in pairs:
+        kind = kind_of(x.text, y.text)
+        later.append((order_b[y.id], BoxChange(kind=kind, rect=_union(x.bbox, y.bbox), before=BoxText(box=ref_a(x), text=x.text),
+                                               after=BoxText(box=ref_b(y), text=y.text), char_diff=char_diff(x.text, y.text),
+                                               in_churn=x.in_churn or y.in_churn)))
+        if kind == "reread":
+            pairings.append((order_b[y.id], Pairing(x.id, y.id, "reread")))
+        else:
+            starts.append(y.id)
+    flicker_new: list[str] = []
+    for y in after:  # an after box left without a partner: appeared when touched, flicker when not
+        starts.append(y.id)
+        if y.id in touched_b:
+            later.append((order_b[y.id], BoxChange(kind="appeared", rect=y.bbox, before=None, after=BoxText(box=ref_b(y), text=y.text),
+                                                   in_churn=y.in_churn)))
+        else:
+            flicker_new.append(ref_b(y))
+    removed = [BoxChange(kind="removed", rect=x.bbox, before=BoxText(box=ref_a(x), text=x.text), after=None, in_churn=x.in_churn)
+               for x in before if x.id in touched_a]
+    flicker_lost = [ref_a(x) for x in before if x.id not in touched_a]
+
+    pixels = None
+    if diff is not None:
+        by_a = [touched_by(x.bbox, diff, m) if t else set() for x, t in zip(a_boxes, ta)]
+        by_b = [touched_by(y.bbox, diff, m) if t else set() for y, t in zip(b_boxes, tb)]
+        with_text = set().union(*by_a, *by_b)
+        textless = [c for k, c in enumerate(diff.components, start=1) if k not in with_text]
+        n = len(a_boxes) + len(b_boxes)
+        rect_only = sum(1 for x, t in (*zip(a_boxes, ta), *zip(b_boxes, tb)) if not t and touched_by_rect(x.bbox, diff, m))
+        pixels = PixelStats(changed_fraction=diff.changed_fraction, components=len(diff.components), textless=len(textless),
+                            textless_area=sum(c.area for c in textless),
+                            touched_share=round((len(touched_a) + len(touched_b)) / n, 4) if n else 0.0, rect_only=rect_only)
+
+    change = Change(id="", from_frame=a.frame, to_frame=b.frame, t=(a.t_end, b.t_settled), kind="single", pixels=pixels,
+                    records=[r for _, r in sorted(later, key=lambda kr: kr[0])] + removed,
+                    moved=[(ref_a(x), ref_b(y)) for x, y in moves], same_place=len(same), unchanged=len(unchanged),
+                    variants=sum(1 for x, y in unchanged if x.text != y.text), flicker_new=flicker_new, flicker_lost=flicker_lost)
+    return PairResult(change, [p for _, p in sorted(pairings, key=lambda kp: kp[0])], sorted(starts, key=order_b.__getitem__))
