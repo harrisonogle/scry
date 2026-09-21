@@ -39,17 +39,22 @@ def test_frames_is_on_by_default_and_on_is_what_it_was():
     assert hashlib.sha256(json.dumps(TOOL_DEFS, sort_keys=True).encode()).hexdigest() == "6aa65ae1b67494285b38dafb28d8a51fd4287098550f504bb00356461e0febfe"
 
 
-def test_without_frames_no_tool_returns_an_image_and_the_prompt_offers_no_look():
-    assert [d["name"] for d in tool_defs(False)] == ["search", "get_node", "get_transitions"]  # exactly get_frame and redecode go
-    assert tool_defs(False) == [d for d in TOOL_DEFS if d["name"] not in ("get_frame", "redecode")]  # the rest as they are
+def test_without_frames_only_pixels_are_withheld_and_the_prompt_says_so():
+    assert [d["name"] for d in tool_defs(False)] == ["search", "get_node", "get_transitions", "get_frame"]  # redecode returns only images
+    by_name = {d["name"]: d for d in TOOL_DEFS}
+    for d in tool_defs(False):  # every tool as it is, but for what get_frame says it returns
+        assert {k: v for k, v in d.items() if k != "description"} == {k: v for k, v in by_name[d["name"]].items() if k != "description"}
+        assert (d["description"] == by_name[d["name"]]["description"]) == (d["name"] != "get_frame")
+    record = " ".join(tool_defs(False)[3]["description"].split())
+    assert "screenshot" in by_name["get_frame"]["description"] and "screenshot" not in record and "Look at" not in record
+    assert "returns no image" in record and "description in force" in record and "every text alive at that frame" in record
     with_frames, without = SYSTEM.split("\n\n"), system_prompt(False).split("\n\n")
     assert len(without) == len(with_frames) == 6
     assert [i for i, (a, b) in enumerate(zip(with_frames, without)) if a != b] == [2, 3, 5]  # how to work, how sure, the last paragraph
     flat, was = " ".join(system_prompt(False).split()), " ".join(SYSTEM.split())
-    for offer in ("Look at a frame", "look at the frame and read it yourself", "redecode"):  # every offer of a look the prompt makes
+    for offer in ("Look at a frame", "or look at the frame and read it yourself", "redecode"):  # every offer of a look the prompt makes
         assert offer in was and offer not in flat, offer
-    assert "get_frame" not in flat
-    assert "You cannot look at the frames themselves" in flat
+    assert "You cannot see a frame" in flat and "get_frame returns its record" in flat  # the record of a frame is still there to read
     assert 'write a frame as "frame 12" and a text box as "12:b4"' in flat  # citing a frame is still asked for
     assert prompt_version(False) == "ask-v1+noframes"
 
@@ -102,6 +107,9 @@ def test_get_frame_returns_image_texts_and_description(tmp_path: Path):
             'model reads "On branch main" | Windows Terminal window') in lines
     assert 'm1 (no box) "Refresh"' in lines
     assert tools.get_frame(99) == [{"type": "text", "text": "no such frame"}]
+    blind = Tools(tools.run, Config(ask=AskConfig(frames=False)))  # without frames: the same record, to the byte, and no image
+    assert blind.get_frame(12) == blocks[:1] and blind.get_frame(13) == tools.get_frame(13)[:1]
+    assert blind.get_frame(99) == [{"type": "text", "text": "no such frame"}]
     lines = Tools(_indexed(tmp_path / "plain", labels=False), Config()).get_frame(11)[0]["text"].split("\n")
     assert lines[1] == "Description in force: none."
     assert 'b3 L4 "C:\\src> git status" | seen 24.4–35.0s in 3 frames' in lines
@@ -141,17 +149,21 @@ def test_ask_loop_runs_tools_and_reports_cost(tmp_path: Path):
     assert last["content"][0]["content"][1]["type"] == "image"
 
 
-def test_ask_without_frames_offers_the_index_tools_alone(tmp_path: Path):
-    client = fake_sync_client([response([tool_use("u1", "get_frame", {"frame": 12}), tool_use("u2", "search", {"query": "Creating"})], "tool_use"),
+def test_ask_without_frames_reads_a_frames_record_and_never_its_pixels(tmp_path: Path):
+    client = fake_sync_client([response([tool_use("u1", "get_frame", {"frame": 12}), tool_use("u2", "redecode", {"t_a": 0, "t_b": 1}),
+                                         tool_use("u3", "get_frame", {"frame": 99})], "tool_use"),
                                response([text("done")], "end_turn")])
     result = ask(_indexed(tmp_path), Config(ask=AskConfig(frames=False)), "q", client)
     for kw in client.messages.calls:
         assert set(kw) == {"model", "max_tokens", "system", "tools", "output_config", "cache_control", "messages"}
         assert (kw["system"], kw["tools"], kw["cache_control"]) == (system_prompt(False), tool_defs(False), {"type": "ephemeral"})
-    refused, found = client.messages.calls[1]["messages"][-1]["content"]  # a tool that was not offered is an unknown tool
-    assert (refused["content"], refused["is_error"]) == ("error: unknown tool get_frame", True) and "is_error" not in found
+    record, refused, missing = client.messages.calls[1]["messages"][-1]["content"]
+    assert [b["type"] for b in record["content"]] == ["text"] and record["content"][0]["text"].startswith("Frame 12, t=26.40")
+    assert (refused["content"], refused["is_error"]) == ("error: unknown tool redecode", True)  # a tool that was not offered
+    assert "image" not in str(client.messages.calls[1]["messages"])  # no pixel reaches the model
     assert [c.model_dump(exclude_none=True) for c in result.tool_log] == [
-        {"name": "get_frame", "input": {"frame": 12}, "error": "unknown tool"}, {"name": "search", "input": {"query": "Creating"}, "results": 3}]
+        {"name": "get_frame", "input": {"frame": 12}, "results": 1}, {"name": "redecode", "input": {"t_a": 0, "t_b": 1}, "error": "unknown tool"},
+        {"name": "get_frame", "input": {"frame": 99}, "results": 0}]  # a frame counts as found by its record, with or without its image
     assert (result.text, result.prompt) == ("done", "ask-v1+noframes")  # the result says which prompt answered
 
 

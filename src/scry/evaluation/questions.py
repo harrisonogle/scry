@@ -120,7 +120,7 @@ class Answer(BaseModel):
     turns: int = 0
     tools: list[str] = []
     calls: list[dict] = []  # per tool call: its name, its input and how many results came back, never the results
-    prompt: str | None = None  # the ask prompt that answered; "+noframes": the agent had the index alone. None: before P6
+    prompt: str | None = None  # the ask prompt that answered; "+noframes": the agent saw no pixels. None: before P6
     stop: str | None = None
     error: str | None = None
 

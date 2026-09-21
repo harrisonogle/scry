@@ -1,6 +1,7 @@
 """The prompt contract of `ask`: the system prompt and the descriptions of its five tools (prompt text too). The prompt
-guides and does not prohibit; nothing in it comes from a video under evaluation. With `[ask] frames = false` the two
-tools that return images are not offered, and `system_prompt` swaps the three sentences that offer a look at a frame."""
+guides and does not prohibit; nothing in it comes from a video under evaluation. With `[ask] frames = false` only the
+pixels are withheld: `redecode`, which returns nothing else, is not offered, `get_frame` returns a frame's record
+without its image and is described as that, and `system_prompt` swaps the three sentences that offer a look."""
 
 VERSION = "ask-v1"
 
@@ -52,11 +53,14 @@ Whether something was done
 When the record does not answer the question, say so and name the time range worth inspecting; redecode can recover
 frames between the captured ones."""
 
-# Every sentence of SYSTEM that tells the agent it can look at a frame, and what stands in its place when it cannot.
+# Every sentence of SYSTEM that tells the agent it can look at a frame, and what stands in its place when it cannot
+# see one: a frame's record (get_frame, without the image) is still there to read.
 _WITHOUT_FRAMES = {
     " Look\nat a frame whenever a text is doubtful or the question is about something visual.":
-        " You\ncannot look at the frames themselves; answer from the record alone.",
-    ", or look at the frame and read it yourself.": ".",
+        " You\ncannot see a frame: get_frame returns its record (the description in force and every text alive there) and no image."
+        "\nRead that record whenever a text is doubtful or the\nquestion is about something visual.",
+    ", or look at the frame and read it yourself.":
+        ". You cannot look at the frame and read it yourself; get_frame lists the readings the record has\n  of every text of a frame.",
     "; redecode can recover\nframes between the captured ones.": ".",
 }
 
@@ -111,3 +115,10 @@ TOOL_DESCRIPTIONS = {
         'frames as images: a recovery tool for what happened between two captured frames.'
     ),
 }
+
+# What get_frame is said to return under `[ask] frames = false`: the same record, and no screenshot.
+GET_FRAME_WITHOUT_IMAGE = (
+    'Read the record of one captured frame: every text alive at that frame (box id, lifetime id, text, when it was '
+    'first and last seen, other readings) and the screen description in force. It returns no image: you cannot see '
+    'the frame. Use it when a reading is doubtful, or to know everything the record holds about one moment.'
+)

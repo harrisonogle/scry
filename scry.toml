@@ -80,7 +80,7 @@ collapse = true
 max_turns = 12
 max_tool_result_chars = 60000
 redecode_max_frames = 6
-frames = true  # false: get_frame and redecode are not offered, so the agent answers from the index alone
+frames = true  # false: the agent sees no pixels: get_frame returns a frame's record without the image, redecode is not offered
 
 [outline]
 enabled = false
