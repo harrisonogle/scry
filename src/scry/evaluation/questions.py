@@ -119,6 +119,7 @@ class Answer(BaseModel):
     seconds: float = 0.0
     turns: int = 0
     tools: list[str] = []
+    calls: list[dict] = []  # per tool call: its name, its input and how many results came back, never the results
     stop: str | None = None
     error: str | None = None
 
@@ -152,7 +153,7 @@ def run_questions(run: Run, cfg: Config, questions_path: Path, answer: Callable[
             failed = out.stop == "api_error"  # the text is then the error message, never an answer
             answers[q.key] = Answer(**base, answer="" if failed else out.text, error=out.text[:500] if failed else None,
                                     usage=out.usage, model=out.model, dollars=out.dollars, seconds=round(clock() - t0, 1),
-                                    turns=out.turns, tools=out.tools, stop=out.stop)
+                                    turns=out.turns, tools=out.tools, calls=out.calls, stop=out.stop)
         write_jsonl(_answers_path(run), [answers[x.key] for x in questions if x.key in answers])
     result = [answers[q.key] for q in questions]
     write_jsonl(_answers_path(run), result)

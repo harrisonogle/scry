@@ -141,11 +141,21 @@ class Tools:
         return blocks or [text_block("no frames in range")]
 
 
+class ToolCall(BaseModel):
+    """One tool call as the answer keeps it: what was asked and how much came back, never the results themselves, so
+    a search that found nothing can be audited afterwards (ledger L57)."""
+    name: str
+    input: dict  # as the model gave it; for `search` the query and its filters
+    results: int | None = None  # hits, transitions, decoded frames; a node or a frame: 1 or 0; None: the call failed
+    error: str | None = None
+
+
 class AskResult(BaseModel):
     text: str
     citations: list[str]  # read out of the answer's prose; a lifetime or transition id is kept only when the run has it
     turns: int  # the API calls that returned
     tool_calls: list[str]  # tool names in call order
+    tool_log: list[ToolCall] = []  # the same calls with their inputs and result counts
     usage: dict
     cost_usd: float
     model: str
@@ -165,16 +175,33 @@ def extract_citations(text: str, known: set[str] | None = None) -> list[str]:
     return list(dict.fromkeys(c for c in found if c))
 
 
-def _tool_result(tools: Tools, cfg: Config, block) -> dict:
-    """One tool call's result block. A tool error goes back to the model and never ends the loop."""
+def _result_count(name: str, out) -> int:
+    """How many things a tool returned: hits, transitions, a node (1 or 0), a frame (1 or 0), decoded frames."""
+    if name == "search":
+        return len(out["hits"])
+    if name == "get_transitions":
+        return len(out["transitions"])
+    if name == "get_node":
+        return 0 if "error" in out else 1
+    if name == "get_frame":
+        return 1 if len(out) > 1 else 0  # "no such frame" is a single text block
+    return sum(b["type"] == "image" for b in out)  # redecode
+
+
+def _tool_result(tools: Tools, cfg: Config, block) -> tuple[dict, ToolCall]:
+    """One tool call's result block and its record. A tool error goes back to the model and never ends the loop."""
     base = {"type": "tool_result", "tool_use_id": block.id}
+    call = ToolCall(name=block.name, input=dict(block.input))
     if block.name not in _SCHEMAS:
-        return base | {"content": f"error: unknown tool {block.name}", "is_error": True}
+        call.error = "unknown tool"
+        return base | {"content": f"error: unknown tool {block.name}", "is_error": True}, call
     try:
-        out = getattr(tools, block.name)(**dict(block.input))
+        out = getattr(tools, block.name)(**call.input)
     except Exception as e:
-        return base | {"content": f"error: {e}", "is_error": True}
-    return base | {"content": out if isinstance(out, list) else json.dumps(out, default=str)[:cfg.ask.max_tool_result_chars]}
+        call.error = f"{type(e).__name__}: {e}"[:200]
+        return base | {"content": f"error: {e}", "is_error": True}, call
+    call.results = _result_count(block.name, out)
+    return base | {"content": out if isinstance(out, list) else json.dumps(out, default=str)[:cfg.ask.max_tool_result_chars]}, call
 
 
 def ask(run: Run, cfg: Config, question: str, client=None) -> AskResult:
@@ -188,6 +215,7 @@ def ask(run: Run, cfg: Config, question: str, client=None) -> AskResult:
     messages: list[dict] = [{"role": "user", "content": question}]
     usage = add_usage({}, {})
     tool_calls: list[str] = []
+    tool_log: list[ToolCall] = []
     turns = 0
     text, stop = f"Stopped after {cfg.ask.max_turns} turns without a final answer.", "max_turns"
     for _ in range(cfg.ask.max_turns):
@@ -209,7 +237,9 @@ def ask(run: Run, cfg: Config, question: str, client=None) -> AskResult:
             break
         calls = [b for b in resp.content if getattr(b, "type", "") == "tool_use"]
         tool_calls += [b.name for b in calls]
-        messages.append({"role": "user", "content": [_tool_result(tools, cfg, b) for b in calls]})  # all results in one message
+        results = [_tool_result(tools, cfg, b) for b in calls]
+        tool_log += [call for _, call in results]
+        messages.append({"role": "user", "content": [block for block, _ in results]})  # all results in one message
     known = {l.id for l in run.load_lifetimes()} | {c.id for c in run.load_changes()}
-    return AskResult(text=text, citations=extract_citations(text, known), turns=turns, tool_calls=tool_calls, usage=usage,
+    return AskResult(text=text, citations=extract_citations(text, known), turns=turns, tool_calls=tool_calls, tool_log=tool_log, usage=usage,
                      cost_usd=estimate_cost(usage, cfg.model.model), model=cfg.model.model, prompt=VERSION, stop=stop)

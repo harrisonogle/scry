@@ -66,7 +66,7 @@ def test_run_and_report_end_to_end_with_fake_stages(tmp_path: Path, monkeypatch)
     stages = {"read": _stage("read"), "annotate": _stage("annotate")}
     monkeypatch.setattr("scry.evaluation.runner.resolve", lambda stage: stages[stage])
     monkeypatch.setattr("scry.ask.ask", lambda run, cfg, question, client=None: SimpleNamespace(
-        text="It ran at frame 2.", turns=2, tool_calls=["search"], usage={"input_tokens": 1_000}, cost_usd=0.05, stop="end_turn"))
+        text="It ran at frame 2.", turns=2, tool_calls=["search"], tool_log=[], usage={"input_tokens": 1_000}, cost_usd=0.05, stop="end_turn"))
     monkeypatch.setattr("scry.evaluation.judge.judge_provider", lambda cfg, cache_dir: _Judge())
     cli = CliRunner()
 

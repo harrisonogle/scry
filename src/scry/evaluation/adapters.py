@@ -3,7 +3,7 @@ a renamed loader costs one function here, never a metric. Pipeline modules are i
 from __future__ import annotations
 
 from contextlib import closing
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable
 
 from scry.config import Config
@@ -61,6 +61,7 @@ class AskOutcome:
     turns: int
     tools: list[str]
     stop: str
+    calls: list[dict] = field(default_factory=list)  # per tool call: name, input, results (a count), error
 
 
 def answer_fn(run: Run, cfg: Config, question: str) -> AskOutcome:
@@ -69,4 +70,4 @@ def answer_fn(run: Run, cfg: Config, question: str) -> AskOutcome:
 
     r = ask(run, cfg, question)
     return AskOutcome(text=r.text, usage=dict(r.usage), dollars=r.cost_usd, model=cfg.model.model, turns=r.turns,
-                      tools=list(r.tool_calls), stop=r.stop)
+                      tools=list(r.tool_calls), stop=r.stop, calls=[c.model_dump(exclude_none=True) for c in r.tool_log])

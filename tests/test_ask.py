@@ -152,6 +152,19 @@ def test_ask_tool_errors_and_stops(tmp_path: Path):
     assert failed.usage["input_tokens"] == 1000 and failed.tool_calls == ["search"]
 
 
+def test_ask_keeps_each_tool_call_with_its_input_and_result_count(tmp_path: Path):
+    # a search that found nothing can be audited afterwards: the name, the input and a count, never the results (ledger L57)
+    client = fake_sync_client([response([tool_use("u1", "search", {"query": '"zzz nothing"', "level": "lifetime"}),
+                                         tool_use("u2", "get_frame", {"frame": 12}), tool_use("u3", "nope", {})], "tool_use"),
+                               response([text("done")], "end_turn")])
+    result = ask(_indexed(tmp_path), Config(), "q", client)
+    assert result.tool_calls == ["search", "get_frame", "nope"]
+    assert [c.model_dump(exclude_none=True) for c in result.tool_log] == [
+        {"name": "search", "input": {"query": '"zzz nothing"', "level": "lifetime"}, "results": 0},
+        {"name": "get_frame", "input": {"frame": 12}, "results": 1},
+        {"name": "nope", "input": {}, "error": "unknown tool"}]
+
+
 def test_extract_citations():
     assert extract_citations("See frame 12 and 12:b4, then Frame 13; frames 12 again (13:m1).") == ["12", "12:b4", "13", "13:m1"]
     assert extract_citations("nothing here") == []
