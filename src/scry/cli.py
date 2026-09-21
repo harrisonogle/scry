@@ -40,6 +40,14 @@ def read(run_dir: Path, config: Path | None = None, verbose: bool = False):
 
 
 @app.command()
+def track(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """track: per-box changes and box lifetimes from boxes and pixels → changes.jsonl, lifetimes.jsonl."""
+    _setup_logging(verbose)
+    from scry.track.stage import run_track
+    run_track(Run(run_dir), load_config(config))
+
+
+@app.command()
 def subset(src: Path, out: Path = typer.Option(..., "--out"),
            frames: str = typer.Option(..., "--frames", help="inclusive frame range, e.g. 145-155"),
            share_cache: bool = typer.Option(True, "--share-cache/--no-share-cache", help="symlink the source run's call cache"),
@@ -55,7 +63,7 @@ def subset(src: Path, out: Path = typer.Option(..., "--out"),
     typer.echo(f"{out}: {len(dst.load_frames())} frames; {rest}")
 
 
-STAGES = ["outline", "decode", "read"]
+STAGES = ["outline", "decode", "read", "track"]
 
 
 @app.command()
@@ -68,12 +76,14 @@ def run(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None
     import time
     from scry.decode import run_decode
     from scry.read import run_read
+    from scry.track.stage import run_track
 
     def _outline():
         from scry.outline import run_outline
         run_outline(r, cfg, video)
 
-    steps = {"outline": _outline, "decode": lambda: run_decode(r, cfg, video), "read": lambda: run_read(r, cfg)}
+    steps = {"outline": _outline, "decode": lambda: run_decode(r, cfg, video), "read": lambda: run_read(r, cfg),
+             "track": lambda: run_track(r, cfg)}
     for name in STAGES:
         if name in wanted:
             typer.echo(f"== {name}")

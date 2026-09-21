@@ -33,7 +33,7 @@ engine = "rapid"
 gap_ratio = 0.25
 
 [track]
-margin = 0.5
+margin = 0.0
 
 [overlay]
 font_size = 12

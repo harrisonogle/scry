@@ -61,6 +61,11 @@ class ReadConfig(BaseModel):
     gap_ratio: float = 0.25  # spacing guard: a gap of at least this × the box height between two words is a space
 
 
+class TrackConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    margin: float = 0.5  # × the median box height of the two frames; 0 = exact touch
+
+
 class OverlayConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     font_size: int = 12
@@ -103,6 +108,7 @@ class Config(BaseModel):
     model_config = ConfigDict(extra="forbid")
     decode: DecodeConfig = DecodeConfig()
     read: ReadConfig = ReadConfig()
+    track: TrackConfig = TrackConfig()
     overlay: OverlayConfig = OverlayConfig()
     model: ModelConfig = ModelConfig()
     index: IndexConfig = IndexConfig()
