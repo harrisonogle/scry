@@ -1,10 +1,10 @@
-"""RapidOCR adapter (optional extra: ``uv sync --extra rapid``).
+"""RapidOCR adapter.
 
 rapidocr 3.9 ships its default PP-OCRv6 small detector/recogniser inside the wheel (``rapidocr/models/``), so the
 engine works offline; other model variants are downloaded on first use. Per-word boxes come from the recogniser's
 CTC columns (``return_word_box=True``): rapidocr splits a line into "pieces" at spaces, at a script change, and at
 wide column gaps, and reports the text of each piece without spaces. The pieces are regrouped here into the
-whitespace tokens of the final line text so ``RawLine.words`` matches the Vision engine's convention.
+whitespace tokens of the final line text, so ``RawLine.words`` holds one entry per whitespace token.
 
 The spacing guard (``rebuild_spaces``) protects against the recogniser dropping spaces: pieces separated by a gap of
 at least ``gap_ratio`` times the line height get a space; the rebuilt text replaces the engine's only when it has
@@ -106,11 +106,10 @@ class RapidEngine:
     name = "rapidocr"
 
     def __init__(self, cfg: OcrConfig, gap_ratio: float | None = None):
-        from rapidocr import RapidOCR  # optional extra: uv sync --extra rapid
+        from rapidocr import RapidOCR
 
         self.cfg = cfg
-        # OcrConfig has no rapid-specific field yet; honour one named gap_ratio if the owner adds it.
-        self.gap_ratio = float(gap_ratio if gap_ratio is not None else getattr(cfg, "gap_ratio", DEFAULT_GAP_RATIO))
+        self.gap_ratio = float(gap_ratio if gap_ratio is not None else cfg.gap_ratio)
         # use_cls off: screens are never rotated and the orientation classifier flipped ~3 % of lines into garbage;
         # rec_batch_num 1: PP-OCR pads a batch to its widest crop and the space decision depends on that width,
         # so the same pixels read differently next to different neighbours (ledger L43).

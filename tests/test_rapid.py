@@ -67,3 +67,25 @@ def test_rapid_reads_terminal_text_with_spaces_and_word_boxes(tmp_path: Path):
     s = eng.settings()
     assert s["engine"] == "rapidocr" and s["version"].startswith("3.") and s["rec_model"].endswith(".onnx")
     assert s["word_boxes"] is True and s["space_guard_fired"] >= 0
+
+
+def test_get_engine_knows_only_rapid():
+    import pydantic
+
+    from scry.config import OcrConfig
+    from scry.ocr import get_engine
+    from scry.ocr.rapid import RapidEngine
+
+    with pytest.raises(pydantic.ValidationError):
+        OcrConfig(engine="vision")
+    if not models_available():
+        pytest.skip("rapidocr or its bundled default models are not available offline")
+    assert isinstance(get_engine(OcrConfig()), RapidEngine)
+
+
+@pytest.mark.skipif(not models_available(), reason="rapidocr or its bundled default models are not available offline")
+def test_gap_ratio_comes_from_config():
+    from scry.config import OcrConfig
+    from scry.ocr.rapid import RapidEngine
+
+    assert RapidEngine(OcrConfig(gap_ratio=0.4)).gap_ratio == 0.4

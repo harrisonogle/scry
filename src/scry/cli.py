@@ -75,7 +75,7 @@ def run(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None
 
 @app.command()
 def setup(config: Path | None = None):
-    """Check the environment: Vision OCR, FTS5, sqlite-vec, credentials, optional embedder."""
+    """Check the environment: the OCR engine, FTS5, sqlite-vec, credentials, optional embedder."""
     import sqlite3
     cfg = load_config(config)
     ok = True

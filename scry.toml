@@ -30,9 +30,7 @@ iou = 0.5
 
 [ocr]
 engine = "rapid"
-languages = ["en-US"]
-language_correction = false
-minimum_text_height = 0.0
+gap_ratio = 0.25
 
 [overlay]
 font_size = 12

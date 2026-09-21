@@ -51,10 +51,8 @@ class Stage1Config(BaseModel):
 
 
 class OcrConfig(BaseModel):
-    engine: Literal["vision", "rapid"] = "rapid"  # rapidocr 3.9 by default (ledger L36); vision is optional on macOS
-    languages: list[str] = ["en-US"]
-    language_correction: bool = False
-    minimum_text_height: float = 0.0
+    engine: Literal["rapid"] = "rapid"  # RapidOCR 3.9 is the only reader (ledger L36, L43)
+    gap_ratio: float = 0.25  # spacing guard: a gap of at least this × the box height between two words is a space
 
 
 class OverlayConfig(BaseModel):

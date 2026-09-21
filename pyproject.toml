@@ -13,12 +13,11 @@ dependencies = [
   "pydantic>=2.8",
   "sqlite-vec>=0.1.6",
   "typer>=0.12",
-  "pyobjc-framework-Vision>=10; sys_platform == 'darwin'",
-  "pyobjc-framework-Quartz>=10; sys_platform == 'darwin'",
+  "rapidocr>=3.9",
+  "onnxruntime>=1.20",
 ]
 
 [project.optional-dependencies]
-rapid = ["rapidocr>=3.9", "onnxruntime>=1.20"]
 embed = ["fastembed>=0.3"]
 outline = ["google-genai>=1.0"]
 
