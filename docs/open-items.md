@@ -21,6 +21,24 @@ stands" says what is built.
       on a doubtful text (L65). In `span2-commands.md` the executed list was accepted by the owner on 2026-09-21; the
       second section ("Appeared on screen but was never run", the key of the *false run* metric) is kept at the owner's
       request and the file records no acceptance of it.
+- [ ] **The question sets are blind to the honest text-change contract** (L66, L67). Every answer below was judged
+  correct: "retyped `kubectl get pods`" where only `kubectl ` was typed and the rest was the shell's grey suggestion
+  (all four Sonnet answers in P8); "corroborated by later scrollback" as evidence that commands ran (two Sonnet
+  answers in P9); two differing readings called "confirmed independently by the OCR-derived text" (P9). Until the
+  rubrics have lines for typed against suggested (Q16, Q18), for what counts as evidence that a command ran (Q17,
+  Q21) and for saying so when readers differ (Q19, Q20), a comparison of models or agents on these sets measures
+  recall of strings and times and little else. The sets are the owner's to correct, so nothing was added.
+- [ ] **Which model answers questions** (L66, L67). On Opus-built indexes a Sonnet 5 agent ties on score at a quarter
+  of the price ($0.053 to $0.062 a question against $0.216 to $0.263) and in under half the time. It opens a frame in
+  3 to 6 of 27 answers where Opus opens 14 to 23, and says that readers differ for 3 of 18 such texts where Opus says
+  so for 40 of 46. The default stays Opus 5; `[ask] model = "claude-sonnet-5"` is there for whoever wants the other
+  trade. `annotate`, `interpret` and `summarize` stay on Opus 5: on Sonnet the index itself records suggestions as
+  entered text (P7, P8).
+- [ ] **`summarize` can paraphrase the contract away** (L67). One Opus step summary says "type the command `kubectl
+  create deployment …`" where the transition it cites calls most of that line a suggestion. One step in one run; it
+  is the first sign of the contract leaking on Opus, and both agents then said "typed" on that question. Nothing was
+  changed: the fix is prompt wording for `summarize`, and the owner should see the case first
+  (`docs/results/p9/analysis.md`, last section).
 - [ ] **The owner's hold-out second video.** Not yet supplied. About $70 of the Anthropic budget is kept for it and
       no further paid phase is started without a result that calls for one (L64, L65). It is the first outside test of
       θpix and θmin, with `touched_share` on near-static pairs as the alarm (proposal §11), the place to find out
