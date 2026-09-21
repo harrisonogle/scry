@@ -1,0 +1,24 @@
+# P8 (ledger L64): the model tier of everything that is not Opus-labelled. Every stage on Sonnet 5 (`interpret`,
+# `summarize`, `ask`, and `annotate` where the base has it), on the whole 221-frame sample with the 27 whole-video
+# questions, against P4's Opus 5 runs of the same two bases (`docs/results/p4/`). The no-annotation base twice; the
+# annotated base once (its labels are known to be worse than Opus's, P7: this run shows whether that costs answers).
+# The command metrics test Sonnet's `interpret`; the answers test its `ask`. The judge stays what it is in P4.
+phase = "p8"
+source = "runs/p0"
+stages = ["read", "track", "annotate", "interpret", "summarize", "index", "ask"]
+repeats = 2
+
+[spans.full]
+frames = "0-220"
+ground_truth = "docs/ground-truth/span2-commands.md"
+questions = "docs/ground-truth/full-questions.md"
+
+[axis.base.none-sonnet5]
+"model.model" = "claude-sonnet-5"
+"annotate.mode" = "off"
+
+[axis.base.inc-transcribing-sonnet5]
+"model.model" = "claude-sonnet-5"
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 1.0
