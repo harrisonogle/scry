@@ -1,0 +1,34 @@
+import json
+
+from scry.annotate.output import output_model
+from scry.prompts.annotate import prompt_version, system_prompt
+
+
+def test_arm_a_paragraphs():
+    paras = system_prompt().split("\n\n")
+    starts = ["You label ", "You are shown the same screenshot twice.", "containers:", "assign:", "links:", "texts:", "description:"]
+    assert len(paras) == 7 and all(p.startswith(s) for p, s in zip(paras, starts))
+    assert all(part in paras[4] for part in ("  runs:", "  pairs:", "  records:")) and paras[4].endswith("breadcrumbs.")
+
+
+def test_group_only_differs_in_one_paragraph():
+    full, group = system_prompt().split("\n\n"), system_prompt(transcribe=False).split("\n\n")
+    assert len(full) == len(group) == 7
+    assert [i for i in range(7) if full[i] != group[i]] == [5]
+    assert group[5] == "Do not transcribe any text: the OCR reading of each box is used."
+    assert full[6].startswith("description:") and group[6].startswith("description:")
+
+
+def test_versions():
+    assert prompt_version() == "annotate-v1"
+    assert prompt_version(transcribe=False) == "annotate-v1+grouponly"
+    assert prompt_version(scale=0.5) == "annotate-v1+s0.5"
+    assert prompt_version(transcribe=False, scale=0.67) == "annotate-v1+grouponly+s0.67"
+
+
+def test_no_sample_video_content():
+    # every paid answer is cached under this text, and the evaluation checks these very containers
+    sent = [system_prompt(), system_prompt(transcribe=False),
+            json.dumps(output_model("A", True).model_json_schema()), json.dumps(output_model("A", False).model_json_schema())]
+    for word in ("PowerShell", "Cloud Shell", "Azure", "kubectl", "msadmin"):
+        assert not any(word in text for text in sent), word

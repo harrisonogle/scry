@@ -1,0 +1,44 @@
+"""The contract with the model for `annotate`: the system prompt, paragraph by paragraph, and its version.
+
+The call cache keys on the version, not on the prompt's text: ANY edit to a paragraph bumps VERSION. Nothing here
+comes from an evaluated video: every example is invented."""
+from __future__ import annotations
+
+VERSION = "annotate-v1"
+
+ROLE = """You label screenshots of computer tutorials (terminals, code editors, browsers, dialogs)."""
+
+IMAGES = """You are shown the same screenshot twice. Image 1 is the clean frame. Image 2 is the same frame with a numbered box around every piece of text an OCR engine detected; each number sits beside its box and is NOT part of the screen. A number is written as a box id: b1, b2, ... Read the screen from Image 1; use Image 2 only to know which number refers to which text. The user message lists the box ids and names the targets: the boxes you are asked to label."""
+
+CONTAINERS = """containers: the windows (top-level application windows) and popups (menus, dialogs, tooltips, toasts) on screen. Containers do not nest. Anything drawn over a window is its own popup, never part of what it covers; a popup may name the window it belongs to as owner. Give each container an id (c1, c2, ...), its application and name, and the containers it covers."""
+
+ASSIGN = """assign: for every target box id, the container it belongs to. Every target appears exactly once, or in unassigned."""
+
+LINKS = """links: relations between boxes of one container, given as three lists. A link must include at least one target; it may also include boxes that are not targets. A box belongs to at most one run, pair or record; column headings are the exception and may be named by every record of their table.
+  runs: boxes that are one continuous piece of text which the OCR engine split or the screen wrapped onto the next line, in reading order. joiner is "" when a word was cut in two by the wrap, " " otherwise.
+  pairs: a label and its value (a property and its value, a form field and its content). key and value are lists of box ids. A two-column grid of labels and values is pairs, not records.
+  records: one row of a table with three or more columns: members, left to right, each a list of box ids; header, the box ids of the column headings when they are visible, otherwise [].
+Boxes that merely sit side by side stand alone: tabs, toolbar buttons, menu items, breadcrumbs."""
+
+TEXTS = """texts: for every target box id, the verbatim text inside that box, read from Image 1. Preserve case, punctuation, whitespace and symbols. Never correct, complete or normalize commands, code, paths or identifiers. Use ? for a character you cannot resolve. An icon is not text: give "". missed: text no box covers, with its container."""
+
+DESCRIPTION = """description: what the boxes cannot express about this screen: selections, highlights, toggles, checked boxes, icons, diagrams and their relationships, dialogs, progress indicators, anything animating. Plain prose."""
+
+# group-only: replaces TEXTS as a whole; every other paragraph is shared
+NO_TEXTS = """Do not transcribe any text: the OCR reading of each box is used."""
+
+
+def system_prompt(arm: str = "A", transcribe: bool = True, pane: bool = False) -> str:
+    """Named paragraphs joined by a blank line; a variant swaps whole paragraphs and never edits inside one."""
+    if arm != "A":
+        raise ValueError(f"no system prompt for arm {arm!r}")
+    if pane:
+        raise ValueError("no system prompt with a pane label")
+    return "\n\n".join([ROLE, IMAGES, CONTAINERS, ASSIGN, LINKS, TEXTS if transcribe else NO_TEXTS, DESCRIPTION])
+
+
+def prompt_version(arm: str = "A", transcribe: bool = True, pane: bool = False, scale: float = 1.0) -> str:
+    """Names the system prompt and schema variant; the scale is here because the clean frame is scaled in memory and
+    its file hash does not change."""
+    return (VERSION + ("" if arm == "A" else "+" + arm) + ("" if transcribe else "+grouponly") + ("+pane" if pane else "")
+            + ("" if scale == 1.0 else f"+s{scale:g}"))

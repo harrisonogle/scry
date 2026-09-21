@@ -6,7 +6,7 @@ import scry
 import scry.schemas
 
 GONE_MODULES = ["merge", "correspond", "coalesce", "diff", "perceive", "interpret", "hierarchy", "agent", "diagnostics",
-                "stage2a", "prompts"]
+                "stage2a"]
 GONE_SCHEMAS = ["Line", "Region", "FrameRecord", "Transition", "DiffOp", "VlmRegion", "VlmPerception", "PerceptionRecord"]
 
 
