@@ -4,8 +4,9 @@ import pytest
 
 from scry.jsonl import read_jsonl, write_jsonl
 from scry.run import Run
-from scry.schemas import (Box, BoxChange, BoxText, Change, FrameBoxes, FrameTime, Lifetime, RawWord, Revert, box_ref,
-                          parse_box_ref)
+from scry.schemas import (Annotation, Box, BoxChange, BoxText, Change, Container, FrameBoxes, FrameTime, Lifetime,
+                          Missed, PairLink, RawWord, RecordLink, Revert, RunLink, TextReading, box_ref, link_members,
+                          link_refs, parse_box_ref)
 
 
 def test_records_round_trip_unicode(tmp_path: Path):
@@ -38,3 +39,51 @@ def test_box_ref_round_trip():
 def test_loaders_return_empty_lists_on_a_fresh_run(tmp_path: Path):
     run = Run(tmp_path / "r")
     assert run.load_frames() == [] and run.load_boxes() == [] and run.load_changes() == [] and run.load_lifetimes() == []
+    assert run.load_annotations() == []
+
+
+# spec §5's example record, verbatim
+SPEC_EXAMPLE = r"""
+{"frame": 155, "targets": ["b33"],
+ "containers": [{"id": "c2", "kind": "window", "app": "PowerShell", "name": "Administrator: PowerShell 7-preview (x64)",
+                 "owner": null, "covers": ["c1"], "rect": null}],
+ "assign": [{"box": "b33", "container": "c2", "pane": null}],
+ "links": [{"kind": "pair", "key": ["b28"], "value": ["b29"]},
+           {"kind": "run", "boxes": ["b61", "b62"], "joiner": ""},
+           {"kind": "record", "members": [["b70"], ["b71"], ["b72"]], "header": ["b64", "b65", "b66"]}],
+ "texts": [{"box": "b33", "text": "PS C:\\Users\\msadmin> a login"}],
+ "missed": [{"id": "m1", "text": "Networking", "container": "c1"}], "unassigned": [],
+ "description": "The Overview item is highlighted in the left navigation; the Properties tab is selected; …",
+ "repairs": 0, "model": "claude-opus-5", "prompt_version": "annotate-v1", "usage": {}, "error": null}
+"""
+
+
+def test_spec_example_parses():
+    rec = Annotation.model_validate_json(" ".join(line.strip() for line in SPEC_EXAMPLE.strip().splitlines()))
+    assert rec.targets == ["b33"]
+    assert rec.containers[0].covers == ["c1"] and rec.containers[0].rect is None
+    assert [l.kind for l in rec.links] == ["pair", "run", "record"]
+    assert rec.links[1].joiner == ""
+    assert rec.links[2].header == ["b64", "b65", "b66"]
+    assert rec.missed[0].id == "m1"
+    assert rec.repair_counts == {}
+
+
+def test_annotation_round_trip_unicode(tmp_path: Path):
+    a = Annotation(frame=1, targets=["b1", "b2"],
+                   containers=[Container(id="c1", kind="window", app="x", name='He said "hi" — 区')],
+                   links=[RunLink(boxes=["b1", "b2"], joiner="")],
+                   texts=[TextReading(box="b1", text="PS C:\\Users\\msadmin> az login")],
+                   missed=[Missed(id="m1", text="two\nlines")], description="d", model="m", prompt_version="annotate-v1")
+    b = Annotation(frame=2, targets=[], texts=None, model="m", prompt_version="annotate-v1")
+    write_jsonl(tmp_path / "annotations.jsonl", [a, b])
+    assert read_jsonl(tmp_path / "annotations.jsonl", Annotation) == [a, b]
+    first = (tmp_path / "annotations.jsonl").read_text(encoding="utf-8").splitlines()[0]
+    assert '"kind":"run"' in first and '"key"' not in first
+
+
+def test_link_members_and_refs():
+    rec = RecordLink(members=[["b70"], ["b71", "b73"], ["b72"]], header=["b64"])
+    assert link_members(rec) == ["b70", "b71", "b73", "b72"]
+    assert link_refs(rec) == ["b70", "b71", "b73", "b72", "b64"]
+    assert link_members(PairLink(key=["b1"], value=["b2", "b3"])) == ["b1", "b2", "b3"]

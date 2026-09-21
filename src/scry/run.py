@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 
 from scry.jsonl import read_jsonl, sha256_file
-from scry.schemas import Change, Frame, FrameBoxes, Lifetime, OutlineChapter
+from scry.schemas import Annotation, Change, Frame, FrameBoxes, Lifetime, OutlineChapter
 
 
 class Run:
@@ -18,6 +18,7 @@ class Run:
         self.boxes = self.root / "boxes.jsonl"
         self.changes = self.root / "changes.jsonl"
         self.lifetimes = self.root / "lifetimes.jsonl"
+        self.annotations = self.root / "annotations.jsonl"
         self.outline = self.root / "outline.json"
         self.manifest = self.root / "manifest.json"
         self.batches = self.root / "batches.json"
@@ -63,6 +64,9 @@ class Run:
 
     def load_lifetimes(self) -> list[Lifetime]:
         return read_jsonl(self.lifetimes, Lifetime)
+
+    def load_annotations(self) -> list[Annotation]:
+        return read_jsonl(self.annotations, Annotation)
 
     def load_outline(self) -> list[OutlineChapter]:
         if not self.outline.exists():

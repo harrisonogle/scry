@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 BBox = tuple[int, int, int, int]  # x0, y0, x1, y1 in original-frame pixels; x1/y1 exclusive
 
@@ -124,6 +124,88 @@ class Lifetime(BaseModel):
     last: FrameTime
     moved: bool = False
     boxes: list[str]  # box refs, frame order
+
+
+# ---------- annotate: annotations.jsonl (labels: proposals of a model, never measurements) ----------
+class Container(BaseModel):
+    id: str  # "c<n>", local to the record
+    kind: Literal["window", "popup"]
+    app: str
+    name: str
+    owner: str | None = None
+    covers: list[str] = []
+    rect: BBox | None = None  # set only under the arms where the model draws containers
+
+
+class Assign(BaseModel):
+    box: str  # frame-local box id, e.g. "b33"
+    container: str
+    pane: str | None = None
+
+
+class RunLink(BaseModel):
+    kind: Literal["run"] = "run"
+    boxes: list[str]
+    joiner: Literal["", " "]
+
+
+class PairLink(BaseModel):
+    kind: Literal["pair"] = "pair"
+    key: list[str]
+    value: list[str]
+
+
+class RecordLink(BaseModel):
+    kind: Literal["record"] = "record"
+    members: list[list[str]]  # the row's cells, left to right
+    header: list[str] = []
+
+
+Link = Annotated[RunLink | PairLink | RecordLink, Field(discriminator="kind")]
+
+
+class TextReading(BaseModel):
+    box: str
+    text: str
+
+
+class Missed(BaseModel):
+    id: str  # "m<n>", n from 1 in the record
+    text: str
+    container: str | None = None
+
+
+class Annotation(BaseModel):
+    """One record per call. A failed call has `error` set, no description, `texts` None, empty lists, and its targets."""
+    frame: int
+    targets: list[str]
+    containers: list[Container] = []
+    assign: list[Assign] = []
+    links: list[Link] = []
+    texts: list[TextReading] | None = None  # None: the call did not transcribe; a list, possibly empty: it did
+    missed: list[Missed] = []
+    unassigned: list[str] = []
+    description: str | None = None
+    repairs: int = 0
+    repair_counts: dict[str, int] = {}
+    label_clashes: int = 0
+    model: str
+    prompt_version: str
+    usage: dict = {}
+    error: str | None = None
+
+
+def link_members(link: RunLink | PairLink | RecordLink) -> list[str]:
+    if link.kind == "run":
+        return list(link.boxes)
+    if link.kind == "pair":
+        return link.key + link.value
+    return [b for cell in link.members for b in cell]
+
+
+def link_refs(link: RunLink | PairLink | RecordLink) -> list[str]:
+    """The members plus, for a record, its header."""
+    return link_members(link) + (link.header if link.kind == "record" else [])
 
 
 # ---------- outline ----------
