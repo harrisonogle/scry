@@ -1,5 +1,7 @@
 import base64
+import hashlib
 import io
+import json
 from pathlib import Path
 
 import numpy as np
@@ -7,10 +9,10 @@ from fakes import fake_sync_client, response, text, tool_use
 from minirun import mini_interpretations, mini_run
 from PIL import Image
 
-from scry.ask import TOOL_DEFS, Tools, ask, extract_citations
+from scry.ask import TOOL_DEFS, Tools, ask, extract_citations, tool_defs
 from scry.config import AskConfig, Config
 from scry.index import build_index
-from scry.prompts.ask import SYSTEM
+from scry.prompts.ask import SYSTEM, prompt_version, system_prompt
 
 
 def _indexed(tmp_path: Path, labels: bool = True):
@@ -27,6 +29,29 @@ def test_tool_defs():
     for d in TOOL_DEFS:
         assert d["input_schema"]["type"] == "object" and d["input_schema"]["required"] == required[d["name"]]
         assert set(required[d["name"]]) <= set(d["input_schema"]["properties"])
+
+
+def test_frames_is_on_by_default_and_on_is_what_it_was():
+    assert AskConfig().frames is True and Config().ask.frames is True
+    assert tool_defs(True) is TOOL_DEFS and system_prompt(True) is SYSTEM and prompt_version(True) == "ask-v1"
+    # pinned on purpose: with frames the agent gets, byte for byte, the prompt and the tools that P1 to P4 were answered with
+    assert hashlib.sha256(SYSTEM.encode()).hexdigest() == "03726cf8cdb1c94e79474c59d8081aa969f106d7a93e2253740d18478348f4fa"
+    assert hashlib.sha256(json.dumps(TOOL_DEFS, sort_keys=True).encode()).hexdigest() == "6aa65ae1b67494285b38dafb28d8a51fd4287098550f504bb00356461e0febfe"
+
+
+def test_without_frames_no_tool_returns_an_image_and_the_prompt_offers_no_look():
+    assert [d["name"] for d in tool_defs(False)] == ["search", "get_node", "get_transitions"]  # exactly get_frame and redecode go
+    assert tool_defs(False) == [d for d in TOOL_DEFS if d["name"] not in ("get_frame", "redecode")]  # the rest as they are
+    with_frames, without = SYSTEM.split("\n\n"), system_prompt(False).split("\n\n")
+    assert len(without) == len(with_frames) == 6
+    assert [i for i, (a, b) in enumerate(zip(with_frames, without)) if a != b] == [2, 3, 5]  # how to work, how sure, the last paragraph
+    flat, was = " ".join(system_prompt(False).split()), " ".join(SYSTEM.split())
+    for offer in ("Look at a frame", "look at the frame and read it yourself", "redecode"):  # every offer of a look the prompt makes
+        assert offer in was and offer not in flat, offer
+    assert "get_frame" not in flat
+    assert "You cannot look at the frames themselves" in flat
+    assert 'write a frame as "frame 12" and a text box as "12:b4"' in flat  # citing a frame is still asked for
+    assert prompt_version(False) == "ask-v1+noframes"
 
 
 def test_search_and_get_node_tools(tmp_path: Path):
@@ -114,6 +139,20 @@ def test_ask_loop_runs_tools_and_reports_cost(tmp_path: Path):
     assert last["role"] == "user"
     assert [(b["type"], b["tool_use_id"]) for b in last["content"]] == [("tool_result", "u2"), ("tool_result", "u3")]
     assert last["content"][0]["content"][1]["type"] == "image"
+
+
+def test_ask_without_frames_offers_the_index_tools_alone(tmp_path: Path):
+    client = fake_sync_client([response([tool_use("u1", "get_frame", {"frame": 12}), tool_use("u2", "search", {"query": "Creating"})], "tool_use"),
+                               response([text("done")], "end_turn")])
+    result = ask(_indexed(tmp_path), Config(ask=AskConfig(frames=False)), "q", client)
+    for kw in client.messages.calls:
+        assert set(kw) == {"model", "max_tokens", "system", "tools", "output_config", "cache_control", "messages"}
+        assert (kw["system"], kw["tools"], kw["cache_control"]) == (system_prompt(False), tool_defs(False), {"type": "ephemeral"})
+    refused, found = client.messages.calls[1]["messages"][-1]["content"]  # a tool that was not offered is an unknown tool
+    assert (refused["content"], refused["is_error"]) == ("error: unknown tool get_frame", True) and "is_error" not in found
+    assert [c.model_dump(exclude_none=True) for c in result.tool_log] == [
+        {"name": "get_frame", "input": {"frame": 12}, "error": "unknown tool"}, {"name": "search", "input": {"query": "Creating"}, "results": 3}]
+    assert (result.text, result.prompt) == ("done", "ask-v1+noframes")  # the result says which prompt answered
 
 
 def test_ask_asks_for_prompt_caching_and_prices_the_four_usage_keys(tmp_path: Path):

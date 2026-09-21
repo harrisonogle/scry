@@ -7,7 +7,7 @@ from scry.ask import TOOL_DEFS
 def _prompts() -> tuple[list[str], list[str]]:
     """The system prompts of plan 3, and every text a model reads from it (the prompts and the tool descriptions)."""
     systems = [scry.prompts.interpret.SYSTEM, scry.prompts.summarize.BOUNDARY_SYSTEM, scry.prompts.summarize.ELABORATE_SYSTEM,
-               scry.prompts.ask.SYSTEM]
+               scry.prompts.ask.SYSTEM, scry.prompts.ask.system_prompt(frames=False)]
     return systems, systems + [d["description"] for d in TOOL_DEFS] + list(scry.prompts.summarize.ELABORATE_LEVEL.values())
 
 

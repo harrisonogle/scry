@@ -135,6 +135,7 @@ class AskConfig(BaseModel):
     max_turns: int = 12  # model turns before the loop gives up
     max_tool_result_chars: int = 60000  # characters; a JSON tool result longer than this is cut
     redecode_max_frames: int = 6  # frames one redecode call may return
+    frames: bool = True  # false: the tools that return images (get_frame, redecode) are not offered; the index alone answers
 
 
 class OutlineConfig(BaseModel):

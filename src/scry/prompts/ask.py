@@ -1,5 +1,6 @@
 """The prompt contract of `ask`: the system prompt and the descriptions of its five tools (prompt text too). The prompt
-guides and does not prohibit; nothing in it comes from a video under evaluation."""
+guides and does not prohibit; nothing in it comes from a video under evaluation. With `[ask] frames = false` the two
+tools that return images are not offered, and `system_prompt` swaps the three sentences that offer a look at a frame."""
 
 VERSION = "ask-v1"
 
@@ -50,6 +51,31 @@ Whether something was done
 
 When the record does not answer the question, say so and name the time range worth inspecting; redecode can recover
 frames between the captured ones."""
+
+# Every sentence of SYSTEM that tells the agent it can look at a frame, and what stands in its place when it cannot.
+_WITHOUT_FRAMES = {
+    " Look\nat a frame whenever a text is doubtful or the question is about something visual.":
+        " You\ncannot look at the frames themselves; answer from the record alone.",
+    ", or look at the frame and read it yourself.": ".",
+    "; redecode can recover\nframes between the captured ones.": ".",
+}
+
+
+def system_prompt(frames: bool = True) -> str:
+    """SYSTEM as it stands, or, without frames, SYSTEM with each sentence that offers a look replaced."""
+    if frames:
+        return SYSTEM
+    out = SYSTEM
+    for offer, instead in _WITHOUT_FRAMES.items():
+        if out.count(offer) != 1:
+            raise ValueError(f"the ask prompt no longer holds {offer!r}")
+        out = out.replace(offer, instead)
+    return out
+
+
+def prompt_version(frames: bool = True) -> str:
+    return VERSION if frames else VERSION + "+noframes"
+
 
 TOOL_DESCRIPTIONS = {
     "search": (
