@@ -3,9 +3,13 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from scry.jsonl import read_jsonl, sha256_file
 from scry.schemas import Annotation, Change, Frame, FrameBoxes, Lifetime, OutlineChapter
+
+if TYPE_CHECKING:
+    from scry.annotate.join import Labels
 
 
 class Run:
@@ -67,6 +71,15 @@ class Run:
 
     def load_annotations(self) -> list[Annotation]:
         return read_jsonl(self.annotations, Annotation)
+
+    def load_labels(self) -> Labels | None:
+        """The joined view of annotations.jsonl (scry.annotate.join.Labels): labels per box, frame and lifetime, joined
+        onto the measured records on read. None when annotations.jsonl is absent or holds no record."""
+        annotations = self.load_annotations()
+        if not annotations:
+            return None
+        from scry.annotate.join import build_labels
+        return build_labels(annotations, self.load_boxes(), self.load_lifetimes())
 
     def load_outline(self) -> list[OutlineChapter]:
         if not self.outline.exists():
