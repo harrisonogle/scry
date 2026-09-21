@@ -1,0 +1,33 @@
+# P5 (ledger L61): referencing arm D (one clean image, no overlay; the user turn lists every OCR box as id: x0,y0,x1,y1)
+# on the working default (incremental, transcribing), through `annotate` only, at the three scales where P3 (ledger L60)
+# has arm A runs to compare with: 1.0, 0.67 and 0.5. Same two spans and the same judging as P3 (the labels, directly:
+# second-reading agreement, the edited line on frame 155, repairs, popups, links, containers), scored with P3's scripts
+# against P3's s100, s067 and s050 runs. Two cold repeats: 12 runs.
+phase = "p5"
+source = "runs/p0"
+stages = ["read", "track", "annotate"]
+repeats = 2
+
+[spans.smoke]
+frames = "145-155"
+
+[spans.span2]
+frames = "155-187"
+
+[axis.scale.d100]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.arm" = "D"
+"annotate.scale" = 1.0
+
+[axis.scale.d067]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.arm" = "D"
+"annotate.scale" = 0.67
+
+[axis.scale.d050]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.arm" = "D"
+"annotate.scale" = 0.5
