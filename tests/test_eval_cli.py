@@ -30,6 +30,25 @@ def test_p1_matrix_expands_to_the_planned_runs(monkeypatch):
     assert all(cfg.annotate.mode == "off" for name, cfg in cfgs.items() if "-none-" in name)
 
 
+def test_p6_matrix_asks_again_over_the_five_p4_pipelines(monkeypatch):
+    """Reads the committed matrix on purpose: P6 builds nothing, and each run's config is the one its P4 pipeline had."""
+    monkeypatch.chdir(REPO)
+    m = load_matrix(Path("evals/p6.toml"))
+    specs = expand(m)
+    assert {s.name: str(s.copy_from) for s in specs} == {
+        "full-inc-transcribing-indexonly-r1": "runs/eval/p4/full-inc-transcribing-r1",
+        "full-inc-transcribing-indexonly-r2": "runs/eval/p4/full-inc-transcribing-r2",
+        "full-none-indexonly-r1": "runs/eval/p4/full-none-r1", "full-none-indexonly-r2": "runs/eval/p4/full-none-r2",
+        "full-inc-transcribing-batch-indexonly-r1": "runs/eval/p4b/full-inc-transcribing-batch-r1"}
+    assert all(s.stages == ("ask",) and s.span.frames == (0, 220) for s in specs)
+    by_origin = {(p4.phase, p4.name): config_for(p4m, p4) for p4m in (load_matrix(Path("evals/p4.toml")), load_matrix(Path("evals/p4b.toml")))
+                 for p4 in expand(p4m)}
+    for s in specs:
+        cfg, origin = config_for(m, s), by_origin[s.copy_from.parts[-2], s.copy_from.parts[-1]]
+        assert cfg.ask.frames is False and origin.ask.frames is True
+        assert cfg.model_dump(exclude={"ask"}) == origin.model_dump(exclude={"ask"})  # the pipeline's config, to the key
+
+
 def _stage(name: str, fail_first: bool = False):
     """A fake stage: it only adds a manifest entry with usage."""
     calls = itertools.count(1)

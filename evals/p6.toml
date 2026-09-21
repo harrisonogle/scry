@@ -1,0 +1,76 @@
+# P6: WHAT THE INDEX ITSELF HOLDS. P1, P2 and P4 found that every annotation base, including no annotation at a quarter
+# of the cost, answers every question, because the answering agent opens the frames and reads them itself. P6 asks the
+# same whole-video questions over the same five indexes with the agent's eyes withheld: `[ask] frames = false` offers
+# neither get_frame nor redecode, and the system prompt says so (prompt "ask-v1+noframes", recorded on every answer).
+# The other side of the comparison is P4's own answers (with frames, prompt "ask-v1"; same indexes, same question file),
+# in docs/results/p4/scores.json and docs/results/p4b/scores.json.
+#
+# NOTHING IS BUILT. The [copy] table copies the pipeline of each finished P4 and P4b run into runs/eval/p6/<run>, byte
+# for byte: every record, the index, the manifest, the frames, the call cache; never its answers, verdicts, scorecard,
+# evalrun.json or config.json. The only stage is `ask` (a matrix with [copy] is refused any other), so no stage can
+# rebuild a copied pipeline. A copy is refused unless the P4 run is finished, covers frames 0 to 220 and was built with
+# this file's config in every section but [ask]. Nothing is written under runs/eval/p4 or runs/eval/p4b.
+#
+# How to read the report. P6's own: the question set's dollars and seconds (27 questions a run; with frames P4 paid
+# $0.21 to $0.27 a question, $5.68 to $7.34 a run, $33.10 for these five, and an answer without images should cost
+# less) and the judge's (P4: $0.15 to $0.27 a run). Copied, NOT spent again: the pipeline dollars, $ / frame and
+# $ / video, which come from the copied manifests and are what P4 paid for these indexes (so "Spend over all 5 runs:
+# pipeline ..." restates P4's spend); pipeline seconds are 0; the command metrics are P4's, recomputed from the copied
+# records. Every run shows `cold: no` and the warning "run is not cold": that is how the report says the pipelines
+# were copied and not built; each evalrun.json names its source in `copied_from`.
+#
+# Procedure, from the repository root. Only the steps marked PAID call a model.
+#   1. uv run scry eval run evals/p6.toml --dry-run    # 5 runs, each "ask (pipeline copied from runs/eval/p4...)"
+#   2. PAID, at most about $7 a run. Either all five, one after the other:
+#        uv run scry eval run evals/p6.toml
+#      or side by side, one process each:
+#        uv run scry eval run evals/p6.toml --only full-inc-transcribing-indexonly-r1
+#        uv run scry eval run evals/p6.toml --only full-inc-transcribing-indexonly-r2
+#        uv run scry eval run evals/p6.toml --only full-none-indexonly-r1
+#        uv run scry eval run evals/p6.toml --only full-none-indexonly-r2
+#        uv run scry eval run evals/p6.toml --only full-inc-transcribing-batch-indexonly-r1
+#      Safe to re-issue: a finished run is skipped, a failed one asks only the questions that failed.
+#   3. The copies are intact when each of these prints exactly: answers.jsonl, config.json and evalrun.json differ;
+#      judgments.jsonl and scorecard.json are only in the P4 run (after steps 4 and 5 those two differ instead):
+#        diff -rq runs/eval/p4/full-inc-transcribing-r1 runs/eval/p6/full-inc-transcribing-indexonly-r1
+#        diff -rq runs/eval/p4/full-inc-transcribing-r2 runs/eval/p6/full-inc-transcribing-indexonly-r2
+#        diff -rq runs/eval/p4/full-none-r1 runs/eval/p6/full-none-indexonly-r1
+#        diff -rq runs/eval/p4/full-none-r2 runs/eval/p6/full-none-indexonly-r2
+#        diff -rq runs/eval/p4b/full-inc-transcribing-batch-r1 runs/eval/p6/full-inc-transcribing-batch-indexonly-r1
+#   4. PAID, about $0.25 a run:  uv run scry eval judge evals/p6.toml
+#   5. uv run scry eval report evals/p6.toml           # docs/results/p6/report.md and scores.json
+phase = "p6"
+source = "runs/p0"
+stages = ["ask"]
+repeats = 2
+
+[spans.full]
+frames = "0-220"
+ground_truth = "docs/ground-truth/span2-commands.md"
+questions = "docs/ground-truth/full-questions.md"
+
+# the three bases as P4 and P4b built them: what each copied pipeline must have been built with
+[axis.base.inc-transcribing]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 1.0
+
+[axis.base.none]
+"annotate.mode" = "off"
+
+[axis.base.inc-transcribing-batch]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 1.0
+"model.mode" = "batch"
+
+[axis.ask.indexonly]
+"ask.frames" = false
+
+# run → the finished run whose pipeline it copies. The matrix has exactly these five runs (P4b ran once: no batch r2).
+[copy]
+full-inc-transcribing-indexonly-r1 = "runs/eval/p4/full-inc-transcribing-r1"
+full-inc-transcribing-indexonly-r2 = "runs/eval/p4/full-inc-transcribing-r2"
+full-none-indexonly-r1 = "runs/eval/p4/full-none-r1"
+full-none-indexonly-r2 = "runs/eval/p4/full-none-r2"
+full-inc-transcribing-batch-indexonly-r1 = "runs/eval/p4b/full-inc-transcribing-batch-r1"
