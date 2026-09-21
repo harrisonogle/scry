@@ -13,12 +13,6 @@ def test_fields_of_arm_a():
     assert output_model("A", True) is output_model("A", True)  # one class, one schema hash
 
 
-def test_arm_d_asks_for_what_arm_a_asks_for():
-    assert output_model("D", True) is output_model("A", True) and output_model("D", False) is output_model("A", False)
-    with pytest.raises(ValueError):
-        output_model("B", True)  # arms B and C are not built
-
-
 def _walk(node):
     if isinstance(node, dict):
         yield node

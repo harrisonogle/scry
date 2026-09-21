@@ -173,7 +173,7 @@ def test_a_copied_pipeline_is_byte_identical_and_only_the_questions_are_asked(tm
             materialise(m, replace(spec, name="smoke-indexonly-r2", copy_from=other), root, IDENTITY)
     assert not (root / "p10" / "smoke-indexonly-r2").exists()
     # [ask] is what such a phase changes, and a config written before a key existed holds that key's default
-    older = altered("older", "config.json", lambda d: (d["ask"].update(max_turns=3), d["ask"].pop("frames"), d["annotate"].pop("arm")))
+    older = altered("older", "config.json", lambda d: (d["ask"].update(max_turns=3), d["ask"].pop("frames")))
     assert check_copy(m, replace(spec, copy_from=older))["status"] == "done"
     with pytest.raises(ValueError, match="different spec"):  # the table changed under a run that exists
         materialise(m, replace(spec, copy_from=older), root, IDENTITY)

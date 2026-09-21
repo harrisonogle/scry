@@ -1,3 +1,5 @@
+# NOTE: arm D was removed from the code after this phase (ledger L63). This matrix runs only from the tag
+# `arm-d-evaluated` (`git checkout arm-d-evaluated`); on later code the key `annotate.arm` is refused.
 # P5 (ledger L61): referencing arm D (one clean image, no overlay; the user turn lists every OCR box as id: x0,y0,x1,y1)
 # on the working default (incremental, transcribing), through `annotate` only, at the three scales where P3 (ledger L60)
 # has arm A runs to compare with: 1.0, 0.67 and 0.5. Same two spans and the same judging as P3 (the labels, directly:

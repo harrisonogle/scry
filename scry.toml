@@ -38,7 +38,6 @@ margin = 0.5
 [annotate]
 # working default, for the owner to confirm: incremental transcribing (docs/decision-ledger.md, L59)
 mode = "incremental"
-arm = "A"  # "A": a second image with numbered boxes; "D": one clean image and the boxes listed as id: x0,y0,x1,y1
 transcribe = true
 scale = 1.0
 

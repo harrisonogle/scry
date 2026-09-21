@@ -30,21 +30,14 @@ DESCRIPTION = """description: what the boxes cannot express about this screen: s
 # group-only: replaces TEXTS as a whole; every other paragraph is shared
 NO_TEXTS = """Do not transcribe any text: the OCR reading of each box is used."""
 
-# arm D (one clean image; the user turn lists every box as id and rectangle; ledger L61) replaces IMAGES and TEXTS as
-# wholes. TEXTS_D is TEXTS with "read from Image 1" as "read from the screenshot"; every other paragraph is arm A's.
-IMAGES_D = """You are shown one screenshot. The user message lists every piece of text an OCR engine detected on it as a box id with its rectangle, b1: x0,y0,x1,y1, in reading order, in the coordinates it states. Use the rectangles to know which id refers to which text on screen. The user message also names the targets: the boxes you are asked to label."""
-
-TEXTS_D = """texts: for every target box id, the verbatim text inside that box, read from the screenshot. Preserve case, punctuation, whitespace and symbols. Never correct, complete or normalize commands, code, paths or identifiers. Use ? for a character you cannot resolve. An icon is not text: give "". missed: text no box covers, with its container."""
-
 
 def system_prompt(arm: str = "A", transcribe: bool = True, pane: bool = False) -> str:
     """Named paragraphs joined by a blank line; a variant swaps whole paragraphs and never edits inside one."""
-    if arm not in ("A", "D"):
+    if arm != "A":
         raise ValueError(f"no system prompt for arm {arm!r}")
     if pane:
         raise ValueError("no system prompt with a pane label")
-    images, texts = (IMAGES, TEXTS) if arm == "A" else (IMAGES_D, TEXTS_D)
-    return "\n\n".join([ROLE, images, CONTAINERS, ASSIGN, LINKS, texts if transcribe else NO_TEXTS, DESCRIPTION])
+    return "\n\n".join([ROLE, IMAGES, CONTAINERS, ASSIGN, LINKS, TEXTS if transcribe else NO_TEXTS, DESCRIPTION])
 
 
 def prompt_version(arm: str = "A", transcribe: bool = True, pane: bool = False, scale: float = 1.0) -> str:

@@ -72,13 +72,10 @@ class AnnotateConfig(BaseModel):
     # "incremental": the first frame and every frame whose incoming transition changed pixels, the targets being the
     # boxes whose lifetime starts there or continues there by a move; "off": the "no annotation" base. [model] mode =
     # "batch" works with each.
+    # Incremental annotation is built for the id-based arms only: when the `arm` key arrives, a validator here refuses
+    # mode = "incremental" with arm B or C ("incremental annotation needs arm A or D").
     # The default is the working default of ledger L59 (incremental, transcribing), for the owner to confirm.
     mode: Literal["every_frame", "incremental", "off"] = "incremental"
-    # how the model is told which box is which (the referencing arm). "A": a second image of the frame with every box
-    # outlined and numbered; "D": the clean frame alone, and the user turn lists every box as id: x0,y0,x1,y1. Both
-    # answer by box id, so every mode, transcribe and scale works with each. Arms B and C (the model draws rectangles
-    # or gives points, and code assigns the boxes) are not built, so there is no combination to refuse (ledger L61).
-    arm: Literal["A", "D"] = "A"
     transcribe: bool = True  # true: the call also returns a second reading (texts, missed); false: group-only
     scale: float = Field(1.0, gt=0, le=1)  # factor applied to every image sent; tags keep their pixel size
 

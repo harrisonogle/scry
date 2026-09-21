@@ -52,44 +52,6 @@ def test_partial_targets_churn_and_unsettled(tmp_path: Path):
                                   "Return the JSON object."]
 
 
-COORDS = "Coordinates are pixels of the 128x64 frame: top-left origin, x1 and y1 exclusive."
-
-
-def test_arm_d_blocks(tmp_path: Path):
-    frames, boxes = fixture_e()
-    frame_png, _ = _pngs(tmp_path)
-    blocks = build_blocks(frames[0], boxes[0], CallPlan(0, ("b1", "b2")), "D", 1.0, frame_png, None)
-    assert [b["type"] for b in blocks] == ["text", "image", "text", "text", "text", "text"]
-    assert _texts(blocks) == ["Screenshot (frame 0, t=0.00s):", COORDS,
-                              "Boxes, as id: x0,y0,x1,y1 in reading order: b1: 4,4,40,20; b2: 70,4,110,20.",
-                              "Targets: all boxes.", "Return the JSON object."]
-    assert blocks[1]["source"]["data"] == base64.standard_b64encode(frame_png.read_bytes()).decode()  # the clean frame as it is
-    empty = build_blocks(frames[0], fb(0, []), CallPlan(0, ()), "D", 1.0, frame_png, None)
-    assert _texts(empty)[2:4] == ["Boxes: none.", NO_TARGETS]
-    unchanged = build_blocks(frames[1], boxes[1], CallPlan(1, ()), "D", 1.0, frame_png, None)  # the same line under both arms
-    assert _texts(unchanged)[2:] == ["Boxes, as id: x0,y0,x1,y1 in reading order: b1: 4,4,40,20; b2: 70,4,110,20.", NO_TARGETS,
-                                     "Return the JSON object."]
-    hashes = input_hashes(frames[0], None, blocks)
-    assert hashes[:2] == ["sha-0", "-"]  # no overlay is sent
-    moved = fb(0, [mk("b1", 4, 4, 40, 20, "a"), mk("b2", 71, 4, 110, 20, "b")])
-    other = build_blocks(frames[0], moved, CallPlan(0, ("b1", "b2")), "D", 1.0, frame_png, None)
-    assert input_hashes(frames[0], None, other)[2] != hashes[2]  # the rectangles are text of the user turn, so they are hashed
-
-
-def test_arm_d_blocks_at_a_reduced_scale(tmp_path: Path):
-    frame_png, _ = _pngs(tmp_path)
-    boxes = fb(0, [mk("b1", 4, 4, 40, 20, "a", in_churn=True), mk("b2", 70, 4, 110, 20, "b")])
-    blocks = build_blocks(frame(0, 128, 64, settled=False), boxes, CallPlan(0, ("b2",)), "D", 0.5, frame_png, None)
-    assert _texts(blocks) == [
-        "Screenshot (frame 0, t=0.00s):",
-        COORDS + " The image is scaled by 0.5; every coordinate is in the unscaled 128x64 frame.",
-        "Boxes, as id: x0,y0,x1,y1 in reading order: b1: 4,4,40,20; b2: 70,4,110,20.",  # unscaled at every image scale
-        "Targets: b2.", "Boxes inside animating areas (low confidence): b1.",
-        "This frame was captured while the screen was still changing (not settled).", "Return the JSON object."]
-    images = [b for b in blocks if b["type"] == "image"]
-    assert len(images) == 1 and Image.open(io.BytesIO(base64.standard_b64decode(images[0]["source"]["data"]))).size == (64, 32)
-
-
 def test_every_frame_call_is_pinned(tmp_path: Path):
     # paid answers are cached under these: the every-frame call's system prompt, version, user-turn text and key must
     # not change by a byte unless the version is bumped (ledger L56). User-turn digests taken at f0e7691 and unchanged
@@ -126,9 +88,8 @@ def test_no_ocr_text_is_sent(tmp_path: Path):
     frames, _ = fixture_e()
     frame_png, overlay_png = _pngs(tmp_path)
     boxes = fb(0, [mk("b1", 4, 4, 40, 20, "SECRET-A"), mk("b2", 70, 4, 110, 20, "SECRET-B")])
-    for arm, overlay in (("A", overlay_png), ("D", None)):  # arm D lists ids and rectangles, never what OCR read
-        blocks = build_blocks(frames[0], boxes, CallPlan(0, ("b1", "b2")), arm, 1.0, frame_png, overlay)
-        assert not any("SECRET" in t for t in _texts(blocks))
+    blocks = build_blocks(frames[0], boxes, CallPlan(0, ("b1", "b2")), "A", 1.0, frame_png, overlay_png)
+    assert not any("SECRET" in t for t in _texts(blocks))
 
 
 def test_input_hashes(tmp_path: Path):
