@@ -49,6 +49,18 @@ def _frames(run: Run, shas: list[str]) -> None:
     write_jsonl(run.frames, recs)
 
 
+def test_identical_runs_write_identical_bytes(tmp_path: Path):
+    written = []
+    for name in ("first", "second"):
+        run = Run(tmp_path / name)
+        _frames(run, ["a", "b"])
+        run_read(run, Config(), FakeEngine([RawLine("x", 0.9, (1, 1, 5, 5), None)]))
+        written.append(run.boxes.read_bytes())
+        entry = run.manifest_read()["stages"]["read"]
+        assert entry["seconds"] >= 0 and entry["seconds_per_frame"] >= 0  # the wall time is in the manifest
+    assert written[0] == written[1] and b"seconds" not in written[0]
+
+
 def test_run_read_writes_boxes_and_skips_when_up_to_date(tmp_path: Path):
     run = Run(tmp_path / "r")
     _frames(run, ["a", "b"])

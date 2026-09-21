@@ -40,10 +40,11 @@ class Box(BaseModel):
 
 
 class FrameBoxes(BaseModel):
+    """Nothing here varies between identical runs: the file's hash is every later stage's up-to-date check, so read's
+    wall time is in the manifest (a `seconds` key in an older file is ignored on load)."""
     frame: int
     png: str
     engine: dict  # the adapter's whole settings() dict
-    seconds: float = 0.0  # wall time of the OCR call
     boxes: list[Box] = []
 
 

@@ -38,14 +38,17 @@ def run_read(run: Run, cfg: Config, engine: OcrEngine | None = None) -> None:
     engine = engine or get_engine(cfg.read)
     records: list[FrameBoxes] = []
     dropped = 0
+    total = 0.0  # wall time of the OCR calls: it goes to the manifest, never into boxes.jsonl (ledger L56)
     for rec in run.load_frames():
         t0 = time.perf_counter()
         raw = engine.recognize(run.root / rec.png)
-        seconds = round(time.perf_counter() - t0, 3)
+        seconds = time.perf_counter() - t0
+        total += seconds
         boxes, d = assign_ids(raw, rec.churn_regions)
         dropped += d
-        records.append(FrameBoxes(frame=rec.frame, png=rec.png, engine=engine.settings(), seconds=seconds, boxes=boxes))
+        records.append(FrameBoxes(frame=rec.frame, png=rec.png, engine=engine.settings(), boxes=boxes))
         log.debug("frame %d: %d boxes in %.2fs", rec.frame, len(boxes), seconds)
     write_jsonl(run.boxes, records)
     run.stage_done("read", inputs, ch, frames=len(records), boxes=sum(len(r.boxes) for r in records), dropped_empty=dropped,
-                   seconds=round(sum(r.seconds for r in records), 1), engine=engine.settings())
+                   seconds=round(total, 1), seconds_per_frame=round(total / len(records), 3) if records else None,
+                   engine=engine.settings())
