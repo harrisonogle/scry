@@ -1,7 +1,9 @@
 # P6: WHAT THE INDEX ITSELF HOLDS. P1, P2 and P4 found that every annotation base, including no annotation at a quarter
 # of the cost, answers every question, because the answering agent opens the frames and reads them itself. P6 asks the
-# same whole-video questions over the same five indexes with the agent's eyes withheld: `[ask] frames = false` offers
-# neither get_frame nor redecode, and the system prompt says so (prompt "ask-v1+noframes", recorded on every answer).
+# same whole-video questions over the same five indexes with the agent's eyes withheld, and nothing else: under
+# `[ask] frames = false` no pixel reaches the agent. get_frame still returns a frame's record (the description in
+# force and every text alive there) without its image and is described as that; redecode, which returns only images,
+# is not offered; the system prompt says so (prompt "ask-v1+noframes", recorded on every answer).
 # The other side of the comparison is P4's own answers (with frames, prompt "ask-v1"; same indexes, same question file),
 # in docs/results/p4/scores.json and docs/results/p4b/scores.json.
 #
