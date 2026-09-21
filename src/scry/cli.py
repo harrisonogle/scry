@@ -240,14 +240,21 @@ def setup(config: Path | None = None):
 
 
 @app.command()
-def outline(video: Path, out: Path = typer.Option(..., "--out"), import_path: Path | None = typer.Option(None, "--import"), config: Path | None = None):
-    """Stage 0 (optional): Gemini agentic chapter outline, or import one from a JSON file."""
-    from scry.outline import run_outline
+def outline(video: Path, out: Path = typer.Option(..., "--out"), import_path: Path | None = typer.Option(None, "--import"), config: Path | None = None,
+            verbose: bool = False):
+    """outline (optional): Gemini agentic chapter outline of the whole video → outline.json, or import one from a JSON
+    file. The Gemini call costs money and needs `uv sync --extra outline` and GEMINI_API_KEY."""
+    _setup_logging(verbose)
+    from scry.outline import OutlineError, run_outline
     cfg = load_config(config)
     if import_path is None and not cfg.outline.enabled:
         typer.echo("outline disabled in config (set [outline] enabled = true) and no --import given")
         raise typer.Exit(code=1)
-    run_outline(Run(out), cfg, video, import_path)
+    try:
+        run_outline(Run(out), cfg, video, import_path)
+    except OutlineError as e:
+        typer.echo(f"outline: {e}")
+        raise typer.Exit(code=1)
 
 
 from scry.evaluation.cli import eval_app  # noqa: E402

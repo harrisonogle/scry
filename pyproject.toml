@@ -19,7 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 embed = ["fastembed>=0.3"]
-outline = ["google-genai>=1.0"]
+outline = ["google-genai>=2.23"]  # 2.23.0 is the version the agentic interactions call was verified with
 
 [project.scripts]
 scry = "scry.cli:app"

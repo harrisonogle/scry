@@ -94,5 +94,5 @@ design's §21. This list is the short "what next" view across all three.
 ## Unverified claims marked in the design
 
 - Search the design for `[verify]`: Batches `custom_id` limits and Files API references inside batch requests (§20.7),
-  the Windows OCR port (§20.8), the Gemini `interactions` input shape (§6, Task 20), the macOS floor for Vision
+  the Windows OCR port (§20.8), the Gemini `interactions` input shape (§6, Task 20; verified live on 2026-09-21 with google-genai 2.23.0, see `src/scry/outline.py`), the macOS floor for Vision
   revision 3.
