@@ -1,0 +1,21 @@
+# P4 (ledger L59): FINDABILITY at the scale of the whole 221-frame sample, where the answering agent cannot look at
+# everything. The working default (incremental, transcribing) against no annotation; the whole-video question set
+# (docs/ground-truth/full-questions.md, a draft for the owner to correct) and the command ground truth of frames 155 to 187
+# scored against the whole-video index; two cold repeats: 4 runs.
+phase = "p4"
+source = "runs/p0"
+stages = ["read", "track", "annotate", "interpret", "summarize", "index", "ask"]
+repeats = 2
+
+[spans.full]
+frames = "0-220"
+ground_truth = "docs/ground-truth/span2-commands.md"
+questions = "docs/ground-truth/full-questions.md"
+
+[axis.base.inc-transcribing]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 1.0
+
+[axis.base.none]
+"annotate.mode" = "off"

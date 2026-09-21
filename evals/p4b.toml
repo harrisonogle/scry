@@ -1,0 +1,17 @@
+# P4b (ledger L59): the same whole-sample run of the working default in BATCH mode, once: the first live use of the
+# Message Batches path, for the sync-against-batch comparison of cost and wall time the owner asked for.
+phase = "p4b"
+source = "runs/p0"
+stages = ["read", "track", "annotate", "interpret", "summarize", "index", "ask"]
+repeats = 1
+
+[spans.full]
+frames = "0-220"
+ground_truth = "docs/ground-truth/span2-commands.md"
+questions = "docs/ground-truth/full-questions.md"
+
+[axis.base.inc-transcribing-batch]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 1.0
+"model.mode" = "batch"
