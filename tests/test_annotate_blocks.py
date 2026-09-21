@@ -49,7 +49,8 @@ def test_partial_targets_churn_and_unsettled(tmp_path: Path):
 
 def test_every_frame_call_is_pinned(tmp_path: Path):
     # paid answers are cached under these: the every-frame call's system prompt, version, user-turn text and key must
-    # not change by a byte when the incremental call's wording does (ledger L56). Digests taken at f0e7691.
+    # not change by a byte when the incremental call's wording does (ledger L56). User-turn digests taken at f0e7691;
+    # the system prompt's digest, the version and the key retaken at annotate-v3 (ledger L57).
     frames, boxes = fixture_e()
     frame_png, overlay_png = _pngs(tmp_path)
     full = build_blocks(frames[0], boxes[0], plan_calls(boxes, [], [], "every_frame")[0], "A", 1.0, frame_png, overlay_png)
@@ -58,11 +59,11 @@ def test_every_frame_call_is_pinned(tmp_path: Path):
     none = fb(0, [])  # a frame without boxes: "Targets: none." in every-frame mode too
     empty = build_blocks(frames[0], none, plan_calls([none], [], [], "every_frame")[0], "A", 1.0, frame_png, overlay_png)
     assert input_hashes(frames[0], None, empty)[2] == "72698cf9088219af08f3ea60214fad9330cf051e1fb95d9ed409f45d87399b89"
-    assert sha256_obj([system_prompt(), system_prompt(transcribe=False)]) == "493dff2d1efe078873ee2b151702a4fa528c5f3bf169d7c9281b2f5855390711"
-    assert (prompt_version(), prompt_version(transcribe=False)) == ("annotate-v2", "annotate-v2+grouponly")
+    assert sha256_obj([system_prompt(), system_prompt(transcribe=False)]) == "2bed1ce0451e7988a96c887007b8e4bebbc278d5753c08caeef8b754c39e1755"
+    assert (prompt_version(), prompt_version(transcribe=False)) == ("annotate-v3", "annotate-v3+grouponly")
     schema = sha256_obj(output_model("A", True).model_json_schema())
     assert CallCache.key("annotate", "fake-model", "high", 1000, prompt_version(), schema, hashes) == \
-        "f76a361711cc101d5e02ee3f71b984723fa20b2614f767a1768288411f23fd8e"
+        "1d3d65a2793bdaad60622fb52cf70656687ac07f3a3172fb5a18fc3428485ddb"
 
 
 def test_scale_halves_the_clean_frame_in_memory(tmp_path: Path):

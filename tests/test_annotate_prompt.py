@@ -13,6 +13,10 @@ def test_arm_a_paragraphs():
     head, pairs = paras[4].split("\n")[0], next(line for line in paras[4].split("\n") if line.startswith("  pairs:"))
     assert "A box id may appear in at most one link" in head
     assert "inside that pair's key or value and give no separate run" in pairs and "key [b4, b5] and value [b6]" in pairs
+    # separate lines are not a run, and a pair needs two different boxes (ledger L57)
+    runs = next(line for line in paras[4].split("\n") if line.startswith("  runs:"))
+    assert "separate rows of a list or table and separate menu items are NOT a run, even when they follow one another" in runs
+    assert "a pair needs at least two different boxes" in pairs and "give no link for it" in pairs
 
 
 def test_group_only_differs_in_one_paragraph():
@@ -24,10 +28,10 @@ def test_group_only_differs_in_one_paragraph():
 
 
 def test_versions():
-    assert prompt_version() == "annotate-v2"
-    assert prompt_version(transcribe=False) == "annotate-v2+grouponly"
-    assert prompt_version(scale=0.5) == "annotate-v2+s0.5"
-    assert prompt_version(transcribe=False, scale=0.67) == "annotate-v2+grouponly+s0.67"
+    assert prompt_version() == "annotate-v3"
+    assert prompt_version(transcribe=False) == "annotate-v3+grouponly"
+    assert prompt_version(scale=0.5) == "annotate-v3+s0.5"
+    assert prompt_version(transcribe=False, scale=0.67) == "annotate-v3+grouponly+s0.67"
 
 
 def test_no_sample_video_content():
