@@ -43,7 +43,7 @@ def totals(changes: list[Change]) -> dict:
             "moved": sum(len(c.moved) for c in changes), "same_place": sum(c.same_place for c in changes),
             "unchanged": sum(c.unchanged for c in changes), "variants": sum(c.variants for c in changes),
             "flicker_new": sum(len(c.flicker_new) for c in changes), "flicker_lost": sum(len(c.flicker_lost) for c in changes),
-            "reverts": sum(len(c.reverts) for c in changes), "textless": sum(p.textless for p in with_pixels),
+            "reverts": sum(c.reverts is not None for c in changes), "textless": sum(p.textless for p in with_pixels),
             "rect_only": sum(p.rect_only for p in with_pixels)}
 
 

@@ -35,7 +35,7 @@ def test_keystroke_is_one_appended_record():
     p = c.pixels
     assert (p.changed_fraction, p.components, p.textless, p.textless_area, p.touched_share, p.rect_only) == (0.0154, 1, 0, 0, 0.2, 0)
     assert res.pairings == [Pairing("b1", "b1", "unchanged")] and res.starts == ["b2"]
-    assert c.id == "" and c.kind == "single" and c.t == (1.0, 1.0) and c.reverts == []
+    assert c.id == "" and c.kind == "single" and c.t == (1.0, 1.0) and c.reverts is None
 
 
 def test_truncation_pairs_with_the_untouched_later_box():

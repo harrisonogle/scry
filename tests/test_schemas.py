@@ -19,7 +19,7 @@ def test_records_round_trip_unicode(tmp_path: Path):
                                        after=BoxText(box="155:b33", text="PS C:\\Users\\msadmin> az login"),
                                        char_diff=[["=", "PS C:\\Users\\msadmin>"], ["+", " az login"]], continues="T8/0"),
                              BoxChange(kind="appeared", rect=(24, 164, 48, 179), before=None, after=BoxText(box="155:b1", text="区"))],
-                    moved=[("0:b4", "1:b3")], reverts=[Revert(of="T8", rect=(300, 100, 380, 120), hold_s=2.8)])
+                    moved=[("0:b4", "1:b3")], reverts=Revert(of="T8", share=0.8125, hold_s=2.8))
     life = Lifetime(id="L1", text="A b", readings={"A b": [0, 2], "Ab": [1]}, unstable=True, sightings=3,
                     first=FrameTime(frame=0, t=0.0), last=FrameTime(frame=2, t=9.0), boxes=["0:b1", "1:b1", "2:b1"])
     for name, rec, model in (("boxes.jsonl", fb, FrameBoxes), ("changes.jsonl", change, Change), ("lifetimes.jsonl", life, Lifetime)):

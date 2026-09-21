@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from PIL import Image
-from track_fixtures import make_run, typing_run
+from track_fixtures import black, lit, make_run, typing_run
 
 from scry.config import Config
 from scry.report import build_report, write_sheets
@@ -46,6 +46,17 @@ def test_report_with_ground_truth(tmp_path):
     commands = text[text.index("## Commands"):]
     assert "| 1 | `git status` | yes | yes | 1 | L3 | 2 | 0 | 0.0 |" in commands  # scorable, exact, matches, lifetime, first frame, frame error, t error
     assert "exact: 1 / 1" in commands
+
+
+def test_report_lists_reverts_largest_share_first(tmp_path):
+    # A 20 × 80 block appears, its right half goes (T2: half of T1's pixels are back, 0.5), then returns (T3 undoes all of T2, 1.0).
+    run = make_run(tmp_path / "r", [black(), lit((100, 120, 300, 380)), lit((100, 120, 300, 340)), lit((100, 120, 300, 380))],
+                   [[], [], [], []], t_change=[0.0, 1.0, 3.0, 3.5])
+    run_track(run, Config())
+    text = build_report(run, Config())
+    assert rows(text, "- T") == ["- T3 2→3 reverts T2: share 1.0, held 0.5 s", "- T2 1→2 reverts T1: share 0.5, held 2.0 s"]
+    assert [r.split(" | ")[-1] for r in rows(text, "| T")] == ["– |", "0.5 |", "1.0 |"]
+    assert '- reverts: 2' in text
 
 
 def test_report_renders_on_empty_run(tmp_path):

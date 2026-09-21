@@ -85,9 +85,10 @@ class BoxChange(BaseModel):
 
 
 class Revert(BaseModel):
-    of: str  # a change id
-    rect: BBox
-    hold_s: float
+    """What a transition undid of the one before it: one per transition, present only when share > 0 (ledger L51)."""
+    of: str  # the previous change's id
+    share: float  # of the pixels the previous change changed, the share that is back to what it was before it; 4 places
+    hold_s: float  # how long the previous change stood
 
 
 class Change(BaseModel):
@@ -104,7 +105,7 @@ class Change(BaseModel):
     variants: int = 0
     flicker_new: list[str] = []
     flicker_lost: list[str] = []
-    reverts: list[Revert] = []
+    reverts: Revert | None = None
 
 
 # ---------- track: lifetimes.jsonl ----------

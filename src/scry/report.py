@@ -80,13 +80,13 @@ def build_report(run: Run, cfg: Config, frames: tuple[int, int] | None = None, g
           "", "model calls: none, $0.00", ""]
 
     L += ["## Transitions", "",
-          "| id | frames | kind | changed % | components | textless | touched share | rect-only | records | moved | same place | unchanged | variants | flicker new / lost | reverts |",
+          "| id | frames | kind | changed % | components | textless | touched share | rect-only | records | moved | same place | unchanged | variants | flicker new / lost | revert share |",
           "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for c in changes:
         p = c.pixels
         px = [f"{p.changed_fraction * 100:.4f}", p.components, p.textless, p.touched_share, p.rect_only] if p else ["–"] * 5
         cells = [c.id, f"{c.from_frame}→{c.to_frame}", c.kind, *px, _kinds(Counter(r.kind for r in c.records)), len(c.moved), c.same_place,
-                 c.unchanged, c.variants, f"{len(c.flicker_new)} / {len(c.flicker_lost)}", len(c.reverts)]
+                 c.unchanged, c.variants, f"{len(c.flicker_new)} / {len(c.flicker_lost)}", c.reverts.share if c.reverts else "–"]
         L.append("| " + " | ".join(str(x) for x in cells) + " |")
     L.append("")
 
@@ -128,8 +128,10 @@ def build_report(run: Run, cfg: Config, frames: tuple[int, int] | None = None, g
         L += [f"  - ×{len(fr)} {_code(reading)} at frames {_ranges(fr)}" for reading, fr in l.readings.items()]
     L.append("")
 
-    L += ["## Reverts", ""]
-    L += [f"- {c.id} {c.from_frame}→{c.to_frame} reverts {rv.of}: rect {rv.rect}, held {rv.hold_s} s" for c in changes for rv in c.reverts]
+    L += ["## Reverts", "",
+          "Share: of the pixels the previous transition changed, the part that is back to what it was before it. Largest share first.", ""]
+    L += [f"- {c.id} {c.from_frame}→{c.to_frame} reverts {c.reverts.of}: share {c.reverts.share}, held {c.reverts.hold_s} s"
+          for c in sorted((c for c in changes if c.reverts), key=lambda c: (-c.reverts.share, int(c.id[1:])))]
     L.append("")
 
     if ground_truth is not None:
@@ -179,14 +181,13 @@ def _sheet(rows: list[tuple[str, Image.Image]], font) -> Image.Image:
 
 
 def write_sheets(run: Run, cfg: Config, out_dir: Path, frames: tuple[int, int] | None, per_kind: int, seed: int) -> list[Path]:
-    """One PNG per sampled record, revert, unstable lifetime and flicker box: up to `per_kind` of each record kind and of
-    each of the other three, drawn with random.Random(seed). A sheet that needs a missing PNG is skipped."""
+    """One PNG per sampled record, unstable lifetime and flicker box: up to `per_kind` of each record kind and of each of
+    the other two, drawn with random.Random(seed). A sheet that needs a missing PNG is skipped. A revert has no sheet:
+    it is one number over a whole transition and has no rectangle to crop."""
     all_boxes = run.load_boxes()
-    all_changes = run.load_changes()
-    _, changes, lifetimes = select(all_boxes, all_changes, run.load_lifetimes(), frames)
+    _, changes, lifetimes = select(all_boxes, run.load_changes(), run.load_lifetimes(), frames)
     png = {f.frame: run.root / f.png for f in run.load_frames()}
     rects, texts = _box_index(all_boxes), {f"{fb.frame}:{b.id}": b.text for fb in all_boxes for b in fb.boxes}
-    by_id = {c.id: c for c in all_changes}
     font = _font(cfg.overlay)
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -220,10 +221,6 @@ def write_sheets(run: Run, cfg: Config, out_dir: Path, frames: tuple[int, int] |
         for c, j, r in pick([(c, j, r) for c in changes for j, r in enumerate(c.records) if r.kind == kind]):
             jobs.append((f"{c.id}-r{j}-{kind}.png", [(c.from_frame, r.rect, f"{kind}, before: {r.before.text if r.before else '(no box)'}"),
                                                       (c.to_frame, r.rect, f"after: {r.after.text if r.after else '(no box)'}")]))
-    for c, j, rv in pick([(c, j, rv) for c in changes for j, rv in enumerate(c.reverts)]):
-        z = by_id[rv.of].from_frame
-        jobs.append((f"{c.id}-revert{j}.png", [(z, rv.rect, f"before {rv.of}"), (c.from_frame, rv.rect, f"after {rv.of}, held {rv.hold_s} s"),
-                                               (c.to_frame, rv.rect, f"after {c.id}: reverted")]))
     for l in pick([l for l in lifetimes if l.unstable]):
         ref_at = {parse_box_ref(ref)[0]: ref for ref in l.boxes}
         readings = [l.text] + [r for r in l.readings if r != l.text]  # majority first
