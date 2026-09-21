@@ -10,7 +10,7 @@ from minirun import mini_interpretations, mini_run
 from PIL import Image
 
 from scry.ask import TOOL_DEFS, Tools, ask, extract_citations, tool_defs
-from scry.config import AskConfig, Config
+from scry.config import AskConfig, Config, ModelConfig
 from scry.index import build_index
 from scry.prompts.ask import SYSTEM, prompt_version, system_prompt
 
@@ -177,6 +177,26 @@ def test_ask_asks_for_prompt_caching_and_prices_the_four_usage_keys(tmp_path: Pa
     assert result.usage == {"input_tokens": 600, "output_tokens": 400, "cache_read_input_tokens": 3000, "cache_creation_input_tokens": 4000}
     # claude-opus-5: 600 × $5 + 400 × $25 + 3000 read × $0.5 + 4000 written × $5 × 1.25, per million
     assert result.cost_usd == round((600 * 5 + 400 * 25 + 3000 * 0.5 + 4000 * 5 * 1.25) / 1e6, 4) == 0.0395
+
+
+def test_ask_model_is_the_pipelines_unless_set(tmp_path: Path):
+    run = _indexed(tmp_path)
+    assert AskConfig().model == "" and Config().ask.model == ""  # empty: the pipeline's model, [model] model
+    configs = {"default": Config(), "pipeline": Config(model=ModelConfig(model="claude-haiku-4-5")),
+               "set": Config(ask=AskConfig(model="claude-sonnet-5"), model=ModelConfig(model="claude-haiku-4-5"))}
+    requests, results = {}, {}
+    for name, cfg in configs.items():
+        client = fake_sync_client([response([tool_use("u1", "search", {"query": "git"})], "tool_use"), response([text("done")], "end_turn")])
+        results[name] = ask(run, cfg, "q", client)
+        requests[name] = client.messages.calls
+    called = {name: [kw["model"] for kw in calls] for name, calls in requests.items()}  # the model the client receives
+    assert called == {"default": ["claude-opus-5"] * 2, "pipeline": ["claude-haiku-4-5"] * 2, "set": ["claude-sonnet-5"] * 2}
+    assert {name: r.model for name, r in results.items()} == {name: models[0] for name, models in called.items()}  # the result says which
+    # 2000 tokens in and 200 out, at the prices of the model that was called: $5 and $25, $1 and $5, $2 and $10 per million
+    assert {name: r.cost_usd for name, r in results.items()} == {"default": 0.015, "pipeline": 0.003, "set": 0.006}
+    rest = [[{k: v for k, v in kw.items() if k != "model"} for kw in requests[name]] for name in ("pipeline", "set")]
+    assert rest[0] == rest[1]  # the model is all that changes in a request
+    assert results["set"].model_dump(exclude={"model", "cost_usd"}) == results["pipeline"].model_dump(exclude={"model", "cost_usd"})
 
 
 def test_ask_tool_errors_and_stops(tmp_path: Path):

@@ -49,6 +49,26 @@ def test_p6_matrix_asks_again_over_the_five_p4_pipelines(monkeypatch):
         assert cfg.model_dump(exclude={"ask"}) == origin.model_dump(exclude={"ask"})  # the pipeline's config, to the key
 
 
+def test_p9_matrix_asks_again_on_sonnet_over_the_four_p4_pipelines(monkeypatch):
+    """Reads the committed matrix on purpose: P9 builds nothing and changes one key, the model of the answering agent."""
+    monkeypatch.chdir(REPO)
+    m = load_matrix(Path("evals/p9.toml"))
+    specs = expand(m)
+    assert {s.name: str(s.copy_from) for s in specs} == {
+        "full-inc-transcribing-asksonnet-r1": "runs/eval/p4/full-inc-transcribing-r1",
+        "full-inc-transcribing-asksonnet-r2": "runs/eval/p4/full-inc-transcribing-r2",
+        "full-none-asksonnet-r1": "runs/eval/p4/full-none-r1", "full-none-asksonnet-r2": "runs/eval/p4/full-none-r2"}
+    assert all(s.stages == ("ask",) and s.span.frames == (0, 220) for s in specs)
+    p4m = load_matrix(Path("evals/p4.toml"))
+    by_origin = {p4.name: (p4, config_for(p4m, p4)) for p4 in expand(p4m)}
+    for s in specs:
+        cfg, (p4, origin) = config_for(m, s), by_origin[s.copy_from.name]
+        assert (s.span.questions, s.span.ground_truth) == (p4.span.questions, p4.span.ground_truth)  # the same questions and commands
+        assert (cfg.ask.model, origin.ask.model, cfg.model.model) == ("claude-sonnet-5", "", "claude-opus-5")
+        assert cfg.ask.model_dump(exclude={"model"}) == origin.ask.model_dump(exclude={"model"}) and cfg.ask.frames is True
+        assert cfg.model_dump(exclude={"ask"}) == origin.model_dump(exclude={"ask"})  # the pipeline's config, to the key
+
+
 def _stage(name: str, fail_first: bool = False):
     """A fake stage: it only adds a manifest entry with usage."""
     calls = itertools.count(1)
@@ -90,7 +110,8 @@ def test_asking_again_over_copied_pipelines_end_to_end(tmp_path: Path, monkeypat
     def fake_ask(run, cfg, question, client=None):
         asked.append(cfg.ask.frames)
         return SimpleNamespace(text="It ran at frame 2.", turns=2, tool_calls=["search"], tool_log=[], usage={"input_tokens": 1_000},
-                               cost_usd=0.05 if cfg.ask.frames else 0.02, stop="end_turn", prompt="ask-v1" if cfg.ask.frames else "ask-v1+noframes")
+                               cost_usd=0.05 if cfg.ask.frames else 0.02, model="claude-opus-5", stop="end_turn",
+                               prompt="ask-v1" if cfg.ask.frames else "ask-v1+noframes")
 
     monkeypatch.setattr("scry.evaluation.runner.resolve", lambda stage: stages[stage])
     monkeypatch.setattr("scry.ask.ask", fake_ask)
@@ -136,7 +157,7 @@ def test_run_and_report_end_to_end_with_fake_stages(tmp_path: Path, monkeypatch)
     monkeypatch.setattr("scry.evaluation.runner.resolve", lambda stage: stages[stage])
     monkeypatch.setattr("scry.ask.ask", lambda run, cfg, question, client=None: SimpleNamespace(
         text="It ran at frame 2.", turns=2, tool_calls=["search"], tool_log=[], usage={"input_tokens": 1_000}, cost_usd=0.05, stop="end_turn",
-        prompt="ask-v1"))
+        model="claude-opus-5", prompt="ask-v1"))
     monkeypatch.setattr("scry.evaluation.judge.judge_provider", lambda cfg, cache_dir: _Judge())
     cli = CliRunner()
 

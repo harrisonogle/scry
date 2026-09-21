@@ -4,7 +4,9 @@ run" from how long a text stayed on screen. Each call is a fresh conversation; n
 written except the frames `redecode` saves. Every request of the loop asks for the API's automatic prompt caching, so
 the conversation so far is read from the cache on the next turn instead of being paid for again (L54). With `[ask]
 frames = false` only the pixels are withheld, which is how an evaluation sees what the index itself holds: `redecode`,
-which returns nothing but images, is not offered, and `get_frame` returns the same record of a frame without its image."""
+which returns nothing but images, is not offered, and `get_frame` returns the same record of a frame without its image.
+The loop calls the pipeline's model (`[model] model`) unless `[ask] model` names another; the result carries the model
+that was called and is priced with it."""
 from __future__ import annotations
 
 import json
@@ -228,6 +230,7 @@ def ask(run: Run, cfg: Config, question: str, client=None) -> AskResult:
         client = anthropic.Anthropic()
     messages: list[dict] = [{"role": "user", "content": question}]
     system, offered = system_prompt(cfg.ask.frames), tool_defs(cfg.ask.frames)
+    model = cfg.ask.model or cfg.model.model  # [ask] model; empty: the pipeline's. The model called is the one recorded and priced
     usage = add_usage({}, {})
     tool_calls: list[str] = []
     tool_log: list[ToolCall] = []
@@ -235,7 +238,7 @@ def ask(run: Run, cfg: Config, question: str, client=None) -> AskResult:
     text, stop = f"Stopped after {cfg.ask.max_turns} turns without a final answer.", "max_turns"
     for _ in range(cfg.ask.max_turns):
         try:
-            resp = client.messages.create(model=cfg.model.model, max_tokens=cfg.model.max_tokens, system=system, tools=offered,
+            resp = client.messages.create(model=model, max_tokens=cfg.model.max_tokens, system=system, tools=offered,
                                           output_config={"effort": cfg.model.effort_ask}, cache_control=CACHE_CONTROL,
                                           messages=list(messages))
         except Exception as e:
@@ -257,4 +260,4 @@ def ask(run: Run, cfg: Config, question: str, client=None) -> AskResult:
         messages.append({"role": "user", "content": [block for block, _ in results]})  # all results in one message
     known = {l.id for l in run.load_lifetimes()} | {c.id for c in run.load_changes()}
     return AskResult(text=text, citations=extract_citations(text, known), turns=turns, tool_calls=tool_calls, tool_log=tool_log, usage=usage,
-                     cost_usd=estimate_cost(usage, cfg.model.model), model=cfg.model.model, prompt=prompt_version(cfg.ask.frames), stop=stop)
+                     cost_usd=estimate_cost(usage, model), model=model, prompt=prompt_version(cfg.ask.frames), stop=stop)

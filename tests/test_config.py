@@ -28,7 +28,7 @@ def test_repo_toml_loads():
     assert (cfg.annotate.mode, cfg.annotate.transcribe) == ("incremental", True)  # the working default (ledger L59)
     assert cfg.model.effort_annotate == "low"
     assert cfg.interpret.images == "scaled"
-    assert cfg.ask.max_turns == 12 and cfg.ask.frames is True
+    assert cfg.ask.max_turns == 12 and cfg.ask.frames is True and cfg.ask.model == ""
 
 
 def test_stage_sections_defaults():
@@ -38,6 +38,7 @@ def test_stage_sections_defaults():
     assert cfg.index.collapse is True
     assert cfg.ask.max_turns == 12
     assert cfg.ask.frames is True  # the agent may open frames unless a run withholds them
+    assert cfg.ask.model == ""  # empty: the answering agent runs on the pipeline's model, [model] model
     assert (cfg.model.effort_interpret, cfg.model.effort_summarize, cfg.model.effort_ask) == ("low", "medium", "high")
     for mode in ("text", "crops"):
         with pytest.raises(pydantic.ValidationError):
@@ -50,6 +51,15 @@ def test_ask_frames_is_in_no_pipeline_stage_hash():
     pipeline = [s for s in Config.model_fields if s != "ask"]
     assert config_hash(with_frames, *pipeline) == config_hash(without, *pipeline)
     assert config_hash(with_frames, "ask") != config_hash(without, "ask")
+
+
+def test_ask_model_is_in_no_pipeline_stage_hash():
+    """Answering on another model leaves every pipeline stage up to date, and [model], which the stages hash, as it was."""
+    pipelines, sonnet = Config(), Config.model_validate({"ask": {"model": "claude-sonnet-5"}})
+    pipeline = [s for s in Config.model_fields if s != "ask"]
+    assert config_hash(pipelines, *pipeline) == config_hash(sonnet, *pipeline)
+    assert config_hash(pipelines, "ask") != config_hash(sonnet, "ask")
+    assert sonnet.model.model == pipelines.model.model == "claude-opus-5"
 
 
 def test_annotate_defaults():

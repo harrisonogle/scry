@@ -80,6 +80,7 @@ max_turns = 12
 max_tool_result_chars = 60000
 redecode_max_frames = 6
 frames = true  # false: the agent sees no pixels: get_frame returns a frame's record without the image, redecode is not offered
+model = ""  # the model the answering agent runs on; empty means the pipeline's model, [model] model
 
 [outline]
 enabled = false

@@ -70,5 +70,5 @@ def answer_fn(run: Run, cfg: Config, question: str) -> AskOutcome:
     from scry.ask import ask
 
     r = ask(run, cfg, question)
-    return AskOutcome(text=r.text, usage=dict(r.usage), dollars=r.cost_usd, model=cfg.model.model, turns=r.turns,
+    return AskOutcome(text=r.text, usage=dict(r.usage), dollars=r.cost_usd, model=r.model, turns=r.turns,  # the model `ask` called
                       tools=list(r.tool_calls), stop=r.stop, calls=[c.model_dump(exclude_none=True) for c in r.tool_log], prompt=r.prompt)
