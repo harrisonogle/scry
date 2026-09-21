@@ -48,7 +48,7 @@ def build_blocks(frame: Frame, fb: FrameBoxes, plan: CallPlan, arm: str, scale: 
         size = f"{frame.width}x{frame.height}"
         coords = f"Coordinates are pixels of the {size} frame: top-left origin, x1 and y1 exclusive."
         if scale != 1.0:
-            coords += f" The image is scaled by {scale:g}; give and read every coordinate in the unscaled {size} frame."
+            coords += f" The image is scaled by {scale:g}; every coordinate is in the unscaled {size} frame."
         listed = "; ".join(f"{b.id}: {','.join(map(str, b.bbox))}" for b in fb.boxes)
         blocks = [
             text_block(f"Screenshot (frame {frame.frame}, t={frame.t_settled:.2f}s):"), frame_block(frame_png, scale),

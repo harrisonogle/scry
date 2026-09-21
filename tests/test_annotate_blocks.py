@@ -73,7 +73,7 @@ def test_arm_d_blocks_at_a_reduced_scale(tmp_path: Path):
     blocks = build_blocks(frame(0, 128, 64, settled=False), boxes, CallPlan(0, ("b2",)), "D", 0.5, frame_png, None)
     assert _texts(blocks) == [
         "Screenshot (frame 0, t=0.00s):",
-        COORDS + " The image is scaled by 0.5; give and read every coordinate in the unscaled 128x64 frame.",
+        COORDS + " The image is scaled by 0.5; every coordinate is in the unscaled 128x64 frame.",
         "Boxes, as id: x0,y0,x1,y1 in reading order: b1: 4,4,40,20; b2: 70,4,110,20.",  # unscaled at every image scale
         "Targets: b2.", "Boxes inside animating areas (low confidence): b1.",
         "This frame was captured while the screen was still changing (not settled).", "Return the JSON object."]
