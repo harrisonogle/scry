@@ -66,6 +66,15 @@ def interpret(run_dir: Path, config: Path | None = None, verbose: bool = False):
 
 
 @app.command()
+def summarize(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """summarize: steps, sections and a summary of the video, from the transitions and their interpretations →
+    steps.jsonl, sections.jsonl, video.json. Costs money unless every call is already in the run's cache."""
+    _setup_logging(verbose)
+    from scry.summarize import run_summarize
+    run_summarize(Run(run_dir), load_config(config))
+
+
+@app.command()
 def report(run_dir: Path, frames: str | None = typer.Option(None, "--frames", help="inclusive frame range, e.g. 155-187"),
            ground_truth: Path | None = typer.Option(None, "--ground-truth", help="a command list in the format of docs/ground-truth/span2-commands.md"),
            out: str = typer.Option("report.md", "--out", help="file name inside the run directory"),

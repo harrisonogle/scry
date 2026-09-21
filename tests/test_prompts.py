@@ -1,9 +1,10 @@
 import scry.prompts.interpret
+import scry.prompts.summarize
 
 
 def _prompts() -> tuple[list[str], list[str]]:
     """The system prompts of plan 3, and every text a model reads from it (the prompts and the tool descriptions)."""
-    systems = [scry.prompts.interpret.SYSTEM]
+    systems = [scry.prompts.interpret.SYSTEM, scry.prompts.summarize.BOUNDARY_SYSTEM, scry.prompts.summarize.ELABORATE_SYSTEM]
     return systems, list(systems)
 
 
@@ -18,3 +19,4 @@ def test_prompts_hold_the_rulings():
         for banned in ("focus", "az ", "kubectl"):
             assert banned not in flat, banned
     assert scry.prompts.interpret.VERSION == "interpret-v1"
+    assert scry.prompts.summarize.VERSION == "summarize-v1"
