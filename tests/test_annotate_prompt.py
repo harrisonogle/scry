@@ -17,6 +17,11 @@ def test_arm_a_paragraphs():
     runs = next(line for line in paras[4].split("\n") if line.startswith("  runs:"))
     assert "separate rows of a list or table and separate menu items are NOT a run, even when they follow one another" in runs
     assert "a pair needs at least two different boxes" in pairs and "give no link for it" in pairs
+    # the description is about the screen, in every call and both variants (ledger L59)
+    sentence = ("The description is about the whole screen, as a person looking at it would describe it, and must never "
+                "mention box numbers, box ids, targets, or what was or was not requested.")
+    assert paras[6].endswith("Plain prose. " + sentence)
+    assert system_prompt(transcribe=False).split("\n\n")[6] == paras[6]
 
 
 def test_group_only_differs_in_one_paragraph():
@@ -28,10 +33,10 @@ def test_group_only_differs_in_one_paragraph():
 
 
 def test_versions():
-    assert prompt_version() == "annotate-v3"
-    assert prompt_version(transcribe=False) == "annotate-v3+grouponly"
-    assert prompt_version(scale=0.5) == "annotate-v3+s0.5"
-    assert prompt_version(transcribe=False, scale=0.67) == "annotate-v3+grouponly+s0.67"
+    assert prompt_version() == "annotate-v4"
+    assert prompt_version(transcribe=False) == "annotate-v4+grouponly"
+    assert prompt_version(scale=0.5) == "annotate-v4+s0.5"
+    assert prompt_version(transcribe=False, scale=0.67) == "annotate-v4+grouponly+s0.67"
 
 
 def test_no_sample_video_content():

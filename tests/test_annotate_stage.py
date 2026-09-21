@@ -66,7 +66,7 @@ def test_every_frame_arm_a_end_to_end(tmp_path: Path):
     assert r0.links == [PairLink(key=["b1"], value=["b2"])]
     assert r0.texts == [TextReading(box="b1", text="a"), TextReading(box="b2", text="B")]
     assert (r0.description, r0.repairs, r0.repair_counts, r0.label_clashes) == ("d0", 0, {}, 0)
-    assert (r0.model, r0.prompt_version, r0.error) == ("fake-model", "annotate-v3", None)
+    assert (r0.model, r0.prompt_version, r0.error) == ("fake-model", "annotate-v4", None)
     for kw in provider.calls:
         assert kw["stage"] == "annotate" and kw["effort"] == "low" and kw["system"] == system_prompt()
         assert kw["output_model"] is output_model("A", True)
@@ -87,7 +87,7 @@ def test_group_only(tmp_path: Path):
     run_annotate(run, _cfg(transcribe=False), provider)
     kw = provider.calls[0]
     assert kw["system"] == system_prompt(transcribe=False) and kw["output_model"] is output_model("A", False)
-    assert kw["prompt_version"] == "annotate-v3+grouponly"
+    assert kw["prompt_version"] == "annotate-v4+grouponly"
     record = run.load_annotations()[0]
     assert record.texts is None and record.missed == []
     assert _entry(run)["mark_match"] is None
@@ -152,7 +152,7 @@ def test_missing_png_is_an_error_record_without_a_call(tmp_path: Path):
 def test_scale_reaches_the_version_and_both_images(tmp_path: Path):
     run, provider = _run(tmp_path), AnswerProvider(standard)
     run_annotate(run, _cfg(scale=0.5), provider)
-    assert provider.calls[0]["prompt_version"] == "annotate-v3+s0.5"
+    assert provider.calls[0]["prompt_version"] == "annotate-v4+s0.5"
     assert _image_sizes(provider.calls[0]) == [(64, 32), (64, 32)]
 
 
@@ -198,10 +198,10 @@ def test_incremental_run(tmp_path: Path):
     assert sorted(calls) == [10, 11]  # no changed pixel into frame 12: no call
     for kw in calls.values():  # the every-frame call: one prompt, one schema, one version
         assert kw["system"] == system_prompt() and kw["output_model"] is output_model("A", True)
-        assert kw["prompt_version"] == "annotate-v3" and len(_image_sizes(kw)) == 2
+        assert kw["prompt_version"] == "annotate-v4" and len(_image_sizes(kw)) == 2
     assert "Targets: all boxes." in _texts(calls[10]) and "Targets: b1, b5." in _texts(calls[11])
-    # only the call with fewer targets carries the sentence about the description (ledger L56)
-    assert [sum("never mention" in t for t in _texts(calls[n])) for n in (10, 11)] == [0, 1]
+    # the sentence about the description is in the shared system prompt, not in any user turn (ledger L59)
+    assert "never mention" in system_prompt() and not any("never mention" in t for n in (10, 11) for t in _texts(calls[n]))
     records = run.load_annotations()
     assert [r.frame for r in records] == [10, 11]
     for got in records:

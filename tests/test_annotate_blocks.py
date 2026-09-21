@@ -39,9 +39,8 @@ def test_partial_targets_churn_and_unsettled(tmp_path: Path):
     frame_png, overlay_png = _pngs(tmp_path)
     boxes = fb(0, [mk("b1", 4, 4, 40, 20, "a", in_churn=True), mk("b2", 70, 4, 110, 20, "b")])
     blocks = build_blocks(frame(0, 128, 64, settled=False), boxes, CallPlan(0, ("b2",)), "A", 1.0, frame_png, overlay_png)
+    # no sentence about the description: it is in the shared system prompt (ledger L59)
     assert _texts(blocks)[2:] == ["Boxes: b1, b2.", "Targets: b2.",
-                                  "The description is about the whole screen, as a person looking at it would describe it, and "
-                                  "must never mention box numbers, box ids, targets, or what was or was not requested.",
                                   "Boxes inside animating areas (low confidence): b1.",
                                   "This frame was captured while the screen was still changing (not settled).",
                                   "Return the JSON object."]
@@ -49,8 +48,8 @@ def test_partial_targets_churn_and_unsettled(tmp_path: Path):
 
 def test_every_frame_call_is_pinned(tmp_path: Path):
     # paid answers are cached under these: the every-frame call's system prompt, version, user-turn text and key must
-    # not change by a byte when the incremental call's wording does (ledger L56). User-turn digests taken at f0e7691;
-    # the system prompt's digest, the version and the key retaken at annotate-v3 (ledger L57).
+    # not change by a byte unless the version is bumped (ledger L56). User-turn digests taken at f0e7691 and unchanged
+    # since; the system prompt's digest, the version and the key retaken at annotate-v4 (ledger L59).
     frames, boxes = fixture_e()
     frame_png, overlay_png = _pngs(tmp_path)
     full = build_blocks(frames[0], boxes[0], plan_calls(boxes, [], [], "every_frame")[0], "A", 1.0, frame_png, overlay_png)
@@ -59,11 +58,11 @@ def test_every_frame_call_is_pinned(tmp_path: Path):
     none = fb(0, [])  # a frame without boxes: "Targets: none." in every-frame mode too
     empty = build_blocks(frames[0], none, plan_calls([none], [], [], "every_frame")[0], "A", 1.0, frame_png, overlay_png)
     assert input_hashes(frames[0], None, empty)[2] == "72698cf9088219af08f3ea60214fad9330cf051e1fb95d9ed409f45d87399b89"
-    assert sha256_obj([system_prompt(), system_prompt(transcribe=False)]) == "2bed1ce0451e7988a96c887007b8e4bebbc278d5753c08caeef8b754c39e1755"
-    assert (prompt_version(), prompt_version(transcribe=False)) == ("annotate-v3", "annotate-v3+grouponly")
+    assert sha256_obj([system_prompt(), system_prompt(transcribe=False)]) == "0f7e9852109c96a3fbc04021498ed2ad727b75fc2f224a1a44d6b78153d2b55d"
+    assert (prompt_version(), prompt_version(transcribe=False)) == ("annotate-v4", "annotate-v4+grouponly")
     schema = sha256_obj(output_model("A", True).model_json_schema())
     assert CallCache.key("annotate", "fake-model", "high", 1000, prompt_version(), schema, hashes) == \
-        "1d3d65a2793bdaad60622fb52cf70656687ac07f3a3172fb5a18fc3428485ddb"
+        "448903502de4a7561ec4ee24874fddfe8102a7886e52e0e8208473b70dad4958"
 
 
 def test_scale_halves_the_clean_frame_in_memory(tmp_path: Path):

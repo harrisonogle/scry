@@ -3,9 +3,10 @@ optionally a second reading, a screen description) → annotations.jsonl. Labels
 gates a measured record, and every request is built from measured records only, so no call depends on another.
 
 An incremental call is the every-frame call with a shorter target list: the same system prompt, schema, images and
-prompt version; in the user turn the `Targets:` line names fewer boxes and one sentence after it keeps the description
-about the screen (ledger L56). Which frames get a call and which boxes are targets is `plan_calls`' answer, read from
-track's records alone; what the labels mean at a later frame is the join's (`scry.annotate.join`)."""
+prompt version; in the user turn only the `Targets:` line differs, naming fewer boxes (the sentence that keeps the
+description about the screen is in the shared system prompt, ledger L59). Which frames get a call and which boxes are
+targets is `plan_calls`' answer, read from track's records alone; what the labels mean at a later frame is the join's
+(`scry.annotate.join`)."""
 from __future__ import annotations
 
 import asyncio

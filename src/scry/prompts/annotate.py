@@ -6,7 +6,8 @@ from __future__ import annotations
 
 # v2: a box id in at most one link; a wrapped side of a pair goes inside the pair (ledger L53)
 # v3: separate lines, rows and menu items are not a run; a pair needs two different boxes (ledger L57)
-VERSION = "annotate-v3"
+# v4: the description is about the whole screen and never mentions box ids or targets, in every call (ledger L59)
+VERSION = "annotate-v4"
 
 ROLE = """You label screenshots of computer tutorials (terminals, code editors, browsers, dialogs)."""
 
@@ -24,7 +25,7 @@ Boxes that merely sit side by side stand alone: tabs, toolbar buttons, menu item
 
 TEXTS = """texts: for every target box id, the verbatim text inside that box, read from Image 1. Preserve case, punctuation, whitespace and symbols. Never correct, complete or normalize commands, code, paths or identifiers. Use ? for a character you cannot resolve. An icon is not text: give "". missed: text no box covers, with its container."""
 
-DESCRIPTION = """description: what the boxes cannot express about this screen: selections, highlights, toggles, checked boxes, icons, diagrams and their relationships, dialogs, progress indicators, anything animating. Plain prose."""
+DESCRIPTION = """description: what the boxes cannot express about this screen: selections, highlights, toggles, checked boxes, icons, diagrams and their relationships, dialogs, progress indicators, anything animating. Plain prose. The description is about the whole screen, as a person looking at it would describe it, and must never mention box numbers, box ids, targets, or what was or was not requested."""
 
 # group-only: replaces TEXTS as a whole; every other paragraph is shared
 NO_TEXTS = """Do not transcribe any text: the OCR reading of each box is used."""
