@@ -107,6 +107,24 @@ def search(run_dir: Path, query: str, level: str | None = typer.Option(None, "--
 
 
 @app.command()
+def ask(run_dir: Path, question: str, as_json: bool = typer.Option(False, "--json", help="print the whole result (text, citations, usage, cost) as JSON"),
+        config: Path | None = None, verbose: bool = False):
+    """Answer a question over a run's index and records. Costs money: every question is a fresh conversation."""
+    _setup_logging(verbose)
+    from scry.ask import ask as _ask
+    try:
+        result = _ask(Run(run_dir), load_config(config), question)
+    except FileNotFoundError as e:  # no index.sqlite
+        typer.echo(str(e), err=True)
+        raise typer.Exit(code=1)
+    if as_json:
+        typer.echo(result.model_dump_json(indent=2))
+    else:
+        typer.echo(result.text)
+        typer.echo(f"turns={result.turns} tools={','.join(result.tool_calls)} cost=${result.cost_usd:.4f}", err=True)
+
+
+@app.command()
 def report(run_dir: Path, frames: str | None = typer.Option(None, "--frames", help="inclusive frame range, e.g. 155-187"),
            ground_truth: Path | None = typer.Option(None, "--ground-truth", help="a command list in the format of docs/ground-truth/span2-commands.md"),
            out: str = typer.Option("report.md", "--out", help="file name inside the run directory"),
