@@ -1,0 +1,49 @@
+# P3 (ledger L59): the image-scale sweep the owner asked about, on the working default (incremental, transcribing, arm A),
+# through `annotate` only: the answering agent looks at full-resolution frames itself, so its answers do not depend on the
+# scale of the images `annotate` sees; the labels are judged directly (second-reading agreement, the edited line on frame
+# 155, repairs, popups, links, containers). Both spans, seven scales, two cold repeats: 28 runs.
+phase = "p3"
+source = "runs/p0"
+stages = ["read", "track", "annotate"]
+repeats = 2
+
+[spans.smoke]
+frames = "145-155"
+
+[spans.span2]
+frames = "155-187"
+
+[axis.scale.s100]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 1.0
+
+[axis.scale.s067]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 0.67
+
+[axis.scale.s050]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 0.5
+
+[axis.scale.s040]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 0.4
+
+[axis.scale.s030]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 0.3
+
+[axis.scale.s025]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 0.25
+
+[axis.scale.s020]
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.scale" = 0.2
