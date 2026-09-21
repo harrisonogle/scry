@@ -111,7 +111,10 @@ class RapidEngine:
         self.cfg = cfg
         # OcrConfig has no rapid-specific field yet; honour one named gap_ratio if the owner adds it.
         self.gap_ratio = float(gap_ratio if gap_ratio is not None else getattr(cfg, "gap_ratio", DEFAULT_GAP_RATIO))
-        self._ocr = RapidOCR(params={"Global.log_level": "warning"})
+        # use_cls off: screens are never rotated and the orientation classifier flipped ~3 % of lines into garbage;
+        # rec_batch_num 1: PP-OCR pads a batch to its widest crop and the space decision depends on that width,
+        # so the same pixels read differently next to different neighbours (ledger L43).
+        self._ocr = RapidOCR(params={"Global.log_level": "warning", "Global.use_cls": False, "Rec.rec_batch_num": 1})
         self.space_guard_fired = 0
         self.version = metadata.version("rapidocr")
         try:
@@ -131,7 +134,7 @@ class RapidEngine:
     def settings(self) -> dict:
         return {"engine": self.name, "version": self.version, "runtime": self.runtime,
                 "det_model": self.models["det"], "rec_model": self.models["rec"], "cls_model": self.models["cls"],
-                "rec_lang": self.rec_lang, "word_boxes": True, "gap_ratio": self.gap_ratio,
+                "rec_lang": self.rec_lang, "word_boxes": True, "use_cls": False, "rec_batch_num": 1, "gap_ratio": self.gap_ratio,
                 "space_guard_fired": self.space_guard_fired}
 
     def recognize(self, png: Path) -> list[RawLine]:
