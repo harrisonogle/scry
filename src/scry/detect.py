@@ -40,25 +40,45 @@ def reduce_2x2(changed: np.ndarray) -> np.ndarray:
     return changed[:h, :w].reshape(h // 2, 2, w // 2, 2).any(axis=(1, 3))
 
 
-def components(changed: np.ndarray, theta_min: int) -> list[Component]:
+def _kept_components(changed: np.ndarray, theta_min: int) -> tuple[np.ndarray | None, list[tuple[int, Component]]]:
+    """decode's component rule: 3×3 dilation, 8-connected labelling, a component's area is its count of changed pixels,
+    components under theta_min dropped. Returns scipy's labels on the changed pixels only (0 on the dilation halo; None
+    when nothing can be kept) and the kept components with their scipy label, in label order."""
     if int(changed.sum()) < theta_min:
-        return []
+        return None, []
     blobs = ndimage.binary_dilation(changed, structure=_S8)
     labels, n = ndimage.label(blobs, structure=_S8)
     if n == 0:
-        return []
+        return None, []
     areas = np.bincount(labels[changed], minlength=n + 1)
     tight = np.where(changed, labels, 0)
     objs = ndimage.find_objects(tight, max_label=n)
-    out: list[Component] = []
+    out: list[tuple[int, Component]] = []
     for lab in range(1, n + 1):
         a = int(areas[lab])
         sl = objs[lab - 1]
         if a < theta_min or sl is None:
             continue
         ys, xs = sl
-        out.append(Component(a, (int(xs.start), int(ys.start), int(xs.stop), int(ys.stop))))
-    return out
+        out.append((lab, Component(a, (int(xs.start), int(ys.start), int(xs.stop), int(ys.stop)))))
+    return tight, out
+
+
+def components(changed: np.ndarray, theta_min: int) -> list[Component]:
+    return [c for _, c in _kept_components(changed, theta_min)[1]]
+
+
+def label_components(changed: np.ndarray, theta_min: int) -> tuple[np.ndarray, list[Component]]:
+    """The same components as `components`, plus a frame-shaped int32 image in which every changed pixel of the k-th
+    kept component holds k (1-based position in the returned list) and everything else holds 0: the dilation halo and
+    the changed pixels of dropped components included."""
+    tight, kept = _kept_components(changed, theta_min)
+    if not kept:
+        return np.zeros(changed.shape, dtype=np.int32), []
+    lut = np.zeros(int(tight.max()) + 1, dtype=np.int32)
+    for k, (lab, _) in enumerate(kept, start=1):
+        lut[lab] = k
+    return lut[tight], [c for _, c in kept]
 
 
 def is_bar(c: Component, p: DetectParams) -> bool:
