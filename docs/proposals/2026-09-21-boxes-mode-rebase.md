@@ -1,6 +1,8 @@
 # Proposal: re-base the pipeline on boxes mode
 
-Status: **revision 3, 2026-09-21, for the owner's review. No code has been written against it.** Revision 1 is commit
+Status: **revision 3.1, 2026-09-21. Accepted by the owner as the basis of the re-base; being built on branch
+`rebase-boxes` from the plans under `docs/superpowers/plans/` (ledger L44 onward). Where a reconciled plan and this
+document differ, the plan is later and wins.** Revision 1 is commit
 `0a3135e`, revision 2 `b9b0c0c`; the two reviews of revision 1 are in `docs/reviews/`. If accepted this becomes design
 revision 7, a restructuring of `docs/visual-transcript-pipeline-design.md` around new stages and records rather than a
 patch to its sections. The decoder and settle machine, the optional Gemini outline, the RapidOCR adapter, the provider,
@@ -10,6 +12,7 @@ the call cache and `subset` carry over unchanged. Everything between OCR and the
 
 | Change | Source |
 |---|---|
+| **Revision 3.1 (2026-09-21):** brought into line with the reconciled build plan 1 (ledger L45, L46): pairs only, one record list, no groups, pools, clock rule, `trivial` kind or `confusable` flag; projection counts calls per pixel-changing transition | L45, L46 |
 | **Reviewer prototypes are thrown out.** Every number and claim sourced from one is removed and their code is deleted; the implementation is not based on them, compared with them or justified by them. Choices that cited them survive only where they follow from the principles, as hypotheses (§4) that the real implementation's first run tests on its own terms. Future reviews read, reason and run the repository's real code. | Owner ruling |
 | **Written as the redesign it is.** Stages are named for what they do and ordered as the design implies; no lines, rows, regions, units, marks or old stage numbers survive. | Owner ruling |
 | **`track` (changes and lifetimes) sits before the model stage**: it needs only OCR boxes and pixels. Two options follow, evaluated and not decided: annotate only new or changed boxes (§6), and no annotation at all as the cost floor (§9). | The order; span-2 baseline: 27 of 30 transitions changed under 5 % of the screen |
@@ -93,7 +96,7 @@ One name for the design: **boxes mode**.
 | **Box** | One OCR detection: text and a rectangle. The unit of identity, change, citation and agreement. | measured |
 | **Reading** | A text for a box from one reader: `ocr` always, `vlm` when `annotate` transcribes. | measured / model |
 | **Lifetime** | A box followed across consecutive frames while it stays the same text: on unchanged pixels, moved, or re-read with only whitespace differing. It has a majority reading per reader, the variants, and first and last frame and time. The index unit. | measured |
-| **Change group** | Before and after boxes that overlap each other under changed pixels, with a kind and a character diff. | measured |
+| **Change record** | One changed box: a pair of an earlier and a later box that intersect, at least one of them under changed pixels, with a kind, the exact before and after strings and a character diff; or a single box that appeared or was removed. | measured |
 | **Container** | A window or a popup. Flat: containers do not nest. A popup may name its owner window. A label. | model |
 | **Link** | A typed relation among boxes of one container: `run`, `pair`, `record`. A label. | model |
 
@@ -101,13 +104,13 @@ One name for the design: **boxes mode**.
 |---|---|
 | Stage 1; Stage 0 | `decode`; `outline` |
 | Stage 2a, `ocr.jsonl`, mark, OCR line, `l<n>` | `read`, `boxes.jsonl`, box, `b<n>` |
-| Stage 4, 4b, `transitions.jsonl`, `computed_diff`, `DiffOp`, unit line lists, row banding | `track`, `changes.jsonl`: `groups`, `appeared`, `removed`, `moved`; `lifetimes.jsonl` |
+| Stage 4, 4b, `transitions.jsonl`, `computed_diff`, `DiffOp`, unit line lists, row banding | `track`, `changes.jsonl`: `records`, `moved`; `lifetimes.jsonl` |
 | Stage 2b, 2c, 3, `perception.jsonl`, `frames.jsonl` (merged), `focus.jsonl` | `annotate`, `annotations.jsonl`; `frames.jsonl` now names `decode`'s records |
 | row, row line, line, `Line`, `rows`, `vlm_lines` | box; a split text is a `run` link; `texts` |
 | region, unit, pane, `Region`, `r<n>` | container `c<n>` (window or popup); pane is at most a label string |
 | association | link |
 | VLM-only line `v<n>` | missed text `m<n>` (no rectangle; citable, never in a change) |
-| `typed`, `output_appended`, `coalesced`, `transient_merged` | kinds on groups; `continues`; `reverts`; `entered_text`, `submitted` from `interpret` |
+| `typed`, `output_appended`, `coalesced`, `transient_merged` | kinds on change records; `continues`; `reverts`; `entered_text`, `submitted` from `interpret` |
 | region correspondence, `matched`, focus signals | removed |
 | Stage 5, 6, 7, the agent | `interpret`, `summarize`, `index`, `ask` |
 | per-frame region and frame index nodes | whole-screen entries per frame (kept) plus lifetime entries (added); duplicates collapsed at query time |
@@ -144,7 +147,7 @@ its own terms: by reading the records against the frames of both spans, and by t
 | | Hypothesis | Follows from |
 |---|---|---|
 | H1 | The veto is sound at any changed fraction: a differing OCR text on unchanged pixels is a re-read. | Principle 2; the differences the box-stability result lists are glyph and spacing noise |
-| H2 | The box is the unit of a change record; a changed box finds its earlier self by rectangle intersection, so a growing text matches its shorter self. | Principle 1: joining every box near a change mixes unrelated boxes |
+| H2 | The box is the unit of a change record; a changed box pairs one to one with the box of the other frame it intersects most, touched or not, so a growing text matches its shorter self and a shrinking text its longer self. | Principle 1: joining every box near a change mixes unrelated boxes |
 | H3 | Equal texts on both sides of a transition are moves, cancelled across the whole transition; scrolls and window moves become small. | A scroll changes every pixel and no text |
 | H4 | Kind labels computed with whitespace removed are useful conveniences; the exact strings are the record. | L35, L43: OCR spacing jitters on the same text |
 | H5 | One record shape serves a keystroke and a page load; no large-change mode is needed. | Principle 7 |
@@ -157,41 +160,65 @@ its own terms: by reading the records against the frames of both spans, and by t
 `frames.jsonl` is `decode`'s record per emitted frame, unchanged in content. `boxes.jsonl`, from `read`:
 
 ```json
-{"frame": 155, "png": "frames/00155.png", "engine": {"name": "rapidocr", "version": "3.9.2"},
+{"frame": 155, "png": "frames/00155.png", "seconds": 0.412,
+ "engine": {"engine": "rapidocr", "version": "3.9.2", "use_cls": false, "rec_batch_num": 1, "…": "…"},
  "boxes": [{"id": "b33", "bbox": [659, 352, 904, 371], "text": "PS C:\\Users\\msadmin> az login", "conf": 0.98,
             "words": [{"text": "PS", "bbox": [659, 352, 679, 371]}], "in_churn": false}]}
 ```
 
-`changes.jsonl`, from `track`, one record per transition:
+`engine` is the OCR adapter's whole settings record; `seconds` is the OCR wall time for the frame.
+
+`changes.jsonl`, from `track`, one record per transition (values illustrative):
 
 ```json
 {"id": "T9", "from_frame": 154, "to_frame": 155, "t": [598.7, 620.7], "kind": "single",
- "pixels": {"changed_fraction": 0.0002, "components": 2, "textless": 1, "touched_share": 0.01},
- "groups": [{"kind": "appended", "rect": [659, 350, 904, 373],
-             "before": [{"box": "154:b31", "text": "PS C:\\Users\\msadmin>"}],
-             "after": [{"box": "155:b33", "text": "PS C:\\Users\\msadmin> az login"}],
-             "char_diff": [["=", "PS C:\\Users\\msadmin>"], ["+", " az login"]], "continues": null}],
- "appeared": [], "removed": [], "moved": 0, "same_place": 1, "reverts": []}
+ "pixels": {"changed_fraction": 0.0002, "components": 2, "textless": 1, "textless_area": 64,
+            "touched_share": 0.0113, "rect_only": 0},
+ "records": [{"kind": "appended", "rect": [659, 352, 904, 371],
+              "before": {"box": "154:b31", "text": "PS C:\\Users\\msadmin>"},
+              "after": {"box": "155:b33", "text": "PS C:\\Users\\msadmin> az login"},
+              "char_diff": [["=", "PS C:\\Users\\msadmin>"], ["+", " az login"]],
+              "continues": null, "in_churn": false}],
+ "moved": [], "same_place": 1, "unchanged": 131, "variants": 0,
+ "flicker_new": [], "flicker_lost": [], "reverts": []}
 ```
 
-- One shape for every size (H5). A keystroke is one group. A page load is a few groups plus long `appeared` and
-  `removed` lists of box ids. A scroll is mostly `moved`.
-- `reverts` lists the areas of this transition that undo the previous transition's change there, as
+- `records` is one list with one change record per changed box: a pair of an earlier and a later box (kinds `reread`,
+  `appended`, `truncated`, `changed`), or a single box that `appeared` (`before` null) or was `removed` (`after`
+  null). A pair carries the exact before and after strings and the character diff of that pair only. `rect` is the
+  union of the two boxes, or the single box's own; `in_churn` is set when either box carries `decode`'s flag. Pair and
+  `appeared` records come first, in the later box's reading order, then `removed` records in the earlier box's.
+- One shape for every size (H5). A keystroke is one record. A page load is many `appeared` and `removed` records. A
+  scroll is mostly `moved`.
+- `moved` lists the cancelled moves as (earlier id, later id) pairs, for example `["154:b12", "155:b11"]`.
+  `same_place` counts the pairs at the same place with exactly the same text (something visual changed over unchanged
+  text): a count, not a kind. `unchanged` counts the untouched pairs and `variants` those of them whose OCR texts
+  differ. `flicker_new` and `flicker_lost` list the untouched boxes left without a partner: no record, counted.
+- `continues` names the record of the previous transition whose `after` box is this record's `before` box, written
+  `"T8/0"` (the change id and the index in its `records`), whatever that record's kind; null otherwise.
+- `pixels` is null when a PNG is missing or the two frames differ in size. `textless` and `textless_area` count the
+  components that touch no box of either frame and sum their areas; `touched_share` is the touched boxes over all
+  boxes of the two frames; `rect_only` counts the boxes that a component's bounding rectangle reaches and its pixels
+  do not (what P0 reads for H6).
+- `reverts` lists the components of the previous transition's change that this transition undoes, as
   `{"of": "T4", "rect": […], "hold_s": 3.4}`. Both transitions stay and both are interpreted.
-- Transition kinds: `single`, `unsettled`, `trivial`.
+- Transition kinds: `single`, `unsettled` (either frame is not settled).
 
-`lifetimes.jsonl`, from `track`, measured fields only (counts illustrative):
+`lifetimes.jsonl`, from `track`, measured fields only (frames illustrative):
 
 ```json
 {"id": "L412", "text": "PS C:\\Users\\msadmin> az configure --defaults group=RG1-KodeKloud-AKS",
- "readings": {"PS C:\\Users\\msadmin> az configure --defaults group=RG1-KodeKloud-AKS": 25,
-              "PS C:\\Users\\msadmin>azconfigure --defaultsgroup=RG1-KodeKloud-AKS": 1},
- "unstable": true, "sightings": 26, "first": {"frame": 161, "t": 649.2}, "last": {"frame": 187, "t": 721.0},
+ "readings": {"PS C:\\Users\\msadmin> az configure --defaults group=RG1-KodeKloud-AKS": [161, 162, "…", 187],
+              "PS C:\\Users\\msadmin>azconfigure --defaultsgroup=RG1-KodeKloud-AKS": [174]},
+ "unstable": true, "sightings": 27, "first": {"frame": 161, "t": 649.2}, "last": {"frame": 187, "t": 721.0},
  "moved": true, "boxes": ["161:b40", "…"]}
 ```
 
-`text` is the majority OCR reading; `unstable` means OCR gave more than one reading of the same pixels, a measured
-fact the agent can hedge on with no second reader.
+`readings` maps each OCR reading to the frames at which it was sighted, ascending, so the frame where a variant
+occurred can be opened. `text` is the majority OCR reading: the reading sighted at the most frames, a tie going to the
+reading sighted first. `unstable` means OCR gave more than one reading of the same pixels, a measured fact the agent
+can hedge on with no second reader. `sightings` is the number of boxes. `first` is the first box's frame with that
+frame's `t_settled`; `last` is the last box's frame with that frame's `t_end`.
 
 `annotations.jsonl`, from `annotate`, one record per call:
 
@@ -232,26 +259,48 @@ outside the base.
 
 1. **Changed components** by `decode`'s rule over the two PNGs: pixels differing by more than θpix, in connected
    components of at least θmin pixels. Changed pixels outside any component are ignored.
-2. **Touched boxes.** A box is touched when a pixel of a component (H6) lies inside the box grown by the margin,
-   half the median box height over both frames. With a PNG missing every box is touched and `pixels` is null.
-3. **Untouched boxes are unchanged** (H1). Each continues the lifetime of the untouched box of *a* it overlaps most; a
-   differing OCR text there is a variant reading.
-4. **Same place, same text.** A touched before box and after box that intersect and read the same drop out, counted
-   in `same_place`: something visual changed over unchanged text.
-5. **Moved** (H3). Texts equal on both sides anywhere in the transition cancel as a multiset, counted in `moved`, and
-   continue their lifetimes. Reading order is used only to pair duplicates of the same string.
-6. **Groups** (H2). The remaining before and after boxes are grouped by rectangle intersection. Each group's kind is
-   computed with whitespace removed (H4): `reread` (equal), `appended` (before is a prefix of after), `truncated` (the
-   reverse), `changed` (otherwise). Recorded strings and `char_diff` are exact. A `reread` continues the lifetime with
-   a variant; the other kinds end one lifetime and start another.
-7. **Appeared, removed.** After boxes in no group; before boxes in no group.
+2. **Touched boxes.** A box is touched when a pixel of a component (H6), not merely the component's bounding
+   rectangle, lies inside the box grown by the margin. The margin is relative: half the median box height over the
+   boxes of both frames. With a PNG missing, or two frames of different sizes, every box is touched and `pixels` is
+   null.
+3. **Untouched boxes are unchanged** (H1), at any changed fraction. Untouched boxes of *a* and *b* that intersect are
+   matched one to one, greedily by intersection area with ties by reading order (the one matching rule, used again in
+   steps 4 and 6). A matched pair is unchanged and continues the lifetime; a differing OCR text there is a variant
+   reading, counted, never a change.
+4. **Same place, same text.** Of the boxes left, a before box and an after box that intersect, read exactly the same
+   string and of which at least one is touched drop out, matched one to one and counted in `same_place`: something
+   visual changed over unchanged text. They continue their lifetimes.
+5. **Moved** (H3). Then texts exactly equal on both sides, anywhere in the transition, cancel: the k-th occurrence of
+   a string among the remaining touched before boxes pairs with its k-th occurrence among the remaining touched after
+   boxes, up to the smaller count. Only touched boxes can move: an untouched box has not moved (H1). Each pair is
+   listed in `moved` as (earlier id, later id) and continues its lifetime. Reading order is used only to pair
+   duplicates of the same string.
+6. **Pairs** (H2). The remaining boxes pair symmetrically and one to one: the candidates are every remaining before
+   box with every remaining after box it intersects, provided at least one of the two is touched, taken greedily by
+   intersection area with ties by reading order. The partner may be untouched, in either direction: a growing text's
+   shorter self usually lies outside the changed pixels, and so does a shrinking text's. Each pair is one change
+   record. Its kind is computed with whitespace removed (H4): `reread` (equal), `appended` (before is a prefix of
+   after), `truncated` (the reverse), `changed` (otherwise). Recorded strings and `char_diff` are exact and cover that
+   pair only. A `reread` continues the lifetime with a variant; the other kinds end one lifetime and start another.
+7. **Appeared, removed, flicker.** A touched after box left without a partner is an `appeared` record; a touched
+   before box left without a partner is a `removed` record. An untouched box left without a partner is flicker:
+   nothing changed there, so it yields no record; its lifetime starts or ends silently and it is counted in
+   `flicker_new` or `flicker_lost`.
 8. **Textless components**, touching no box in either frame, are counted with their area and yield no record.
-9. **Reverts** (H8). For each area the previous transition *z*→*a* changed, if comparing *z* and *b* directly shows no
-   component inside it, *a*→*b* records `reverts` with the hold time. Nothing is folded.
-10. **Continues.** A group whose before box is the previous transition's after box records `continues`: an exact
-    identity through a shared box that asserts nothing. New output arrives as new boxes, so geometry cannot join it to
-    a growing input text.
-11. `trivial` keeps the clock rule on `char_diff`; boxes flagged `in_churn` by `decode` keep the flag on their groups.
+9. **Reverts** (H8). For each component the previous transition *z*→*a* changed, if comparing *z* and *b* directly
+   shows no changed component on that component's own pixels, *a*→*b* records `reverts` with the component's
+   rectangle and the hold time, the time from the one change to the other. The test is per component, so a revert is
+   found even when something else changes in the same transition. No time constant; nothing is folded.
+10. **Continues.** A record whose before box is the after box of a record of the previous transition records
+    `continues`, naming that record, whatever its kind (`appeared` included): an exact identity through a shared box
+    that asserts nothing. New output arrives as new boxes, so geometry cannot join it to a growing input text.
+11. **Lifetimes.** Every box of the first frame starts a lifetime. An unchanged, same-place, moved or `reread` pair
+    continues the earlier box's lifetime and records the later frame under the later box's reading. Every other after
+    box starts one: the later box of an `appended`, `truncated` or `changed` pair, an appeared box, a new flicker box.
+    A lifetime that is not continued stops. The majority reading, `first` and `last` are as §5 defines them.
+
+A transition is `unsettled` when either frame is not settled, else `single`. A record with a box that `decode` flagged
+`in_churn` keeps the flag.
 
 **`annotate`.** One call per frame, or per transition with targets when incremental. Draft system prompt for
 referencing arm A, with the transcription paragraph present only when transcribing:
@@ -309,24 +358,25 @@ OCR's coordinates serve code in: box numbering, the overlay, arm D's list, assig
 `track`'s touch and intersection tests, the spacing guard, `box_stability`, and crops for `interpret`.
 
 **Risks of incremental annotation, stated before it is tried.** A wrong label is carried for a whole lifetime, not
-re-drawn each frame. A container can change with no box changing (a window renamed, a textless popup), and no call
-is made. The first frame and every cut are full calls, so a video of cuts saves nothing. A link between a new box and
+re-drawn each frame. A container can change with no box changing (a window renamed, a textless popup); a call is still made,
+because pixels changed, but it has no target box, so only the description can record it. The first frame and every cut are full calls, so a video of cuts saves nothing. A link between a new box and
 an old one depends on the context the call carries. Nothing is re-annotated, so label noise is invisible within a run.
 
-**`interpret`.** Half-scale frames (L39), one call per non-trivial transition; nothing is folded, so a tooltip costs
-two calls. The change text is rendered per group with the box ids the model may cite and with labels when annotations
-exist, for example `[155:b33] PowerShell window: "PS C:\Users\msadmin>" → appended " az login"`; the model's reading
-sits beside OCR's where two readings differ; appeared and removed texts carry their ids; moved and textless counts are
-one line each; a `reverts` entry reads "undoes T4's change after 3.4 s". Citations are validated against those ids.
-The prompt asks for `entered_text` and `submitted` and says an input field may show a suggestion the user did not enter.
+**`interpret`.** Half-scale frames (L39), one call per transition; nothing is folded, so a tooltip costs
+two calls. The change text is rendered per change record with the box ids the model may cite and with labels when
+annotations exist, for example `[155:b33] PowerShell window: "PS C:\Users\msadmin>" → appended " az login"`; the
+model's reading sits beside OCR's where two readings differ; appeared and removed texts carry their ids; moved and
+textless counts are one line each; a `reverts` entry reads "undoes T4's change after 3.4 s". Citations are validated
+against those ids. The prompt asks for `entered_text` and `submitted` and says an input field may show a suggestion
+the user did not enter.
 
-**`summarize`.** Renders each transition from its interpretation (action, `entered_text`, `submitted`) and group
-texts, and a frame's state from its containers when annotations exist. Intent unchanged.
+**`summarize`.** Renders each transition from its interpretation (action, `entered_text`, `submitted`) and its
+change records' texts, and a frame's state from its containers when annotations exist. Intent unchanged.
 
 **`index` and `ask`.** Nodes: one per **lifetime** (the majority reading of each reader, every variant, run texts
 joined both with `""` and with `" "` so a wrong joiner cannot hide a command, pair text as `key value` tokens with
 `key` and `value` as fields, first and last time, container label when there is one); one per transition (action,
-result, `entered_text`, `submitted`, group texts); steps, sections and the video as today.
+result, `entered_text`, `submitted`, the change records' texts); steps, sections and the video as today.
 
 **Whole-screen entries stay, one per emitted frame** (owner, 2026-09-21: nothing findable today may become unfindable):
 every box's text in reading order plus the screen `description` in force at that frame, so a query whose terms sit in
@@ -362,12 +412,13 @@ only hedge and `entered_text` the only second opinion on a command.
 
 ## 8. Removed, kept, new
 
-The branch's first commit removes the old row machinery, so nothing can import it; `main` and the tag `pre-rebase` hold
-the runnable old pipeline for before-and-after comparison. The removal reaches `main` when the branch merges.
+The branch's first commit removes the old row machinery, so nothing can import it; `main` and the tag
+`pre-rebase-boxes` hold the runnable old pipeline for before-and-after comparison. The removal reaches `main` when the
+branch merges.
 
 | | Modules and keys |
 |---|---|
-| **Removed** | `merge.py`, `correspond.py`, `coalesce.py`, `perceive.py`, `interpret.py`, `hierarchy.py`, `diff.py` except `PixelSource` and the margin helpers (moved into `track`), node extraction in `index.py`, the tools of `agent.py`, the four prompt modules, `diagnostics.py` except cost accounting; every schema from `Line` and `Region` to `Transition` and the `Vlm*` variants; `perception.jsonl`, the merged `frames.jsonl`, `transitions.jsonl`, `focus.jsonl`; the `[merge]` and `[diff]` config keys, `transient_max_s`, `stage2c_*`; their tests |
+| **Removed** | `merge.py`, `correspond.py`, `coalesce.py`, `perceive.py`, `interpret.py`, `hierarchy.py`, `diff.py` (its pixel comparison is rewritten inside `track`), node extraction in `index.py`, `agent.py` and the four prompt modules (the loop and the prompts return with `ask`, `interpret` and `summarize`; build plan 1's "Returns with" table lists everything removed on the branch and the plan that restores it), `diagnostics.py` except cost accounting; every schema from `Line` and `Region` to `Transition` and the `Vlm*` variants; `perception.jsonl`, the merged `frames.jsonl`, `transitions.jsonl`, `focus.jsonl`; the `[merge]` and `[diff]` config keys, `transient_max_s`, `stage2c_*`; their tests |
 | **Removed, not row machinery** | the Apple Vision adapter `ocr/vision.py`, its test and the PyObjC dependencies (the deployment target is not Apple hardware; not the default since L36) |
 | **Kept** | `decode.py`, `detect.py`, `settle.py`, `stage1.py` (renamed for `decode`), `ocr/rapid.py`, `overlay.py`, `outline.py`, `providers/`, `run.py` (new loaders), `subset.py`, `config.py`, `env.py`, `jsonl.py`, `textdiff.py` (normalisation, Myers for `char_diff`), `agreement` per box, cost accounting, the search and fusion code of `index.py` |
 | **New** | `read`, `track` (changes, lifetimes), `annotate`, `interpret`, `summarize`, `index` node extraction, `ask` tools and prompt; schemas `Box`, `Change`, `Lifetime`, `Annotation`, `Container`, `Link`, `Interpretation`; config `margin` (box heights), the annotate switches of §9 |
@@ -404,7 +455,7 @@ without waiting.
 
 | Phase | What | Runs | Estimate |
 |---|---|---|---|
-| P0 | **Free.** `read` and `track` over all 221 frames and both spans. H1–H8 by reading records against frames; the OCR reader's primary metrics against G1; margin 0, 0.25, 0.5, 1.0; lifetime fragmentation; and the calls and target boxes incremental annotation would make, which prices P3 in advance | — | $0 |
+| P0 | **Free.** `read` and `track` over all 221 frames and both spans. H1–H8 by reading records against frames; the OCR reader's primary metrics against G1; margin 0, 0.25, 0.5, 1.0; lifetime fragmentation; and the incremental-annotation projection, in counts (P3 measures the dollars): a labelling call for the first frame and for every transition with changed pixels, and the target boxes per call against all boxes per frame, which is the saving (tokens per call, not calls) | — | $0 |
 | P1 | Three co-equal bases at full scale, arm A, every frame annotated: **transcribing**, **group-only**, **no annotation**; both spans through `index`, the question set on span 2; 3 repeats each. Noise floor per base; side by side with `runs/span2-before`; link quality per kind against G2 | 18 | about $55 |
 | P2 | Referencing arms × coarse scales, smoke span, 2 repeats, every arm alive throughout. Group-only: A–D × 1.0, 0.5, 0.25. Transcribing: A–D × 1.0, 0.67 (it must still read). Then refinement among 0.67, 0.4, 0.3, 0.2 where it looks good; then each mode's chosen point on span 2, 3 repeats | about 36 + 12 + 6 | about $60 |
 | P3 | Incremental annotation against annotating every frame (from P1), for both modes, both spans, 3 repeats: cost, container and link quality against G2, the command metrics, and what the listed risks cost in practice | 12 | $10–30 |
@@ -421,8 +472,8 @@ measured $0.115); group-only about $0.08 (row mode $0.063, plus ids and links), 
 
 Each step lands with synthetic-fixture tests and its own commit. The order is the pipeline's.
 
-0. Tag `pre-rebase` on `main`; create `rebase-boxes`; the first commit removes what §8 lists and renames `decode`'s
-   and `read`'s outputs.
+0. Tag `pre-rebase-boxes` on `main`; create `rebase-boxes`; the first commit removes what §8 lists and renames
+   `decode`'s and `read`'s outputs.
 1. Records `Box`, `Change`, `Lifetime` and their loaders.
 2. **`track`**: changes, then lifetimes. The scripts for the primary metrics. **P0.**
 3. `annotate` arm A on every frame, with the transcribing switch; its records, repair, and the loaders that join
@@ -439,9 +490,10 @@ Each step lands with synthetic-fixture tests and its own commit. The order is th
 - **θpix and θmin now carry identity for the whole pipeline and were calibrated on this one video** (design §7.2,
   §22 #3). The failure is graceful: a noisier encode means fewer vetoes and more OCR jitter reported as change; the
   index is unaffected. `touched_share` on near-static pairs is the per-video alarm, and P6 is its first outside test.
-- **Remaining constants:** the margin (half a box height; P0 varies it), "overlaps most" and "rectangles intersect"
-  (no threshold), whitespace-blind labels, reading order only to pair duplicate moved texts, the spacing guard's gap
-  ratio (it did not fire on the `azconfigure` line of the span-2 baseline; `rec_batch_num` 1 may have made it moot).
+- **Remaining constants:** the margin (half the median box height; P0 varies it), "rectangles intersect" and
+  "greatest intersection first" (no threshold, no floor on the overlap), whitespace-blind labels, reading order only
+  to break ties and to pair duplicate moved texts, the spacing guard's gap ratio (it did not fire on the `azconfigure`
+  line of the span-2 baseline; `rec_batch_num` 1 may have made it moot).
 - **The hypotheses of §4 are untested.** If P0 refutes one, the design changes before anything is paid for.
 - **No window identity across frames** (names vary by call; nothing mechanical depends on them), and **moves pair
   duplicates arbitrarily** (a lifetime may hop between two identical strings).
@@ -463,7 +515,8 @@ written by reading and reasoning, and code exists only as the real implementatio
 **Simplify before repairing (owner, 2026-09-21).** Reviewers tend to answer a minor finding with more machinery. When a
 review finds a fault in a mechanism, the first question is whether the mechanism can be removed; logic is added only
 on evidence from real runs, and P0 is where that evidence comes from. Applied so far: change records pair each
-changed box with its single best-overlapping earlier box (touched or not) and nothing more, so there are no groups, no
+changed box with the box of the other frame it intersects most (touched or not, in either direction, one to one) and
+nothing more, so there are no groups, no
 connected components and no pools until P0 shows that OCR re-splitting under changed pixels needs them; the
 `confusable` flag is dropped; the clock rule and the `trivial` transition kind are dropped (it never fired in any
 recorded run and would have let a transition go uninterpreted).
