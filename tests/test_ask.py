@@ -108,12 +108,24 @@ def test_ask_loop_runs_tools_and_reports_cost(tmp_path: Path):
     assert result.cost_usd == 0.0225
     calls = client.messages.calls
     for kw in calls:
-        assert set(kw) == {"model", "max_tokens", "system", "tools", "output_config", "messages"}
+        assert set(kw) == {"model", "max_tokens", "system", "tools", "output_config", "cache_control", "messages"}
         assert (kw["system"], kw["tools"], kw["output_config"]) == (SYSTEM, TOOL_DEFS, {"effort": "high"})
     last = calls[2]["messages"][-1]
     assert last["role"] == "user"
     assert [(b["type"], b["tool_use_id"]) for b in last["content"]] == [("tool_result", "u2"), ("tool_result", "u3")]
     assert last["content"][0]["content"][1]["type"] == "image"
+
+
+def test_ask_asks_for_prompt_caching_and_prices_the_four_usage_keys(tmp_path: Path):
+    first = {"input_tokens": 400, "output_tokens": 100, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 3000}
+    second = {"input_tokens": 200, "output_tokens": 300, "cache_read_input_tokens": 3000, "cache_creation_input_tokens": 1000}
+    client = fake_sync_client([response([tool_use("u1", "search", {"query": "git"})], "tool_use", first),
+                               response([text("done")], "end_turn", second)])
+    result = ask(_indexed(tmp_path), Config(), "q", client)
+    assert [kw["cache_control"] for kw in client.messages.calls] == [{"type": "ephemeral"}] * 2  # every request of the loop
+    assert result.usage == {"input_tokens": 600, "output_tokens": 400, "cache_read_input_tokens": 3000, "cache_creation_input_tokens": 4000}
+    # claude-opus-5: 600 × $5 + 400 × $25 + 3000 read × $0.5 + 4000 written × $5 × 1.25, per million
+    assert result.cost_usd == round((600 * 5 + 400 * 25 + 3000 * 0.5 + 4000 * 5 * 1.25) / 1e6, 4) == 0.0395
 
 
 def test_ask_tool_errors_and_stops(tmp_path: Path):

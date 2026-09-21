@@ -1,7 +1,8 @@
 """`ask`: the answering agent. A manual tool loop over a run's index and records: lifetimes, changes, interpretations,
 frames. The tools pass measurements on as measurements: none reports which window had focus, and none derives "was
-run" from how long a text stayed on screen. Each call is a fresh conversation; nothing is cached and no file is
-written except the frames `redecode` saves."""
+run" from how long a text stayed on screen. Each call is a fresh conversation; no answer is cached and no file is
+written except the frames `redecode` saves. Every request of the loop asks for the API's automatic prompt caching, so
+the conversation so far is read from the cache on the next turn instead of being paid for again (L54)."""
 from __future__ import annotations
 
 import json
@@ -35,6 +36,7 @@ _SCHEMAS = {
                  "properties": {"t_a": _NUMBER, "t_b": _NUMBER, "fps": {"type": "number", "default": 2}}},
 }
 TOOL_DEFS: list[dict] = [{"name": name, "description": TOOL_DESCRIPTIONS[name], "input_schema": schema} for name, schema in _SCHEMAS.items()]
+CACHE_CONTROL = {"type": "ephemeral"}  # top-level: the API puts the breakpoint on the last cacheable block and moves it each turn
 
 
 def hit_summary(hit: dict) -> dict:
@@ -191,7 +193,8 @@ def ask(run: Run, cfg: Config, question: str, client=None) -> AskResult:
     for _ in range(cfg.ask.max_turns):
         try:
             resp = client.messages.create(model=cfg.model.model, max_tokens=cfg.model.max_tokens, system=SYSTEM, tools=TOOL_DEFS,
-                                          output_config={"effort": cfg.model.effort_ask}, messages=list(messages))
+                                          output_config={"effort": cfg.model.effort_ask}, cache_control=CACHE_CONTROL,
+                                          messages=list(messages))
         except Exception as e:
             log.warning("ask: the API call failed: %s", e)
             text, stop = f"No answer: the API call failed ({type(e).__name__}: {e}).", "api_error"
