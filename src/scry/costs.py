@@ -9,4 +9,5 @@ PRICES = {  # $ per million tokens, input / output / cache read (2026-09-13 list
 
 def estimate_cost(usage: dict, model: str) -> float:
     pin, pout, pcache = PRICES.get(model, (5.0, 25.0, 0.5))
-    return round((usage.get("input_tokens", 0) * pin + usage.get("output_tokens", 0) * pout + usage.get("cache_read_input_tokens", 0) * pcache) / 1e6, 4)
+    return round((usage.get("input_tokens", 0) * pin + usage.get("output_tokens", 0) * pout + usage.get("cache_read_input_tokens", 0) * pcache
+                  + usage.get("cache_creation_input_tokens", 0) * pin * 1.25) / 1e6, 4)  # a five-minute cache write costs 1.25 × input
