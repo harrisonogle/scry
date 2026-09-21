@@ -4,17 +4,18 @@
 timestamped, queryable "visual transcript": every distinct screen state with its text and layout,
 every change between states with what the user did, a step/section hierarchy, and a searchable index.
 
-- Design: `docs/visual-transcript-pipeline-design.md` (revision 3)
+- Design: `docs/proposals/2026-09-21-boxes-mode-rebase.md` is the specification the code follows (the re-base on OCR
+  boxes); `docs/visual-transcript-pipeline-design.md` (revision 6.2) describes the pipeline before the re-base
 - Implementation plans: `docs/superpowers/plans/` (the v1 plan of 2026-09-13; the re-base plans `2026-09-21-rebase-boxes-1` to `-4`)
 - Evaluation results: `docs/results/`
-- Decisions made without the owner present: `docs/decision-ledger.md`
+- Decisions made without the owner present: `docs/decision-ledger.md`; what is open: `docs/open-items.md`
 - Design reviews: `docs/reviews/`
 - Contributing: `CONTRIBUTING.md`
 
 ## Setup (macOS, Apple Silicon)
 
     uv sync
-    uv run scry setup            # checks Vision OCR, FTS5, credentials
+    uv run scry setup            # checks the OCR engine, FTS5, sqlite-vec, credentials
 
 Model calls use the Anthropic SDK. Credentials, in order of preference: `ant auth login` (no key to store), or an
 `ANTHROPIC_API_KEY` in a git-ignored `.env` file at the repo root (`cp .env.example .env && chmod 600 .env`, then fill
@@ -32,9 +33,20 @@ read,track` runs a selection. Beside the stages:
 
 - `scry subset runs/aks --out runs/smoke --frames 145-155` derives a small run from decoded frames, for cheap live checks;
 - `scry report <run-dir> [--frames 155-187] [--ground-truth <list>]` writes what `track` measured, with evidence sheets;
-- `scry eval run|judge|report <matrix.toml>` runs an evaluation matrix cold (costs money; `--dry-run` spends nothing), has a
-  judge model score the answers, and writes `docs/results/<phase>/report.md`. A matrix with a `[copy]` table builds
-  nothing: it copies the pipelines of finished runs and only asks the questions again (`evals/p6.toml`).
+- `scry eval run|judge|report <matrix.toml>` (the matrices are in `evals/`): `run` executes the matrix's runs, each
+  cold in its own directory under `runs/eval/<phase>/` (costs money; `--dry-run` lists the runs, validates every config
+  and spends nothing; `--only <run name>` executes that one run, so several can go side by side); `judge` has a
+  separate model call score each answer against its rubric lines; `report` calls no model and writes
+  `docs/results/<phase>/report.md` and `scores.json`. A matrix with a `[copy]` table (run name = the directory of a
+  finished run) builds nothing: it copies the pipelines of those runs and only asks the questions again, so its only
+  stage is `ask` (`evals/p6.toml`).
+
+Configuration is `scry.toml` in the working directory, or the file given with `--config`; a missing file means the
+defaults of `src/scry/config.py`. `[annotate] mode` is `"incremental"` by default: a call for the first frame and for every frame
+whose pixels changed, labelling only the boxes that are new, changed or moved. `"every_frame"` labels every box of
+every frame, and `"off"` runs the pipeline with no annotation. `[ask] frames = false` withholds every image from the
+answering agent, so that it answers from the index alone. `[model] mode = "batch"` sends `annotate` and `interpret`
+through the Message Batches API; on the whole sample that paid 0.68 of the synchronous price, not half (ledger L62).
 
 ## Tests
 
@@ -46,10 +58,10 @@ The pipeline was re-based on OCR boxes (branch `rebase-boxes`): `read` detects a
 across frames into lifetimes and transitions, `annotate` has a model group and label them, `interpret` says what the user
 did at each transition, `summarize` builds steps and sections, `index` makes it all searchable for `ask`. Every stage is
 unit-tested over synthetic frames, hand-written records and fake model clients; no test touches the sample video or the
-network. The first paid evaluation (P1, frames 155 to 187 of the sample video, 18 cold runs) is in `docs/results/p1/`;
-what it showed and what follows is ledger row L57; open items are in `docs/open-items.md`.
+network. Nothing is merged to `main`, which is at the tag `pre-rebase-boxes`. The paid evaluation phases are reported
+under `docs/results/` (P1 to P7 so far); what each showed is in the ledger (rows L57, L59, L60 and L62 to L65), and
+open items are in `docs/open-items.md`.
 
-Model calls use `claude-opus-5`; `[model] mode = "batch"` in `scry.toml` halves the price of `annotate` and `interpret`.
-Retrieval is lexical-only until an embedder is configured (`[index] embedder`). A stage re-runs only when its inputs or
-its configuration section change; after a code change to a stage, delete its entry from `runs/<id>/manifest.json` (or
-the run directory).
+Model calls use `claude-opus-5` (`[model] model`). Retrieval is lexical-only until an embedder is configured
+(`[index] embedder`). A stage re-runs only when its inputs or its configuration section change; after a code change to
+a stage, delete its entry from `runs/<id>/manifest.json` (or the run directory).
