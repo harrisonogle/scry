@@ -41,40 +41,10 @@ font_path = "/System/Library/Fonts/Menlo.ttc"
 [model]
 provider = "anthropic"
 model = "claude-opus-5"
-effort_stage2c = "low"
-effort_stage5 = "low"
-effort_stage6 = "medium"
-effort_agent = "high"
 max_tokens = 16000
 retry_max_tokens = 32000
 concurrency = 4
 mode = "sync"
-
-[merge]
-row_y_tol = 0.5
-row_gap_lines = 0
-align_sim = 0.8
-align_short_len = 8
-align_short_lev = 1
-glyph_max_len = 2
-
-[diff]
-modify_sim = 0.6
-typed_tolerance = 3
-transient_max_s = 2.0
-corr_w_text = 0.5
-corr_w_iou = 0.3
-corr_w_app = 0.1
-corr_w_name = 0.1
-corr_accept = 0.3
-pixel_gate_max_fraction = 0.05
-pixel_gate_margin_lines = 0.5
-
-[hierarchy]
-window = 2000
-overlap = 200
-fallback_step_transitions = 20
-fallback_section_steps = 8
 
 [index]
 embedder = "none"
@@ -85,7 +55,3 @@ rrf = 60
 [outline]
 enabled = false
 model = "gemini-3.8-flash"
-
-[stage5]
-images = "scaled"
-scale = 0.5

@@ -6,7 +6,7 @@ import tomllib
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 
 class DetectParams(BaseModel):
@@ -73,62 +73,10 @@ Effort = Literal["low", "medium", "high", "xhigh", "max"]
 class ModelConfig(BaseModel):
     provider: Literal["anthropic"] = "anthropic"
     model: str = "claude-opus-5"
-    effort_stage2c: Effort = "low"
-    effort_stage5: Effort = "low"
-    effort_stage6: Effort = "medium"
-    effort_agent: Effort = "high"
-    stage2c_mark_coords: bool = False  # list each mark's box in the Stage 2c prompt (ledger L30 experiment)
-    stage2c_transcribe: bool = True  # False: Stage 2c groups marks into regions and rows but transcribes nothing (§18.3 item 3 ablation)
-    stage2c_panes: bool = True  # False: Stage 2c asks for windows and popups only, rows directly under them ("+nopanes" experiment)
-    stage2c_rows: Literal["lines", "boxes"] = "lines"  # boxes: every mark is its own row and each region lists its associations ("+boxes" experiment)
     max_tokens: int = 16000
     retry_max_tokens: int = 32000
     concurrency: int = 4
     mode: Literal["sync", "batch"] = "sync"
-
-    @model_validator(mode="after")
-    def _structural_variants_transcribe(self):
-        if not self.stage2c_transcribe and (not self.stage2c_panes or self.stage2c_rows != "lines"):
-            raise ValueError("stage2c_panes = false and stage2c_rows = 'boxes' need stage2c_transcribe = true")
-        return self
-
-
-class Stage5Config(BaseModel):
-    """Which images each Stage 5 call carries (§12 sends both frames at native resolution; the other modes are the image-cost experiment)."""
-    images: Literal["full", "scaled", "crops", "text"] = "scaled"  # owner's decision 2026-09-21, ledger L39
-    scale: float = Field(0.5, gt=0, le=1)  # scaled: both frames by this factor; crops: the after-frame context image
-    crop_pad: int = 40  # crops: each changed-pixel component grows by this many pixels before overlapping ones merge
-    crop_max: int = 4  # crops: at most this many crop rectangles per frame; the nearest pair merges until it holds
-    crop_max_fraction: float = 0.25  # crops: a transition without pixel data, or with more of the screen changed, is sent scaled instead
-
-
-class MergeConfig(BaseModel):
-    row_y_tol: float = 0.5
-    row_gap_lines: float = 0.0  # §9.0 horizontal-gap test: reject a row whose neighbouring marks are further apart than this × the median line height; 0 = off (ledger L37)
-    align_sim: float = 0.8
-    align_short_len: int = 8
-    align_short_lev: int = 1
-    glyph_max_len: int = 2
-
-
-class DiffConfig(BaseModel):
-    modify_sim: float = 0.6
-    typed_tolerance: int = 3
-    transient_max_s: float = 2.0
-    corr_w_text: float = 0.5
-    corr_w_iou: float = 0.3
-    corr_w_app: float = 0.1
-    corr_w_name: float = 0.1
-    corr_accept: float = 0.3
-    pixel_gate_max_fraction: float = 0.05  # §11.2 pixel gate: veto ops on unchanged lines when this fraction of the screen or less changed; 0 = off
-    pixel_gate_margin_lines: float = 0.5  # §11.2: each changed-pixel component grows by this × the unit's median line height (8 px with no boxed lines) before the intersection test; 0 = exact (ledger L38)
-
-
-class HierarchyConfig(BaseModel):
-    window: int = 2000
-    overlap: int = 200
-    fallback_step_transitions: int = 20
-    fallback_section_steps: int = 8
 
 
 class IndexConfig(BaseModel):
@@ -148,10 +96,6 @@ class Config(BaseModel):
     ocr: OcrConfig = OcrConfig()
     overlay: OverlayConfig = OverlayConfig()
     model: ModelConfig = ModelConfig()
-    stage5: Stage5Config = Stage5Config()
-    merge: MergeConfig = MergeConfig()
-    diff: DiffConfig = DiffConfig()
-    hierarchy: HierarchyConfig = HierarchyConfig()
     index: IndexConfig = IndexConfig()
     outline: OutlineConfig = OutlineConfig()
 

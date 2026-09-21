@@ -5,8 +5,7 @@ import time
 from pathlib import Path
 
 from scry.jsonl import read_jsonl, sha256_file
-from scry.schemas import (FocusRecord, FrameRecord, Interpretation, OcrFrame, OutlineChapter, PerceptionRecord,
-                        Stage1Record, Transition)
+from scry.schemas import OutlineChapter, Stage1Record
 
 
 class Run:
@@ -16,17 +15,7 @@ class Run:
         self.overlays_dir = self.root / "overlays"
         self.cache_dir = self.root / "cache"
         self.stage1 = self.root / "stage1.jsonl"
-        self.ocr = self.root / "ocr.jsonl"
-        self.perception = self.root / "perception.jsonl"
-        self.frames = self.root / "frames.jsonl"
-        self.transitions = self.root / "transitions.jsonl"
-        self.focus = self.root / "focus.jsonl"
-        self.interpretations = self.root / "interpretations.jsonl"
-        self.steps = self.root / "steps.jsonl"
-        self.sections = self.root / "sections.jsonl"
-        self.video = self.root / "video.json"
         self.outline = self.root / "outline.json"
-        self.index_db = self.root / "index.sqlite"
         self.manifest = self.root / "manifest.json"
         self.batches = self.root / "batches.json"
         for d in (self.root, self.frames_dir, self.overlays_dir, self.cache_dir):
@@ -62,27 +51,6 @@ class Run:
     # ---- loaders (§10.7) ----
     def load_stage1(self) -> list[Stage1Record]:
         return read_jsonl(self.stage1, Stage1Record)
-
-    def load_ocr(self) -> list[OcrFrame]:
-        return read_jsonl(self.ocr, OcrFrame)
-
-    def load_perception(self) -> list[PerceptionRecord]:
-        return read_jsonl(self.perception, PerceptionRecord)
-
-    def load_frames(self) -> list[FrameRecord]:
-        frames = read_jsonl(self.frames, FrameRecord)
-        focus = {f.frame: f for f in read_jsonl(self.focus, FocusRecord)}
-        for fr in frames:
-            f = focus.get(fr.frame)
-            if f is not None:
-                fr.focused_region, fr.focused_conf, fr.focused_signals = f.focused_region, f.focused_conf, f.focused_signals
-        return frames
-
-    def load_transitions(self) -> list[Transition]:
-        return read_jsonl(self.transitions, Transition)
-
-    def load_interpretations(self) -> dict[str, Interpretation]:
-        return {i.id: i for i in read_jsonl(self.interpretations, Interpretation)}
 
     def load_outline(self) -> list[OutlineChapter]:
         if not self.outline.exists():

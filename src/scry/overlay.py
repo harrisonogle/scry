@@ -6,8 +6,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-from scry.config import Config, OverlayConfig, config_hash
-from scry.run import Run
+from scry.config import OverlayConfig
 from scry.schemas import BBox, OcrLine
 
 log = logging.getLogger(__name__)
@@ -124,19 +123,3 @@ def draw_overlay(png_in: Path, lines: list[OcrLine], png_out: Path, cfg: Overlay
         draw.text((x + PAD - l, y + PAD - t), label, fill=LABEL_FG, font=font)
     Image.alpha_composite(img, layer).convert("RGB").save(png_out, format="PNG", compress_level=1)
     return clashes
-
-
-def run_overlay(run: Run, cfg: Config) -> None:
-    inputs = [run.ocr]
-    ch = config_hash(cfg, "overlay")
-    if run.stage_up_to_date("overlay", inputs, ch):
-        log.info("overlay up to date")
-        return
-    s1 = {r.frame: r for r in run.load_stage1()}
-    clashes: dict[int, int] = {}
-    for of in run.load_ocr():
-        rec = s1[of.frame]
-        out = run.overlays_dir / f"{of.frame:05d}.png"
-        clashes[of.frame] = draw_overlay(run.root / rec.png, of.lines, out, cfg.overlay)
-    run.manifest_update(overlay_clashes=clashes)
-    run.stage_done("overlay", inputs, ch, frames=len(clashes), label_clashes=sum(clashes.values()))
