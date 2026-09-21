@@ -22,8 +22,7 @@ class Node(BaseModel):
     frames: tuple[int, int]
     t: tuple[float, float]
     apps: list[str] = []
-    region_names: list[str] = []
-    layout_conf: float = 1.0
+    containers: list[str] = []  # names
     step_id: str | None = None
     section_id: str | None = None
     chapter_id: str | None = None
@@ -69,8 +68,8 @@ def open_db(path: Path) -> sqlite3.Connection:
         """
         CREATE TABLE IF NOT EXISTS nodes (
             node_id TEXT PRIMARY KEY, video_id TEXT, level TEXT, item_id TEXT, frame_start INTEGER, frame_end INTEGER,
-            t_start REAL, t_end REAL, apps TEXT, region_names TEXT, layout_conf REAL, step_id TEXT, section_id TEXT,
-            chapter_id TEXT, text TEXT, payload TEXT);
+            t_start REAL, t_end REAL, apps TEXT, containers TEXT, step_id TEXT, section_id TEXT, chapter_id TEXT, text TEXT,
+            payload TEXT);
         CREATE VIRTUAL TABLE IF NOT EXISTS nodes_fts USING fts5(text, node_id UNINDEXED, tokenize="unicode61 tokenchars '-_./:\\'");
         CREATE VIRTUAL TABLE IF NOT EXISTS nodes_tri USING fts5(text, node_id UNINDEXED, tokenize='trigram');
         """
@@ -87,9 +86,9 @@ def index_nodes(db: sqlite3.Connection, nodes: list[Node], embedder: Embedder | 
     db.execute("DELETE FROM nodes_fts")
     db.execute("DELETE FROM nodes_tri")
     for n in nodes:
-        db.execute("INSERT INTO nodes VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        db.execute("INSERT INTO nodes VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                    (n.node_id, n.video_id, n.level, n.item_id, n.frames[0], n.frames[1], n.t[0], n.t[1], json.dumps(n.apps),
-                    json.dumps(n.region_names), n.layout_conf, n.step_id, n.section_id, n.chapter_id, n.text, json.dumps(n.payload)))
+                    json.dumps(n.containers), n.step_id, n.section_id, n.chapter_id, n.text, json.dumps(n.payload)))
         db.execute("INSERT INTO nodes_fts(text, node_id) VALUES (?, ?)", (n.text, n.node_id))
         db.execute("INSERT INTO nodes_tri(text, node_id) VALUES (?, ?)", (n.text, n.node_id))
     if embedder is not None and nodes:
@@ -180,9 +179,9 @@ def search(db: sqlite3.Connection, query: str, cfg: IndexConfig, embedder: Embed
     fused = rrf(rankings, cfg.rrf)[:k]
     out = []
     for node_id, score in fused:
-        row = db.execute("SELECT node_id, video_id, level, item_id, frame_start, frame_end, t_start, t_end, apps, layout_conf, text, payload FROM nodes WHERE node_id = ?", (node_id,)).fetchone()
+        row = db.execute("SELECT node_id, video_id, level, item_id, frame_start, frame_end, t_start, t_end, apps, containers, text, payload FROM nodes WHERE node_id = ?", (node_id,)).fetchone()
         if row:
             out.append({"node_id": row[0], "video_id": row[1], "level": row[2], "item_id": row[3], "frames": [row[4], row[5]],
-                        "t": [row[6], row[7]], "apps": json.loads(row[8]), "layout_conf": row[9], "text": row[10],
+                        "t": [row[6], row[7]], "apps": json.loads(row[8]), "containers": json.loads(row[9]), "text": row[10],
                         "payload": json.loads(row[11]), "score": round(score, 5)})
     return out

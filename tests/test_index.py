@@ -4,7 +4,7 @@ from scry.index import Node, fts_query, index_nodes, open_db, rrf, search, trigr
 
 def node(i, text, level="transition", t=(0.0, 1.0), apps=("Windows Terminal",)):
     return Node(node_id=f"n{i}", video_id="v1", level=level, item_id=f"T{i}", frames=(i, i + 1), t=t, apps=list(apps),
-                region_names=[], layout_conf=0.9, text=text, payload={"id": f"T{i}"})
+                text=text, payload={"id": f"T{i}"})
 
 
 def test_fts_query_quotes_every_term_and_trigram_needs_three_chars():
@@ -28,6 +28,7 @@ def test_index_and_search_exact_identifiers_and_substrings(tmp_path):
     cfg = IndexConfig()
     hits = search(db, "--resource-group", cfg)
     assert hits and hits[0]["node_id"] == "n1"
+    assert "layout_conf" not in hits[0]
     hits = search(db, "KodeKloud", cfg)          # substring via trigram
     assert hits and hits[0]["node_id"] == "n1"
     hits = search(db, "storage", cfg, level="step")
