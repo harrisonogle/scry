@@ -90,10 +90,10 @@ def merge_transients(frames: list[FrameRecord], singles: list[Transition], cfg: 
             mid = by_id[t1.to_frame]
             nxt = by_id[t2.to_frame]
             nxt_texts = {norm(l.fused) for r in nxt.regions for l in r.lines}
-            for rid in t1.regions.appeared:
+            for rid in t1.regions.appeared:  # unit ids (§11.1)
                 if rid in t2.regions.disappeared:
                     region = mid.region(rid)
-                    texts = {norm(l.fused) for l in region.lines if l.fused}
+                    texts = {norm(l.fused) for l in mid.unit_lines(rid) if l.fused}
                     if texts and texts & nxt_texts:
                         continue
                     hold = nxt.t_change - mid.t_change
@@ -160,8 +160,7 @@ def coalesce(frames: list[FrameRecord], transitions: list[Transition], cfg: Diff
                     continue
                 prev_f, cur_f = by_id[nxt.from_frame], by_id[nxt.to_frame]
                 from_rid = nxt.computed_diff[rid].from_region
-                ins = _output_ops(nxt, rid, len(prev_f.region(from_rid).lines) if from_rid and prev_f.region(from_rid) else 0,
-                                  len(cur_f.region(rid).lines))
+                ins = _output_ops(nxt, rid, len(prev_f.unit_lines(from_rid)) if from_rid else 0, len(cur_f.unit_lines(rid)))
                 if ins is not None:
                     found = (rid, ins)
                     break
@@ -228,8 +227,9 @@ def retrospective_focus(frames: list[FrameRecord], transitions: list[Transition]
             continue
         f, b = by_id[t.from_frame], by_id[t.to_frame]
         if f.focused_region and b.focused_region:  # §9.4: attribute only when focus did not change across the transition
-            mapped = next((a for a, bb, _ in t.regions.matched if bb == b.focused_region), None)
-            if mapped is not None and mapped != f.focused_region:
+            bu = b.unit_of(b.focused_region)  # matched names units (§11.1); a focus id may be a pane
+            mapped = next((a for a, bb, _ in t.regions.matched if bb == bu), None)
+            if mapped is not None and mapped != f.unit_of(f.focused_region):
                 continue
         root = from_region
         by_rid = {r.id: r for r in f.regions}

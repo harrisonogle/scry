@@ -25,6 +25,20 @@ def test_render_diff_shows_both_readings_and_uncertain_grouping():
     assert 'typed "t status"' in render_transition_line(t, {1: a, 2: b})
 
 
+def test_render_diff_names_the_pane_an_op_came_from():
+    nav = Region(id="r2", kind="pane", name="left navigation", app="Azure Portal", parent="r1", bbox=(10, 60, 100, 400), conf=0.9, layout_conf=0.9,
+                 lines=[ln(2, "Overview", 60), ln(3, "Node pools", 80)])
+    a, b = frame(1, [ln(1, "title", 40)]), frame(2, [ln(1, "title", 40)])
+    b.regions.append(nav)
+    t = Transition(id="T1", from_frame=1, to_frame=2, t=(2.0, 2.1), kind="single",
+                   computed_diff={"r1": RegionDiff(from_region="r1", ops=[DiffOp(op="insert", new="Node pools", new_index=2, y=80, pane="r2"),
+                                                                       DiffOp(op="delete", old="gone", old_index=1, y=60, pane="r7")])})
+    text = render_diff(t, {1: a, 2: b})
+    assert '  insert: "Node pools" [pane: left navigation]' in text
+    assert '  delete: "gone" [pane: r7]' in text  # an id the from-frame does not know is shown as is
+    assert "readings disagree" not in text
+
+
 def test_validate_refs_drops_unknown_frames_and_lines():
     a = frame(1, [ln(1, "x", 40)])
     b = frame(2, [ln(1, "x", 40), ln(2, "y", 60)])

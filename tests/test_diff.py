@@ -33,3 +33,16 @@ def test_diff_pair_builds_transition_with_r0_and_unsettled_kind():
     assert "r1" in t.computed_diff and t.computed_diff["r1"].from_region == "r1"
     assert [o.op for o in t.computed_diff["r1"].ops] == ["insert"]
     assert [o.op for o in t.computed_diff["r0"].ops] == ["modify"]
+    assert t.computed_diff["r1"].ops[0].pane is None  # the unit's own line
+
+
+def test_ops_carry_the_pane_a_line_came_from():
+    def nav(lines):
+        return Region(id="r2", kind="pane", name="left navigation", app="T", parent="r1", bbox=(10, 40, 100, 400), conf=0.9, layout_conf=0.9, lines=lines)
+
+    a = frame(1, [reg("r1", [ln(1, "title", 20)]), nav([ln(2, "Overview", 40)])])
+    b = frame(2, [reg("r1", [ln(1, "title", 20)]), nav([ln(2, "Overview", 40), ln(3, "Node pools", 60)])])
+    c = frame(3, [reg("r1", [ln(1, "title — edited", 20), ln(2, "Overview", 40)])])
+    assert [(o.op, o.new, o.new_index, o.pane) for o in diff_pair(a, b, DiffConfig()).computed_diff["r1"].ops] == [("insert", "Node pools", 2, "r2")]
+    ops = diff_pair(b, c, DiffConfig()).computed_diff["r1"].ops  # a delete names the from-frame pane; the unit's own line none
+    assert [(o.op, o.old, o.pane) for o in ops] == [("modify", "title", None), ("delete", "Node pools", "r2")]

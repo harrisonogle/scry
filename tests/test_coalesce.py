@@ -28,12 +28,15 @@ def singles(frames):
 
 
 def test_typing_then_output_becomes_one_command_transition():
-    frames = [frame(0, [term([ln(1, "PS> ", 40)])]),
-              frame(1, [term([ln(1, "PS> git", 40)])]),
-              frame(2, [term([ln(1, "PS> git stat", 40)])]),
-              frame(3, [term([ln(1, "PS> git status", 40)])]),
-              frame(4, [term([ln(1, "PS> git status", 40), ln(2, "On branch main", 60)])]),
-              frame(5, [term([ln(1, "PS> git status", 40), ln(2, "On branch main", 60), ln(3, "clean", 80)])])]
+    # The title line persists: a unit is scored by text containment and the IoU of its lines' boxes (§11.1), so a lone
+    # prompt line that is rewritten and then grows would not match itself when the run is rebuilt over (0, 5).
+    title = ln(0, "Windows PowerShell", 20)
+    frames = [frame(0, [term([title, ln(1, "PS> ", 40)])]),
+              frame(1, [term([title, ln(1, "PS> git", 40)])]),
+              frame(2, [term([title, ln(1, "PS> git stat", 40)])]),
+              frame(3, [term([title, ln(1, "PS> git status", 40)])]),
+              frame(4, [term([title, ln(1, "PS> git status", 40), ln(2, "On branch main", 60)])]),
+              frame(5, [term([title, ln(1, "PS> git status", 40), ln(2, "On branch main", 60), ln(3, "clean", 80)])])]
     out = coalesce(frames, singles(frames), CFG)
     assert len(out) == 1
     t = out[0]
@@ -46,13 +49,16 @@ def test_typing_then_output_becomes_one_command_transition():
 
 
 def test_backspace_and_scrolloff_are_tolerated():
-    frames = [frame(0, [term([ln(1, "PS> git stauts", 40)])]),
-              frame(1, [term([ln(1, "PS> git status", 40)])]),
-              frame(2, [term([ln(1, "PS> git status", 40), ln(2, "x1", 60), ln(3, "x2", 80)])]),
-              frame(3, [term([ln(2, "x1", 40), ln(3, "x2", 60), ln(4, "x3", 80)])])]
+    # x0 persists so the rebuilt (0, 3) diff still matches the terminal to itself (see the test above); a title line
+    # would not do here because Rule 2 wants the scrolled-off deletes at the head of the list.
+    frames = [frame(0, [term([ln(1, "PS> git stauts", 40), ln(5, "x0", 60)])]),
+              frame(1, [term([ln(1, "PS> git status", 40), ln(5, "x0", 60)])]),
+              frame(2, [term([ln(1, "PS> git status", 40), ln(5, "x0", 60), ln(2, "x1", 80), ln(3, "x2", 100)])]),
+              frame(3, [term([ln(5, "x0", 40), ln(2, "x1", 60), ln(3, "x2", 80), ln(4, "x3", 100)])])]
     out = coalesce(frames, singles(frames), CFG)
     assert len(out) == 1 and [e.type for e in out[0].events] == ["typed", "output_appended"]
     assert out[0].events[1].lines == 3
+    assert [(m[0], m[1]) for m in out[0].regions.matched] == [("r1", "r1")] and out[0].regions.appeared == []
 
 
 def test_transient_toast_is_merged_across_three_frames():

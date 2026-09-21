@@ -95,7 +95,7 @@ def _item_full(item: HierNode | Transition, frames: dict[int, FrameRecord], inte
 
 
 def _state_line(f: FrameRecord) -> str:
-    names = ", ".join(f"{r.app}: {r.name}" for r in f.regions if r.parent is None)
+    names = ", ".join(f"{r.app}: {r.name}" for r in f.units())  # windows and popups (§11.1)
     foc = f.region(f.focused_region).name if f.focused_region and f.region(f.focused_region) else "unknown"
     return f"frame {f.frame} (t={f.t_settled:.1f}s): windows [{names}]; focused: {foc}"
 

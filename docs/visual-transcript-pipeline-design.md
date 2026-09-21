@@ -467,7 +467,7 @@ Revision 1 tested whether a line's centre lay inside another region's *hull*; si
 Three signals, two computable:
 
 1. **Caret** (§7.5): the region whose bbox, expanded by one line height, contains the caret bbox is focused; else the nearest region within two line heights (a caret on an empty prompt line lies outside a text-extent bbox). Compared at root-window level when the caret falls in a pane.
-2. **Retrospective**: if the next transition's coalesced `typed` event lands in region R, R was focused at this frame — attributed only when that transition has no `appeared` region and no `focused_region` change (a click that focuses a window can share a transition with the first keystroke). Computed after Stage 4b and written to `focus.jsonl` (§10.7), never back into `frames.jsonl`.
+2. **Retrospective**: if the next transition's coalesced `typed` event lands in region R, R was focused at this frame — attributed only when that transition has no `appeared` region and no `focused_region` change (a click that focuses a window can share a transition with the first keystroke). Computed after Stage 4b and written to `focus.jsonl` (§10.7), never back into `frames.jsonl`. R is a unit (§11.1), and a `focused_region` that names a pane is mapped to its unit before the change check, so a caret in a pane and a typed event in its window agree; the written value is still the root window.
 3. **VLM self-report** (§8.3) with its own 0–1 estimate and cues.
 
 Combination (`focused_conf`; `focused_signals` lists the contributors):
@@ -578,7 +578,7 @@ Field notes:
 
 - `t = [t_end(from_frame), t_settled(to_frame)]` — the window in which the action happened (R2). For a coalesced transition: the first member's `t[0]` to the last member's `t[1]`.
 - `kind ∈ {single, coalesced, transient_merged, unsettled, trivial}`. `unsettled` if any member frame has `settled=false`; `trivial` if every op is a `clock` op (§11.2), in which case Stage 5 is skipped. For `transient_merged`, `transient = {"frame": 14, "region": "r5", "name": "toast", "hold_s": 1.2}`.
-- `regions` records the §11.1 assignment with scores. `computed_diff` is keyed by the **to-frame** region ID with `from_region` naming the from-frame ID (region IDs are per frame); the pseudo-region `r0` holds the diff of `unassigned_lines`. `old_index`/`new_index` are positions in the from/to region's line list; `y` is the new line's `y0` (the old line's for a delete); `char_diff` is a list of `[op, text]` runs (`=`, `+`, `−`) from the character-level Myers of §11.2; `uncertain` marks ops whose text came from a non-agreeing line.
+- `regions` records the §11.1 assignment with scores; its ids are **units** (windows and popups), never panes. `computed_diff` is keyed by the **to-frame** unit ID with `from_region` naming the from-frame ID (region IDs are per frame); the pseudo-region `r0` holds the diff of `unassigned_lines`. `old_index`/`new_index` are positions in the from/to unit's line list (§11.1); `pane` names the region the new line (the old line for a delete) came from when that is not the unit itself, else `null`; `y` is the new line's `y0` (the old line's for a delete); `char_diff` is a list of `[op, text]` runs (`=`, `+`, `−`) from the character-level Myers of §11.2; `uncertain` marks ops whose text came from a non-agreeing line.
 - A coalesced transition's `computed_diff` is **recomputed directly** between `from_frame` and `to_frame`; the members' diffs are not concatenated.
 - Stage 5's interpretation is a sidecar, `interpretations.jsonl` (§10.7), keyed by transition ID: `{"id": "T17", "action", "result", "description", "confidence", "refs": {"lines": ["16:l3", "16:l4"]}, "invalid_refs": 0, "model", "prompt_version", "error"}`.
 
@@ -644,25 +644,29 @@ Order of operations, per video: (1) region correspondence and line diff for ever
 
 ### 11.1 Region correspondence across frames
 
-Before diffing, match regions between frame *i* and frame *i+1*. Revision 1 matched by VLM-emitted names plus bbox IoU; names vary from call to call and text extents change whenever text is added (a terminal with one line and then thirty has IoU ≈ 0.03), so a miss turned every region into `appeared`/`disappeared` and Stage 5 lost the computed diff. Revision 3 scores every pair of regions that hold lines:
+Correspondence and the diff operate on **units**, not on every region (revision 5.5, ledger L31). A unit is every region with `parent: null` plus every `popup` whatever its parent; a pane (any other region with a parent) folds into its nearest ancestor unit and survives only as a label. The VLM splits the same page into a different number of panes from frame to frame (eight in frame 150 and three in frame 155 of the smoke run), which made panes "appear" and "disappear" between near-identical frames and turned their lines into inserted and deleted noise; the windows were stable in every frame. `FrameRecord.units()`, `unit_of()`, `unit_lines()` and `unit_line_sources()` (`schemas.py`) are the shared definitions; `frames.jsonl` and the index keep every region.
+
+A unit's line list is its own lines plus the lines of every region folding into it, in row order: lines are sorted by bbox y centre; lines whose y centre lies within half the unit's median line height of a row's first line form one row; rows run top to bottom and lines within a row left to right by `x0`; lines without a bbox go at the end in stored order. Raw y-centre order is not stable — a title-bar box 3 px taller in the next frame moved its line past a window-control glyph on the same row and produced a delete/insert pair — hence the row banding, the same half-line-height rule §11.2 uses to pair modifies. Each line remembers the region it came from so ops can carry the pane (`pane`, §10.2), and Stage 5's diff text shows it as `[pane: left navigation]`.
+
+Before diffing, match units between frame *i* and frame *i+1*. Revision 1 matched by VLM-emitted names plus bbox IoU; names vary from call to call and text extents change whenever text is added (a terminal with one line and then thirty has IoU ≈ 0.03), so a miss turned every region into `appeared`/`disappeared` and Stage 5 lost the computed diff. Revision 3 scores every pair of units that hold lines:
 
 ```
-J     = |A ∩ B| / min(|A|, |B|) over the sets of normalized fused line texts   // containment, not Jaccard: a terminal growing
-                                                                            // from 1 line to 31 keeps J = 1; 0 if either side is empty
-IoU   = bbox intersection over union                                    // 0 if either bbox is null
+J     = |A ∩ B| / min(|A|, |B|) over the sets of normalized fused texts of the unit line lists   // containment, not Jaccard: a terminal
+                                                                                              // growing from 1 line to 31 keeps J = 1; 0 if either side is empty
+IoU   = intersection over union of the unit bboxes, each the union of the unit's line boxes   // 0 if either unit has no boxed line
 s     = 0.5·J + 0.3·IoU + 0.1·[norm(app) equal] + 0.1·[norm(name) equal]
 assignment: greedy one-to-one by descending s; accept s ≥ 0.3
-regions with no lines: matched only to a region with no lines whose app and name both match
-unmatched regions → appeared / disappeared events; unassigned_lines diffed as pseudo-region r0
+units with no lines: matched only to a unit with no lines whose app and name both match
+unmatched units → appeared / disappeared events; unassigned_lines diffed as pseudo-region r0
 ```
 
-The assignment and scores are recorded on the transition (§10.2).
+The assignment and scores are recorded on the transition (§10.2); `matched`, `appeared` and `disappeared` name unit ids only. A unit whose single line is rewritten *and* that grows (a one-line prompt that is typed into and then produces output) has J = 0 and a small IoU, and scores just under the threshold; the fixtures keep a persistent line, and the threshold is a §16 parameter.
 
-### 11.2 Line-level diff (per matched region)
+### 11.2 Line-level diff (per matched unit)
 
 ```
-prev = [fused(line) for line in region_i.lines   in stored order]
-cur  = [fused(line) for line in region_i+1.lines in stored order]
+prev = [fused(line) for line in unit_lines(unit_i)]     // the unit line list of §11.1, in row order
+cur  = [fused(line) for line in unit_lines(unit_i+1)]
 ops  = myers_diff(prev, cur)                       // insert / delete / equal runs (a small Myers implementation in the repo;
                                                    // Python's difflib uses a different algorithm with junk heuristics and is not used)
 post-process adjacent (delete a, insert b):
@@ -681,7 +685,7 @@ clock ops: a modify whose old and new differ only inside a token matching \d{1,2
 
 ### 11.3 Coalescing **[reasoned]**
 
-Input: the sequence of consecutive transitions with their computed diffs, after transient resolution (§11.4). Output: a sequence of coalesced transitions, each covering `[first, last]`, with `events`; each coalesced transition's `computed_diff` is recomputed directly between its `from_frame` and `to_frame`.
+Input: the sequence of consecutive transitions with their computed diffs, after transient resolution (§11.4). Output: a sequence of coalesced transitions, each covering `[first, last]`, with `events`; each coalesced transition's `computed_diff` is recomputed directly between its `from_frame` and `to_frame`. The region R of the rules below is a unit (§11.1): the rules are unchanged, they just run over unit line lists.
 
 - **Rule 1 — typed:** a maximal run of consecutive transitions whose ops restricted to region R are exactly one `modify(a → b)` on the same row with `lcp(norm a, norm b) ≥ len(norm a) − 3` (the tolerance absorbs a backspace and PowerShell's inline prediction text changing under the caret); ops in other regions are permitted only on lines with `in_churn = true` or tagged `clock`. Event `typed(text = b_final[len(lcp(a_first, b_final)):], line = b_final, region, frames = [first.from_frame, last.to_frame])`.
 - **Rule 2 — output_appended:** a maximal run whose ops in R are `insert`s at the end of R's list, optionally with `delete`s at the start (scroll-off), other regions restricted as in Rule 1. Event `output_appended(lines = Σ inserted, text = concatenation, region, frames)`.
@@ -693,7 +697,7 @@ Input: the sequence of consecutive transitions with their computed diffs, after 
 
 ### 11.4 Transients **[reasoned]**
 
-For frames `i−1, i, i+1`: frame `i` is a transient if it has at least one region unmatched (§11.1) in both neighbours, that region's lines are absent from frame `i+1`, and `hold_s = t_change_{i+1} − t_change_i < T_transient`. Revision 1 additionally required every matched region's text to be equal between `i−1` and `i+1`, which rejected the common cases (a "Saved" toast next to a title-bar dirty-marker change; a toast during output).
+For frames `i−1, i, i+1`: frame `i` is a transient if it has at least one unit unmatched (§11.1) in both neighbours, that unit's lines are absent from frame `i+1`, and `hold_s = t_change_{i+1} − t_change_i < T_transient`. Popups are units, so a tooltip drawn inside a window is still a transient. Revision 1 additionally required every matched region's text to be equal between `i−1` and `i+1`, which rejected the common cases (a "Saved" toast next to a title-bar dirty-marker change; a toast during output).
 
 - Frame `i` stays in `frames.jsonl`.
 - Instead of two Stage 5 calls (`i−1 → i` "toast appeared", `i → i+1` "toast disappeared"), one transition `i−1 → i+1` (`kind: transient_merged`) is built with the normal computed diff between `i−1` and `i+1`, and Stage 5 receives frame `i` as a third image with the note "this region appeared for *h* seconds between them." Result: one edge such as "user pressed Ctrl+S; a 'Saved' toast confirmed it."
@@ -826,7 +830,7 @@ All are initial values to be tuned on the ground-truth set (§18.1); until then,
 | glyph strip | one leading/trailing token of ≤ 2 chars | — | §9.2 | Icon-glyph agreement rule |
 | `layout_conf` penalties | −0.3 per interleaved region (cap 0.6); −0.2 if row coverage < 0.3; cap 0.6 singleton; cap 0.5 no bbox | — | §9.3 | |
 | focus combination | 0.9 / 0.7 / 0.6 / 0.6 / 0.5 / null | — | §9.4 | |
-| region correspondence | s = 0.5·J + 0.3·IoU + 0.1·app + 0.1·name (J = text containment); accept ≥ 0.3 | — | §11.1 | Cross-frame region matching |
+| region correspondence | s = 0.5·J + 0.3·IoU + 0.1·app + 0.1·name (J = text containment); accept ≥ 0.3 | — | §11.1 | Cross-frame matching of units (windows and popups) |
 | modify pairing | y-overlap (0.5·h) or similarity ≥ 0.6 | — | §11.2 | Delete+insert pairing |
 | typed tolerance | lcp ≥ len(a) − 3 | — | §11.3 | Backspace / inline-prediction tolerance |
 | `T_transient` | 2 s | — | §11.4 | Max hold for a transient |
@@ -1143,3 +1147,4 @@ Prior art recalled from training, not fetched during design **[verify IDs]**:
 - **Revision 5.2 (2026-09-13):** §20.11 adds `scry subset`, a derived run directory over a frame range of an existing Stage 1 output, used for the first live smoke run of the model stages (ledger L28).
 - **Revision 5.3 (2026-09-13):** first live run of the model stages (ledger L28–L29). §8.2: overlay labels are opaque yellow tags with black 12-px digits. §19.6: measured per-frame and per-transition costs. Open questions from the run are in `docs/open-items.md`.
 - **Revision 5.4 (2026-09-14):** §18.4 adds the `mark_match_fraction` diagnostic; overlay A/B recorded in ledger L30 (coordinate list and 16-px labels rejected).
+- **Revision 5.5 (2026-09-20):** correspondence and the line diff operate on units — parent-null regions plus every popup — with panes folded into their nearest ancestor unit and kept only as labels (§11.1; ledger L31, after the smoke run split one page into 8 panes and then 3). `regions.matched/appeared/disappeared` and the `computed_diff` keys are unit ids; `old_index`/`new_index` index the unit line list, which is in row order (y-centre bands of half a line height, then `x0`); `DiffOp.pane` records the source pane and Stage 5's diff text renders it (§10.2, §12). Transients, coalescing and trivial tagging run per unit unchanged (§11.3–§11.4); §9.4 compares focus ids at unit level; `fragment_stability` (§18.4) and the Stage 6 state line iterate units. Stage 3, `frames.jsonl` and the index are unchanged.

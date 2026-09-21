@@ -43,24 +43,29 @@ def render_diff(t: Transition, frames: dict[int, FrameRecord]) -> str:
         out.append("Regions that appeared in frame b: " + ", ".join(_region_name(b, r) for r in t.regions.appeared))
     if t.regions.disappeared:
         out.append("Regions that disappeared after frame a: " + ", ".join(_region_name(a, r) for r in t.regions.disappeared))
-    for rid, rd in t.computed_diff.items():
+    for rid, rd in t.computed_diff.items():  # keyed by unit (§11.1); indices are positions in the unit's line list
         reg = b.region(rid)
         head = _region_name(b, rid)
         if reg is not None and reg.layout_conf < 0.5:
             head += " (grouping uncertain; text may belong to an adjacent window)"
         out.append(f"Region {head}:")
+        lines = b.unit_lines(rid)
         for o in rd.ops:
             flag = " [uncertain reading]" if o.uncertain else ""
             churn = " [region was animating]" if o.in_churn else ""
+            pane = ""
+            if o.pane:
+                pr = (a if o.op == "delete" else b).region(o.pane)
+                pane = f" [pane: {pr.name if pr else o.pane}]"
             if o.op == "modify":
-                out.append(f'  modify: "{o.old}" -> "{o.new}"{flag}{churn}')
+                out.append(f'  modify: "{o.old}" -> "{o.new}"{flag}{churn}{pane}')
             elif o.op == "insert":
-                out.append(f'  insert: "{o.new}"{flag}{churn}')
+                out.append(f'  insert: "{o.new}"{flag}{churn}{pane}')
             else:
-                out.append(f'  delete: "{o.old}"{flag}{churn}')
+                out.append(f'  delete: "{o.old}"{flag}{churn}{pane}')
             src = None
-            if o.new_index is not None and reg is not None and o.new_index < len(reg.lines):
-                src = reg.lines[o.new_index]
+            if o.new_index is not None and reg is not None and o.new_index < len(lines):
+                src = lines[o.new_index]
             if src is not None and src.agree is False and src.ocr and src.vlm:
                 out.append(f"    readings disagree — OCR: {src.ocr} | VLM: {src.vlm}")
     for e in t.events:

@@ -41,8 +41,12 @@ def diff_region(prev: list[Line], cur: list[Line], cfg: DiffConfig) -> list[Diff
 def diff_pair(prev: FrameRecord, cur: FrameRecord, cfg: DiffConfig) -> Transition:
     corr = correspond(prev, cur, cfg)
     computed: dict[str, RegionDiff] = {}
-    for a, b, _ in corr.matched:
-        ops = diff_region(prev.region(a).lines, cur.region(b).lines, cfg)
+    for a, b, _ in corr.matched:  # units (§11.1); the pane a line came from rides along as metadata
+        la, lb = prev.unit_line_sources(a), cur.unit_line_sources(b)
+        ops = diff_region([l for l, _ in la], [l for l, _ in lb], cfg)
+        for o in ops:
+            src, unit = (lb[o.new_index][1], b) if o.new_index is not None else (la[o.old_index][1], a)
+            o.pane = src if src != unit else None
         if ops:
             computed[b] = RegionDiff(from_region=a, ops=ops)
     r0 = diff_region(prev.unassigned_lines, cur.unassigned_lines, cfg)

@@ -29,7 +29,7 @@ def summarize(frames: list[dict]) -> dict:
 
 
 def fragment_stability(frames: list, transitions: list) -> float | None:
-    """§18.4: fraction of unchanged lines (same fused text in matched regions of consecutive frames) whose OCR mark count
+    """§18.4: fraction of unchanged lines (same fused text in matched units of consecutive frames) whose OCR mark count
     differs — 0.0 means the engine split lines identically frame to frame."""
     by_id = {f.frame: f for f in frames}
     same, differ = 0, 0
@@ -38,8 +38,8 @@ def fragment_stability(frames: list, transitions: list) -> float | None:
         if a is None or b is None:
             continue
         for ra, rb, _ in t.regions.matched:
-            la = {norm(l.fused): len(l.marks) for l in a.region(ra).lines if l.marks} if a.region(ra) else {}
-            for l in (b.region(rb).lines if b.region(rb) else []):
+            la = {norm(l.fused): len(l.marks) for l in a.unit_lines(ra) if l.marks}
+            for l in b.unit_lines(rb):
                 k = norm(l.fused)
                 if l.marks and k in la:
                     if la[k] == len(l.marks):

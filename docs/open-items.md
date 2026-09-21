@@ -38,6 +38,10 @@ design's §21. This list is the short "what next" view across all three.
 - [x] **Overlay A/B** (ledger L30): a per-mark coordinate list and 16-px labels are within noise of the 12-px opaque
       tags; both stay off. Residual id errors (6 % of rows) are identical lines on one screen, e.g. two 'Node pools';
       per-pane crops (design §21) are the literature's answer if that ever matters.
+- [x] **Pane segmentation is unstable between near-identical frames** (the same portal page is 8 panes in frame 150
+      and 3 in frame 155), so panes "appeared" and "disappeared" and their lines showed up as deleted and inserted
+      noise while the windows were stable in all 11 frames. Correspondence and the diff now run over window-level
+      units (parent-null regions plus popups); panes are labels only (ledger L31, design §11.1 revision 5.5).
 
 ## Needs the owner (hand-made ground truth, design §18.1)
 

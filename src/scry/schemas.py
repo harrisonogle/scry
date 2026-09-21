@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import statistics
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -157,6 +158,43 @@ class FrameRecord(BaseModel):
         ids |= {ln.id for ln in self.unassigned_lines}
         return ids
 
+    # ---------- diff units (§11.1): windows and popups; panes fold into their nearest ancestor unit ----------
+    def unit_of(self, rid: str) -> str | None:
+        """The unit a region folds into: itself for a parent-null region or a popup, else its nearest ancestor unit."""
+        by_id = {r.id: r for r in self.regions}
+        if rid not in by_id:
+            return None
+        seen = {rid}
+        while by_id[rid].parent in by_id and by_id[rid].kind != "popup" and by_id[rid].parent not in seen:
+            rid = by_id[rid].parent
+            seen.add(rid)
+        return rid
+
+    def units(self) -> list[Region]:
+        return [r for r in self.regions if self.unit_of(r.id) == r.id]
+
+    def unit_line_sources(self, unit_id: str) -> list[tuple[Line, str]]:
+        """The unit's line list with the id of the region each line came from: its own lines plus those of every region
+        folding into it, in row order — lines whose y centres lie within half the median line height of a row's first
+        line form one row, rows top to bottom, lines within a row by x0 (raw y-centre order flips on 1-px OCR jitter);
+        lines without a bbox last, in stored order."""
+        items = [(ln, r.id) for r in self.regions if self.unit_of(r.id) == unit_id for ln in r.lines]
+        boxed = sorted((it for it in items if it[0].bbox), key=lambda it: (it[0].bbox[1] + it[0].bbox[3]) / 2)
+        hs = [it[0].bbox[3] - it[0].bbox[1] for it in boxed]
+        half_h = 0.5 * (statistics.median(hs) if hs else 16.0)
+        rows: list[list[tuple[Line, str]]] = []
+        row_yc = None
+        for it in boxed:
+            yc = (it[0].bbox[1] + it[0].bbox[3]) / 2
+            if row_yc is None or yc - row_yc >= half_h:
+                rows.append([])
+                row_yc = yc
+            rows[-1].append(it)
+        return [it for row in rows for it in sorted(row, key=lambda it: it[0].bbox[0])] + [it for it in items if not it[0].bbox]
+
+    def unit_lines(self, unit_id: str) -> list[Line]:
+        return [ln for ln, _ in self.unit_line_sources(unit_id)]
+
 
 # ---------- Stage 4 (§10.2) ----------
 class DiffOp(BaseModel):
@@ -170,6 +208,7 @@ class DiffOp(BaseModel):
     uncertain: bool = False
     clock: bool = False
     in_churn: bool = False
+    pane: str | None = None  # region the new line (old line for a delete) came from, when it is not the unit itself (§11.1)
 
 
 class RegionDiff(BaseModel):
