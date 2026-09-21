@@ -7,7 +7,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 from scry.config import OverlayConfig
-from scry.schemas import BBox, OcrLine
+from scry.schemas import BBox, Box
 
 log = logging.getLogger(__name__)
 COLOR = (255, 0, 255, 255)   # box outline
@@ -62,7 +62,7 @@ def _fit_text(text: str, w: int, h: int, cfg: OverlayConfig, fonts: dict) -> tup
         size -= 1
 
 
-def mask_image(img: Image.Image, lines: list[OcrLine], cfg: OverlayConfig) -> Image.Image:
+def mask_image(img: Image.Image, lines: list[Box], cfg: OverlayConfig) -> Image.Image:
     """[overlay] mask: `img` (the frame, already scaled by cfg.scale) with every OCR box covered, in place. opaque and
     opaque_label fill the box MASK_FILL grey; rendered fills it white and re-sets the OCR text inside it (left-aligned,
     vertically centred, see _fit_text). No tags: draw_overlay adds them afterwards, and perceive.frame_block applies the
@@ -99,7 +99,7 @@ def _scale_box(box: BBox, scale: float) -> BBox:
     return (math.floor(x0 * scale), math.floor(y0 * scale), math.ceil(x1 * scale), math.ceil(y1 * scale))
 
 
-def draw_overlay(png_in: Path, lines: list[OcrLine], png_out: Path, cfg: OverlayConfig) -> int:
+def draw_overlay(png_in: Path, lines: list[Box], png_out: Path, cfg: OverlayConfig) -> int:
     img = mask_image(scale_image(Image.open(png_in).convert("RGBA"), cfg.scale), lines, cfg)
     W, H = img.size
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
@@ -110,7 +110,7 @@ def draw_overlay(png_in: Path, lines: list[OcrLine], png_out: Path, cfg: Overlay
     for ln, box in zip(lines, boxes):
         x0, y0, x1, y1 = box
         draw.rectangle((x0, y0, max(x1 - 1, x0), max(y1 - 1, y0)), outline=COLOR, width=1)
-        label = ln.id[1:]  # "l17" → "17"
+        label = ln.id[1:]  # "b17" → "17"
         l, t, r, b = font.getbbox(label)
         lw, lh = (r - l) + 2 * PAD, (b - t) + 2 * PAD
         if cfg.mask == "opaque_label":  # the tag sits inside the covered box: left-aligned, vertically centred, black on the grey

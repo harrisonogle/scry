@@ -4,7 +4,7 @@ from PIL import Image
 
 from scry.config import OverlayConfig
 from scry.overlay import draw_overlay, place_label
-from scry.schemas import OcrLine
+from scry.schemas import Box
 
 
 def test_place_label_prefers_right_then_left_then_above_then_below():
@@ -37,8 +37,8 @@ def test_place_label_never_leaves_the_image():
 def test_draw_overlay_keeps_dimensions(tmp_path: Path):
     src = tmp_path / "f.png"
     Image.new("RGB", (320, 120), (10, 10, 10)).save(src)
-    lines = [OcrLine(id="l1", bbox=(10, 10, 120, 28), text="a", conf=1.0),
-             OcrLine(id="l2", bbox=(10, 40, 200, 58), text="b", conf=1.0)]
+    lines = [Box(id="b1", bbox=(10, 10, 120, 28), text="a", conf=1.0),
+         Box(id="b2", bbox=(10, 40, 200, 58), text="b", conf=1.0)]
     out = tmp_path / "o.png"
     clashes = draw_overlay(src, lines, out, OverlayConfig())
     im = Image.open(out)
@@ -50,7 +50,7 @@ def test_labels_are_opaque_high_contrast_tags(tmp_path: Path):
     src = tmp_path / "f.png"
     Image.new("RGB", (320, 120), (200, 200, 200)).save(src)
     out = tmp_path / "o.png"
-    draw_overlay(src, [OcrLine(id="l7", bbox=(10, 10, 120, 28), text="a", conf=1.0)], out, OverlayConfig())
+    draw_overlay(src, [Box(id="b7", bbox=(10, 10, 120, 28), text="a", conf=1.0)], out, OverlayConfig())
     im = Image.open(out).convert("RGB")
     tag = {im.getpixel((x, y)) for x in range(122, 140) for y in range(6, 34)}  # the label sits right of the box
     assert (255, 255, 0) in tag  # opaque backing, not blended with the frame
@@ -64,7 +64,7 @@ def _tag_rows(im: Image.Image, xs: range, ys: range) -> set[int]:
 def test_draw_overlay_scale_halves_the_image_and_boxes_but_not_the_tags(tmp_path: Path):
     src = tmp_path / "f.png"
     Image.new("RGB", (320, 120), (200, 200, 200)).save(src)
-    lines = [OcrLine(id="l7", bbox=(10, 11, 121, 29), text="a", conf=1.0)]
+    lines = [Box(id="b7", bbox=(10, 11, 121, 29), text="a", conf=1.0)]
     full, half = tmp_path / "full.png", tmp_path / "half.png"
     draw_overlay(src, lines, full, OverlayConfig())
     clashes = draw_overlay(src, lines, half, OverlayConfig(scale=0.5))
@@ -97,7 +97,7 @@ def _bg(tmp_path: Path, color=(10, 10, 10)) -> Path:
 def test_mask_opaque_fills_the_box_grey_and_keeps_the_outside_tag(tmp_path: Path):
     from scry.overlay import MASK_FILL
     src, out = _bg(tmp_path), tmp_path / "o.png"
-    clashes = draw_overlay(src, [OcrLine(id="l7", bbox=(10, 10, 120, 28), text="Hello", conf=1.0)], out, OverlayConfig(mask="opaque"))
+    clashes = draw_overlay(src, [Box(id="b7", bbox=(10, 10, 120, 28), text="Hello", conf=1.0)], out, OverlayConfig(mask="opaque"))
     im = Image.open(out).convert("RGB")
     assert clashes == 0 and im.size == (320, 120)
     assert im.getpixel((60, 19)) == MASK_FILL[:3] and im.getpixel((118, 26)) == MASK_FILL[:3]  # interior covered
@@ -110,7 +110,7 @@ def test_mask_opaque_fills_the_box_grey_and_keeps_the_outside_tag(tmp_path: Path
 def test_mask_opaque_label_draws_the_tag_inside_the_box_and_no_outside_tag(tmp_path: Path):
     from scry.overlay import MASK_FILL
     src, out = _bg(tmp_path), tmp_path / "o.png"
-    clashes = draw_overlay(src, [OcrLine(id="l7", bbox=(10, 10, 120, 28), text="Hello", conf=1.0)], out, OverlayConfig(mask="opaque_label"))
+    clashes = draw_overlay(src, [Box(id="b7", bbox=(10, 10, 120, 28), text="Hello", conf=1.0)], out, OverlayConfig(mask="opaque_label"))
     im = Image.open(out).convert("RGB")
     assert clashes == 0
     left = {im.getpixel((x, y)) for x in range(11, 30) for y in range(11, 27)}    # the digit: black on the grey, left-aligned
@@ -122,8 +122,8 @@ def test_mask_opaque_label_draws_the_tag_inside_the_box_and_no_outside_tag(tmp_p
 
 def test_mask_rendered_sets_white_boxes_with_dark_text_clipped_to_the_box(tmp_path: Path):
     src, out = _bg(tmp_path), tmp_path / "o.png"
-    lines = [OcrLine(id="l1", bbox=(10, 10, 120, 28), text="Hello", conf=1.0),
-             OcrLine(id="l2", bbox=(10, 50, 60, 68), text="a very long line that cannot possibly fit", conf=1.0)]
+    lines = [Box(id="b1", bbox=(10, 10, 120, 28), text="Hello", conf=1.0),
+         Box(id="b2", bbox=(10, 50, 60, 68), text="a very long line that cannot possibly fit", conf=1.0)]
     draw_overlay(src, lines, out, OverlayConfig(mask="rendered"))
     im = Image.open(out).convert("RGB")
     box = {im.getpixel((x, y)) for x in range(11, 119) for y in range(11, 27)}
@@ -141,7 +141,7 @@ def test_mask_rendered_sets_white_boxes_with_dark_text_clipped_to_the_box(tmp_pa
 def test_mask_image_masks_the_clean_frame_over_the_overlay_rectangles(tmp_path: Path):
     from scry.overlay import MASK_FILL, mask_image, scale_image
     src, out = _bg(tmp_path), tmp_path / "o.png"
-    lines = [OcrLine(id="l7", bbox=(10, 11, 121, 29), text="Hello", conf=1.0)]
+    lines = [Box(id="b7", bbox=(10, 11, 121, 29), text="Hello", conf=1.0)]
     for mode in ("opaque", "opaque_label", "rendered"):
         cfg = OverlayConfig(mask=mode, scale=0.5)
         draw_overlay(src, lines, out, cfg)
