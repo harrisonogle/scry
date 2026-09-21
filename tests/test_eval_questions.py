@@ -43,7 +43,7 @@ def _clock():
 
 def _outcome(stop: str = "end_turn", dollars: float = 0.1) -> AskOutcome:
     return AskOutcome("It ran at frame 2.", {"input_tokens": 10_000, "output_tokens": 2_000}, dollars, "claude-opus-5", 3,
-                      ["search", "get_frame"], stop, calls=[{"name": "search", "input": {"query": "git push"}, "results": 0}])
+                      ["search", "get_frame"], stop, calls=[{"name": "search", "input": {"query": "git push"}, "results": 0}], prompt="ask-v1")
 
 
 def test_run_questions_records_cost_resumes_and_keeps_errors(tmp_path: Path):
@@ -61,6 +61,7 @@ def test_run_questions_records_cost_resumes_and_keeps_errors(tmp_path: Path):
     assert (a1.qid, a1.polarity, a1.answer, a1.dollars, a1.seconds, a1.turns) == ("Q1", "positive", "It ran at frame 2.", 0.1, 2.0, 3)
     assert (a2.qid, a2.dollars, a2.seconds, a2.tools, a2.model, a2.error) == ("Q2", 0.1, 2.0, ["search", "get_frame"], "claude-opus-5", None)
     assert a2.calls == [{"name": "search", "input": {"query": "git push"}, "results": 0}]  # the input and a count, kept (L57)
+    assert a1.prompt == a2.prompt == "ask-v1"  # which ask prompt answered: "ask-v1+noframes" when the agent had no frames
     assert len((run.root / "answers.jsonl").read_text().splitlines()) == 2
     assert asked == ["Where does `git status` get run?", "Did they push?"]
 
@@ -102,11 +103,11 @@ def test_answer_fn_maps_ask_result(tmp_path: Path, monkeypatch):
     def fake_ask(run, cfg, question, client=None):
         seen.append(question)
         return SimpleNamespace(text="x", turns=2, tool_calls=["search"], tool_log=[ToolCall(name="search", input={"query": "push"}, results=0)],
-                               usage={"input_tokens": 1}, cost_usd=0.0225, stop="end_turn")
+                               usage={"input_tokens": 1}, cost_usd=0.0225, stop="end_turn", prompt="ask-v1+noframes")
 
     monkeypatch.setattr("scry.ask.ask", fake_ask)
     cfg = Config()
     out = adapters.answer_fn(Run(tmp_path), cfg, "Did they push?")
     assert seen == ["Did they push?"]
     assert out == AskOutcome(text="x", usage={"input_tokens": 1}, dollars=0.0225, model=cfg.model.model, turns=2, tools=["search"],
-                             stop="end_turn", calls=[{"name": "search", "input": {"query": "push"}, "results": 0}])
+                             stop="end_turn", calls=[{"name": "search", "input": {"query": "push"}, "results": 0}], prompt="ask-v1+noframes")

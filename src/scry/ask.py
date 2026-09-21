@@ -2,7 +2,9 @@
 frames. The tools pass measurements on as measurements: none reports which window had focus, and none derives "was
 run" from how long a text stayed on screen. Each call is a fresh conversation; no answer is cached and no file is
 written except the frames `redecode` saves. Every request of the loop asks for the API's automatic prompt caching, so
-the conversation so far is read from the cache on the next turn instead of being paid for again (L54)."""
+the conversation so far is read from the cache on the next turn instead of being paid for again (L54). With `[ask]
+frames = false` only the pixels are withheld, which is how an evaluation sees what the index itself holds: `redecode`,
+which returns nothing but images, is not offered, and `get_frame` returns the same record of a frame without its image."""
 from __future__ import annotations
 
 import json
@@ -16,7 +18,7 @@ from scry.changetext import box_label, render_change_line
 from scry.config import Config
 from scry.costs import USAGE_KEYS, add_usage, estimate_cost
 from scry.index import get_embedder, open_db, search as index_search
-from scry.prompts.ask import SYSTEM, TOOL_DESCRIPTIONS, VERSION
+from scry.prompts.ask import GET_FRAME_WITHOUT_IMAGE, TOOL_DESCRIPTIONS, prompt_version, system_prompt
 from scry.providers import image_block, text_block
 from scry.run import Run
 from scry.schemas import box_ref
@@ -36,7 +38,16 @@ _SCHEMAS = {
                  "properties": {"t_a": _NUMBER, "t_b": _NUMBER, "fps": {"type": "number", "default": 2}}},
 }
 TOOL_DEFS: list[dict] = [{"name": name, "description": TOOL_DESCRIPTIONS[name], "input_schema": schema} for name, schema in _SCHEMAS.items()]
+IMAGES_ONLY = ("redecode",)  # a tool whose result is nothing but images; get_frame's holds a record and one image
 CACHE_CONTROL = {"type": "ephemeral"}  # top-level: the API puts the breakpoint on the last cacheable block and moves it each turn
+
+
+def tool_defs(frames: bool = True) -> list[dict]:
+    """The tools the model is offered: all five as they stand; or, without frames, all but `redecode`, with `get_frame`
+    described as what it then returns (a frame's record and no image)."""
+    if frames:
+        return TOOL_DEFS
+    return [d | {"description": GET_FRAME_WITHOUT_IMAGE} if d["name"] == "get_frame" else d for d in TOOL_DEFS if d["name"] not in IMAGES_ONLY]
 
 
 def hit_summary(hit: dict) -> dict:
@@ -119,8 +130,11 @@ class Tools:
             where = box_label(ref, self.labels, boxes)
             lines.append(line + (f" | {where}" if where else ""))
         lines += [f'{m.id} (no box) "{m.text}"' for m in (screen.missed if screen is not None else [])]
+        record = text_block("\n".join(lines))
+        if not self.cfg.ask.frames:  # only the pixels are withheld: the record is what it is with them
+            return [record]
         png = self.run.root / rec.png  # at full resolution: the agent looks at a frame in order to read it
-        return [text_block("\n".join(lines)), image_block(png) if png.exists() else text_block("(the image file is missing)")]
+        return [record, image_block(png) if png.exists() else text_block("(the image file is missing)")]
 
     def redecode(self, t_a: float, t_b: float, fps: float = 2.0) -> list[dict]:
         from scry.video import iter_frames
@@ -184,7 +198,7 @@ def _result_count(name: str, out) -> int:
     if name == "get_node":
         return 0 if "error" in out else 1
     if name == "get_frame":
-        return 1 if len(out) > 1 else 0  # "no such frame" is a single text block
+        return 0 if out[0]["text"] == "no such frame" else 1  # a found frame starts with its record, with or without its image
     return sum(b["type"] == "image" for b in out)  # redecode
 
 
@@ -192,7 +206,7 @@ def _tool_result(tools: Tools, cfg: Config, block) -> tuple[dict, ToolCall]:
     """One tool call's result block and its record. A tool error goes back to the model and never ends the loop."""
     base = {"type": "tool_result", "tool_use_id": block.id}
     call = ToolCall(name=block.name, input=dict(block.input))
-    if block.name not in _SCHEMAS:
+    if block.name not in _SCHEMAS or (block.name in IMAGES_ONLY and not cfg.ask.frames):  # a tool that was not offered
         call.error = "unknown tool"
         return base | {"content": f"error: unknown tool {block.name}", "is_error": True}, call
     try:
@@ -213,6 +227,7 @@ def ask(run: Run, cfg: Config, question: str, client=None) -> AskResult:
 
         client = anthropic.Anthropic()
     messages: list[dict] = [{"role": "user", "content": question}]
+    system, offered = system_prompt(cfg.ask.frames), tool_defs(cfg.ask.frames)
     usage = add_usage({}, {})
     tool_calls: list[str] = []
     tool_log: list[ToolCall] = []
@@ -220,7 +235,7 @@ def ask(run: Run, cfg: Config, question: str, client=None) -> AskResult:
     text, stop = f"Stopped after {cfg.ask.max_turns} turns without a final answer.", "max_turns"
     for _ in range(cfg.ask.max_turns):
         try:
-            resp = client.messages.create(model=cfg.model.model, max_tokens=cfg.model.max_tokens, system=SYSTEM, tools=TOOL_DEFS,
+            resp = client.messages.create(model=cfg.model.model, max_tokens=cfg.model.max_tokens, system=system, tools=offered,
                                           output_config={"effort": cfg.model.effort_ask}, cache_control=CACHE_CONTROL,
                                           messages=list(messages))
         except Exception as e:
@@ -242,4 +257,4 @@ def ask(run: Run, cfg: Config, question: str, client=None) -> AskResult:
         messages.append({"role": "user", "content": [block for block, _ in results]})  # all results in one message
     known = {l.id for l in run.load_lifetimes()} | {c.id for c in run.load_changes()}
     return AskResult(text=text, citations=extract_citations(text, known), turns=turns, tool_calls=tool_calls, tool_log=tool_log, usage=usage,
-                     cost_usd=estimate_cost(usage, cfg.model.model), model=cfg.model.model, prompt=VERSION, stop=stop)
+                     cost_usd=estimate_cost(usage, cfg.model.model), model=cfg.model.model, prompt=prompt_version(cfg.ask.frames), stop=stop)

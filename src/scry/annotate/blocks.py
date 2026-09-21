@@ -32,8 +32,8 @@ def build_blocks(frame: Frame, fb: FrameBoxes, plan: CallPlan, arm: str, scale: 
     if arm not in ("A", "D"):
         raise ValueError(f"no user turn for arm {arm!r}")
     ids = [b.id for b in fb.boxes]
-    if not plan.targets:
-        targets = "Targets: none."
+    if not plan.targets:  # the call is still made, for the description; said outright, or the model labels every box anyway
+        targets = "Targets: none. Label no box: return every list empty and give only the description."
     elif list(plan.targets) == ids:
         targets = "Targets: all boxes."
     else:

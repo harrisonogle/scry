@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import json
 import logging
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass
@@ -64,7 +65,10 @@ def _span(spec: RunSpec) -> dict:
 
 
 def _spec_hash(spec: RunSpec) -> str:
-    return sha256_obj({"name": spec.name, "span": _span(spec), "overrides": spec.overrides, "stages": list(spec.stages)})
+    """What a run directory was made from. The copy source is in it only when there is one, so the hash of every run
+    that built its own pipeline is what it always was."""
+    copied = {"copy": str(spec.copy_from)} if spec.copy_from is not None else {}
+    return sha256_obj({"name": spec.name, "span": _span(spec), "overrides": spec.overrides, "stages": list(spec.stages)} | copied)
 
 
 def _write_json(path: Path, obj: dict) -> None:
@@ -73,9 +77,35 @@ def _write_json(path: Path, obj: dict) -> None:
     tmp.replace(path)
 
 
+# What a copy leaves behind, at the top of the run it copies: the harness's state and the run's config (this run has its
+# own), the answers with their verdicts and scores (asking again is the point), and the frames `redecode` saved for them.
+NOT_PIPELINE = ("evalrun.json", "config.json", "answers.jsonl", "judgments.jsonl", "scorecard.json", "redecode")
+
+
+def check_copy(m: Matrix, spec: RunSpec) -> dict:
+    """The state of the finished run whose pipeline `spec` copies. A copy must not mislabel what it holds, so it is
+    refused unless that run is finished, covers the span's frames and was built with the spec's config in every
+    section but `[ask]`, the one section no pipeline stage reads. Only reads."""
+    src = Path(spec.copy_from)
+    if not (src / "evalrun.json").exists():
+        raise ValueError(f"{src} is not a run of the harness: it has no evalrun.json")
+    state = json.loads((src / "evalrun.json").read_text())
+    if state["status"] != "done":
+        raise ValueError(f"{src} is not finished: its status is {state['status']}")
+    if state["span"]["frames"] != list(spec.span.frames):
+        raise ValueError(f"{src} covers frames {state['span']['frames']}, not {list(spec.span.frames)}")
+    built = Config.model_validate(json.loads((src / "config.json").read_text())).model_dump()
+    mine = config_for(m, spec).model_dump()
+    differ = [section for section in mine if section != "ask" and mine[section] != built[section]]
+    if differ:
+        raise ValueError(f"{src} was built with a different " + ", ".join(f"[{section}]" for section in differ))
+    return state
+
+
 def materialise(m: Matrix, spec: RunSpec, root: Path, identity: dict) -> Run:
     """The run directory `root/<phase>/<name>`: derived from the matrix's source with a private, empty call cache, or
-    reused when it was made from the same spec. Nothing is written under the source."""
+    reused when it was made from the same spec. Nothing is written under the source. A spec that copies a pipeline
+    gets every file of that finished run but NOT_PIPELINE, byte for byte, and is never cold; nothing is written there."""
     out = Path(root) / spec.phase / spec.name
     state = out / "evalrun.json"
     spec_hash = _spec_hash(spec)
@@ -85,14 +115,21 @@ def materialise(m: Matrix, spec: RunSpec, root: Path, identity: dict) -> Run:
                              "choose a new phase name or delete the directory")
         return Run(out)
     cfg = config_for(m, spec)  # a bad override fails before anything is created
-    run = make_subset(m.source, out, spec.span.frames, share_cache=False)
+    if spec.copy_from is not None:
+        check_copy(m, spec)
+        src = Path(spec.copy_from)
+        shutil.copytree(src, out, ignore=lambda d, names: [n for n in names if n in NOT_PIPELINE] if Path(d) == src else [])
+        run = Run(out)
+    else:
+        run = make_subset(m.source, out, spec.span.frames, share_cache=False)
     cache = run.cache_dir
     _write_json(out / "config.json", cfg.model_dump())
     _write_json(state, {
         "phase": spec.phase, "name": spec.name, "config_id": spec.config_id, "span": _span(spec),
         "values": spec.values, "repeat": spec.repeat, "overrides": spec.overrides, "stages": list(spec.stages),
         "matrix": str(m.path), "spec_hash": spec_hash, "code": dict(identity),
-        "cold": cache.is_dir() and not cache.is_symlink() and not any(cache.iterdir()),
+        **({"copied_from": str(spec.copy_from)} if spec.copy_from is not None else {}),  # the pipeline was not built here
+        "cold": spec.copy_from is None and cache.is_dir() and not cache.is_symlink() and not any(cache.iterdir()),
         "started": None, "finished": None, "status": "new", "resumed": False, "seconds": {}, "error": None})
     return run
 
@@ -101,7 +138,8 @@ def execute(m: Matrix, spec: RunSpec, root: Path, identity: dict, stage_funcs: d
             clock: Callable[[], float] = time.perf_counter) -> RunOutcome:
     """Run the spec's stages in order, in-process, timing each. A finished run is skipped; an unfinished one gets the
     whole stage list again, flagged `resumed` (real stages skip themselves when their inputs and config are unchanged,
-    and an interrupted one finds its paid calls in the run's private cache)."""
+    and an interrupted one finds its paid calls in the run's private cache). A run whose pipeline was copied has `ask`
+    as its only stage (the matrix loader sees to it), so what it times and pays for is the questions."""
     run = materialise(m, spec, root, identity)
     path = run.root / "evalrun.json"
     state = json.loads(path.read_text())

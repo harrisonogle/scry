@@ -114,6 +114,8 @@ def build_scorecard(run_dir: Path) -> dict:
             commands = score_commands(run, cfg, Path(span["ground_truth"]))
             if commands is None:
                 warnings.append("no lifetimes: commands not scored")
+    if state.get("copied_from"):  # a [copy] phase: the records, the index and the manifest's dollars are that run's
+        notes.append(f"pipeline copied from {state['copied_from']}, not built by this run")
     if not run.annotations.exists():
         notes.append("no annotations")
     if not adapters.vlm_majority(run):

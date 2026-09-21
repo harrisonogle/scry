@@ -30,6 +30,25 @@ def test_p1_matrix_expands_to_the_planned_runs(monkeypatch):
     assert all(cfg.annotate.mode == "off" for name, cfg in cfgs.items() if "-none-" in name)
 
 
+def test_p6_matrix_asks_again_over_the_five_p4_pipelines(monkeypatch):
+    """Reads the committed matrix on purpose: P6 builds nothing, and each run's config is the one its P4 pipeline had."""
+    monkeypatch.chdir(REPO)
+    m = load_matrix(Path("evals/p6.toml"))
+    specs = expand(m)
+    assert {s.name: str(s.copy_from) for s in specs} == {
+        "full-inc-transcribing-indexonly-r1": "runs/eval/p4/full-inc-transcribing-r1",
+        "full-inc-transcribing-indexonly-r2": "runs/eval/p4/full-inc-transcribing-r2",
+        "full-none-indexonly-r1": "runs/eval/p4/full-none-r1", "full-none-indexonly-r2": "runs/eval/p4/full-none-r2",
+        "full-inc-transcribing-batch-indexonly-r1": "runs/eval/p4b/full-inc-transcribing-batch-r1"}
+    assert all(s.stages == ("ask",) and s.span.frames == (0, 220) for s in specs)
+    by_origin = {(p4.phase, p4.name): config_for(p4m, p4) for p4m in (load_matrix(Path("evals/p4.toml")), load_matrix(Path("evals/p4b.toml")))
+                 for p4 in expand(p4m)}
+    for s in specs:
+        cfg, origin = config_for(m, s), by_origin[s.copy_from.parts[-2], s.copy_from.parts[-1]]
+        assert cfg.ask.frames is False and origin.ask.frames is True
+        assert cfg.model_dump(exclude={"ask"}) == origin.model_dump(exclude={"ask"})  # the pipeline's config, to the key
+
+
 def _stage(name: str, fail_first: bool = False):
     """A fake stage: it only adds a manifest entry with usage."""
     calls = itertools.count(1)
@@ -60,13 +79,64 @@ def _matrix(tmp_path: Path, src, phase: str = "p9", extra: str = "") -> Path:
     return path
 
 
+def test_asking_again_over_copied_pipelines_end_to_end(tmp_path: Path, monkeypatch):
+    """The shape of P6: the pipelines of a finished phase are copied, the questions are asked again without frames, and
+    judge and report work on the result. The copied manifest carries the pipeline's dollars; the questions' are new."""
+    src = source_run(tmp_path)
+    built, root, results = _matrix(tmp_path, src), tmp_path / "eval", tmp_path / "results"
+    stages = {"read": _stage("read"), "annotate": _stage("annotate")}
+    asked: list[bool] = []
+
+    def fake_ask(run, cfg, question, client=None):
+        asked.append(cfg.ask.frames)
+        return SimpleNamespace(text="It ran at frame 2.", turns=2, tool_calls=["search"], tool_log=[], usage={"input_tokens": 1_000},
+                               cost_usd=0.05 if cfg.ask.frames else 0.02, stop="end_turn", prompt="ask-v1" if cfg.ask.frames else "ask-v1+noframes")
+
+    monkeypatch.setattr("scry.evaluation.runner.resolve", lambda stage: stages[stage])
+    monkeypatch.setattr("scry.ask.ask", fake_ask)
+    monkeypatch.setattr("scry.evaluation.judge.judge_provider", lambda cfg, cache_dir: _Judge())
+    cli = CliRunner()
+    assert cli.invoke(app, ["eval", "run", str(built), "--root", str(root)]).exit_code == 0
+    manifests = {name: (root / "p9" / name / "manifest.json").read_bytes() for name in ("smoke-r1", "smoke-r2")}
+
+    again = tmp_path / "p10.toml"
+    again.write_text(f'phase = "p10"\nsource = "{src.root}"\nbase_config = "{tmp_path / "base.toml"}"\nstages = ["ask"]\nrepeats = 2\n'
+                     f'[spans.smoke]\nframes = "1-2"\nquestions = "{tmp_path / "q.md"}"\n[axis.ask.indexonly]\n"ask.frames" = false\n'
+                     f'[copy]\nsmoke-indexonly-r1 = "{root / "p9" / "smoke-r1"}"\nsmoke-indexonly-r2 = "{root / "p9" / "smoke-r2"}"\n')
+    dry = cli.invoke(app, ["eval", "run", str(again), "--dry-run", "--root", str(root)])
+    assert dry.exit_code == 0 and f"smoke-indexonly-r1: ask (pipeline copied from {root / 'p9' / 'smoke-r1'})" in dry.output
+    assert "2 runs" in dry.output and not (root / "p10").exists()
+    (tmp_path / "p11.toml").write_text(again.read_text().replace('phase = "p10"', 'phase = "p11"').replace("smoke-r2", "smoke-r3"))
+    missing = cli.invoke(app, ["eval", "run", str(tmp_path / "p11.toml"), "--dry-run", "--root", str(root)])  # refused before a cent is spent
+    assert missing.exit_code == 1 and "smoke-r3 is not a run of the harness" in missing.output
+
+    asked.clear()
+    done = cli.invoke(app, ["eval", "run", str(again), "--root", str(root)])
+    assert done.exit_code == 0, done.output
+    assert asked == [False] * 4  # two questions a run, every one without frames
+    for name, origin in (("smoke-indexonly-r1", "smoke-r1"), ("smoke-indexonly-r2", "smoke-r2")):
+        assert (root / "p10" / name / "manifest.json").read_bytes() == manifests[origin] == (root / "p9" / origin / "manifest.json").read_bytes()
+    assert cli.invoke(app, ["eval", "judge", str(again), "--root", str(root)]).exit_code == 0
+    reported = cli.invoke(app, ["eval", "report", str(again), "--root", str(root), "--results", str(results)])
+    assert reported.exit_code == 0, reported.output
+    card = json.loads((root / "p10" / "smoke-indexonly-r1" / "scorecard.json").read_text())
+    assert card["run"]["cold"] is False and "run is not cold" in card["warnings"]  # how the report shows that nothing was built here
+    assert card["cost"]["dollars"] == 0.15 and card["cost"]["seconds"] == 0  # the pipeline's dollars are the copied manifest's
+    assert card["questions"]["ask_dollars"] == 0.04 and card["questions"]["positive"]["correct"] == 1  # the questions' are this phase's
+    report = (results / "p10" / "report.md").read_text()
+    assert "# p10 evaluation report" in report and "smoke-indexonly" in report and "run is not cold" in report
+    copied = f"pipeline copied from {root / 'p9' / 'smoke-r1'}, not built by this run"  # said outright, in the card and in the report
+    assert copied in card["notes"] and f"- smoke-indexonly-r1: {copied}" in report
+
+
 def test_run_and_report_end_to_end_with_fake_stages(tmp_path: Path, monkeypatch):
     src = source_run(tmp_path)
     matrix, root, results = _matrix(tmp_path, src), tmp_path / "eval", tmp_path / "results"
     stages = {"read": _stage("read"), "annotate": _stage("annotate")}
     monkeypatch.setattr("scry.evaluation.runner.resolve", lambda stage: stages[stage])
     monkeypatch.setattr("scry.ask.ask", lambda run, cfg, question, client=None: SimpleNamespace(
-        text="It ran at frame 2.", turns=2, tool_calls=["search"], tool_log=[], usage={"input_tokens": 1_000}, cost_usd=0.05, stop="end_turn"))
+        text="It ran at frame 2.", turns=2, tool_calls=["search"], tool_log=[], usage={"input_tokens": 1_000}, cost_usd=0.05, stop="end_turn",
+        prompt="ask-v1"))
     monkeypatch.setattr("scry.evaluation.judge.judge_provider", lambda cfg, cache_dir: _Judge())
     cli = CliRunner()
 

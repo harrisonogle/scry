@@ -78,3 +78,22 @@ def test_bad_keys_are_refused_at_load(tmp_path):
         _matrix(tmp_path, "repeat = 3\n" + MATRIX)
     with pytest.raises(ValueError, match="track.margin"):
         _matrix(tmp_path, MATRIX.replace('"model.max_tokens" = 16000', '"model.max_tokens" = 16000\n"track.margin" = 0.5'))
+
+
+COPY = MATRIX.replace('stages = ["track", "read", "annotate", "ask"]', 'stages = ["ask"]') + """
+[copy]
+span2-big-m050-r1 = "runs/eval/p8/span2-big-m050-r1"
+span2-small-m025-r2 = "elsewhere/r2"
+"""
+
+
+def test_a_copy_table_names_the_runs_and_where_each_pipeline_comes_from(tmp_path):
+    specs = expand(_matrix(tmp_path, COPY))
+    assert [(s.name, s.copy_from) for s in specs] == [("span2-big-m050-r1", Path("runs/eval/p8/span2-big-m050-r1")),
+                                                 ("span2-small-m025-r2", Path("elsewhere/r2"))]  # only the runs it names, in matrix order
+    assert all(s.stages == ("ask",) and s.phase == "p9" for s in specs)
+    assert all(s.copy_from is None for s in expand(_matrix(tmp_path)))  # without the table nothing changes
+    with pytest.raises(ValueError, match="span2-big-r1"):  # a name the matrix does not expand to
+        _matrix(tmp_path, COPY.replace("span2-big-m050-r1 =", "span2-big-r1 ="))
+    with pytest.raises(ValueError, match="stages"):  # a copied pipeline is never rebuilt: only the questions are asked
+        _matrix(tmp_path, COPY.replace('stages = ["ask"]', 'stages = ["index", "ask"]'))

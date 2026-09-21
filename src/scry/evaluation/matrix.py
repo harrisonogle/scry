@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 import itertools
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from scry.config import Config
@@ -11,7 +11,7 @@ from scry.subset import parse_frames
 
 STAGE_ORDER = ("read", "track", "annotate", "interpret", "summarize", "index", "ask")
 REQUIRED_KEYS = ("phase", "source", "stages", "repeats", "spans")
-TOP_KEYS = (*REQUIRED_KEYS, "base_config", "axis")
+TOP_KEYS = (*REQUIRED_KEYS, "base_config", "axis", "copy")
 SPAN_KEYS = ("frames", "ground_truth", "questions")
 
 
@@ -33,6 +33,7 @@ class RunSpec:
     repeat: int
     overrides: dict[str, object]
     stages: tuple[str, ...]
+    copy_from: Path | None = None  # the finished run whose pipeline this run copies instead of building one
 
 
 @dataclass
@@ -45,6 +46,7 @@ class Matrix:
     repeats: int
     spans: dict[str, Span]
     axes: dict[str, dict[str, dict]]
+    copy_from: dict[str, Path] = field(default_factory=dict)  # the [copy] table: run name → the finished run its pipeline is copied from
 
 
 def _span(name: str, table: dict) -> Span:
@@ -61,7 +63,12 @@ def _span(name: str, table: dict) -> Span:
 def load_matrix(path: Path) -> Matrix:
     """Read `evals/<phase>.toml`. Everything specific to a video or a phase lives in that file; paths are kept as
     written, relative to the working directory. A key the format does not have, a stage that does not exist and a
-    config key set by two axes are refused here; a config key that does not exist is refused by `config_for`."""
+    config key set by two axes are refused here; a config key that does not exist is refused by `config_for`.
+
+    A `[copy]` table (run name → the directory of a finished run) makes a phase that asks the questions again over
+    pipelines that already exist, for a change that touches only `[ask]`: the matrix then has exactly the runs the
+    table names, each run's pipeline is copied from its directory instead of being built, and the only stage is
+    `ask`, so that a copied pipeline is never rebuilt."""
     path = Path(path)
     with path.open("rb") as f:
         data = tomllib.load(f)
@@ -83,14 +90,29 @@ def load_matrix(path: Path) -> Matrix:
             for key in table:
                 if setters.setdefault(key, axis) != axis:
                     raise ValueError(f"{key} is set by two axes: {setters[key]} and {axis}")
-    return Matrix(phase=data["phase"], path=path, source=Path(data["source"]),
-                  base_config=Path(data.get("base_config", "scry.toml")),
-                  stages=tuple(s for s in STAGE_ORDER if s in data["stages"]), repeats=data["repeats"],
-                  spans={name: _span(name, table) for name, table in data["spans"].items()}, axes=axes)
+    m = Matrix(phase=data["phase"], path=path, source=Path(data["source"]),
+               base_config=Path(data.get("base_config", "scry.toml")),
+               stages=tuple(s for s in STAGE_ORDER if s in data["stages"]), repeats=data["repeats"],
+               spans={name: _span(name, table) for name, table in data["spans"].items()}, axes=axes,
+               copy_from={name: Path(src) for name, src in data.get("copy", {}).items()})
+    if m.copy_from:
+        if m.stages != ("ask",):
+            raise ValueError(f'{path} copies pipelines, which are never rebuilt: stages must be ["ask"]')
+        unknown = sorted(set(m.copy_from) - {spec.name for spec in _expand_all(m)})
+        if unknown:
+            raise ValueError(f"[copy] in {path} names no run of the matrix: {', '.join(unknown)}")
+    return m
 
 
 def expand(m: Matrix) -> list[RunSpec]:
-    """Spans in file order × the cartesian product of the axes (file order, the last axis fastest) × repeats."""
+    """Spans in file order × the cartesian product of the axes (file order, the last axis fastest) × repeats. With a
+    `[copy]` table: of those, the runs the table names, each with the directory its pipeline is copied from."""
+    if not m.copy_from:
+        return _expand_all(m)
+    return [replace(spec, copy_from=m.copy_from[spec.name]) for spec in _expand_all(m) if spec.name in m.copy_from]
+
+
+def _expand_all(m: Matrix) -> list[RunSpec]:
     specs = []
     for span in m.spans.values():
         stages = tuple(s for s in STAGE_ORDER if s in m.stages and (s != "ask" or span.questions is not None))
@@ -127,10 +149,15 @@ def config_for(m: Matrix, spec: RunSpec) -> Config:
 
 def check(m: Matrix) -> list[RunSpec]:
     """Everything that can be refused before a cent is spent: every run's config validates, the source holds decoded
-    frames, and each span's command list and question file exist and parse. Returns the expanded runs."""
+    frames, each span's command list and question file exist and parse, and a pipeline that is copied is a finished
+    run built with the run's own config. Returns the expanded runs."""
     specs = expand(m)
     for spec in specs:
         config_for(m, spec)
+    if m.copy_from:
+        from scry.evaluation.runner import check_copy  # the runner knows what a run directory holds
+        for spec in specs:
+            check_copy(m, spec)
     if not (m.source / "frames.jsonl").exists() and not (m.source / "stage1.jsonl").exists():
         raise ValueError(f"source {m.source} holds no decoded frames")
     for span in m.spans.values():
