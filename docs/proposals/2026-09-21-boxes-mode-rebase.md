@@ -110,7 +110,7 @@ One name for the design: **boxes mode**.
 | `typed`, `output_appended`, `coalesced`, `transient_merged` | kinds on groups; `continues`; `reverts`; `entered_text`, `submitted` from `interpret` |
 | region correspondence, `matched`, focus signals | removed |
 | Stage 5, 6, 7, the agent | `interpret`, `summarize`, `index`, `ask` |
-| per-frame region and frame index nodes | lifetime nodes |
+| per-frame region and frame index nodes | whole-screen entries per frame (kept) plus lifetime entries (added); duplicates collapsed at query time |
 | `rows_rejected`, `fragment_stability`, `layout_conf` | removed; `box_stability`, `unstable`, `touched_share` |
 | citation `"<frame>:<line_id>"` | `"<frame>:<box_id>"` |
 
@@ -326,13 +326,17 @@ texts, and a frame's state from its containers when annotations exist. Intent un
 **`index` and `ask`.** Nodes: one per **lifetime** (the majority reading of each reader, every variant, run texts
 joined both with `""` and with `" "` so a wrong joiner cannot hide a command, pair text as `key value` tokens with
 `key` and `value` as fields, first and last time, container label when there is one); one per transition (action,
-result, `entered_text`, `submitted`, group texts); one per **screen description**, spanning the frames from the call
-that produced it to the next description, so an unchanged screen is described once and not once per frame; steps,
-sections and the video as today. There are no per-frame
-copies: a text on screen for many frames is one hit with its first and last time (today's smoke index holds 67
-region nodes for 11 frames of three screens). A multi-term query with no single-node match falls back to per-term
-hits whose lifetimes overlap in time; a deduplicated whole-screen node is added only if the question set shows the
-need. `ask`'s tools return lifetimes, changes and interpretations. Its prompt guides and does not prohibit: quote
+result, `entered_text`, `submitted`, group texts); steps, sections and the video as today.
+
+**Whole-screen entries stay, one per emitted frame** (owner, 2026-09-21: nothing findable today may become unfindable):
+every box's text in reading order plus the screen `description` in force at that frame, so a query whose terms sit in
+different boxes or windows still matches one document and ranks as it does today, and non-textual state stays
+searchable. Lifetime entries are additive: they give an exact string once, with its first and last time, its majority
+reading and its variants. The duplicate problem is solved where it arises, in the result list, not by deleting
+entries: hits from consecutive frames whose matching text is identical are collapsed into one hit with a frame and
+time range (today the same static line is returned once per frame and crowds other results out of the top k; the
+smoke index holds 67 region nodes for 11 frames of three screens). Nothing about a frame becomes unreachable: `ask`'s
+frame tool returns the image, the texts alive at that frame and the description in force. `ask`'s tools return lifetimes, changes and interpretations. Its prompt guides and does not prohibit: quote
 verbatim where independent readers agree; where they differ, or a text is `unstable` or seen once, say so or look at
 the frame; an input field may show a suggestion; `submitted` is the primary evidence that a command ran, and without
 it say what was seen and how sure; time on screen is not evidence either way. A `get_pairs` tool is a follow-on.
