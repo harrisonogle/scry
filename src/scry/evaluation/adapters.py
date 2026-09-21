@@ -62,6 +62,7 @@ class AskOutcome:
     tools: list[str]
     stop: str
     calls: list[dict] = field(default_factory=list)  # per tool call: name, input, results (a count), error
+    prompt: str | None = None  # the ask prompt that answered: "ask-v1", or "ask-v1+noframes" under [ask] frames = false
 
 
 def answer_fn(run: Run, cfg: Config, question: str) -> AskOutcome:
@@ -70,4 +71,4 @@ def answer_fn(run: Run, cfg: Config, question: str) -> AskOutcome:
 
     r = ask(run, cfg, question)
     return AskOutcome(text=r.text, usage=dict(r.usage), dollars=r.cost_usd, model=cfg.model.model, turns=r.turns,
-                      tools=list(r.tool_calls), stop=r.stop, calls=[c.model_dump(exclude_none=True) for c in r.tool_log])
+                      tools=list(r.tool_calls), stop=r.stop, calls=[c.model_dump(exclude_none=True) for c in r.tool_log], prompt=r.prompt)
