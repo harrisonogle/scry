@@ -102,7 +102,7 @@ def test_ask_loop_runs_tools_and_reports_cost(tmp_path: Path):
         response([tool_use("u2", "get_frame", {"frame": 12}), tool_use("u3", "get_transitions", {"t_a": 24.0, "t_b": 27.0})], "tool_use"),
         response([text(ANSWER)], "end_turn")])
     result = ask(_indexed(tmp_path), Config(), "Did they run git status?", client)
-    assert (result.text, result.citations, result.model, result.prompt) == (ANSWER, ["12", "12:b4"], "claude-opus-5", "ask-v1")
+    assert (result.text, result.citations, result.model, result.prompt) == (ANSWER, ["T2", "12", "12:b4"], "claude-opus-5", "ask-v1")
     assert (result.turns, result.tool_calls, result.stop) == (3, ["search", "get_frame", "get_transitions"], "end_turn")
     assert result.usage == {"input_tokens": 3000, "output_tokens": 300, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0}
     assert result.cost_usd == 0.0225
@@ -143,4 +143,12 @@ def test_ask_tool_errors_and_stops(tmp_path: Path):
 def test_extract_citations():
     assert extract_citations("See frame 12 and 12:b4, then Frame 13; frames 12 again (13:m1).") == ["12", "12:b4", "13", "13:m1"]
     assert extract_citations("nothing here") == []
-    assert extract_citations("frame 99") == ["99"]  # nothing is validated
+    assert extract_citations("frame 99") == ["99"]  # frames and boxes are not validated
+
+
+def test_lifetime_and_transition_ids_are_citations_when_the_run_has_them(tmp_path: Path):
+    prose = "Submitted at T2 (v:T2 again), seen as lifetime L4 in frame 12; T3–T5 follow; an NVIDIA T4000, XL4 and HTML5 are not ids."
+    assert extract_citations(prose) == ["T2", "L4", "12", "T3", "T5", "T4000"]
+    assert extract_citations(prose, {"T1", "T2", "T3", "L4"}) == ["T2", "L4", "12", "T3"]  # no range is filled in
+    client = fake_sync_client([response([text("It ran at T2 (L4, 12:b4); T9 and L99 do not exist.")], "end_turn")])
+    assert ask(_indexed(tmp_path), Config(), "q", client).citations == ["T2", "L4", "12:b4"]

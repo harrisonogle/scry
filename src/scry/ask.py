@@ -141,7 +141,7 @@ class Tools:
 
 class AskResult(BaseModel):
     text: str
-    citations: list[str]  # read out of the answer's prose; nothing is validated here
+    citations: list[str]  # read out of the answer's prose; a lifetime or transition id is kept only when the run has it
     turns: int  # the API calls that returned
     tool_calls: list[str]  # tool names in call order
     usage: dict
@@ -151,12 +151,16 @@ class AskResult(BaseModel):
     stop: str  # the last stop reason, or "max_turns" or "api_error"
 
 
-_CITATION = re.compile(r"\b(\d+:[bm]\d+)\b|\b[Ff]rames?\s+(\d+)")
+_CITATION = re.compile(r"\b(\d+:[bm]\d+)\b|\b[Ff]rames?\s+(\d+)|\b([LT]\d+)\b")
 
 
-def extract_citations(text: str) -> list[str]:
-    """Box and missed-text refs as they stand and frames as their numbers, in order of appearance, without repeats."""
-    return list(dict.fromkeys(ref or frame for ref, frame in _CITATION.findall(text)))
+def extract_citations(text: str, known: set[str] | None = None) -> list[str]:
+    """Box and missed-text refs as they stand, frames as their numbers, and lifetime and transition ids (`L12`, `T7`) as
+    they stand, in order of appearance, without repeats. A lifetime or transition id is kept only when it is in `known`
+    (the ids of the run), because so short a pattern also matches other prose; None keeps them all. A range such as
+    T3–T7 is its two ends."""
+    found = (ref or frame or (item if known is None or item in known else "") for ref, frame, item in _CITATION.findall(text))
+    return list(dict.fromkeys(c for c in found if c))
 
 
 def _tool_result(tools: Tools, cfg: Config, block) -> dict:
@@ -203,5 +207,6 @@ def ask(run: Run, cfg: Config, question: str, client=None) -> AskResult:
         calls = [b for b in resp.content if getattr(b, "type", "") == "tool_use"]
         tool_calls += [b.name for b in calls]
         messages.append({"role": "user", "content": [_tool_result(tools, cfg, b) for b in calls]})  # all results in one message
-    return AskResult(text=text, citations=extract_citations(text), turns=turns, tool_calls=tool_calls, usage=usage,
+    known = {l.id for l in run.load_lifetimes()} | {c.id for c in run.load_changes()}
+    return AskResult(text=text, citations=extract_citations(text, known), turns=turns, tool_calls=tool_calls, usage=usage,
                      cost_usd=estimate_cost(usage, cfg.model.model), model=cfg.model.model, prompt=VERSION, stop=stop)
