@@ -20,9 +20,11 @@ const SceneBody: React.FC<{scene: ResolvedScene}> = ({scene}) => {
     case 'image':
       return <ImageScene src={v.src} caption={scene.caption} highlights={v.highlights} />;
     case 'frame':
-      return <FrameScene src={v.src} zoom={v.zoom} labels={v.labels} caption={scene.caption} />;
+      return <FrameScene src={v.src} width={v.width} height={v.height} zoom={v.zoom} labels={v.labels} caption={scene.caption} />;
     case 'terminal':
-      return <TerminalScene title={v.title} status={v.status} blocks={v.blocks} caption={scene.caption} />;
+      return (
+        <TerminalScene title={v.title} status={v.status} blocks={v.blocks} hold={v.hold} keyCitations={v.keyCitations} caption={scene.caption} />
+      );
     default:
       return null;
   }

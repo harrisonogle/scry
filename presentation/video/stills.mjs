@@ -1,6 +1,6 @@
 // Prints the scene table (start frame and duration of every scene, from the same script.json and voice
 // files the composition uses) and renders still PNGs so the look can be checked without playing the video.
-//   node stills.mjs                 -> stills/title.png, stills/demo.png, stills/cost-per-video.png
+//   node stills.mjs                 -> stills/<id>.png for title, demo, and every image scene that is present
 //   node stills.mjs --table         -> the scene table only
 //   node stills.mjs <id>:<0..1> ... -> one still per argument, at that fraction of the scene, into stills/<id>-<frac>.png
 import {bundle} from '@remotion/bundler';
@@ -39,8 +39,16 @@ const wanted = args.length
   : [
       {id: 'title', at: 0.6, name: 'title'},
       {id: 'demo', at: 0.93, name: 'demo'},
-      {id: 'cost-per-video', at: 0.5, name: 'cost-per-video'},
-    ];
+      {id: 'frame', at: 0.95, name: 'frame'},
+      {id: 'holdout-cost-per-config', at: 0.5, name: 'holdout-cost-per-config'},
+      {id: 'local-vs-api', at: 0.5, name: 'local-vs-api'},
+      {id: 'us-vs-gemini-holdout', at: 0.5, name: 'us-vs-gemini-holdout'},
+      {id: 'per-question', at: 0.5, name: 'per-question'},
+    ].filter((w) => {
+      const present = scenes.some((s) => s.id === w.id);
+      if (!present) console.log(`still ${w.name} skipped: scene ${w.id} is not in the composition (image missing?)`);
+      return present;
+    });
 
 fs.mkdirSync(path.join(here, 'stills'), {recursive: true});
 for (const w of wanted) {
