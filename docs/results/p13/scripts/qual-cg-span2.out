@@ -1,0 +1,144 @@
+runs 20 targets identical: True boxes identical: True
+
+terminal targets (both ids100 refs agree): 126
+
+== PER RUN
+run | cont/rec | popups | unassigned | repairs (kinds) | contdiff% vs r1,r2 | links run/pair/record | relinked | pairs-repro% vs r1,r2 | runs-repro% vs r1,r2 | off-row pairs (dy>12) | run jumps | pairs in neither ids100 ref | of which gap>150px | max pair gap | term ok | term frames listed | false term | 0-window records | tooltip149 | tooltip151 | f150 c/p/w/m | desc mechanism hits | vocab
+p10:span2-ids100-r1 | 1.76 | 1 | 0 | 1 {'link_unknown_box': 1} | 0.2 | 5/47/4 | 3 | 91.1 | 62.5 | 0 {} | 0 | 0 | 0 | 187 | 126/126 | 23/23 | 0 | 3 | - | - | None | 1 | [(('window', 'PowerShell'), 27), (('window', 'Microsoft Edge'), 24), (('window', 'Web browser'), 3), (('window', 'Google Chrome'), 1)]
+      desc: [(184, 'cy are active. A single instance row is listed, unchecked, with a green check icon nex')]
+p10:span2-ids100-r2 | 1.76 | 1 | 0 | 0 {} | 0.2 | 8/45/4 | 2 | 87.2 | 100.0 | 2 {183: 2} | 0 | 0 | 0 | 575 | 126/126 | 23/23 | 0 | 3 | - | - | None | 0 | [(('window', 'PowerShell'), 26), (('window', 'Microsoft Edge'), 24), (('window', 'Web browser'), 4), (('window', 'Chrome'), 1)]
+      OFFROW (183, (106, 272), 'Public IP address', '=>', 'Disabled')
+      OFFROW (183, (70, 271), 'Public IP address (IPv6)', '=>', 'Disabled')
+p10:span2-coords100-r1 | 1.94 | 1 | 0 | 1 {'link_malformed': 1} | 0.5,0.2 | 4/44/4 | 1 | 89.4,86.7 | 60.0,37.5 | 0 {} | 0 | 2 | 1 | 736 | 126/126 | 23/23 | 1 | 0 | - | - | None | 4 | [(('window', 'PowerShell'), 30), (('window', 'Microsoft Edge'), 29), (('window', 'Web browser'), 3), (('popup', 'Video overlay'), 1)]
+      FARNEWPAIR (182, (736, 0), 'Public IP address (IPv6) ', '=>', 'Subscription (move)')
+      false term: [(155, 'b36', 'l.io')]
+      desc: [(159, 'en in mobile and Give feedback buttons; the target sits in that toolbar alongside those co'), (160, ' Give feedback, each with a small icon; the target is the icon just left of the Open in mo'), (163, "en in mobile and Give feedback buttons; the target is the small mobile icon next to 'Open "), (184, 'idden behind a large animated SUBSCRIBE overlay with a bell icon and a pointing-hand cu')]
+p10:span2-coords100-r2 | 1.94 | 1 | 0 | 1 {'second_assignment': 1} | 0.2,0.0 | 5/42/4 | 0 | 89.4,88.9 | 80.0,50.0 | 0 {} | 0 | 0 | 0 | 183 | 126/126 | 23/23 | 0 | 0 | - | - | None | 3 | [(('window', 'Microsoft Edge'), 31), (('window', 'PowerShell'), 30), (('window', 'Web browser'), 2), (('popup', 'Video overlay'), 1)]
+      desc: [(160, "nd a blinking prompt beneath. The small target box is the phone icon next to the 'Open in "), (163, "h, Open in mobile, Give feedback) where the target is the small mobile icon next to 'Open "), (184, 'rge semi-transparent animated SUBSCRIBE overlay with a bell icon and a pointing hand in')]
+p10:span2-ids067-r1 | 1.76 | 1 | 0 | 1 {'link_already_linked': 1} | 1.4,1.6 | 7/50/4 | 4 | 93.6,88.9 | 100.0,62.5 | 0 {} | 0 | 6 | 2 | 235 | 122/126 | 23/23 | 0 | 3 | - | - | None | 1 | [(('window', 'Microsoft Edge'), 26), (('window', 'PowerShell'), 19), (('window', 'PowerShell 7-preview (x64)'), 5), (('window', 'Edge browser'), 2)]
+      FARNEWPAIR (170, (235, 0), 'Node pools', '=>', 'Overwrite? (y/n): Y')
+      FARNEWPAIR (170, (187, 0), 'Kubernetes versions', '=>', 'Overwrite? (y/n):')
+      missed term: [(170, 'b83', 'browser', 'Overwrite? (y/n): Y'), (170, 'b88', 'browser', 'Overwrite? (y/n):'), (177, 'b96', 'browser', 'AKS1-KodeKloudApp'), (185, 'b37', 'browser', '×')]
+      desc: [(185, 'A large blue circular notification/bell overlay badge floats over the lower-left naviga')]
+p10:span2-ids067-r2 | 1.76 | 1 | 0 | 0 {} | 1.4,1.6 | 5/52/4 | 2 | 91.5,88.9 | 60.0,37.5 | 0 {} | 0 | 9 | 3 | 634 | 123/126 | 23/23 | 1 | 3 | - | - | None | 1 | [(('window', 'Microsoft Edge'), 28), (('window', 'PowerShell'), 20), (('window', 'PowerShell 7-preview (x64)'), 5), (('window', 'Google Chrome'), 2)]
+      FARNEWPAIR (170, (235, 0), 'Node pools', '=>', 'Overwrite? (y/n):')
+      FARNEWPAIR (185, (448, 0), '"environmentName": "Azure', '=>', 'Diagnose and solve proble')
+      FARNEWPAIR (187, (634, 0), '口', '=>', '"tenantId": "00000000-0000')
+      missed term: [(170, 'b83', 'browser', 'Overwrite? (y/n): Y'), (170, 'b88', 'browser', 'Overwrite? (y/n):'), (185, 'b37', 'browser', '×')]
+      false term: [(187, 'b52', '口')]
+      desc: [(184, 'ly hidden by a large animated SUBSCRIBE overlay with a ringing bell and pointing hand d')]
+p10:span2-coords067-r1 | 1.94 | 1 | 0 | 2 {'link_malformed': 2} | 0.9,0.7 | 7/46/4 | 0 | 78.7,77.8 | 80.0,50.0 | 1 {183: 1} | 1 | 9 | 2 | 710 | 124/126 | 23/23 | 1 | 0 | - | - | None | 3 | [(('window', 'Microsoft Edge'), 31), (('window', 'PowerShell'), 18), (('window', 'PowerShell 7-preview (x64)'), 7), (('window', 'Windows PowerShell'), 4)]
+      OFFROW (183, (184, 29), 'RG1-KodeKloud-AKS-vnet/de', '=>', 'Size')
+      RUNJUMP (155, [(0, 29)], 'controller | Integrations')
+      FARNEWPAIR (183, (710, 0), ': 1 out of 1 succeeded', '=>', ': Standard_DS2_v2 (1 inst')
+      FARNEWPAIR (183, (184, 29), 'RG1-KodeKloud-AKS-vnet/de', '=>', 'Size')
+      missed term: [(185, 'b37', 'browser', '×'), (185, 'b39', 'browser', '□')]
+      false term: [(155, 'b36', 'l.io')]
+      desc: [(184, 'orite) icon. A large animated Subscribe overlay with a bell icon and a clicking-hand cu'), (185, 'cursor. A large circular blue bell icon overlay sits at the lower left over the menu, a'), (187, 'tl get nodes (a single Ready agent node listed under NAME/STATUS/ROLES/AGE/VERSION col')]
+p10:span2-coords067-r2 | 1.94 | 1 | 0 | 0 {} | 1.2,0.9 | 6/44/5 | 0 | 80.9,80.0 | 100.0,62.5 | 1 {156: 1} | 0 | 6 | 4 | 765 | 125/126 | 23/23 | 3 | 0 | - | - | None | 3 | [(('window', 'Microsoft Edge'), 29), (('window', 'PowerShell'), 19), (('window', 'PowerShell 7-preview (x64)'), 7), (('window', 'Windows PowerShell'), 4)]
+      OFFROW (156, (30, 105), 'Stop', '=>', 'PS C:\\Users\\msadmin>')
+      FARNEWPAIR (182, (194, 0), 'Overview', '=>', ' Essentials')
+      FARNEWPAIR (182, (182, 0), 'Activity log', '=>', 'Resource group (move) : M')
+      FARNEWPAIR (182, (736, 0), 'Public IP address (IPv6) ', '=>', 'Subscription (move)')
+      FARNEWPAIR (182, (765, 0), 'Virtual network/subnet : ', '=>', 'Subscription ID')
+      missed term: [(156, 'b45', 'browser', 'PS C:\\Users\\msadmin>')]
+      false term: [(155, 'b36', 'l.io'), (159, 'b18', '口'), (185, 'b42', 'aks-agentpool-')]
+      desc: [(181, 'ghlighted in yellow with one agent node listed as Ready. The mouse cursor sits near th'), (186, 'ring section). A single instance row is listed with a checkbox and a toolbar of Start/'), (187, ' single instance row with a checkbox is listed under column headings Instance, Compute')]
+p10:span2-ids050-r1 | 1.76 | 1 | 0 | 0 {} | 0.7,0.9 | 10/49/5 | 1 | 78.7,75.6 | 80.0,50.0 | 3 {155: 2, 184: 1} | 1 | 12 | 3 | 634 | 124/126 | 23/23 | 1 | 3 | - | - | None | 2 | [(('window', 'Microsoft Edge'), 22), (('window', 'Windows PowerShell'), 11), (('window', 'PowerShell 7-preview (x64)'), 9), (('window', 'Web browser'), 7)]
+      OFFROW (155, (262, 19), 'Resource group : RG1-Kode', '=>', '88')
+      OFFROW (155, (0, 17), ': Click here to add tags', '=>', 'Subscription ID :00000000')
+      OFFROW (184, (0, 29), 'Start Restart Stop  Reima', '=>', 'aks-agentpool-18097611-vm')
+      RUNJUMP (187, [(0, 14)], 'A different object named  | A different object named ')
+      FARNEWPAIR (155, (262, 19), 'Resource group : RG1-Kode', '=>', '88')
+      FARNEWPAIR (167, (195, 6), 'Virtual node pools', '=>', 'PS C:\\Users\\msadmin> az a')
+      FARNEWPAIR (187, (634, 0), '口', '=>', '"tenantId": "00000000-0000')
+      missed term: [(167, 'b80', 'browser', 'PS C:\\Users\\msadmin> az aks ge'), (177, 'b96', 'browser', 'AKS1-KodeKloudApp')]
+      false term: [(187, 'b52', '口')]
+      desc: [(184, 'em; the pane is partly hidden behind an overlay. A command toolbar across the top has S'), (185, 'e and Latest model; one instance row is listed with an unchecked selection box. A larg')]
+p10:span2-ids050-r2 | 1.76 | 1 | 0 | 0 {} | 0.7,0.5 | 14/44/4 | 0 | 83.0,80.0 | 80.0,50.0 | 1 {155: 1} | 3 | 5 | 1 | 281 | 124/126 | 23/23 | 0 | 3 | - | - | None | 2 | [(('window', 'Microsoft Edge'), 24), (('window', 'PowerShell 7-preview (x64)'), 12), (('window', 'Windows PowerShell'), 10), (('window', 'Web browser'), 6)]
+      OFFROW (155, (262, 19), 'Resource group : RG1-Kode', '=>', '88')
+      RUNJUMP (184, [(0, 29)], 'aks-agentpool-18097611-vm | Start Restart Stop  Reima')
+      RUNJUMP (185, [(0, 14)], 'AKS1-KodeKloudApp | Merged "AKS1-KodeKloudApp')
+      RUNJUMP (185, [(453, 0)], 'PS C:\\Users\\msadmin> kube | Extensions + applications')
+      FARNEWPAIR (155, (262, 19), 'Resource group : RG1-Kode', '=>', '88')
+      missed term: [(167, 'b80', 'browser', 'PS C:\\Users\\msadmin> az aks ge'), (177, 'b96', 'browser', 'AKS1-KodeKloudApp')]
+      desc: [(186, 'ring section). A single instance row is listed with a health/status column. Over the p'), (187, "nt selection, and a single instance row listed with a checkbox and 'Yes' under Latest ")]
+p10:span2-coords050-r1 | 1.94 | 1 | 0 | 0 {} | 1.6,1.4 | 8/43/5 | 0 | 78.7,75.6 | 20.0,12.5 | 1 {155: 1} | 1 | 6 | 1 | 183 | 123/126 | 23/23 | 3 | 0 | - | - | None | 3 | [(('window', 'Microsoft Edge'), 20), (('window', 'Windows PowerShell'), 15), (('window', 'Web browser'), 11), (('window', 'PowerShell 7-preview (x64)'), 9)]
+      OFFROW (155, (0, 16), ' Essentials', '=>', 'Resource group : RG1-Kode')
+      RUNJUMP (155, [(0, 29)], 'controller | Integrations')
+      FARNEWPAIR (183, (163, 3), 'Scaling', '=>', 'Default')
+      missed term: [(185, 'b36', 'browser', 'Administrator: PowerShell 7-pr'), (185, 'b37', 'browser', '×'), (185, 'b39', 'browser', '□')]
+      false term: [(155, 'b36', 'l.io'), (159, 'b18', '口'), (185, 'b42', 'aks-agentpool-')]
+      desc: [(160, "eceded by a small icon; the highlighted target is the small icon just left of the 'Open i"), (185, " a checkbox column; one instance row is listed with a 'Yes' latest-model value. A larg"), (187, 's highlighted and a single instance row listed. A black PowerShell console window, run')]
+p10:span2-coords050-r2 | 1.94 | 1 | 0 | 0 {} | 1.4,1.2 | 5/42/4 | 0 | 72.3,68.9 | 40.0,25.0 | 2 {155: 1, 182: 1} | 1 | 8 | 2 | 390 | 122/126 | 23/23 | 1 | 0 | - | - | None | 0 | [(('window', 'Microsoft Edge'), 26), (('window', 'Windows PowerShell'), 13), (('window', 'PowerShell 7-preview (x64)'), 10), (('window', 'Web browser'), 7)]
+      OFFROW (155, (0, 16), ' Essentials', '=>', 'Resource group : RG1-Kode')
+      OFFROW (182, (0, 40), 'Public IP address (IPv6) ', '=>', 'Orchestration mode: Unifo')
+      RUNJUMP (155, [(0, 29)], 'controller | Integrations')
+      FARNEWPAIR (155, (162, 0), 'Search', '=>', '《 + 十')
+      FARNEWPAIR (155, (390, 0), 'Open in mobile Give feedb', '=>', '-OD-')
+      missed term: [(155, 'b37', 'browser', '□'), (155, 'b38', 'browser', '×'), (185, 'b37', 'browser', '×'), (185, 'b39', 'browser', '□')]
+      false term: [(159, 'b18', '口')]
+p13:span2-cg040-r1 | 1.94 | 1 | 0 | 0 {} | 0.2,0.0 | 7/39/5 | 0 | 63.8,62.2 | 40.0,25.0 | 1 {182: 1} | 0 | 9 | 1 | 183 | 126/126 | 23/23 | 0 | 0 | - | - | None | 3 | [(('window', 'Windows PowerShell'), 20), (('window', 'Microsoft Edge'), 18), (('window', 'Web browser'), 14), (('window', 'PowerShell'), 4)]
+      OFFROW (182, (0, 47), 'Resource group (move) : M', '=>', 'Refresh Feedback')
+      FARNEWPAIR (183, (163, 3), 'Scaling', '=>', 'Default')
+      desc: [(160, 'ust under the console window. The small target box sits among the command toolbar icons ab'), (186, 'ring section) and a single instance row listed as Running/Ready. A black PowerShell co'), (187, 'ar of actions; a single instance row is listed and shows a healthy state. Drawn on top')]
+p13:span2-cg040-r2 | 1.94 | 1 | 0 | 0 {} | 0.5,0.2 | 8/44/4 | 0 | 68.1,64.4 | 40.0,25.0 | 2 {155: 1, 182: 1} | 1 | 12 | 3 | 358 | 126/126 | 23/23 | 0 | 0 | - | - | None | 3 | [(('window', 'Windows PowerShell'), 22), (('window', 'Web browser'), 19), (('window', 'Microsoft Edge'), 14), (('window', 'PowerShell'), 5)]
+      OFFROW (155, (101, 75), 'Container insights', '=>', 'Not enabled')
+      OFFROW (182, (344, 14), ' Essentials + Resource group (move) : M', '=>', 'Delete')
+      RUNJUMP (155, [(0, 27)], '8% GitOps | (deprecated)')
+      FARNEWPAIR (155, (101, 75), 'Container insights', '=>', 'Not enabled')
+      FARNEWPAIR (182, (344, 14), ' Essentials + Resource group (move) : M', '=>', 'Delete')
+      FARNEWPAIR (183, (163, 3), 'Scaling', '=>', 'Default')
+      desc: [(159, 'en in mobile and Give feedback buttons; the target is one of these toolbar icons. A black '), (184, 'ort arrows. A semi-transparent animated overlay sits in the lower-left corner: a bell i'), (186, 'ction Policy) and a single instance row listed as Running/Succeeded/Healthy. A left na')]
+p13:span2-cg030-r1 | 1.94 | 1 | 0 | 1 {'link_malformed': 1} | 0.5,0.2 | 9/46/4 | 3 | 76.6,75.6 | 40.0,25.0 | 0 {} | 0 | 10 | 6 | 623 | 126/126 | 23/23 | 1 | 0 | - | - | None | 3 | [(('window', 'Windows PowerShell'), 28), (('window', 'Web browser'), 24), (('window', 'Microsoft Edge'), 5), (('window', 'Windows PowerShell ISE'), 2)]
+      FARNEWPAIR (155, (623, 0), 'Resource group : RG1-Kode', '=>', 'Kubernetes version')
+      FARNEWPAIR (182, (208, 0), 'Search', '=>', '→Move  Start Restart Stop + Delete + Refresh Feedback')
+      FARNEWPAIR (182, (182, 0), 'Activity log', '=>', 'Resource group (move) : M')
+      FARNEWPAIR (182, (220, 0), 'Tags', '=>', 'Location + : Southeast Asia')
+      FARNEWPAIR (182, (223, 7), 'Settings', '=>', 'Subscription ID + :3eb0e8a-2743-4be7-891c-1')
+      FARNEWPAIR (182, (193, 0), 'Instances', '=>', 'Tags (edit) + aks-managed-createOperati + aks-managed-creationSo... + aks-managed-kubeletIdenti')
+      false term: [(155, 'b36', 'l.io')]
+      desc: [(159, 'ing JSON output of account information. The target is a small toolbar command icon in the '), (186, 'Monitoring, etc.) and a single instance listed in the grid. A PowerShell console windo'), (187, 'e and latest model; one instance row is listed. Drawn over the right half of the brows')]
+p13:span2-cg030-r2 | 1.94 | 1 | 0 | 0 {} | 0.5,0.2 | 6/46/4 | 2 | 72.3,71.1 | 40.0,25.0 | 2 {155: 1, 164: 1} | 0 | 12 | 7 | 941 | 125/126 | 23/23 | 0 | 0 | - | - | None | 4 | [(('window', 'Windows PowerShell'), 29), (('window', 'Web browser'), 26), (('window', 'Microsoft Edge'), 4), (('window', 'Web browser (Microsoft Edge) – Azure portal'), 1)]
+      OFFROW (155, (623, 318), 'Open in mobile Give feedb', '=>', 'itheastasia.azmk8s.io')
+      OFFROW (164, (0, 213), 'PS C:\\Users\\msadmin>', '=>', '"environmentName": "Azure')
+      FARNEWPAIR (155, (623, 318), 'Open in mobile Give feedb', '=>', 'itheastasia.azmk8s.io')
+      FARNEWPAIR (155, (623, 0), 'Resource group : RG1-Kode', '=>', 'Kubernetes version')
+      FARNEWPAIR (164, (0, 213), 'PS C:\\Users\\msadmin>', '=>', '"environmentName": "Azure')
+      FARNEWPAIR (182, (208, 0), 'Search', '=>', '→Move  Start Restart Stop')
+      FARNEWPAIR (182, (182, 0), 'Activity log', '=>', 'Resource group (move) : M')
+      FARNEWPAIR (182, (221, 0), 'Tags', '=>', 'Subscription (move)')
+      FARNEWPAIR (182, (193, 0), 'Instances', '=>', 'Tags (edit) + aks-managed-createOperati + aks-managed-creationSo... + aks-managed-kubeletIdenti')
+      missed term: [(164, 'b79', 'browser', 'PS C:\\Users\\msadmin>')]
+      desc: [(160, 'edback buttons, each with a small icon; the target is the icon next to the feedback comman'), (163, 'en in mobile and Give feedback actions; the target sits among these toolbar buttons. A bla'), (181, 'kubectl get nodes commands, with a node listed as Ready. The console window has the us'), (185, "oy' command at the prompt. A round dark overlay button sits at the bottom-left over the")]
+p13:span2-cg025-r1 | 1.94 | 2 | 2 | 2 {'unplaced': 2} | 2.6,2.4 | 3/40/7 | 1 | 72.3,68.9 | 0.0,0.0 | 0 {} | 0 | 6 | 1 | 710 | 120/126 | 22/23 | 2 | 0 | - | - | None | 2 | [(('window', 'Windows PowerShell'), 29), (('window', 'Web browser'), 24), (('window', 'Microsoft Edge'), 4), (('window', 'Browser'), 3)]
+      FARNEWPAIR (183, (710, 0), ': 1 out of 1 succeeded', '=>', ': Standard_DS2_v2 (1 inst')
+      missed term: [(164, 'b79', 'browser', 'PS C:\\Users\\msadmin>'), (165, 'b81', 'browser', '--name AKS1-KodeKloudApp --nod'), (185, 'b37', 'browser', '×'), (185, 'b39', 'browser', '□'), (186, 'b94', 'P', 'No resources found in default '), (186, 'b95', 'P', 'PS C:\\Users\\msadmin>')]
+      false term: [(155, 'b36', 'l.io'), (159, 'b18', '口')]
+      desc: [(164, "the mouse cursor sits over the console. The target text is part of the portal's property v"), (184, ' above a table of instances; one row is listed with a checkbox, a running status icon,')]
+p13:span2-cg025-r2 | 1.94 | 3 | 1 | 0 {} | 2.6,2.4 | 10/37/6 | 0 | 74.5,73.3 | 0.0,0.0 | 0 {} | 0 | 2 | 0 | 183 | 120/126 | 22/23 | 2 | 0 | - | - | None | 1 | [(('window', 'Web browser'), 29), (('window', 'Windows PowerShell'), 27), (('popup', 'Windows PowerShell'), 2), (('window', 'Microsoft Edge'), 2)]
+      missed term: [(156, 'b45', 'browser', 'PS C:\\Users\\msadmin>'), (165, 'b81', 'browser', '--name AKS1-KodeKloudApp --nod'), (169, 'b82', 'browser', 'A different object named AKS1-'), (169, 'b85', 'browser', 'Overwrite? (y/n):'), (186, 'b94', 'P', 'No resources found in default '), (186, 'b95', 'P', 'PS C:\\Users\\msadmin>')]
+      false term: [(155, 'b36', 'l.io'), (159, 'b18', '口')]
+      desc: [(166, ' part of the line highlighted/selected. The target box is the last command line typed at t')]
+p13:span2-cg020-r1 | 1.64 | 19 | 0 | 0 {} | 33.4,33.4 | 6/38/7 | 0 | 74.5,71.1 | 20.0,12.5 | 0 {} | 0 | 3 | 0 | 183 | 5/126 | 2/23 | 1 | 0 | - | - | None | 2 | [(('window', 'Web browser'), 32), (('popup', 'Azure Cloud Shell'), 6), (('popup', 'Azure Portal'), 5), (('window', 'Windows PowerShell'), 2)]
+      missed term: [(156, 'b45', 'P', 'PS C:\\Users\\msadmin>'), (158, 'b48', 'P', '"environmentName": "AzureCloud'), (158, 'b50', 'P', '"homeTenantId": "00000000-0000'), (158, 'b52', 'P', '"id": "00000000-0000-0000-0000'), (158, 'b54', 'P', '"isDefault": true,'), (158, 'b57', 'P', '"managedByTenants": [],'), (158, 'b58', 'P', '"name": "sub-global",'), (158, 'b60', 'P', '"state": "Enabled",'), (158, 'b65', 'P', '"tenantId": "00000000-0000'), (158, 'b67', 'P', '"user": {'), (158, 'b68', 'P', '"name":'), (158, 'b69', 'P', '"user@example.com",')]
+      false term: [(155, 'b36', 'l.io')]
+      desc: [(175, 'ations remain partly visible around the overlay.'), (186, 'tly hidden behind the terminal. A small overlay control sits at the bottom-right corner')]
+p13:span2-cg020-r2 | 1.64 | 19 | 0 | 0 {} | 34.1,34.1 | 7/38/8 | 0 | 66.0,62.2 | 20.0,12.5 | 1 {182: 1} | 0 | 7 | 1 | 183 | 3/126 | 2/23 | 0 | 0 | - | - | None | 4 | [(('window', 'Web browser'), 32), (('popup', 'Azure Portal'), 6), (('popup', 'Azure Cloud Shell'), 5), (('popup', 'Terminal'), 3)]
+      OFFROW (182, (0, 14), 'Resource group (move) : M', '=>', ' Essentials')
+      FARNEWPAIR (183, (163, 3), 'Scaling', '=>', 'Default')
+      missed term: [(155, 'b37', 'P', '□'), (155, 'b38', 'P', '×'), (155, 'b40', 'P', 'Administrator: PowerShell 7-pr'), (155, 'b44', 'P', 'PS C:\\Users\\msadmin> az login'), (156, 'b45', 'P', 'PS C:\\Users\\msadmin>'), (158, 'b48', 'P', '"environmentName": "AzureCloud'), (158, 'b50', 'P', '"homeTenantId": "00000000-0000'), (158, 'b52', 'P', '"id": "00000000-0000-0000-0000'), (158, 'b54', 'P', '"isDefault": true,'), (158, 'b57', 'P', '"managedByTenants": [],'), (158, 'b58', 'P', '"name": "sub-global",'), (158, 'b60', 'P', '"state": "Enabled",')]
+      desc: [(167, 'resource page and a toolbar of actions. The target text sits just under the terminal area '), (180, 'e is partially obscured by the terminal overlay.'), (184, ' latest model; a single instance row is listed, with a checkbox at its left and its st'), (186, 'the console, which stands out as a dark rectangle covering most of the content area.')]
+
+== PER SET (mean of repeats; P10's analysis columns). First row = ids100 vs the other ids100 (noise).
+set | pairs repro % | runs repro % | cont differs % | term boxes (of 126) | false term | tooltips own popup (of 4, 2 runs) | f150 correct/wrong/missing (sum of 2 runs; partial) | links run/pair/rec | repairs (kinds, sum) | cont/rec | off-row pairs r1,r2 | run jumps | pairs in neither ref r1,r2 | of which gap>150 | desc mechanism hits r1,r2
+p10:ids100 (n=2) | 89.2 | 81.2 | 0.2 | 126.0 | 0.0 | 0 | - | 6.5/46.0/4.0 | 1 {'link_unknown_box': 1} | 1.76 | 0,2 | 0,0 | 0,0 | 0,0 | 1,0
+p10:coords100 (n=2) | 88.6 | 56.9 | 0.2 | 126.0 | 0.5 | 0 | - | 4.5/43.0/4.0 | 2 {'link_malformed': 1, 'second_assignment': 1} | 1.94 | 0,0 | 0,0 | 2,0 | 1,0 | 4,3
+p10:ids067 (n=2) | 90.7 | 65.0 | 1.5 | 122.5 | 0.5 | 0 | - | 6.0/51.0/4.0 | 1 {'link_already_linked': 1} | 1.76 | 0,0 | 0,0 | 6,9 | 2,3 | 1,1
+p10:coords067 (n=2) | 79.3 | 73.1 | 0.9 | 124.5 | 2.0 | 0 | - | 6.5/45.0/4.5 | 2 {'link_malformed': 2} | 1.94 | 1,1 | 1,0 | 9,6 | 2,4 | 3,3
+p10:ids050 (n=2) | 79.3 | 65.0 | 0.7 | 124.0 | 0.5 | 0 | - | 12.0/46.5/4.5 | 0 {} | 1.76 | 3,1 | 1,3 | 12,5 | 3,1 | 2,2
+p10:coords050 (n=2) | 73.9 | 24.4 | 1.4 | 122.5 | 2.0 | 0 | - | 6.5/42.5/4.5 | 0 {} | 1.94 | 1,2 | 1,1 | 6,8 | 1,2 | 3,0
+p13:cg040 (n=2) | 64.6 | 32.5 | 0.2 | 126.0 | 0.0 | 0 | - | 7.5/41.5/4.5 | 0 {} | 1.94 | 1,2 | 0,1 | 9,12 | 1,3 | 3,3
+p13:cg030 (n=2) | 73.9 | 32.5 | 0.4 | 125.5 | 0.5 | 0 | - | 7.5/46.0/4.0 | 1 {'link_malformed': 1} | 1.94 | 0,2 | 0,0 | 10,12 | 6,7 | 3,4
+p13:cg025 (n=2) | 72.3 | 0.0 | 2.5 | 120.0 | 2.0 | 0 | - | 6.5/38.5/6.5 | 2 {'unplaced': 2} | 1.94 | 0,0 | 0,0 | 6,2 | 1,0 | 2,1
+p13:cg020 (n=2) | 68.4 | 16.2 | 33.8 | 4.0 | 0.5 | 0 | - | 6.5/38.0/7.5 | 0 {} | 1.64 | 0,1 | 0,0 | 3,7 | 0,1 | 2,4

@@ -1,0 +1,549 @@
+== NEIGH (P5 neigh.py): run | targets read (non-empty) | disagree with own OCR | is ANOTHER box's text | of which own box is an icon glyph | adjacent in reading order (|d|<=1) | |d|<=3 | far (|d|>3) | swapped pairs | longest shift chain | frames
+span2-s100-r1 | 349 | 48 | 5 | 0 | 4 | 5 | 0 | 0 | 2 | {155: 2, 171: 1, 187: 2}
+      {'frame': 155, 'box': 'b19', 'own': 'Delete', 'read': 'Refresh', 'other': 'b20', 'd': 1, 'rel': 'beside', 'dx': 22, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b24', 'own': 'D Start', 'read': 'Stop', 'other': 'b25', 'd': 1, 'rel': 'beside', 'dx': 23, 'dy': 0, 'icon': False}
+      {'frame': 171, 'box': 'b87', 'own': 'Overwrite? (y/n): y', 'read': '1.24.10', 'other': 'b88', 'd': 1, 'rel': 'beside', 'dx': 46, 'dy': 0, 'icon': False}
+      {'frame': 187, 'box': 'b81', 'own': 'agent', 'read': 'Ready', 'other': 'b84', 'd': 3, 'rel': 'beside', 'dx': 25, 'dy': 0, 'icon': False}
+      {'frame': 187, 'box': 'b84', 'own': 'Ready', 'read': 'aks-agentpool-18097611-vmss000000', 'other': 'b83', 'd': -1, 'rel': 'beside', 'dx': 11, 'dy': 0, 'icon': False}
+span2-s100-r2 | 348 | 53 | 5 | 1 | 4 | 4 | 0 | 0 | 2 | {155: 3, 171: 1, 180: 1}
+      {'frame': 155, 'box': 'b23', 'own': 'Connect', 'read': 'Create', 'other': 'b22', 'd': -1, 'rel': 'beside', 'dx': 32, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b24', 'own': 'D Start', 'read': 'Stop', 'other': 'b25', 'd': 1, 'rel': 'beside', 'dx': 23, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b27', 'own': '《', 'read': 'Connect', 'other': 'b23', 'd': -4, 'rel': 'beside', 'dx': 161, 'dy': 0, 'icon': True}
+      {'frame': 171, 'box': 'b87', 'own': 'Overwrite? (y/n): y', 'read': '1.24.10', 'other': 'b88', 'd': 1, 'rel': 'beside', 'dx': 46, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b109', 'own': 'aks-agentpool-18097611-vmss000000', 'read': '1.24.10', 'other': 'b110', 'd': 1, 'rel': 'beside', 'dx': 45, 'dy': 0, 'icon': False}
+span2-ct100-r1 | 361 | 44 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | {}
+span2-ct100-r2 | 360 | 46 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | {}
+span2-s067-r1 | 353 | 77 | 17 | 5 | 5 | 11 | 1 | 1 | 3 | {155: 2, 158: 1, 159: 1, 170: 2, 171: 1, 172: 1, 180: 5, 182: 1, 185: 1, 187: 2}
+      {'frame': 155, 'box': 'b14', 'own': '☆', 'read': 'AKS1-KodeKloudApp', 'other': 'b13', 'd': -1, 'rel': 'beside', 'dx': 2, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b24', 'own': 'D Start', 'read': 'Connect', 'other': 'b23', 'd': -1, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 158, 'box': 'b83', 'own': '国', 'read': 'Settings', 'other': 'b87', 'd': 4, 'rel': 'below', 'dx': 0, 'dy': 21, 'icon': True}
+      {'frame': 159, 'box': 'b18', 'own': '口', 'read': 'Delete', 'other': 'b20', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': True}
+      {'frame': 170, 'box': 'b83', 'own': 'Overwrite? (y/n): Y', 'read': '1 node pool', 'other': 'b85', 'd': 2, 'rel': 'beside', 'dx': 16, 'dy': 0, 'icon': False}
+      {'frame': 170, 'box': 'b88', 'own': 'Overwrite? (y/n):', 'read': '1.24.10', 'other': 'b89', 'd': 1, 'rel': 'beside', 'dx': 46, 'dy': 0, 'icon': False}
+      {'frame': 171, 'box': 'b87', 'own': 'Overwrite? (y/n): y', 'read': '1.24.10', 'other': 'b88', 'd': 1, 'rel': 'beside', 'dx': 46, 'dy': 0, 'icon': False}
+      {'frame': 172, 'box': 'b124', 'own': '品', 'read': '(preview)', 'other': 'b126', 'd': 2, 'rel': 'beside', 'dx': 3, 'dy': 0, 'icon': True}
+      {'frame': 180, 'box': 'b98', 'own': 'AGE', 'read': 'Ready', 'other': 'b106', 'd': 8, 'rel': 'beside', 'dx': 90, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b100', 'own': 'NAME', 'read': 'ROLES', 'other': 'b102', 'd': 2, 'rel': 'beside', 'dx': 335, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b101', 'own': 'STATUS', 'read': 'NAME', 'other': 'b100', 'd': -1, 'rel': 'beside', 'dx': 261, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b102', 'own': 'ROLES', 'read': 'STATUS', 'other': 'b101', 'd': -1, 'rel': 'beside', 'dx': 17, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b106', 'own': 'Ready', 'read': 'aks-agentpool-18097611-vmss000000', 'other': 'b109', 'd': 3, 'rel': 'beside', 'dx': 17, 'dy': 0, 'icon': False}
+      {'frame': 182, 'box': 'b28', 'own': '日', 'read': 'Overview', 'other': 'b23', 'd': -5, 'rel': 'diagonal', 'dx': 3, 'dy': 14, 'icon': True}
+      {'frame': 185, 'box': 'b60', 'own': '"user@example.com",', 'read': '"type": "user"', 'other': 'b62', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 187, 'box': 'b81', 'own': 'agent', 'read': 'Ready', 'other': 'b84', 'd': 3, 'rel': 'beside', 'dx': 25, 'dy': 0, 'icon': False}
+      {'frame': 187, 'box': 'b84', 'own': 'Ready', 'read': 'agent', 'other': 'b81', 'd': -3, 'rel': 'beside', 'dx': 25, 'dy': 0, 'icon': False}
+span2-s067-r2 | 355 | 64 | 7 | 4 | 2 | 3 | 0 | 0 | 1 | {158: 1, 159: 1, 170: 2, 171: 1, 172: 1, 182: 1}
+      {'frame': 158, 'box': 'b83', 'own': '国', 'read': 'Settings', 'other': 'b87', 'd': 4, 'rel': 'below', 'dx': 0, 'dy': 21, 'icon': True}
+      {'frame': 159, 'box': 'b18', 'own': '口', 'read': 'Delete', 'other': 'b20', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': True}
+      {'frame': 170, 'box': 'b83', 'own': 'Overwrite? (y/n): Y', 'read': '1 node pool', 'other': 'b85', 'd': 2, 'rel': 'beside', 'dx': 16, 'dy': 0, 'icon': False}
+      {'frame': 170, 'box': 'b88', 'own': 'Overwrite? (y/n):', 'read': '1.24.10', 'other': 'b89', 'd': 1, 'rel': 'beside', 'dx': 46, 'dy': 0, 'icon': False}
+      {'frame': 171, 'box': 'b87', 'own': 'Overwrite? (y/n): y', 'read': '1.24.10', 'other': 'b88', 'd': 1, 'rel': 'beside', 'dx': 46, 'dy': 0, 'icon': False}
+      {'frame': 172, 'box': 'b124', 'own': '品', 'read': '(preview)', 'other': 'b126', 'd': 2, 'rel': 'beside', 'dx': 3, 'dy': 0, 'icon': True}
+      {'frame': 182, 'box': 'b28', 'own': '日', 'read': 'Overview', 'other': 'b23', 'd': -5, 'rel': 'diagonal', 'dx': 3, 'dy': 14, 'icon': True}
+span2-ct067-r1 | 365 | 50 | 3 | 0 | 0 | 3 | 0 | 0 | 1 | {172: 1, 173: 1, 187: 1}
+      {'frame': 172, 'box': 'b91', 'own': 'PSC:\\Users\\msadmin> kubect1rollout undo ', 'read': 'Merged "AKS1-KodeKloudApp" as current co', 'other': 'b89', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 173, 'box': 'b91', 'own': 'PSC:\\Users\\msadmin> kubectl_rollout undo', 'read': 'Merged "AKS1-KodeKloudApp" as current co', 'other': 'b89', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 187, 'box': 'b41', 'own': '"environmentName": "AzureCloud"', 'read': '"homeTenantId": "00000000-0000', 'other': 'b43', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+span2-ct067-r2 | 359 | 50 | 2 | 0 | 0 | 2 | 0 | 0 | 1 | {172: 1, 174: 1}
+      {'frame': 172, 'box': 'b91', 'own': 'PSC:\\Users\\msadmin> kubect1rollout undo ', 'read': 'Merged "AKS1-KodeKloudApp" as current co', 'other': 'b89', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 174, 'box': 'b92', 'own': 'PSC:\\Users\\msadmin> kubectlrollout undo ', 'read': 'Merged "AKS1-KodeKloudApp" as current co', 'other': 'b90', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+span2-s050-r1 | 354 | 87 | 26 | 8 | 7 | 13 | 5 | 0 | 5 | {155: 1, 158: 2, 159: 1, 161: 1, 169: 1, 171: 1, 172: 1, 174: 1, 177: 2, 180: 5, 182: 1, 184: 1, 185: 4, 187: 4}
+      {'frame': 155, 'box': 'b17', 'own': '-OD-', 'read': 'Connect', 'other': 'b23', 'd': 6, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': True}
+      {'frame': 158, 'box': 'b50', 'own': '"homeTenantId": "00000000-0000', 'read': '"environmentName": "AzureCloud",', 'other': 'b48', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 158, 'box': 'b83', 'own': '国', 'read': 'Configuration', 'other': 'b82', 'd': -1, 'rel': 'beside', 'dx': 3, 'dy': 0, 'icon': True}
+      {'frame': 159, 'box': 'b18', 'own': '口', 'read': 'Delete', 'other': 'b20', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': True}
+      {'frame': 161, 'box': 'b16', 'own': '中', 'read': 'Kubernetes service', 'other': 'b17', 'd': 1, 'rel': 'beside', 'dx': 12, 'dy': 0, 'icon': True}
+      {'frame': 169, 'box': 'b8', 'own': '→', 'read': 'portal.azure.com/#@example.com/r', 'other': 'b7', 'd': -1, 'rel': 'beside', 'dx': 58, 'dy': 0, 'icon': True}
+      {'frame': 171, 'box': 'b87', 'own': 'Overwrite? (y/n): y', 'read': '1.24.10', 'other': 'b88', 'd': 1, 'rel': 'beside', 'dx': 46, 'dy': 0, 'icon': False}
+      {'frame': 172, 'box': 'b124', 'own': '品', 'read': '(preview)', 'other': 'b126', 'd': 2, 'rel': 'beside', 'dx': 3, 'dy': 0, 'icon': True}
+      {'frame': 174, 'box': 'b15', 'own': '-OD-', 'read': 'Connect', 'other': 'b23', 'd': 8, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': True}
+      {'frame': 177, 'box': 'b94', 'own': 'Standard_DS2_', 'read': 'Node sizes', 'other': 'b95', 'd': 1, 'rel': 'beside', 'dx': 143, 'dy': 0, 'icon': False}
+      {'frame': 177, 'box': 'b96', 'own': 'AKS1-KodeKloudApp', 'read': 'Standard_DS2', 'other': 'b94', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b97', 'own': 'PS C:\\Users\\msadmin> kubectl get nodes', 'read': 'STATUS', 'other': 'b101', 'd': 4, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b101', 'own': 'STATUS', 'read': 'agent', 'other': 'b105', 'd': 4, 'rel': 'beside', 'dx': 15, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b105', 'own': 'agent', 'read': 'Ready', 'other': 'b106', 'd': 1, 'rel': 'beside', 'dx': 23, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b106', 'own': 'Ready', 'read': 'aks-agentpool-18097611-vmss000000', 'other': 'b109', 'd': 3, 'rel': 'beside', 'dx': 17, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b109', 'own': 'aks-agentpool-18097611-vmss000000', 'read': 'AKS1-KodeKloudApp', 'other': 'b95', 'd': -14, 'rel': 'above', 'dx': 0, 'dy': 32, 'icon': False}
+      {'frame': 182, 'box': 'b28', 'own': '日', 'read': 'Overview', 'other': 'b23', 'd': -5, 'rel': 'diagonal', 'dx': 3, 'dy': 14, 'icon': True}
+      {'frame': 184, 'box': 'b15', 'own': 'Start Restart Stop  Reimage Delete ↑ Upg', 'read': 'Virtual machine scale set', 'other': 'b14', 'd': -1, 'rel': 'diagonal', 'dx': 97, 'dy': 11, 'icon': False}
+      {'frame': 185, 'box': 'b60', 'own': '"user@example.com",', 'read': '"type": "user"', 'other': 'b62', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b79', 'own': 'ROLES', 'read': 'VERSION', 'other': 'b81', 'd': 2, 'rel': 'beside', 'dx': 66, 'dy': 0, 'icon': False}
+span2-s050-r2 | 358 | 90 | 26 | 9 | 7 | 12 | 5 | 0 | 4 | {155: 2, 158: 1, 159: 1, 161: 1, 171: 1, 172: 1, 174: 1, 177: 2, 180: 4, 182: 1, 184: 1, 185: 5, 187: 5}
+      {'frame': 155, 'box': 'b1', 'own': '+', 'read': 'AKS1-KodeKloudApp - Micros', 'other': 'b3', 'd': 2, 'rel': 'beside', 'dx': 20, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b14', 'own': '☆', 'read': 'AKS1-KodeKloudApp', 'other': 'b13', 'd': -1, 'rel': 'beside', 'dx': 2, 'dy': 0, 'icon': True}
+      {'frame': 158, 'box': 'b83', 'own': '国', 'read': 'Configuration', 'other': 'b82', 'd': -1, 'rel': 'beside', 'dx': 3, 'dy': 0, 'icon': True}
+      {'frame': 159, 'box': 'b18', 'own': '口', 'read': 'Delete', 'other': 'b20', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': True}
+      {'frame': 161, 'box': 'b16', 'own': '中', 'read': 'Kubernetes service', 'other': 'b17', 'd': 1, 'rel': 'beside', 'dx': 12, 'dy': 0, 'icon': True}
+      {'frame': 171, 'box': 'b87', 'own': 'Overwrite? (y/n): y', 'read': '1.24.10', 'other': 'b88', 'd': 1, 'rel': 'beside', 'dx': 46, 'dy': 0, 'icon': False}
+      {'frame': 172, 'box': 'b124', 'own': '品', 'read': '(preview)', 'other': 'b126', 'd': 2, 'rel': 'beside', 'dx': 3, 'dy': 0, 'icon': True}
+      {'frame': 174, 'box': 'b15', 'own': '-OD-', 'read': 'Connect', 'other': 'b23', 'd': 8, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': True}
+      {'frame': 177, 'box': 'b94', 'own': 'Standard_DS2_', 'read': 'Node sizes', 'other': 'b95', 'd': 1, 'rel': 'beside', 'dx': 143, 'dy': 0, 'icon': False}
+      {'frame': 177, 'box': 'b96', 'own': 'AKS1-KodeKloudApp', 'read': 'Standard_DS2', 'other': 'b94', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b97', 'own': 'PS C:\\Users\\msadmin> kubectl get nodes', 'read': 'STATUS', 'other': 'b101', 'd': 4, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b101', 'own': 'STATUS', 'read': 'Ready', 'other': 'b106', 'd': 5, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b106', 'own': 'Ready', 'read': 'aks-agentpool-18097611-vmss000000', 'other': 'b109', 'd': 3, 'rel': 'beside', 'dx': 17, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b109', 'own': 'aks-agentpool-18097611-vmss000000', 'read': 'AKS1-KodeKloudApp', 'other': 'b95', 'd': -14, 'rel': 'above', 'dx': 0, 'dy': 32, 'icon': False}
+      {'frame': 182, 'box': 'b28', 'own': '日', 'read': 'Overview', 'other': 'b23', 'd': -5, 'rel': 'diagonal', 'dx': 3, 'dy': 14, 'icon': True}
+      {'frame': 184, 'box': 'b15', 'own': 'Start Restart Stop  Reimage Delete ↑ Upg', 'read': 'Virtual machine scale set', 'other': 'b14', 'd': -1, 'rel': 'diagonal', 'dx': 97, 'dy': 11, 'icon': False}
+      {'frame': 185, 'box': 'b60', 'own': '"user@example.com",', 'read': '"type": "user"', 'other': 'b62', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b79', 'own': 'ROLES', 'read': 'STATUS', 'other': 'b83', 'd': 4, 'rel': 'beside', 'dx': 16, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b80', 'own': 'AGE', 'read': 'ROLES', 'other': 'b79', 'd': -1, 'rel': 'beside', 'dx': 15, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b81', 'own': 'VERSION', 'read': 'AGE', 'other': 'b80', 'd': -1, 'rel': 'beside', 'dx': 15, 'dy': 0, 'icon': False}
+span2-ct050-r1 | 360 | 56 | 3 | 0 | 0 | 3 | 0 | 0 | 1 | {172: 1, 173: 1, 174: 1}
+      {'frame': 172, 'box': 'b91', 'own': 'PSC:\\Users\\msadmin> kubect1rollout undo ', 'read': 'Merged "AKS1-KodeKloudApp" as current co', 'other': 'b89', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 173, 'box': 'b91', 'own': 'PSC:\\Users\\msadmin> kubectl_rollout undo', 'read': 'Merged "AKS1-KodeKloudApp" as current co', 'other': 'b89', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 174, 'box': 'b92', 'own': 'PSC:\\Users\\msadmin> kubectlrollout undo ', 'read': 'Merged "AKS1-KodeKloudApp" as current co', 'other': 'b90', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+span2-ct050-r2 | 359 | 57 | 1 | 0 | 0 | 1 | 0 | 0 | 1 | {174: 1}
+      {'frame': 174, 'box': 'b92', 'own': 'PSC:\\Users\\msadmin> kubectlrollout undo ', 'read': 'Merged "AKS1-KodeKloudApp" as current co', 'other': 'b90', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+span2-s040-r1 | 371 | 174 | 92 | 28 | 23 | 44 | 20 | 3 | 9 | {155: 22, 156: 4, 158: 8, 159: 1, 161: 1, 165: 1, 166: 1, 169: 1, 174: 1, 175: 2, 177: 1, 180: 10, 181: 2, 182: 1, 183: 1, 184: 2, 185: 21, 186: 1, 187: 11}
+      {'frame': 155, 'box': 'b1', 'own': '+', 'read': 'AKS1-KodeKloudApp - Microsoft', 'other': 'b3', 'd': 2, 'rel': 'beside', 'dx': 20, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b14', 'own': '☆', 'read': 'Kubernetes service', 'other': 'b16', 'd': 2, 'rel': 'diagonal', 'dx': 141, 'dy': 4, 'icon': True}
+      {'frame': 155, 'box': 'b15', 'own': '中', 'read': 'Search', 'other': 'b21', 'd': 6, 'rel': 'below', 'dx': 0, 'dy': 28, 'icon': True}
+      {'frame': 155, 'box': 'b17', 'own': '-OD-', 'read': 'Essentials', 'other': 'b28', 'd': 11, 'rel': 'diagonal', 'dx': 15, 'dy': 12, 'icon': True}
+      {'frame': 155, 'box': 'b19', 'own': 'Delete', 'read': 'Stop', 'other': 'b25', 'd': 6, 'rel': 'beside', 'dx': 31, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b25', 'own': 'Stop', 'read': 'Delete', 'other': 'b19', 'd': -6, 'rel': 'beside', 'dx': 31, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b27', 'own': '《', 'read': 'Refresh', 'other': 'b20', 'd': -7, 'rel': 'beside', 'dx': 463, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b34', 'own': ': Succeeded (Running)', 'read': 'Status', 'other': 'b35', 'd': 1, 'rel': 'beside', 'dx': 54, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b35', 'own': 'Status', 'read': 'Succeeded (Running)', 'other': 'b34', 'd': -1, 'rel': 'beside', 'dx': 54, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b41', 'own': '88', 'read': 'Access control (IAM)', 'other': 'b39', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b69', 'own': '国', 'read': 'Settings', 'other': 'b73', 'd': 4, 'rel': 'below', 'dx': 0, 'dy': 19, 'icon': True}
+      {'frame': 155, 'box': 'b73', 'own': 'Settings', 'read': 'Node pools', 'other': 'b71', 'd': -2, 'rel': 'beside', 'dx': 268, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b76', 'own': '[] Node pools', 'read': 'Cluster configuration', 'other': 'b79', 'd': 3, 'rel': 'below', 'dx': 0, 'dy': 11, 'icon': False}
+      {'frame': 155, 'box': 'b79', 'own': 'Cluster configuration', 'read': 'Networking', 'other': 'b81', 'd': 2, 'rel': 'below', 'dx': 0, 'dy': 11, 'icon': False}
+      {'frame': 155, 'box': 'b81', 'own': 'Networking', 'read': 'Extensions + applications', 'other': 'b84', 'd': 3, 'rel': 'below', 'dx': 0, 'dy': 10, 'icon': False}
+      {'frame': 155, 'box': 'b84', 'own': 'Extensions + applications', 'read': 'Authorized IP ranges', 'other': 'b89', 'd': 5, 'rel': 'diagonal', 'dx': 1001, 'dy': 18, 'icon': False}
+      {'frame': 155, 'box': 'b85', 'own': 'Patch', 'read': 'Auto Upgrade Type', 'other': 'b86', 'd': 1, 'rel': 'beside', 'dx': 93, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b86', 'own': 'Auto Upgrade Type', 'read': 'Kubernetes version', 'other': 'b83', 'd': -3, 'rel': 'above', 'dx': 0, 'dy': 11, 'icon': False}
+      {'frame': 155, 'box': 'b88', 'own': 'Not enabled', 'read': 'Patch', 'other': 'b85', 'd': -3, 'rel': 'diagonal', 'dx': 817, 'dy': 3, 'icon': False}
+      {'frame': 155, 'box': 'b89', 'own': 'Authorized IP ranges', 'read': 'Application Gateway ingress', 'other': 'b93', 'd': 4, 'rel': 'below', 'dx': 0, 'dy': 10, 'icon': False}
+span2-s040-r2 | 364 | 133 | 60 | 22 | 9 | 24 | 14 | 1 | 8 | {155: 19, 156: 3, 158: 1, 159: 1, 161: 1, 165: 1, 166: 1, 169: 1, 170: 1, 172: 1, 174: 1, 175: 2, 177: 1, 178: 2, 180: 7, 183: 2, 184: 2, 185: 6, 186: 1, 187: 6}
+      {'frame': 155, 'box': 'b1', 'own': '+', 'read': 'AKS1-KodeKloudApp - Microsof', 'other': 'b3', 'd': 2, 'rel': 'beside', 'dx': 20, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b14', 'own': '☆', 'read': 'Kubernetes service', 'other': 'b16', 'd': 2, 'rel': 'diagonal', 'dx': 141, 'dy': 4, 'icon': True}
+      {'frame': 155, 'box': 'b15', 'own': '中', 'read': 'Search', 'other': 'b21', 'd': 6, 'rel': 'below', 'dx': 0, 'dy': 28, 'icon': True}
+      {'frame': 155, 'box': 'b17', 'own': '-OD-', 'read': 'Essentials', 'other': 'b28', 'd': 11, 'rel': 'diagonal', 'dx': 15, 'dy': 12, 'icon': True}
+      {'frame': 155, 'box': 'b26', 'own': '十', 'read': 'Refresh', 'other': 'b20', 'd': -6, 'rel': 'beside', 'dx': 403, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b34', 'own': ': Succeeded (Running)', 'read': 'Status', 'other': 'b35', 'd': 1, 'rel': 'beside', 'dx': 54, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b35', 'own': 'Status', 'read': 'Access control (IAM)', 'other': 'b39', 'd': 4, 'rel': 'beside', 'dx': 126, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b41', 'own': '88', 'read': 'Tags', 'other': 'b45', 'd': 4, 'rel': 'diagonal', 'dx': 3, 'dy': 15, 'icon': True}
+      {'frame': 155, 'box': 'b43', 'own': ': Southeast Asia', 'read': 'Succeeded (Running)', 'other': 'b34', 'd': -9, 'rel': 'above', 'dx': 0, 'dy': 7, 'icon': False}
+      {'frame': 155, 'box': 'b44', 'own': 'PS C:\\Users\\msadmin> az login', 'read': 'Subscription', 'other': 'b46', 'd': 2, 'rel': 'diagonal', 'dx': 274, 'dy': 7, 'icon': False}
+      {'frame': 155, 'box': 'b45', 'own': 'Tags', 'read': 'Diagnose and solve problems', 'other': 'b48', 'd': 3, 'rel': 'below', 'dx': 0, 'dy': 12, 'icon': False}
+      {'frame': 155, 'box': 'b47', 'own': ': sub-global', 'read': 'Southeast Asia', 'other': 'b43', 'd': -4, 'rel': 'above', 'dx': 0, 'dy': 10, 'icon': False}
+      {'frame': 155, 'box': 'b48', 'own': 'Diagnose and solve problems', 'read': 'Microsoft Defender for Cloud', 'other': 'b50', 'd': 2, 'rel': 'below', 'dx': 0, 'dy': 15, 'icon': False}
+      {'frame': 155, 'box': 'b50', 'own': 'Microsoft Defender for Cloud', 'read': 'sub-global', 'other': 'b47', 'd': -3, 'rel': 'diagonal', 'dx': 172, 'dy': 32, 'icon': False}
+      {'frame': 155, 'box': 'b85', 'own': 'Patch', 'read': 'Auto-Upgrade Type', 'other': 'b86', 'd': 1, 'rel': 'beside', 'dx': 93, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b86', 'own': 'Auto Upgrade Type', 'read': 'Kubernetes version', 'other': 'b83', 'd': -3, 'rel': 'above', 'dx': 0, 'dy': 11, 'icon': False}
+      {'frame': 155, 'box': 'b93', 'own': 'Application Gateway ingress', 'read': 'Authorized IP ranges', 'other': 'b89', 'd': -4, 'rel': 'above', 'dx': 0, 'dy': 10, 'icon': False}
+      {'frame': 155, 'box': 'b105', 'own': '(deprecated)', 'read': 'Container insights', 'other': 'b104', 'd': -1, 'rel': 'beside', 'dx': 1075, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b110', 'own': '(preview)', 'read': '(deprecated)', 'other': 'b105', 'd': -5, 'rel': 'above', 'dx': 0, 'dy': 29, 'icon': False}
+      {'frame': 156, 'box': 'b34', 'own': '日', 'read': 'Activity log', 'other': 'b31', 'd': -3, 'rel': 'beside', 'dx': 6, 'dy': 0, 'icon': True}
+span2-ct040-r1 | 356 | 67 | 6 | 0 | 1 | 3 | 3 | 0 | 2 | {171: 2, 173: 1, 185: 3}
+      {'frame': 171, 'box': 'b90', 'own': 'Merged "AKS1-KodeKloudApp" as current co', 'read': 'A different object named clusterUser_RG1', 'other': 'b85', 'd': -5, 'rel': 'above', 'dx': 0, 'dy': 13, 'icon': False}
+      {'frame': 171, 'box': 'b92', 'own': 'PS C:\\Users\\msadmin>', 'read': 'Overwrite? (y/n): Y', 'other': 'b87', 'd': -5, 'rel': 'above', 'dx': 0, 'dy': 12, 'icon': False}
+      {'frame': 173, 'box': 'b91', 'own': 'PSC:\\Users\\msadmin> kubectl_rollout undo', 'read': 'Merged "AKS1-KodeKloudApp" as current co', 'other': 'b89', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b15', 'own': 'Stop', 'read': 'Reimage', 'other': 'b16', 'd': 1, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b22', 'own': 'Restart', 'read': 'Stop', 'other': 'b15', 'd': -7, 'rel': 'beside', 'dx': 4, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b30', 'own': '↑.1. Status', 'read': 'Computer name', 'other': 'b27', 'd': -3, 'rel': 'beside', 'dx': 140, 'dy': 0, 'icon': False}
+span2-ct040-r2 | 361 | 78 | 8 | 1 | 1 | 6 | 1 | 0 | 8 | {158: 8}
+      {'frame': 158, 'box': 'b48', 'own': '"environmentName": "AzureCloud",', 'read': '"homeTenantId": "00000000-0000', 'other': 'b50', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 158, 'box': 'b50', 'own': '"homeTenantId": "00000000-0000', 'read': '"id": "00000000-0000-0000-0000-000000000000', 'other': 'b52', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 158, 'box': 'b52', 'own': '"id": "00000000-0000-0000-0000-000000000000', 'read': '"isDefault": true,', 'other': 'b54', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': True}
+      {'frame': 158, 'box': 'b54', 'own': '"isDefault": true,', 'read': '"managedByTenants": [],', 'other': 'b57', 'd': 3, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 158, 'box': 'b57', 'own': '"managedByTenants": [],', 'read': '"name": "sub-global",', 'other': 'b58', 'd': 1, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 158, 'box': 'b58', 'own': '"name": "sub-global",', 'read': '"state": "Enabled",', 'other': 'b60', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 158, 'box': 'b60', 'own': '"state": "Enabled",', 'read': '"tenantId": "00000000-0000', 'other': 'b65', 'd': 5, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 158, 'box': 'b65', 'own': '"tenantId": "00000000-0000', 'read': '"user": {', 'other': 'b67', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+span2-s030-r1 | 372 | 294 | 169 | 40 | 25 | 61 | 68 | 0 | 9 | {155: 43, 156: 4, 158: 9, 159: 1, 161: 1, 163: 1, 165: 1, 171: 1, 172: 1, 173: 1, 174: 1, 175: 1, 177: 2, 178: 1, 180: 4, 182: 16, 183: 28, 184: 8, 185: 30, 186: 4, 187: 11}
+      {'frame': 155, 'box': 'b1', 'own': '+', 'read': 'AKS1-KodeKloudApp - Microsoft ...', 'other': 'b3', 'd': 2, 'rel': 'beside', 'dx': 20, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b10', 'own': 'Microsoft Azure', 'read': 'portal.azure.com/#@clouddevedge/resource', 'other': 'b7', 'd': -3, 'rel': 'above', 'dx': 0, 'dy': 19, 'icon': False}
+      {'frame': 155, 'box': 'b12', 'own': 'Home> microsoft.aks-20230410195123|Overv', 'read': 'Microsoft Azure', 'other': 'b10', 'd': -2, 'rel': 'above', 'dx': 0, 'dy': 22, 'icon': False}
+      {'frame': 155, 'box': 'b14', 'own': '☆', 'read': 'Kubernetes service', 'other': 'b16', 'd': 2, 'rel': 'diagonal', 'dx': 141, 'dy': 4, 'icon': True}
+      {'frame': 155, 'box': 'b16', 'own': 'Kubernetes service', 'read': 'Search', 'other': 'b21', 'd': 5, 'rel': 'below', 'dx': 0, 'dy': 18, 'icon': False}
+      {'frame': 155, 'box': 'b19', 'own': 'Delete', 'read': 'Stop', 'other': 'b25', 'd': 6, 'rel': 'beside', 'dx': 31, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b20', 'own': 'Refresh', 'read': 'Delete', 'other': 'b19', 'd': -1, 'rel': 'beside', 'dx': 22, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b21', 'own': 'Search', 'read': 'Overview', 'other': 'b29', 'd': 8, 'rel': 'below', 'dx': 0, 'dy': 16, 'icon': False}
+      {'frame': 155, 'box': 'b26', 'own': '十', 'read': 'Essentials', 'other': 'b28', 'd': 2, 'rel': 'below', 'dx': 0, 'dy': 16, 'icon': True}
+      {'frame': 155, 'box': 'b27', 'own': '《', 'read': 'Activity log', 'other': 'b31', 'd': 4, 'rel': 'diagonal', 'dx': 135, 'dy': 53, 'icon': True}
+      {'frame': 155, 'box': 'b31', 'own': 'Activity log', 'read': 'Refresh', 'other': 'b20', 'd': -11, 'rel': 'diagonal', 'dx': 613, 'dy': 50, 'icon': False}
+      {'frame': 155, 'box': 'b34', 'own': ': Succeeded (Running)', 'read': 'Status', 'other': 'b35', 'd': 1, 'rel': 'beside', 'dx': 54, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b41', 'own': '88', 'read': 'Tags', 'other': 'b45', 'd': 4, 'rel': 'diagonal', 'dx': 3, 'dy': 15, 'icon': True}
+      {'frame': 155, 'box': 'b43', 'own': ': Southeast Asia', 'read': 'Succeeded (Running)', 'other': 'b34', 'd': -9, 'rel': 'above', 'dx': 0, 'dy': 7, 'icon': False}
+      {'frame': 155, 'box': 'b45', 'own': 'Tags', 'read': 'Diagnose and solve problems', 'other': 'b48', 'd': 3, 'rel': 'below', 'dx': 0, 'dy': 12, 'icon': False}
+      {'frame': 155, 'box': 'b46', 'own': 'Subscription', 'read': 'Location', 'other': 'b42', 'd': -4, 'rel': 'above', 'dx': 0, 'dy': 9, 'icon': False}
+      {'frame': 155, 'box': 'b47', 'own': ': sub-global', 'read': 'Southeast Asia', 'other': 'b43', 'd': -4, 'rel': 'above', 'dx': 0, 'dy': 10, 'icon': False}
+      {'frame': 155, 'box': 'b48', 'own': 'Diagnose and solve problems', 'read': 'Microsoft Defender for Cloud', 'other': 'b50', 'd': 2, 'rel': 'below', 'dx': 0, 'dy': 15, 'icon': False}
+      {'frame': 155, 'box': 'b50', 'own': 'Microsoft Defender for Cloud', 'read': 'Subscription', 'other': 'b46', 'd': -4, 'rel': 'diagonal', 'dx': 75, 'dy': 32, 'icon': False}
+      {'frame': 155, 'box': 'b54', 'own': 'Get started', 'read': 'Tags', 'other': 'b45', 'd': -9, 'rel': 'diagonal', 'dx': 230, 'dy': 104, 'icon': False}
+span2-s030-r2 | 386 | 295 | 148 | 37 | 21 | 57 | 54 | 2 | 6 | {155: 51, 156: 4, 158: 2, 159: 1, 160: 1, 163: 1, 165: 1, 172: 1, 174: 2, 175: 1, 177: 2, 178: 1, 180: 2, 182: 7, 183: 28, 184: 7, 185: 20, 186: 1, 187: 15}
+      {'frame': 155, 'box': 'b1', 'own': '+', 'read': 'AKS1-KodeKloudApp - Microsoft ?', 'other': 'b3', 'd': 2, 'rel': 'beside', 'dx': 20, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b3', 'own': 'AKS1-KodeKloudApp - Microsoft X', 'read': 'portal.azure.com/#@kodekloudedge.com.au/', 'other': 'b7', 'd': 4, 'rel': 'below', 'dx': 0, 'dy': 19, 'icon': False}
+      {'frame': 155, 'box': 'b5', 'own': '←', 'read': 'Microsoft Azure', 'other': 'b10', 'd': 5, 'rel': 'diagonal', 'dx': 33, 'dy': 20, 'icon': True}
+      {'frame': 155, 'box': 'b15', 'own': '中', 'read': 'Kubernetes service', 'other': 'b16', 'd': 1, 'rel': 'beside', 'dx': 12, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b17', 'own': '-OD-', 'read': 'Essentials', 'other': 'b28', 'd': 11, 'rel': 'diagonal', 'dx': 15, 'dy': 12, 'icon': True}
+      {'frame': 155, 'box': 'b19', 'own': 'Delete', 'read': 'Stop', 'other': 'b25', 'd': 6, 'rel': 'beside', 'dx': 31, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b20', 'own': 'Refresh', 'read': 'Delete', 'other': 'b19', 'd': -1, 'rel': 'beside', 'dx': 22, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b25', 'own': 'Stop', 'read': 'Refresh', 'other': 'b20', 'd': -5, 'rel': 'beside', 'dx': 105, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b26', 'own': '十', 'read': 'Create', 'other': 'b22', 'd': -4, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b39', 'own': 'Access control (IAM)', 'read': 'Overview', 'other': 'b29', 'd': -10, 'rel': 'above', 'dx': 0, 'dy': 43, 'icon': False}
+      {'frame': 155, 'box': 'b43', 'own': ': Southeast Asia', 'read': 'Status', 'other': 'b35', 'd': -8, 'rel': 'diagonal', 'dx': 54, 'dy': 8, 'icon': False}
+      {'frame': 155, 'box': 'b44', 'own': 'PS C:\\Users\\msadmin> az login', 'read': 'Succeeded (Running)', 'other': 'b34', 'd': -10, 'rel': 'diagonal', 'dx': 114, 'dy': 8, 'icon': False}
+      {'frame': 155, 'box': 'b45', 'own': 'Tags', 'read': 'Location', 'other': 'b42', 'd': -3, 'rel': 'beside', 'dx': 220, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b47', 'own': ': sub-global', 'read': 'Subscription', 'other': 'b46', 'd': -1, 'rel': 'beside', 'dx': 13, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b50', 'own': 'Microsoft Defender for Cloud', 'read': 'Activity log', 'other': 'b31', 'd': -19, 'rel': 'above', 'dx': 0, 'dy': 113, 'icon': False}
+      {'frame': 155, 'box': 'b53', 'own': 'Kubernetes resources', 'read': 'Access control (IAM)', 'other': 'b39', 'd': -14, 'rel': 'above', 'dx': 0, 'dy': 122, 'icon': False}
+      {'frame': 155, 'box': 'b54', 'own': 'Get started', 'read': 'Tags', 'other': 'b45', 'd': -9, 'rel': 'diagonal', 'dx': 230, 'dy': 104, 'icon': False}
+      {'frame': 155, 'box': 'b55', 'own': 'Properties', 'read': 'Click here to add tags', 'other': 'b52', 'd': -3, 'rel': 'above', 'dx': 0, 'dy': 24, 'icon': False}
+      {'frame': 155, 'box': 'b56', 'own': 'Monitoring', 'read': 'Kubernetes services', 'other': 'b59', 'd': 3, 'rel': 'diagonal', 'dx': 23, 'dy': 30, 'icon': False}
+      {'frame': 155, 'box': 'b57', 'own': 'Capabilit', 'read': 'Encryption type', 'other': 'b62', 'd': 5, 'rel': 'diagonal', 'dx': 155, 'dy': 57, 'icon': False}
+span2-ct030-r1 | 357 | 141 | 23 | 4 | 4 | 11 | 8 | 0 | 4 | {155: 4, 177: 1, 182: 1, 185: 12, 187: 5}
+      {'frame': 155, 'box': 'b82', 'own': '1.24.10', 'read': 'Enabled', 'other': 'b94', 'd': 12, 'rel': 'below', 'dx': 0, 'dy': 63, 'icon': True}
+      {'frame': 155, 'box': 'b83', 'own': 'Kubernetes version', 'read': 'Auto-Upgrade Type', 'other': 'b86', 'd': 3, 'rel': 'below', 'dx': 0, 'dy': 11, 'icon': False}
+      {'frame': 155, 'box': 'b105', 'own': '(deprecated)', 'read': '(preview)', 'other': 'b110', 'd': 5, 'rel': 'below', 'dx': 0, 'dy': 29, 'icon': False}
+      {'frame': 155, 'box': 'b109', 'own': 'Automated deployments', 'read': 'Extensions + applications', 'other': 'b84', 'd': -25, 'rel': 'above', 'dx': 0, 'dy': 180, 'icon': False}
+      {'frame': 177, 'box': 'b94', 'own': 'Standard_DS2_', 'read': 'Enabled', 'other': 'b114', 'd': 20, 'rel': 'below', 'dx': 0, 'dy': 140, 'icon': False}
+      {'frame': 182, 'box': 'b17', 'own': 'Refresh Feedback', 'read': 'Delete', 'other': 'b19', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b44', 'own': 'C:\\Users\\msadmin> az account show', 'read': '"environmentName": "AzureCloud",', 'other': 'b46', 'd': 2, 'rel': 'below', 'dx': 0, 'dy': 14, 'icon': False}
+      {'frame': 185, 'box': 'b49', 'own': '"id": "00000000-0000-0000-0000-000000000000', 'read': '"isDefault": true,', 'other': 'b51', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': True}
+      {'frame': 185, 'box': 'b51', 'own': '"isDefault": true,', 'read': '"managedByTenants": [],', 'other': 'b52', 'd': 1, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b52', 'own': '"managedByTenants": [],', 'read': '"name": "sub-global",', 'other': 'b53', 'd': 1, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b53', 'own': '"name": "sub-global",', 'read': '"state": "Enabled",', 'other': 'b55', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b56', 'own': '"tenantId": "00000000-0000', 'read': '"user": {', 'other': 'b58', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b59', 'own': '"name":', 'read': '"type": "user"', 'other': 'b62', 'd': 3, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b79', 'own': 'ROLES', 'read': 'STATUS', 'other': 'b83', 'd': 4, 'rel': 'beside', 'dx': 16, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b80', 'own': 'AGE', 'read': 'ROLES', 'other': 'b79', 'd': -1, 'rel': 'beside', 'dx': 15, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b85', 'own': 'agent', 'read': 'Ready', 'other': 'b89', 'd': 4, 'rel': 'beside', 'dx': 25, 'dy': 0, 'icon': False}
+      {'frame': 185, 'box': 'b87', 'own': '44m', 'read': 'agent', 'other': 'b85', 'd': -2, 'rel': 'beside', 'dx': 16, 'dy': 0, 'icon': True}
+      {'frame': 185, 'box': 'b95', 'own': 'Pro', 'read': 'Tags', 'other': 'b45', 'd': -50, 'rel': 'above', 'dx': 0, 'dy': 556, 'icon': False}
+      {'frame': 187, 'box': 'b41', 'own': '"environmentName": "AzureCloud"', 'read': '"name": "sub-global",', 'other': 'b48', 'd': 7, 'rel': 'below', 'dx': 0, 'dy': 62, 'icon': False}
+      {'frame': 187, 'box': 'b44', 'own': '"id": "00000000-0000-0000-0000-000000000000', 'read': '"user": {', 'other': 'b54', 'd': 10, 'rel': 'below', 'dx': 0, 'dy': 80, 'icon': True}
+span2-ct030-r2 | 355 | 138 | 25 | 3 | 0 | 9 | 13 | 0 | 2 | {155: 6, 158: 5, 170: 1, 172: 1, 173: 1, 174: 1, 177: 1, 183: 1, 184: 2, 185: 3, 187: 3}
+      {'frame': 155, 'box': 'b82', 'own': '1.24.10', 'read': 'Patch', 'other': 'b85', 'd': 3, 'rel': 'below', 'dx': 0, 'dy': 7, 'icon': True}
+      {'frame': 155, 'box': 'b83', 'own': 'Kubernetes version', 'read': 'Auto-Upgrade Type', 'other': 'b86', 'd': 3, 'rel': 'below', 'dx': 0, 'dy': 11, 'icon': False}
+      {'frame': 155, 'box': 'b85', 'own': 'Patch', 'read': 'Enabled', 'other': 'b94', 'd': 9, 'rel': 'below', 'dx': 0, 'dy': 34, 'icon': False}
+      {'frame': 155, 'box': 'b105', 'own': '(deprecated)', 'read': '(preview)', 'other': 'b110', 'd': 5, 'rel': 'below', 'dx': 0, 'dy': 29, 'icon': False}
+      {'frame': 155, 'box': 'b109', 'own': 'Automated deployments', 'read': 'Policies', 'other': 'b111', 'd': 2, 'rel': 'below', 'dx': 0, 'dy': 29, 'icon': False}
+      {'frame': 155, 'box': 'b111', 'own': 'Policies', 'read': 'Properties', 'other': 'b55', 'd': -56, 'rel': 'diagonal', 'dx': 310, 'dy': 555, 'icon': False}
+      {'frame': 158, 'box': 'b48', 'own': '"environmentName": "AzureCloud",', 'read': '"isDefault": true,', 'other': 'b54', 'd': 6, 'rel': 'below', 'dx': 0, 'dy': 30, 'icon': False}
+      {'frame': 158, 'box': 'b50', 'own': '"homeTenantId": "00000000-0000', 'read': '"managedByTenants": [],', 'other': 'b57', 'd': 7, 'rel': 'below', 'dx': 0, 'dy': 29, 'icon': False}
+      {'frame': 158, 'box': 'b54', 'own': '"isDefault": true,', 'read': '"state": "Enabled",', 'other': 'b60', 'd': 6, 'rel': 'below', 'dx': 0, 'dy': 28, 'icon': False}
+      {'frame': 158, 'box': 'b58', 'own': '"name": "sub-global",', 'read': '"user": {', 'other': 'b67', 'd': 9, 'rel': 'below', 'dx': 0, 'dy': 26, 'icon': False}
+      {'frame': 158, 'box': 'b65', 'own': '"tenantId": "00000000-0000', 'read': '"type": "user"', 'other': 'b72', 'd': 7, 'rel': 'below', 'dx': 0, 'dy': 30, 'icon': False}
+      {'frame': 170, 'box': 'b86', 'own': 'A different object named clusterUser_RG1', 'read': 'PS C:\\Users\\mmukadam> az aks get-credent', 'other': 'b79', 'd': -7, 'rel': 'above', 'dx': 0, 'dy': 31, 'icon': False}
+      {'frame': 172, 'box': 'b91', 'own': 'PSC:\\Users\\msadmin> kubect1rollout undo ', 'read': 'Merged "AKS1-KodeKloudApp" as current co', 'other': 'b89', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 173, 'box': 'b91', 'own': 'PSC:\\Users\\msadmin> kubectl_rollout undo', 'read': 'Merged "AKS1-KodeCloudApp" as current co', 'other': 'b89', 'd': -2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 174, 'box': 'b15', 'own': '-OD-', 'read': 'Start', 'other': 'b16', 'd': 1, 'rel': 'beside', 'dx': 58, 'dy': 0, 'icon': True}
+      {'frame': 177, 'box': 'b94', 'own': 'Standard_DS2_', 'read': 'Enabled', 'other': 'b114', 'd': 20, 'rel': 'below', 'dx': 0, 'dy': 140, 'icon': False}
+      {'frame': 183, 'box': 'b126', 'own': 'Fault domain count', 'read': 'Single placement group', 'other': 'b130', 'd': 4, 'rel': 'below', 'dx': 0, 'dy': 10, 'icon': False}
+      {'frame': 184, 'box': 'b15', 'own': 'Start Restart Stop  Reimage Delete ↑ Upg', 'read': 'Search virtual machine instances', 'other': 'b20', 'd': 5, 'rel': 'below', 'dx': 0, 'dy': 29, 'icon': False}
+      {'frame': 184, 'box': 'b60', 'own': 'Loc', 'read': 'Monitoring', 'other': 'b62', 'd': 2, 'rel': 'below', 'dx': 0, 'dy': 14, 'icon': False}
+      {'frame': 185, 'box': 'b70', 'own': 'A different object named clusterUser_RG1', 'read': 'Merged "AKS1-KubeCloudApp" as current co', 'other': 'b73', 'd': 3, 'rel': 'below', 'dx': 0, 'dy': 12, 'icon': False}
+span2-s025-r1 | 387 | 365 | 126 | 22 | 15 | 29 | 75 | 3 | 8 | {155: 42, 158: 3, 159: 1, 161: 1, 164: 1, 165: 1, 175: 2, 178: 1, 181: 2, 182: 27, 183: 21, 184: 7, 185: 1, 186: 4, 187: 12}
+      {'frame': 155, 'box': 'b14', 'own': '☆', 'read': 'Kubernetes service', 'other': 'b16', 'd': 2, 'rel': 'diagonal', 'dx': 141, 'dy': 4, 'icon': True}
+      {'frame': 155, 'box': 'b16', 'own': 'Kubernetes service', 'read': 'Search', 'other': 'b21', 'd': 5, 'rel': 'below', 'dx': 0, 'dy': 18, 'icon': False}
+      {'frame': 155, 'box': 'b17', 'own': '-OD-', 'read': 'Overview', 'other': 'b29', 'd': 12, 'rel': 'diagonal', 'dx': 294, 'dy': 15, 'icon': True}
+      {'frame': 155, 'box': 'b21', 'own': 'Search', 'read': 'Activity log', 'other': 'b31', 'd': 10, 'rel': 'below', 'dx': 0, 'dy': 49, 'icon': False}
+      {'frame': 155, 'box': 'b22', 'own': 'Create ', 'read': 'Access control (IAM)', 'other': 'b39', 'd': 17, 'rel': 'diagonal', 'dx': 151, 'dy': 82, 'icon': False}
+      {'frame': 155, 'box': 'b24', 'own': 'D Start', 'read': 'Tags', 'other': 'b45', 'd': 21, 'rel': 'diagonal', 'dx': 411, 'dy': 117, 'icon': False}
+      {'frame': 155, 'box': 'b25', 'own': 'Stop', 'read': 'Delete', 'other': 'b19', 'd': -6, 'rel': 'beside', 'dx': 31, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b27', 'own': '《', 'read': 'Connect', 'other': 'b23', 'd': -4, 'rel': 'beside', 'dx': 161, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b28', 'own': ' Essentials', 'read': 'Diagnose and solve problems', 'other': 'b48', 'd': 20, 'rel': 'diagonal', 'dx': 72, 'dy': 119, 'icon': False}
+      {'frame': 155, 'box': 'b29', 'own': 'Overview', 'read': 'Microsoft Defender for Cloud', 'other': 'b50', 'd': 21, 'rel': 'below', 'dx': 0, 'dy': 148, 'icon': False}
+      {'frame': 155, 'box': 'b31', 'own': 'Activity log', 'read': 'Essentials', 'other': 'b28', 'd': -3, 'rel': 'diagonal', 'dx': 181, 'dy': 16, 'icon': False}
+      {'frame': 155, 'box': 'b34', 'own': ': Succeeded (Running)', 'read': 'Kubernetes resources', 'other': 'b53', 'd': 19, 'rel': 'diagonal', 'dx': 243, 'dy': 130, 'icon': False}
+      {'frame': 155, 'box': 'b39', 'own': 'Access control (IAM)', 'read': 'Namespaces', 'other': 'b58', 'd': 19, 'rel': 'below', 'dx': 0, 'dy': 155, 'icon': False}
+      {'frame': 155, 'box': 'b42', 'own': 'Location', 'read': 'Status', 'other': 'b35', 'd': -7, 'rel': 'above', 'dx': 0, 'dy': 8, 'icon': False}
+      {'frame': 155, 'box': 'b43', 'own': ': Southeast Asia', 'read': 'Location', 'other': 'b42', 'd': -1, 'rel': 'beside', 'dx': 41, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b46', 'own': 'Subscription', 'read': 'Succeeded (Running)', 'other': 'b34', 'd': -12, 'rel': 'diagonal', 'dx': 16, 'dy': 37, 'icon': False}
+      {'frame': 155, 'box': 'b48', 'own': 'Diagnose and solve problems', 'read': 'Subscription', 'other': 'b46', 'd': -2, 'rel': 'beside', 'dx': 72, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b49', 'own': 'Subscription ID :00000000-0000-0000-0000', 'read': 'Workloads', 'other': 'b60', 'd': 11, 'rel': 'diagonal', 'dx': 188, 'dy': 113, 'icon': False}
+      {'frame': 155, 'box': 'b51', 'own': 'Tags (edit)', 'read': 'Services and ingresses', 'other': 'b64', 'd': 13, 'rel': 'diagonal', 'dx': 115, 'dy': 109, 'icon': False}
+      {'frame': 155, 'box': 'b54', 'own': 'Get started', 'read': 'Storage', 'other': 'b67', 'd': 13, 'rel': 'diagonal', 'dx': 211, 'dy': 96, 'icon': False}
+span2-s025-r2 | 361 | 334 | 143 | 30 | 15 | 44 | 69 | 3 | 10 | {155: 44, 158: 4, 159: 1, 161: 1, 164: 1, 165: 1, 167: 1, 171: 1, 175: 1, 178: 1, 180: 6, 181: 2, 182: 29, 183: 27, 184: 7, 185: 1, 186: 3, 187: 12}
+      {'frame': 155, 'box': 'b14', 'own': '☆', 'read': 'Microsoft Azure', 'other': 'b10', 'd': -4, 'rel': 'diagonal', 'dx': 121, 'dy': 55, 'icon': True}
+      {'frame': 155, 'box': 'b16', 'own': 'Kubernetes service', 'read': 'AKS1-KodeKloudApp', 'other': 'b13', 'd': -3, 'rel': 'above', 'dx': 0, 'dy': 1, 'icon': False}
+      {'frame': 155, 'box': 'b17', 'own': '-OD-', 'read': 'Kubernetes service', 'other': 'b16', 'd': -1, 'rel': 'diagonal', 'dx': 233, 'dy': 13, 'icon': True}
+      {'frame': 155, 'box': 'b19', 'own': 'Delete', 'read': 'Refresh', 'other': 'b20', 'd': 1, 'rel': 'beside', 'dx': 22, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b20', 'own': 'Refresh', 'read': 'Delete', 'other': 'b19', 'd': -1, 'rel': 'beside', 'dx': 22, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b26', 'own': '十', 'read': 'Overview', 'other': 'b29', 'd': 3, 'rel': 'diagonal', 'dx': 200, 'dy': 19, 'icon': True}
+      {'frame': 155, 'box': 'b28', 'own': ' Essentials', 'read': 'Activity log', 'other': 'b31', 'd': 3, 'rel': 'diagonal', 'dx': 181, 'dy': 16, 'icon': False}
+      {'frame': 155, 'box': 'b29', 'own': 'Overview', 'read': 'Essentials', 'other': 'b28', 'd': -1, 'rel': 'beside', 'dx': 193, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b31', 'own': 'Activity log', 'read': 'Access control (IAM)', 'other': 'b39', 'd': 8, 'rel': 'below', 'dx': 0, 'dy': 8, 'icon': False}
+      {'frame': 155, 'box': 'b34', 'own': ': Succeeded (Running)', 'read': 'Tags', 'other': 'b45', 'd': 11, 'rel': 'diagonal', 'dx': 321, 'dy': 19, 'icon': False}
+      {'frame': 155, 'box': 'b35', 'own': 'Status', 'read': '1.24.10', 'other': 'b30', 'd': -5, 'rel': 'diagonal', 'dx': 953, 'dy': 8, 'icon': False}
+      {'frame': 155, 'box': 'b37', 'own': '□', 'read': 'Status', 'other': 'b35', 'd': -2, 'rel': 'beside', 'dx': 1251, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b38', 'own': '×', 'read': 'Succeeded (Running)', 'other': 'b34', 'd': -4, 'rel': 'beside', 'dx': 1101, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b39', 'own': 'Access control (IAM)', 'read': 'Diagnose and solve problems', 'other': 'b48', 'd': 9, 'rel': 'below', 'dx': 0, 'dy': 46, 'icon': False}
+      {'frame': 155, 'box': 'b41', 'own': '88', 'read': 'Subscription', 'other': 'b46', 'd': 5, 'rel': 'diagonal', 'dx': 260, 'dy': 33, 'icon': True}
+      {'frame': 155, 'box': 'b44', 'own': 'PS C:\\Users\\msadmin> az login', 'read': 'Microsoft Defender for Cloud', 'other': 'b50', 'd': 6, 'rel': 'diagonal', 'dx': 433, 'dy': 59, 'icon': False}
+      {'frame': 155, 'box': 'b48', 'own': 'Diagnose and solve problems', 'read': 'Kubernetes resources', 'other': 'b53', 'd': 5, 'rel': 'below', 'dx': 0, 'dy': 56, 'icon': False}
+      {'frame': 155, 'box': 'b49', 'own': 'Subscription ID :00000000-0000-0000-0000', 'read': 'Namespaces', 'other': 'b58', 'd': 9, 'rel': 'diagonal', 'dx': 174, 'dy': 78, 'icon': False}
+      {'frame': 155, 'box': 'b52', 'own': ': Click here to add tags', 'read': 'Node pools', 'other': 'b70', 'd': 18, 'rel': 'below', 'dx': 0, 'dy': 177, 'icon': False}
+      {'frame': 155, 'box': 'b53', 'own': 'Kubernetes resources', 'read': 'Workloads', 'other': 'b60', 'd': 7, 'rel': 'below', 'dx': 0, 'dy': 52, 'icon': False}
+span2-ct025-r1 | 353 | 204 | 37 | 2 | 0 | 12 | 23 | 2 | 6 | {155: 12, 174: 1, 177: 1, 182: 3, 183: 5, 184: 1, 185: 7, 186: 4, 187: 3}
+      {'frame': 155, 'box': 'b14', 'own': '☆', 'read': 'Kubernetes service', 'other': 'b16', 'd': 2, 'rel': 'diagonal', 'dx': 141, 'dy': 4, 'icon': True}
+      {'frame': 155, 'box': 'b16', 'own': 'Kubernetes service', 'read': 'Search', 'other': 'b21', 'd': 5, 'rel': 'below', 'dx': 0, 'dy': 18, 'icon': False}
+      {'frame': 155, 'box': 'b21', 'own': 'Search', 'read': 'Overview', 'other': 'b29', 'd': 8, 'rel': 'below', 'dx': 0, 'dy': 16, 'icon': False}
+      {'frame': 155, 'box': 'b22', 'own': 'Create ', 'read': 'Delete', 'other': 'b19', 'd': -3, 'rel': 'beside', 'dx': 260, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b23', 'own': 'Connect', 'read': 'Refresh', 'other': 'b20', 'd': -3, 'rel': 'beside', 'dx': 241, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b29', 'own': 'Overview', 'read': 'Activity log', 'other': 'b31', 'd': 2, 'rel': 'below', 'dx': 0, 'dy': 10, 'icon': False}
+      {'frame': 155, 'box': 'b31', 'own': 'Activity log', 'read': 'Access control (IAM)', 'other': 'b39', 'd': 8, 'rel': 'below', 'dx': 0, 'dy': 8, 'icon': False}
+      {'frame': 155, 'box': 'b39', 'own': 'Access control (IAM)', 'read': 'Tags', 'other': 'b45', 'd': 6, 'rel': 'below', 'dx': 0, 'dy': 11, 'icon': False}
+      {'frame': 155, 'box': 'b48', 'own': 'Diagnose and solve problems', 'read': 'Microsoft Defender for Cloud', 'other': 'b50', 'd': 2, 'rel': 'below', 'dx': 0, 'dy': 15, 'icon': False}
+      {'frame': 155, 'box': 'b89', 'own': 'Authorized IP ranges', 'read': 'Integrations', 'other': 'b100', 'd': 11, 'rel': 'below', 'dx': 0, 'dy': 76, 'icon': False}
+      {'frame': 155, 'box': 'b97', 'own': 'Open Service Mesh', 'read': 'Properties', 'other': 'b55', 'd': -42, 'rel': 'diagonal', 'dx': 242, 'dy': 390, 'icon': False}
+      {'frame': 155, 'box': 'b98', 'own': '8% GitOps', 'read': 'Monitoring', 'other': 'b56', 'd': -42, 'rel': 'diagonal', 'dx': 405, 'dy': 418, 'icon': False}
+      {'frame': 174, 'box': 'b15', 'own': '-OD-', 'read': 'Stop', 'other': 'b18', 'd': 3, 'rel': 'beside', 'dx': 153, 'dy': 0, 'icon': True}
+      {'frame': 177, 'box': 'b94', 'own': 'Standard_DS2_', 'read': 'Enabled', 'other': 'b114', 'd': 20, 'rel': 'below', 'dx': 0, 'dy': 140, 'icon': False}
+      {'frame': 182, 'box': 'b38', 'own': 'Subscription (move)', 'read': 'Location', 'other': 'b33', 'd': -5, 'rel': 'above', 'dx': 0, 'dy': 9, 'icon': False}
+      {'frame': 182, 'box': 'b44', 'own': 'Settings', 'read': 'Tags', 'other': 'b36', 'd': -8, 'rel': 'above', 'dx': 0, 'dy': 50, 'icon': False}
+      {'frame': 182, 'box': 'b47', 'own': 'Instances', 'read': 'Settings', 'other': 'b44', 'd': -3, 'rel': 'above', 'dx': 0, 'dy': 13, 'icon': False}
+      {'frame': 183, 'box': 'b98', 'own': 'Colocation status', 'read': 'Instance count', 'other': 'b106', 'd': 8, 'rel': 'below', 'dx': 0, 'dy': 37, 'icon': False}
+      {'frame': 183, 'box': 'b106', 'own': 'Instance count', 'read': 'Scaling', 'other': 'b112', 'd': 6, 'rel': 'below', 'dx': 0, 'dy': 5, 'icon': False}
+      {'frame': 183, 'box': 'b112', 'own': 'Scaling', 'read': 'Scale-in policy', 'other': 'b117', 'd': 5, 'rel': 'below', 'dx': 0, 'dy': 1, 'icon': False}
+span2-ct025-r2 | 354 | 219 | 50 | 3 | 14 | 23 | 24 | 0 | 11 | {155: 9, 158: 1, 174: 1, 180: 3, 182: 22, 183: 8, 185: 5, 187: 1}
+      {'frame': 155, 'box': 'b18', 'own': 'Open in mobile Give feedback', 'read': 'Administrator: PowerShell 7 preview x64', 'other': 'b40', 'd': 22, 'rel': 'below', 'dx': 0, 'dy': 80, 'icon': False}
+      {'frame': 155, 'box': 'b22', 'own': 'Create ', 'read': 'Connect', 'other': 'b23', 'd': 1, 'rel': 'beside', 'dx': 32, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b23', 'own': 'Connect', 'read': 'Delete', 'other': 'b19', 'd': -4, 'rel': 'beside', 'dx': 167, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b24', 'own': 'D Start', 'read': 'Refresh', 'other': 'b20', 'd': -4, 'rel': 'beside', 'dx': 171, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b30', 'own': ':1.24.10', 'read': 'Kubernetes version', 'other': 'b33', 'd': 3, 'rel': 'beside', 'dx': 12, 'dy': 0, 'icon': True}
+      {'frame': 155, 'box': 'b82', 'own': '1.24.10', 'read': 'Enabled', 'other': 'b94', 'd': 12, 'rel': 'below', 'dx': 0, 'dy': 63, 'icon': True}
+      {'frame': 155, 'box': 'b89', 'own': 'Authorized IP ranges', 'read': 'Application Gateway ingress', 'other': 'b93', 'd': 4, 'rel': 'below', 'dx': 0, 'dy': 10, 'icon': False}
+      {'frame': 155, 'box': 'b97', 'own': 'Open Service Mesh', 'read': 'Policies', 'other': 'b111', 'd': 14, 'rel': 'below', 'dx': 0, 'dy': 145, 'icon': False}
+      {'frame': 155, 'box': 'b98', 'own': '8% GitOps', 'read': 'Monitoring', 'other': 'b56', 'd': -42, 'rel': 'diagonal', 'dx': 405, 'dy': 418, 'icon': False}
+      {'frame': 158, 'box': 'b104', 'own': 'Authentication and Authorization', 'read': 'Local accounts with Kubernetes RBAC', 'other': 'b105', 'd': 1, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 174, 'box': 'b15', 'own': '-OD-', 'read': 'Stop', 'other': 'b18', 'd': 3, 'rel': 'beside', 'dx': 153, 'dy': 0, 'icon': True}
+      {'frame': 180, 'box': 'b99', 'own': 'VERSION', 'read': 'AGE', 'other': 'b98', 'd': -1, 'rel': 'beside', 'dx': 15, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b101', 'own': 'STATUS', 'read': 'READY', 'other': 'b106', 'd': 5, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b102', 'own': 'ROLES', 'read': 'STATUS', 'other': 'b101', 'd': -1, 'rel': 'beside', 'dx': 17, 'dy': 0, 'icon': False}
+      {'frame': 182, 'box': 'b13', 'own': 'Home >Resource groups> MC_RG1-KodeKloud-', 'read': 'aks-agentpool-18097611-vmss', 'other': 'b15', 'd': 2, 'rel': 'below', 'dx': 0, 'dy': 12, 'icon': False}
+      {'frame': 182, 'box': 'b15', 'own': 'aks-agentpool-18097611-vmss ☆ …', 'read': 'Virtual machine scale set', 'other': 'b16', 'd': 1, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 182, 'box': 'b16', 'own': 'Virtual machine scale set', 'read': 'Search', 'other': 'b20', 'd': 4, 'rel': 'below', 'dx': 0, 'dy': 15, 'icon': False}
+      {'frame': 182, 'box': 'b38', 'own': 'Subscription (move)', 'read': 'Location', 'other': 'b33', 'd': -5, 'rel': 'above', 'dx': 0, 'dy': 9, 'icon': False}
+      {'frame': 182, 'box': 'b44', 'own': 'Settings', 'read': 'Tags', 'other': 'b36', 'd': -8, 'rel': 'above', 'dx': 0, 'dy': 50, 'icon': False}
+      {'frame': 182, 'box': 'b47', 'own': 'Instances', 'read': 'Overview', 'other': 'b23', 'd': -24, 'rel': 'above', 'dx': 0, 'dy': 191, 'icon': False}
+span2-s020-r1 | 347 | 339 | 45 | 10 | 11 | 15 | 20 | 0 | 6 | {159: 1, 161: 1, 163: 1, 170: 1, 174: 1, 175: 1, 180: 1, 182: 29, 183: 1, 184: 5, 185: 3}
+      {'frame': 159, 'box': 'b18', 'own': '口', 'read': 'Tags', 'other': 'b45', 'd': 27, 'rel': 'diagonal', 'dx': 555, 'dy': 117, 'icon': True}
+      {'frame': 161, 'box': 'b16', 'own': '中', 'read': 'Search', 'other': 'b21', 'd': 5, 'rel': 'below', 'dx': 0, 'dy': 28, 'icon': True}
+      {'frame': 163, 'box': 'b25', 'own': '日', 'read': 'Essentials', 'other': 'b27', 'd': 2, 'rel': 'diagonal', 'dx': 419, 'dy': 15, 'icon': True}
+      {'frame': 170, 'box': 'b8', 'own': '曰', 'read': 'Overview', 'other': 'b27', 'd': 19, 'rel': 'diagonal', 'dx': 1689, 'dy': 193, 'icon': True}
+      {'frame': 174, 'box': 'b15', 'own': '-OD-', 'read': 'Overview', 'other': 'b26', 'd': 11, 'rel': 'diagonal', 'dx': 295, 'dy': 13, 'icon': True}
+      {'frame': 175, 'box': 'b14', 'own': '中', 'read': 'Overview', 'other': 'b26', 'd': 12, 'rel': 'below', 'dx': 0, 'dy': 66, 'icon': True}
+      {'frame': 180, 'box': 'b24', 'own': '日', 'read': 'Essentials', 'other': 'b26', 'd': 2, 'rel': 'diagonal', 'dx': 418, 'dy': 16, 'icon': True}
+      {'frame': 182, 'box': 'b13', 'own': 'Home >Resource groups> MC_RG1-KodeKloud-', 'read': 'aks-agentpool-18097611-vmss', 'other': 'b15', 'd': 2, 'rel': 'below', 'dx': 0, 'dy': 12, 'icon': False}
+      {'frame': 182, 'box': 'b16', 'own': 'Virtual machine scale set', 'read': 'Status', 'other': 'b30', 'd': 14, 'rel': 'diagonal', 'dx': 97, 'dy': 112, 'icon': False}
+      {'frame': 182, 'box': 'b17', 'own': 'Refresh Feedback', 'read': 'Operating system', 'other': 'b26', 'd': 9, 'rel': 'diagonal', 'dx': 193, 'dy': 47, 'icon': False}
+      {'frame': 182, 'box': 'b19', 'own': 'Delete', 'read': 'Location', 'other': 'b33', 'd': 14, 'rel': 'diagonal', 'dx': 371, 'dy': 106, 'icon': False}
+      {'frame': 182, 'box': 'b25', 'own': 'Resource group (move) : MC RG1-KodeKloud', 'read': 'Subscription ID', 'other': 'b42', 'd': 17, 'rel': 'below', 'dx': 0, 'dy': 96, 'icon': False}
+      {'frame': 182, 'box': 'b26', 'own': 'Operating system', 'read': 'Public IP address', 'other': 'b35', 'd': 9, 'rel': 'below', 'dx': 0, 'dy': 37, 'icon': False}
+      {'frame': 182, 'box': 'b37', 'own': 'Public IP address (IPv6) : :', 'read': 'Scaling', 'other': 'b52', 'd': 15, 'rel': 'diagonal', 'dx': 1067, 'dy': 138, 'icon': False}
+      {'frame': 182, 'box': 'b38', 'own': 'Subscription (move)', 'read': 'Instances', 'other': 'b47', 'd': 9, 'rel': 'diagonal', 'dx': 194, 'dy': 73, 'icon': False}
+      {'frame': 182, 'box': 'b41', 'own': 'Virtual network/subnet : RG1-KodeKloud-A', 'read': 'Tags', 'other': 'b36', 'd': -5, 'rel': 'diagonal', 'dx': 1085, 'dy': 22, 'icon': False}
+      {'frame': 182, 'box': 'b42', 'own': 'Subscription ID', 'read': 'Tags (edit)', 'other': 'b46', 'd': 4, 'rel': 'below', 'dx': 0, 'dy': 43, 'icon': False}
+      {'frame': 182, 'box': 'b43', 'own': ':3eb0e8a-2743-4be7-891c-1e2b3a83ad1b', 'read': 'Essentials', 'other': 'b22', 'd': -21, 'rel': 'diagonal', 'dx': 61, 'dy': 132, 'icon': True}
+      {'frame': 182, 'box': 'b44', 'own': 'Settings', 'read': 'Overview', 'other': 'b23', 'd': -21, 'rel': 'above', 'dx': 0, 'dy': 154, 'icon': False}
+      {'frame': 182, 'box': 'b45', 'own': 'Orchestration mode: Uniform', 'read': 'Activity log', 'other': 'b27', 'd': -18, 'rel': 'diagonal', 'dx': 1048, 'dy': 121, 'icon': False}
+span2-s020-r2 | 398 | 395 | 36 | 6 | 5 | 9 | 21 | 0 | 4 | {159: 1, 160: 1, 163: 1, 164: 1, 170: 1, 174: 1, 175: 1, 182: 21, 183: 2, 184: 6}
+      {'frame': 159, 'box': 'b18', 'own': '口', 'read': 'Overview', 'other': 'b29', 'd': 11, 'rel': 'diagonal', 'dx': 527, 'dy': 16, 'icon': True}
+      {'frame': 160, 'box': 'b25', 'own': '日', 'read': 'Essentials', 'other': 'b27', 'd': 2, 'rel': 'diagonal', 'dx': 419, 'dy': 15, 'icon': True}
+      {'frame': 163, 'box': 'b25', 'own': '日', 'read': 'Essentials', 'other': 'b27', 'd': 2, 'rel': 'diagonal', 'dx': 419, 'dy': 15, 'icon': True}
+      {'frame': 164, 'box': 'b79', 'own': 'PS C:\\Users\\msadmin>', 'read': 'Networking', 'other': 'b92', 'd': 13, 'rel': 'diagonal', 'dx': 536, 'dy': 141, 'icon': False}
+      {'frame': 170, 'box': 'b83', 'own': 'Overwrite? (y/n): Y', 'read': 'Node pools', 'other': 'b82', 'd': -1, 'rel': 'beside', 'dx': 232, 'dy': 0, 'icon': False}
+      {'frame': 174, 'box': 'b15', 'own': '-OD-', 'read': 'Overview', 'other': 'b26', 'd': 11, 'rel': 'diagonal', 'dx': 295, 'dy': 13, 'icon': True}
+      {'frame': 175, 'box': 'b14', 'own': '中', 'read': 'Search', 'other': 'b22', 'd': 8, 'rel': 'below', 'dx': 0, 'dy': 28, 'icon': True}
+      {'frame': 182, 'box': 'b13', 'own': 'Home >Resource groups> MC_RG1-KodeKloud-', 'read': 'aks-agentpool-18097611-vmss', 'other': 'b15', 'd': 2, 'rel': 'below', 'dx': 0, 'dy': 12, 'icon': False}
+      {'frame': 182, 'box': 'b15', 'own': 'aks-agentpool-18097611-vmss ☆ …', 'read': 'Virtual machine scale set', 'other': 'b16', 'd': 1, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 182, 'box': 'b19', 'own': 'Delete', 'read': 'Essentials', 'other': 'b22', 'd': 3, 'rel': 'diagonal', 'dx': 344, 'dy': 14, 'icon': False}
+      {'frame': 182, 'box': 'b24', 'own': ': Linux', 'read': 'Operating system', 'other': 'b26', 'd': 2, 'rel': 'beside', 'dx': 29, 'dy': 0, 'icon': False}
+      {'frame': 182, 'box': 'b26', 'own': 'Operating system', 'read': 'Size', 'other': 'b29', 'd': 3, 'rel': 'below', 'dx': 0, 'dy': 7, 'icon': False}
+      {'frame': 182, 'box': 'b42', 'own': 'Subscription ID', 'read': 'Tags', 'other': 'b36', 'd': -6, 'rel': 'diagonal', 'dx': 221, 'dy': 23, 'icon': False}
+      {'frame': 182, 'box': 'b46', 'own': 'Tags (edit)', 'read': 'Location', 'other': 'b33', 'd': -13, 'rel': 'above', 'dx': 0, 'dy': 101, 'icon': False}
+      {'frame': 182, 'box': 'b51', 'own': 'Networking', 'read': 'Overview', 'other': 'b23', 'd': -28, 'rel': 'above', 'dx': 0, 'dy': 221, 'icon': False}
+      {'frame': 182, 'box': 'b52', 'own': 'Scaling', 'read': 'Activity log', 'other': 'b27', 'd': -25, 'rel': 'above', 'dx': 0, 'dy': 219, 'icon': False}
+      {'frame': 182, 'box': 'b53', 'own': 'Disks', 'read': 'Access control (IAM)', 'other': 'b32', 'd': -21, 'rel': 'above', 'dx': 0, 'dy': 221, 'icon': False}
+      {'frame': 182, 'box': 'b54', 'own': 'Operating system', 'read': 'Tags', 'other': 'b36', 'd': -18, 'rel': 'above', 'dx': 0, 'dy': 220, 'icon': False}
+      {'frame': 182, 'box': 'b55', 'own': 'Microsoft Defender for Cloud', 'read': 'Diagnose and solve problems', 'other': 'b40', 'd': -15, 'rel': 'above', 'dx': 0, 'dy': 224, 'icon': False}
+      {'frame': 182, 'box': 'b56', 'own': 'Guest + host updates', 'read': 'Settings', 'other': 'b44', 'd': -12, 'rel': 'above', 'dx': 0, 'dy': 214, 'icon': False}
+span2-ct020-r1 | 341 | 271 | 52 | 2 | 8 | 13 | 37 | 0 | 4 | {155: 14, 158: 1, 180: 3, 182: 11, 183: 12, 184: 1, 185: 2, 187: 8}
+      {'frame': 155, 'box': 'b3', 'own': 'AKS1-KodeKloudApp - Microsoft X', 'read': 'Microsoft Azure', 'other': 'b10', 'd': 7, 'rel': 'below', 'dx': 0, 'dy': 58, 'icon': False}
+      {'frame': 155, 'box': 'b22', 'own': 'Create ', 'read': 'Connect', 'other': 'b23', 'd': 1, 'rel': 'beside', 'dx': 32, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b24', 'own': 'D Start', 'read': 'Stop', 'other': 'b25', 'd': 1, 'rel': 'beside', 'dx': 23, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b42', 'own': 'Location', 'read': 'Status', 'other': 'b35', 'd': -7, 'rel': 'above', 'dx': 0, 'dy': 8, 'icon': False}
+      {'frame': 155, 'box': 'b43', 'own': ': Southeast Asia', 'read': 'Succeeded (Running)', 'other': 'b34', 'd': -9, 'rel': 'above', 'dx': 0, 'dy': 7, 'icon': False}
+      {'frame': 155, 'box': 'b46', 'own': 'Subscription', 'read': 'Location', 'other': 'b42', 'd': -4, 'rel': 'above', 'dx': 0, 'dy': 9, 'icon': False}
+      {'frame': 155, 'box': 'b47', 'own': ': sub-global', 'read': 'Southeast Asia', 'other': 'b43', 'd': -4, 'rel': 'above', 'dx': 0, 'dy': 10, 'icon': False}
+      {'frame': 155, 'box': 'b54', 'own': 'Get started', 'read': 'Tags', 'other': 'b45', 'd': -9, 'rel': 'diagonal', 'dx': 230, 'dy': 104, 'icon': False}
+      {'frame': 155, 'box': 'b62', 'own': 'Encryption type', 'read': 'Kubernetes version', 'other': 'b75', 'd': 13, 'rel': 'below', 'dx': 0, 'dy': 111, 'icon': False}
+      {'frame': 155, 'box': 'b82', 'own': '1.24.10', 'read': 'Enabled', 'other': 'b94', 'd': 12, 'rel': 'below', 'dx': 0, 'dy': 63, 'icon': True}
+      {'frame': 155, 'box': 'b89', 'own': 'Authorized IP ranges', 'read': 'Container insights', 'other': 'b104', 'd': 15, 'rel': 'below', 'dx': 0, 'dy': 103, 'icon': False}
+      {'frame': 155, 'box': 'b91', 'own': 'Backup (preview)', 'read': 'Networking', 'other': 'b81', 'd': -10, 'rel': 'above', 'dx': 0, 'dy': 58, 'icon': False}
+      {'frame': 155, 'box': 'b98', 'own': '8% GitOps', 'read': 'Monitoring', 'other': 'b56', 'd': -42, 'rel': 'diagonal', 'dx': 405, 'dy': 418, 'icon': False}
+      {'frame': 155, 'box': 'b101', 'own': 'No extensions installed', 'read': 'Extensions + applications', 'other': 'b84', 'd': -17, 'rel': 'diagonal', 'dx': 141, 'dy': 124, 'icon': False}
+      {'frame': 158, 'box': 'b104', 'own': 'Authentication and Authorization', 'read': 'Extensions + applications', 'other': 'b98', 'd': -6, 'rel': 'diagonal', 'dx': 145, 'dy': 23, 'icon': False}
+      {'frame': 180, 'box': 'b99', 'own': 'VERSION', 'read': 'AGE', 'other': 'b98', 'd': -1, 'rel': 'beside', 'dx': 15, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b101', 'own': 'STATUS', 'read': 'READY', 'other': 'b106', 'd': 5, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+      {'frame': 180, 'box': 'b102', 'own': 'ROLES', 'read': 'STATUS', 'other': 'b101', 'd': -1, 'rel': 'beside', 'dx': 17, 'dy': 0, 'icon': False}
+      {'frame': 182, 'box': 'b3', 'own': 'aks-agentpool-18097611-vmss- ×', 'read': 'Microsoft Azure', 'other': 'b9', 'd': 6, 'rel': 'below', 'dx': 0, 'dy': 56, 'icon': False}
+      {'frame': 182, 'box': 'b17', 'own': 'Refresh Feedback', 'read': 'Delete', 'other': 'b19', 'd': 2, 'rel': 'beside', 'dx': 0, 'dy': 0, 'icon': False}
+span2-ct020-r2 | 331 | 262 | 42 | 1 | 8 | 14 | 27 | 0 | 4 | {155: 9, 157: 1, 182: 12, 183: 11, 184: 1, 185: 8}
+      {'frame': 155, 'box': 'b22', 'own': 'Create ', 'read': 'Connect', 'other': 'b23', 'd': 1, 'rel': 'beside', 'dx': 32, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b24', 'own': 'D Start', 'read': 'Stop', 'other': 'b25', 'd': 1, 'rel': 'beside', 'dx': 23, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b54', 'own': 'Get started', 'read': 'Properties', 'other': 'b55', 'd': 1, 'rel': 'beside', 'dx': 20, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b55', 'own': 'Properties', 'read': 'Monitoring', 'other': 'b56', 'd': 1, 'rel': 'beside', 'dx': 16, 'dy': 0, 'icon': False}
+      {'frame': 155, 'box': 'b62', 'own': 'Encryption type', 'read': 'Kubernetes version', 'other': 'b75', 'd': 13, 'rel': 'below', 'dx': 0, 'dy': 111, 'icon': False}
+      {'frame': 155, 'box': 'b75', 'own': 'Kubernetes versions', 'read': 'Node sizes', 'other': 'b78', 'd': 3, 'rel': 'below', 'dx': 0, 'dy': 11, 'icon': False}
+      {'frame': 155, 'box': 'b91', 'own': 'Backup (preview)', 'read': 'Policies', 'other': 'b111', 'd': 20, 'rel': 'below', 'dx': 0, 'dy': 175, 'icon': False}
+      {'frame': 155, 'box': 'b97', 'own': 'Open Service Mesh', 'read': 'Properties', 'other': 'b55', 'd': -42, 'rel': 'diagonal', 'dx': 242, 'dy': 390, 'icon': False}
+      {'frame': 155, 'box': 'b101', 'own': 'No extensions installed', 'read': 'Extensions + applications', 'other': 'b84', 'd': -17, 'rel': 'diagonal', 'dx': 141, 'dy': 124, 'icon': False}
+      {'frame': 157, 'box': 'b44', 'own': 'C:\\Users\\msadmin> az account show', 'read': 'aks1-kodekloudapp-rg', 'other': 'b13', 'd': -31, 'rel': 'diagonal', 'dx': 370, 'dy': 165, 'icon': False}
+      {'frame': 182, 'box': 'b3', 'own': 'aks-agentpool-18097611-vmss- ×', 'read': 'Microsoft Azure', 'other': 'b9', 'd': 6, 'rel': 'below', 'dx': 0, 'dy': 56, 'icon': False}
+      {'frame': 182, 'box': 'b44', 'own': 'Settings', 'read': 'Overview', 'other': 'b23', 'd': -21, 'rel': 'above', 'dx': 0, 'dy': 154, 'icon': False}
+      {'frame': 182, 'box': 'b47', 'own': 'Instances', 'read': 'Tags', 'other': 'b36', 'd': -11, 'rel': 'above', 'dx': 0, 'dy': 87, 'icon': False}
+      {'frame': 182, 'box': 'b51', 'own': 'Networking', 'read': 'Activity log', 'other': 'b27', 'd': -24, 'rel': 'above', 'dx': 0, 'dy': 184, 'icon': False}
+      {'frame': 182, 'box': 'b52', 'own': 'Scaling', 'read': 'Instances', 'other': 'b47', 'd': -5, 'rel': 'above', 'dx': 0, 'dy': 45, 'icon': False}
+      {'frame': 182, 'box': 'b53', 'own': 'Disks', 'read': 'Scaling', 'other': 'b52', 'd': -1, 'rel': 'above', 'dx': 0, 'dy': 9, 'icon': False}
+      {'frame': 182, 'box': 'b54', 'own': 'Operating system', 'read': 'Networking', 'other': 'b51', 'd': -3, 'rel': 'above', 'dx': 0, 'dy': 77, 'icon': False}
+      {'frame': 182, 'box': 'b56', 'own': 'Guest + host updates', 'read': 'Operating system', 'other': 'b54', 'd': -2, 'rel': 'above', 'dx': 0, 'dy': 46, 'icon': False}
+      {'frame': 182, 'box': 'b57', 'own': 'Size', 'read': 'Disks', 'other': 'b53', 'd': -4, 'rel': 'above', 'dx': 0, 'dy': 111, 'icon': False}
+      {'frame': 182, 'box': 'b59', 'own': 'Continuous delivery', 'read': 'Configuration', 'other': 'b60', 'd': 1, 'rel': 'below', 'dx': 0, 'dy': 11, 'icon': False}
+
+== LOOSE (P5 loose.py): run | readings | another box's text (loose) | own is icon glyph | other box: line above/below | beside | elsewhere | frames
+span2-s100-r1 | 349 | 9 | 0 | 0 | 6 | 3 | {155: 2, 171: 1, 184: 1, 185: 3, 187: 2}
+span2-s100-r2 | 348 | 9 | 1 | 0 | 5 | 3 | {155: 3, 171: 1, 180: 1, 184: 1, 185: 3}
+span2-ct100-r1 | 361 | 2 | 0 | 0 | 0 | 2 | {185: 2}
+span2-ct100-r2 | 360 | 2 | 0 | 0 | 0 | 2 | {185: 2}
+span2-s067-r1 | 353 | 22 | 6 | 2 | 11 | 3 | {155: 3, 158: 1, 159: 1, 170: 2, 171: 1, 172: 1, 180: 6, 182: 1, 184: 1, 185: 3, 187: 2}
+span2-s067-r2 | 355 | 11 | 5 | 0 | 3 | 3 | {155: 1, 158: 1, 159: 1, 170: 2, 171: 1, 172: 1, 182: 1, 184: 1, 185: 2}
+span2-ct067-r1 | 365 | 5 | 0 | 3 | 0 | 2 | {172: 1, 173: 1, 185: 2, 187: 1}
+span2-ct067-r2 | 359 | 4 | 0 | 2 | 0 | 2 | {172: 1, 174: 1, 185: 2}
+span2-s050-r1 | 354 | 28 | 8 | 7 | 10 | 3 | {155: 1, 158: 2, 159: 1, 161: 1, 167: 1, 169: 1, 171: 1, 172: 1, 174: 1, 177: 2, 180: 5, 182: 1, 184: 2, 185: 4, 187: 4}
+span2-s050-r2 | 358 | 29 | 9 | 7 | 9 | 4 | {155: 2, 158: 1, 159: 1, 161: 1, 167: 1, 171: 1, 172: 1, 174: 1, 177: 2, 180: 4, 182: 1, 184: 2, 185: 6, 187: 5}
+span2-ct050-r1 | 360 | 5 | 0 | 3 | 0 | 2 | {172: 1, 173: 1, 174: 1, 185: 2}
+span2-ct050-r2 | 359 | 3 | 0 | 1 | 0 | 2 | {174: 1, 185: 2}
+span2-s040-r1 | 371 | 98 | 28 | 29 | 27 | 14 | {155: 22, 156: 4, 158: 8, 159: 1, 161: 1, 165: 1, 166: 1, 169: 1, 174: 1, 175: 2, 177: 1, 180: 10, 181: 2, 182: 1, 183: 2, 184: 4, 185: 24, 186: 1, 187: 11}
+span2-s040-r2 | 364 | 67 | 22 | 9 | 23 | 13 | {155: 19, 156: 3, 158: 1, 159: 1, 161: 1, 165: 1, 166: 1, 169: 1, 170: 1, 172: 1, 174: 1, 175: 2, 177: 1, 178: 2, 180: 8, 183: 3, 184: 4, 185: 8, 186: 1, 187: 7}
+span2-ct040-r1 | 356 | 8 | 0 | 3 | 3 | 2 | {171: 2, 173: 1, 185: 5}
+span2-ct040-r2 | 361 | 10 | 1 | 7 | 0 | 2 | {158: 8, 185: 2}
+span2-s030-r1 | 372 | 184 | 42 | 49 | 19 | 74 | {155: 44, 156: 4, 158: 9, 159: 1, 161: 1, 163: 1, 165: 1, 171: 1, 172: 1, 173: 1, 174: 1, 175: 1, 177: 2, 178: 1, 180: 4, 182: 19, 183: 31, 184: 11, 185: 30, 186: 4, 187: 16}
+span2-s030-r2 | 386 | 163 | 40 | 37 | 29 | 57 | {155: 51, 156: 4, 158: 2, 159: 1, 160: 1, 163: 1, 165: 1, 172: 1, 174: 2, 175: 1, 177: 2, 178: 1, 180: 3, 182: 10, 183: 30, 184: 11, 185: 22, 186: 1, 187: 18}
+span2-ct030-r1 | 357 | 27 | 4 | 10 | 3 | 10 | {155: 5, 175: 1, 177: 1, 182: 1, 185: 13, 187: 6}
+span2-ct030-r2 | 355 | 29 | 3 | 9 | 0 | 17 | {155: 7, 158: 5, 170: 1, 172: 1, 173: 1, 174: 1, 177: 1, 183: 1, 184: 2, 185: 5, 187: 4}
+span2-s025-r1 | 387 | 132 | 23 | 15 | 24 | 70 | {155: 43, 158: 3, 159: 1, 161: 1, 164: 1, 165: 1, 175: 2, 178: 1, 181: 2, 182: 28, 183: 23, 184: 8, 185: 2, 186: 4, 187: 12}
+span2-s025-r2 | 361 | 154 | 30 | 24 | 21 | 79 | {155: 47, 158: 4, 159: 1, 161: 1, 164: 1, 165: 1, 167: 1, 171: 1, 175: 1, 178: 1, 179: 1, 180: 6, 181: 2, 182: 29, 183: 29, 184: 9, 185: 2, 186: 3, 187: 14}
+span2-ct025-r1 | 353 | 44 | 2 | 15 | 2 | 25 | {155: 13, 174: 1, 177: 1, 182: 4, 183: 7, 184: 1, 185: 8, 186: 4, 187: 5}
+span2-ct025-r2 | 354 | 59 | 3 | 17 | 8 | 31 | {155: 10, 158: 2, 174: 1, 180: 3, 182: 23, 183: 10, 185: 8, 187: 2}
+span2-s020-r1 | 347 | 49 | 10 | 10 | 4 | 25 | {159: 1, 161: 1, 163: 1, 170: 1, 174: 1, 175: 1, 180: 1, 182: 29, 183: 2, 184: 6, 185: 5}
+span2-s020-r2 | 398 | 38 | 6 | 4 | 6 | 22 | {159: 1, 160: 1, 163: 1, 164: 1, 170: 1, 174: 1, 175: 1, 182: 22, 183: 2, 184: 7}
+span2-ct020-r1 | 341 | 61 | 2 | 12 | 13 | 34 | {155: 15, 158: 1, 180: 3, 182: 13, 183: 15, 184: 1, 185: 5, 187: 8}
+span2-ct020-r2 | 331 | 46 | 1 | 4 | 11 | 30 | {155: 10, 157: 1, 182: 12, 183: 14, 184: 1, 185: 8}
+
+== OFFROW (P5 offrow.py): run | pair links | off-row pairs (dy>12) | frames | runs with a jump (dy>12 or dx>300) | max pair gap px
+span2-s100-r1 | 43 | 0 | {} | 0 | 187
+span2-s100-r2 | 46 | 0 | {} | 0 | 193
+span2-ct100-r1 | 42 | 0 | {} | 0 | 183
+span2-ct100-r2 | 40 | 0 | {} | 0 | 183
+span2-s067-r1 | 45 | 0 | {} | 0 | 235
+span2-s067-r2 | 45 | 1 | {182: 1} | 0 | 235
+      OFFROW (182, (0, 225), 'Resource group (move) : M', '=>', 'portal.azure.com/#@clouda')
+span2-ct067-r1 | 43 | 0 | {} | 0 | 183
+span2-ct067-r2 | 38 | 0 | {} | 0 | 183
+span2-s050-r1 | 40 | 1 | {183: 1} | 0 | 936
+      OFFROW (183, (106, 272), 'Public IP address', '=>', 'Disabled')
+span2-s050-r2 | 41 | 0 | {} | 0 | 183
+span2-ct050-r1 | 44 | 0 | {} | 0 | 741
+span2-ct050-r2 | 37 | 0 | {} | 0 | 183
+span2-s040-r1 | 40 | 1 | {155: 1} | 0 | 820
+      OFFROW (155, (129, 16), 'Resource group : RG1-Kode', '=>', 'Access control (IAM)')
+span2-s040-r2 | 42 | 2 | {155: 2} | 1 | 1291
+      OFFROW (155, (129, 16), 'Resource group : RG1-Kode', '=>', 'Access control (IAM)')
+      OFFROW (155, (75, 32), 'Subscription', '=>', 'Microsoft Defender for Cl')
+      RUNJUMP (155, [(0, 47)], 'Deployment center | (preview)')
+span2-ct040-r1 | 39 | 0 | {} | 0 | 183
+span2-ct040-r2 | 42 | 0 | {} | 0 | 183
+span2-cg040-r1 | 39 | 1 | {182: 1} | 0 | 183
+      OFFROW (182, (0, 47), 'Resource group (move) : M', '=>', 'Refresh Feedback')
+span2-cg040-r2 | 44 | 2 | {155: 1, 182: 1} | 1 | 358
+      OFFROW (155, (101, 75), 'Container insights', '=>', 'Not enabled')
+      OFFROW (182, (344, 14), ' Essentials + Resource group (move) : M', '=>', 'Delete')
+      RUNJUMP (155, [(0, 27)], '8% GitOps | (deprecated)')
+span2-s030-r1 | 33 | 5 | {155: 1, 182: 2, 183: 2} | 0 | 1265
+      OFFROW (155, (0, 63), 'Node pools', '=>', 'Node sizes')
+      OFFROW (182, (0, 98), 'Resource group (move) : M', '=>', ':3eb0e8a-2743-4be7-891c-1')
+      OFFROW (182, (0, 70), 'Public IP address', '=>', 'Orchestration mode: Unifo')
+      OFFROW (183, (0, 39), 'Public IP address', '=>', 'Virtual network/subnet')
+      OFFROW (183, (106, 39), 'Colocation status', '=>', '1')
+span2-s030-r2 | 34 | 2 | {183: 2} | 0 | 1131
+      OFFROW (183, (168, 56), 'Recommendations', '=>', 'Operating system')
+      OFFROW (183, (181, 33), 'Size', '=>', '2')
+span2-ct030-r1 | 44 | 0 | {} | 0 | 183
+span2-ct030-r2 | 40 | 0 | {} | 0 | 183
+span2-cg030-r1 | 46 | 0 | {} | 0 | 623
+span2-cg030-r2 | 46 | 2 | {155: 1, 164: 1} | 0 | 941
+      OFFROW (155, (623, 318), 'Open in mobile Give feedb', '=>', 'itheastasia.azmk8s.io')
+      OFFROW (164, (0, 213), 'PS C:\\Users\\msadmin>', '=>', '"environmentName": "Azure')
+span2-s025-r1 | 31 | 6 | {155: 4, 182: 2} | 0 | 964
+      OFFROW (155, (3, 15), '88', '=>', 'Tags')
+      OFFROW (155, (0, 15), 'Diagnose and solve proble', '=>', 'Microsoft Defender for Cl')
+      OFFROW (155, (216, 14), 'Namespaces', '=>', 'Kubernetes services')
+      OFFROW (155, (150, 54), 'controller', '=>', 'Enabled')
+      OFFROW (182, (0, 49), 'Delete', '=>', 'Resource group (move) : M')
+      OFFROW (182, (0, 43), 'Subscription ID', '=>', 'Tags (edit) + aks-managed-createOperati')
+span2-s025-r2 | 22 | 7 | {155: 6, 183: 1} | 0 | 212
+      OFFROW (155, (3, 15), '88', '=>', 'Tags')
+      OFFROW (155, (155, 57), 'Capabilit', '=>', 'Encryption type')
+      OFFROW (155, (0, 16), 'Workloads', '=>', 'Services and ingresses')
+      OFFROW (155, (135, 29), 'Not enabled', '=>', 'Node pools')
+      OFFROW (155, (144, 36), '1 node pool', '=>', 'Node sizes')
+      OFFROW (155, (150, 54), 'controller', '=>', 'Enabled')
+      OFFROW (183, (0, 27), 'RAM', '=>', 'Disk')
+span2-ct025-r1 | 36 | 0 | {} | 0 | 183
+span2-ct025-r2 | 36 | 0 | {} | 0 | 474
+span2-cg025-r1 | 40 | 0 | {} | 0 | 710
+span2-cg025-r2 | 37 | 0 | {} | 0 | 183
+span2-s020-r1 | 13 | 3 | {182: 2, 183: 1} | 0 | 1163
+      OFFROW (182, (1127, 36), '日', '=>', 'Public IP address')
+      OFFROW (182, (280, 18), 'Orchestration mode: Unifo', '=>', 'aks-managed-createOperati')
+      OFFROW (183, (769, 14), 'N/A', '=>', 'Not enabled')
+span2-s020-r2 | 18 | 1 | {182: 1} | 0 | 789
+      OFFROW (182, (34, 37), ': Linux', '=>', 'Public IP address')
+span2-ct020-r1 | 34 | 0 | {} | 0 | 230
+span2-ct020-r2 | 30 | 0 | {} | 0 | 354
+span2-cg020-r1 | 38 | 0 | {} | 0 | 183
+span2-cg020-r2 | 38 | 1 | {182: 1} | 0 | 183
+      OFFROW (182, (0, 14), 'Resource group (move) : M', '=>', ' Essentials')
+
+== CONTAINER SCRAMBLES (window class per target where both s100 refs agree; frames with >=4 targets moved to another class): run | targets moved | frames (count, moved to)
+span2-s100-r1 | 0 | {}
+span2-s100-r2 | 0 | {}
+span2-ct100-r1 | 1 | {}
+span2-ct100-r2 | 2 | {}
+span2-s067-r1 | 3 | {}
+span2-s067-r2 | 3 | {}
+span2-ct067-r1 | 2 | {}
+span2-ct067-r2 | 5 | {}
+span2-s050-r1 | 3 | {}
+span2-s050-r2 | 4 | {}
+span2-ct050-r1 | 1 | {}
+span2-ct050-r2 | 1 | {}
+span2-s040-r1 | 11 | {}
+span2-s040-r2 | 11 | {}
+span2-ct040-r1 | 1 | {}
+span2-ct040-r2 | 1 | {}
+span2-cg040-r1 | 1 | {}
+span2-cg040-r2 | 1 | {}
+span2-s030-r1 | 13 | {185: (4, {('term', 'browser'): 3, ('browser', 'term'): 1})}
+span2-s030-r2 | 19 | {158: (4, {('term', 'browser'): 4}), 185: (4, {('term', 'browser'): 3, ('browser', 'term'): 1})}
+span2-ct030-r1 | 6 | {}
+span2-ct030-r2 | 2 | {}
+span2-cg030-r1 | 2 | {}
+span2-cg030-r2 | 2 | {}
+span2-s025-r1 | 13 | {}
+span2-s025-r2 | 20 | {180: (6, {('term', 'browser'): 6})}
+span2-ct025-r1 | 7 | {}
+span2-ct025-r2 | 6 | {}
+span2-cg025-r1 | 9 | {}
+span2-cg025-r2 | 8 | {}
+span2-s020-r1 | 55 | {158: (5, {('term', 'browser'): 5}), 185: (37, {('term', 'browser'): 37})}
+span2-s020-r2 | 62 | {155: (9, {('term', 'browser'): 3, ('browser', 'term'): 6}), 158: (6, {('term', 'browser'): 6}), 185: (37, {('term', 'browser'): 37})}
+span2-ct020-r1 | 96 | {158: (13, {('term', 'browser'): 13}), 185: (37, {('term', 'browser'): 37}), 187: (34, {('term', 'browser'): 34})}
+span2-ct020-r2 | 87 | {185: (37, {('term', 'browser'): 37}), 187: (34, {('term', 'browser'): 34})}
+span2-cg020-r1 | 47 | {185: (37, {('term', 'browser'): 37})}
+span2-cg020-r2 | 45 | {185: (37, {('term', 'browser'): 37})}

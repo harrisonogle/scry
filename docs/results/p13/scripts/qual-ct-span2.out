@@ -1,0 +1,91 @@
+runs 28 targets identical: True boxes identical: True
+
+terminal targets (both s100 refs agree): 125
+
+== PER RUN
+run | mark_match | agree% (n read) | wrongbox | off | empty_real | contdiff% | pairs repro% | runs repro% | links run/pair/rec | repairs | cont/rec | popups | unassigned | missed | 0-cont | errors | term ok | false term | tooltips 149,151 | f150 correct/partial/wrong/missing
+span2-s100-r1 | 325of349 93.1 | 86.2 (349) | 5 | 2 | 14 | 0.2 | 91.3 | 100.0 | 5/43/4 | 2 {'link_malformed': 2} | 1.94 | 1 | 0 | 22 | 0 | 0 | 125/125 | 0 | ['-', '-'] | None
+span2-ct100-r1 | 349of361 96.7 | 87.8 (361) | 0 | 0 | 2 | 0.4 | 93.3 | 80.0 | 4/42/4 | 0 {} | 1.94 | 1 | 0 | 107 | 0 | 0 | 125/125 | 1 | ['-', '-'] | None
+      false term: [(171, 'b87', 'Overwrite? (y/n): y')]
+span2-s100-r2 | 320of348 92.0 | 84.8 (348) | 5 | 2 | 16 | 0.2 | 97.7 | 100.0 | 5/46/4 | 1 {'link_malformed': 1} | 1.94 | 1 | 0 | 28 | 0 | 0 | 125/125 | 0 | ['-', '-'] | None
+span2-ct100-r2 | 347of360 96.4 | 87.2 (360) | 0 | 0 | 2 | 0.6 | 88.8 | 80.0 | 4/40/4 | 3 {'unplaced': 1, 'text_missing': 1, 'link_malformed': 1} | 1.94 | 1 | 1 | 61 | 0 | 0 | 124/125 | 1 | ['-', '-'] | None
+      missed term: [(155, 'b40', 'none', 'Administrator: PowerShell 7-pr')]
+      false term: [(171, 'b87', 'Overwrite? (y/n): y')]
+span2-s067-r1 | 309of353 87.5 | 78.2 (353) | 17 | 2 | 18 | 1.3 | 94.5 | 60.0 | 5/45/4 | 1 {'link_malformed': 1} | 1.94 | 1 | 0 | 37 | 0 | 0 | 122/125 | 0 | ['-', '-'] | None
+      missed term: [(170, 'b83', 'browser', 'Overwrite? (y/n): Y'), (170, 'b88', 'browser', 'Overwrite? (y/n):'), (185, 'b37', 'browser', '×')]
+span2-ct067-r1 | 348of365 95.3 | 86.3 (365) | 3 | 0 | 2 | 0.6 | 94.5 | 80.0 | 4/43/5 | 0 {} | 1.76 | 1 | 0 | 54 | 3 | 0 | 125/125 | 2 | ['-', '-'] | None
+      false term: [(155, 'b41', '88'), (171, 'b87', 'Overwrite? (y/n): y')]
+span2-s067-r2 | 322of355 90.7 | 82.0 (355) | 7 | 2 | 15 | 1.3 | 93.3 | 60.0 | 6/45/4 | 1 {'second_text': 1} | 1.97 | 2 | 0 | 34 | 0 | 0 | 122/125 | 0 | ['-', '-'] | None
+      missed term: [(170, 'b83', 'browser', 'Overwrite? (y/n): Y'), (170, 'b88', 'browser', 'Overwrite? (y/n):'), (185, 'b37', 'browser', '×')]
+span2-ct067-r2 | 344of359 95.8 | 86.1 (359) | 2 | 1 | 2 | 1.3 | 85.5 | 80.0 | 6/38/5 | 4 {'unplaced': 2, 'text_missing': 2} | 1.76 | 1 | 2 | 99 | 3 | 0 | 125/125 | 3 | ['-', '-'] | None
+      false term: [(155, 'b41', '88'), (171, 'b87', 'Overwrite? (y/n): y'), (177, 'b94', 'Standard_DS2_')]
+span2-s050-r1 | 293of354 82.8 | 75.4 (354) | 26 | 7 | 20 | 1.1 | 77.7 | 60.0 | 4/40/4 | 1 {'link_malformed': 1} | 1.94 | 1 | 0 | 13 | 0 | 0 | 122/125 | 0 | ['-', '-'] | None
+      missed term: [(165, 'b80', 'browser', 'PS C:\\Users\\msadmin> az aks sc'), (177, 'b96', 'browser', 'AKS1-KodeKloudApp'), (177, 'b98', 'browser', 'PS C:\\Users\\msadmin>')]
+span2-ct050-r1 | 343of360 95.3 | 84.4 (360) | 3 | 1 | 2 | 0.4 | 91.2 | 80.0 | 6/44/4 | 6 {'rect_unplaced': 1, 'link_malformed': 5} | 1.88 | 1 | 0 | 21 | 1 | 0 | 125/125 | 1 | ['-', '-'] | None
+      false term: [(171, 'b87', 'Overwrite? (y/n): y')]
+span2-s050-r2 | 294of358 82.1 | 74.9 (358) | 26 | 5 | 16 | 1.1 | 86.7 | 60.0 | 5/41/4 | 2 {'second_text': 1, 'link_malformed': 1} | 1.94 | 1 | 0 | 15 | 0 | 0 | 123/125 | 2 | ['-', '-'] | None
+      missed term: [(165, 'b80', 'browser', 'PS C:\\Users\\msadmin> az aks sc'), (177, 'b96', 'browser', 'AKS1-KodeKloudApp')]
+      false term: [(155, 'b36', 'l.io'), (187, 'b52', '口')]
+span2-ct050-r2 | 342of359 95.3 | 84.1 (359) | 1 | 0 | 2 | 0.4 | 82.2 | 80.0 | 8/37/4 | 4 {'link_malformed': 4} | 1.88 | 1 | 0 | 48 | 1 | 0 | 125/125 | 1 | ['-', '-'] | None
+      false term: [(171, 'b87', 'Overwrite? (y/n): y')]
+span2-s040-r1 | 225of371 60.6 | 53.1 (371) | 92 | 16 | 18 | 2.7 | 66.4 | 80.0 | 11/40/5 | 2 {'second_text': 1, 'link_unknown_box': 1} | 1.94 | 1 | 0 | 14 | 0 | 0 | 120/125 | 6 | ['-', '-'] | None
+      missed term: [(155, 'b44', 'browser', 'PS C:\\Users\\msadmin> az login'), (156, 'b45', 'browser', 'PS C:\\Users\\msadmin>'), (166, 'b80', 'browser', 'PS C:\\Users\\msadmin> az aks ge'), (175, 'b69', 'browser', '"type": "user"'), (185, 'b36', 'browser', 'Administrator: PowerShell 7-pr')]
+      false term: [(155, 'b36', 'l.io'), (155, 'b49', 'Subscription ID :00000000-0000'), (171, 'b87', 'Overwrite? (y/n): y'), (177, 'b94', 'Standard_DS2_'), (185, 'b30', '↑.1. Status'), (187, 'b52', '口')]
+span2-ct040-r1 | 328of356 92.1 | 81.2 (356) | 6 | 2 | 4 | 0.4 | 86.6 | 80.0 | 5/39/4 | 0 {} | 1.82 | 1 | 0 | 69 | 2 | 0 | 125/125 | 1 | ['-', '-'] | None
+      false term: [(171, 'b87', 'Overwrite? (y/n): y')]
+span2-s040-r2 | 262of364 72.0 | 63.5 (364) | 60 | 12 | 19 | 2.7 | 65.2 | 20.0 | 5/42/4 | 1 {'second_text': 1} | 1.94 | 1 | 0 | 11 | 0 | 0 | 118/125 | 4 | ['-', '-'] | None
+      missed term: [(155, 'b44', 'browser', 'PS C:\\Users\\msadmin> az login'), (156, 'b45', 'browser', 'PS C:\\Users\\msadmin>'), (165, 'b80', 'browser', 'PS C:\\Users\\msadmin> az aks sc'), (166, 'b80', 'browser', 'PS C:\\Users\\msadmin> az aks ge'), (170, 'b88', 'browser', 'Overwrite? (y/n):'), (175, 'b69', 'browser', '"type": "user"'), (185, 'b36', 'browser', 'Administrator: PowerShell 7-pr')]
+      false term: [(155, 'b36', 'l.io'), (155, 'b49', 'Subscription ID :00000000-0000'), (171, 'b87', 'Overwrite? (y/n): y'), (177, 'b94', 'Standard_DS2_')]
+span2-ct040-r2 | 327of361 90.6 | 78.4 (361) | 8 | 6 | 2 | 0.4 | 90.0 | 80.0 | 6/42/4 | 0 {} | 1.88 | 1 | 0 | 57 | 1 | 0 | 125/125 | 1 | ['-', '-'] | None
+      false term: [(171, 'b87', 'Overwrite? (y/n): y')]
+span2-s030-r1 | 91of372 24.5 | 21.0 (372) | 169 | 56 | 27 | 3.2 | 9.0 | 20.0 | 9/33/4 | 0 {} | 1.94 | 1 | 0 | 11 | 0 | 0 | 117/125 | 5 | ['-', '-'] | None
+      missed term: [(155, 'b44', 'browser', 'PS C:\\Users\\msadmin> az login'), (156, 'b45', 'browser', 'PS C:\\Users\\msadmin>'), (158, 'b79', 'browser', 'PS C:\\Users\\msadmin>'), (173, 'b91', 'browser', 'PSC:\\Users\\msadmin> kubectl_ro'), (177, 'b96', 'browser', 'AKS1-KodeKloudApp'), (185, 'b36', 'browser', 'Administrator: PowerShell 7-pr'), (185, 'b37', 'browser', '×'), (185, 'b39', 'browser', '□')]
+      false term: [(155, 'b36', 'l.io'), (155, 'b49', 'Subscription ID :00000000-0000'), (171, 'b87', 'Overwrite? (y/n): y'), (185, 'b42', 'aks-agentpool-'), (187, 'b52', '口')]
+span2-ct030-r1 | 261of357 73.1 | 60.5 (357) | 23 | 24 | 8 | 1.5 | 90.0 | 20.0 | 1/44/6 | 0 {} | 1.82 | 1 | 0 | 22 | 2 | 0 | 121/125 | 2 | ['-', '-'] | None
+      missed term: [(156, 'b45', 'browser', 'PS C:\\Users\\msadmin>'), (185, 'b36', 'browser', 'Administrator: PowerShell 7-pr'), (185, 'b37', 'browser', '×'), (185, 'b39', 'browser', '□')]
+      false term: [(155, 'b36', 'l.io'), (171, 'b87', 'Overwrite? (y/n): y')]
+span2-s030-r2 | 102of386 26.4 | 23.6 (386) | 148 | 56 | 15 | 4.6 | 12.3 | 20.0 | 8/34/4 | 0 {} | 1.94 | 1 | 0 | 13 | 0 | 0 | 112/125 | 6 | ['-', '-'] | None
+      missed term: [(155, 'b44', 'browser', 'PS C:\\Users\\msadmin> az login'), (156, 'b45', 'browser', 'PS C:\\Users\\msadmin>'), (158, 'b48', 'browser', '"environmentName": "AzureCloud'), (158, 'b54', 'browser', '"isDefault": true,'), (158, 'b60', 'browser', '"state": "Enabled",'), (158, 'b79', 'browser', 'PS C:\\Users\\msadmin>'), (172, 'b91', 'browser', 'PSC:\\Users\\msadmin> kubect1rol'), (173, 'b91', 'browser', 'PSC:\\Users\\msadmin> kubectl_ro'), (174, 'b92', 'browser', 'PSC:\\Users\\msadmin> kubectlrol'), (177, 'b96', 'browser', 'AKS1-KodeKloudApp')]
+      false term: [(155, 'b36', 'l.io'), (155, 'b49', 'Subscription ID :00000000-0000'), (171, 'b87', 'Overwrite? (y/n): y'), (178, 'b83', '国'), (185, 'b42', 'aks-agentpool-'), (187, 'b52', '口')]
+span2-ct030-r2 | 265of355 74.6 | 61.1 (355) | 25 | 31 | 8 | 0.6 | 85.5 | 80.0 | 6/40/4 | 1 {'link_malformed': 1} | 1.82 | 1 | 0 | 28 | 2 | 0 | 125/125 | 2 | ['-', '-'] | None
+      false term: [(155, 'b36', 'l.io'), (171, 'b87', 'Overwrite? (y/n): y')]
+span2-s025-r1 | 28of387 7.2 | 5.7 (387) | 126 | 67 | 18 | 3.2 | 16.8 | 0.0 | 1/31/1 | 0 {} | 1.94 | 1 | 0 | 4 | 0 | 0 | 115/125 | 3 | ['-', '-'] | None
+      missed term: [(155, 'b37', 'browser', '□'), (155, 'b38', 'browser', '×'), (158, 'b79', 'browser', 'PS C:\\Users\\msadmin>'), (164, 'b79', 'browser', 'PS C:\\Users\\msadmin>'), (173, 'b91', 'browser', 'PSC:\\Users\\msadmin> kubectl_ro'), (175, 'b93', 'browser', 'PSC:\\Users\\msadmin> kubectl co'), (180, 'b97', 'browser', 'PS C:\\Users\\msadmin> kubectl g'), (180, 'b98', 'browser', 'AGE'), (185, 'b36', 'browser', 'Administrator: PowerShell 7-pr'), (185, 'b37', 'browser', '×')]
+      false term: [(171, 'b87', 'Overwrite? (y/n): y'), (177, 'b94', 'Standard_DS2_'), (187, 'b52', '口')]
+span2-ct025-r1 | 176of353 49.9 | 42.2 (353) | 37 | 61 | 13 | 2.5 | 76.5 | 20.0 | 5/36/6 | 0 {} | 1.76 | 2 | 0 | 12 | 3 | 0 | 120/125 | 5 | ['-', '-'] | None
+      missed term: [(170, 'b83', 'P', 'Overwrite? (y/n): Y'), (170, 'b86', 'P', 'A different object named clust'), (170, 'b88', 'P', 'Overwrite? (y/n):'), (185, 'b37', 'browser', '×'), (185, 'b39', 'browser', '□')]
+      false term: [(155, 'b36', 'l.io'), (156, 'b26', '日'), (159, 'b18', '口'), (163, 'b25', '日'), (171, 'b87', 'Overwrite? (y/n): y')]
+span2-s025-r2 | 40of361 11.1 | 7.5 (361) | 143 | 78 | 35 | 5.6 | 1.1 | 0.0 | 0/22/1 | 0 {} | 1.94 | 1 | 0 | 2 | 0 | 0 | 109/125 | 4 | ['-', '-'] | None
+      missed term: [(155, 'b37', 'browser', '□'), (155, 'b38', 'browser', '×'), (155, 'b44', 'browser', 'PS C:\\Users\\msadmin> az login'), (156, 'b45', 'browser', 'PS C:\\Users\\msadmin>'), (158, 'b79', 'browser', 'PS C:\\Users\\msadmin>'), (164, 'b79', 'browser', 'PS C:\\Users\\msadmin>'), (167, 'b80', 'browser', 'PS C:\\Users\\msadmin> az aks ge'), (180, 'b105', 'browser', 'agent'), (180, 'b106', 'browser', 'Ready'), (180, 'b107', 'browser', 'v1.24.10')]
+      false term: [(171, 'b87', 'Overwrite? (y/n): y'), (177, 'b94', 'Standard_DS2_'), (186, 'b98', 'Identity'), (187, 'b52', '口')]
+span2-ct025-r2 | 168of354 47.5 | 38.1 (354) | 50 | 67 | 12 | 4.5 | 76.5 | 20.0 | 9/36/7 | 5 {'rect_unplaced': 2, 'link_already_linked': 1, 'link_malformed': 2} | 1.76 | 3 | 0 | 19 | 3 | 0 | 111/125 | 4 | ['-', '-'] | None
+      missed term: [(161, 'b78', 'P', 'PS C:\\Users\\msadmin>az configu'), (180, 'b100', 'P', 'NAME'), (180, 'b101', 'P', 'STATUS'), (180, 'b102', 'P', 'ROLES'), (180, 'b105', 'P', 'agent'), (180, 'b106', 'P', 'Ready'), (180, 'b107', 'P', 'v1.24.10'), (180, 'b108', 'P', '44m'), (180, 'b112', 'P', 'PS C:\\Users\\msadmin>'), (180, 'b97', 'P', 'PS C:\\Users\\msadmin> kubectl g')]
+      false term: [(155, 'b18', 'Open in mobile Give feedback'), (155, 'b19', 'Delete'), (155, 'b20', 'Refresh'), (171, 'b87', 'Overwrite? (y/n): y')]
+span2-s020-r1 | 8of347 2.3 | 2.3 (347) | 45 | 33 | 56 | 27.3 | 0.0 | 0.0 | 0/13/1 | 0 {} | 1.79 | 23 | 0 | 0 | 0 | 0 | 37/125 | 2 | ['-', '-'] | None
+      missed term: [(155, 'b37', 'browser', '□'), (155, 'b38', 'browser', '×'), (155, 'b40', 'browser', 'Administrator: PowerShell 7-pr'), (155, 'b44', 'P', 'PS C:\\Users\\msadmin> az login'), (156, 'b45', 'browser', 'PS C:\\Users\\msadmin>'), (158, 'b48', 'browser', '"environmentName": "AzureCloud'), (158, 'b50', 'P', '"homeTenantId": "00000000-0000'), (158, 'b52', 'P', '"id": "00000000-0000-0000-0000'), (158, 'b54', 'browser', '"isDefault": true,'), (158, 'b57', 'browser', '"managedByTenants": [],')]
+      false term: [(171, 'b87', 'Overwrite? (y/n): y'), (187, 'b52', '口')]
+span2-ct020-r1 | 76of341 22.3 | 20.5 (341) | 52 | 127 | 19 | 34.6 | 68.7 | 20.0 | 2/34/5 | 0 {} | 1.42 | 14 | 0 | 10 | 1 | 0 | 4/125 | 1 | ['-', '-'] | None
+      missed term: [(156, 'b45', 'P', 'PS C:\\Users\\msadmin>'), (157, 'b44', 'browser', 'C:\\Users\\msadmin> az account s'), (158, 'b48', 'browser', '"environmentName": "AzureCloud'), (158, 'b50', 'browser', '"homeTenantId": "00000000-0000'), (158, 'b52', 'browser', '"id": "00000000-0000-0000-0000'), (158, 'b54', 'browser', '"isDefault": true,'), (158, 'b57', 'browser', '"managedByTenants": [],'), (158, 'b58', 'browser', '"name": "sub-global",'), (158, 'b60', 'browser', '"state": "Enabled",'), (158, 'b65', 'browser', '"tenantId": "00000000-0000')]
+      false term: [(155, 'b36', 'l.io')]
+span2-s020-r2 | 6of398 1.5 | 0.8 (398) | 36 | 11 | 13 | 35.5 | 15.7 | 0.0 | 0/18/2 | 0 {} | 1.73 | 21 | 0 | 1 | 0 | 0 | 3/125 | 6 | ['-', '-'] | None
+      missed term: [(155, 'b37', 'browser', '□'), (155, 'b38', 'browser', '×'), (155, 'b40', 'browser', 'Administrator: PowerShell 7-pr'), (156, 'b45', 'browser', 'PS C:\\Users\\msadmin>'), (158, 'b48', 'browser', '"environmentName": "AzureCloud'), (158, 'b50', 'P', '"homeTenantId": "00000000-0000'), (158, 'b52', 'P', '"id": "00000000-0000-0000-0000'), (158, 'b54', 'browser', '"isDefault": true,'), (158, 'b57', 'browser', '"managedByTenants": [],'), (158, 'b58', 'browser', '"name": "sub-global",')]
+      false term: [(155, 'b57', 'Capabilit'), (155, 'b61', 'itheastasia.azmk8s.io'), (155, 'b63', 'Encryption at-re'), (155, 'b72', '1 node pool'), (155, 'b77', 'Standard_DS2_V'), (155, 'b90', 'Authentication and Authorizati')]
+span2-ct020-r2 | 73of331 22.1 | 20.8 (331) | 42 | 125 | 35 | 35.3 | 60.7 | 20.0 | 6/30/7 | 0 {} | 1.42 | 15 | 0 | 14 | 1 | 0 | 0/125 | 0 | ['-', '-'] | None
+      missed term: [(155, 'b37', 'P', '□'), (155, 'b38', 'P', '×'), (155, 'b40', 'P', 'Administrator: PowerShell 7-pr'), (155, 'b44', 'P', 'PS C:\\Users\\msadmin> az login'), (156, 'b45', 'P', 'PS C:\\Users\\msadmin>'), (157, 'b44', 'browser', 'C:\\Users\\msadmin> az account s'), (158, 'b48', 'P', '"environmentName": "AzureCloud'), (158, 'b50', 'P', '"homeTenantId": "00000000-0000'), (158, 'b52', 'P', '"id": "00000000-0000-0000-0000'), (158, 'b54', 'P', '"isDefault": true,')]
+
+== PER SCALE (mean of repeats; contdiff/pairs/runs mean over repeats x refs; the 1.0 overlay row is s100 r1 vs r2 = repeat noise)
+scale | mode | mark_match % | wrong box | off | empty_real | pairs repro % | runs repro % | contdiff % | term boxes ok (of 125) | false term | tooltips own (of 4) | f150 correct/wrong/missing (sum of 2 runs) | links run/pair/rec | repairs (kinds, sum) | cont/rec
+100 | overlay (n=2) | 92.5 | 5.0 | 2.0 | 15.0 | 94.5 | 100.0 | 0.2 | 125.0 | 0.0 | 0 | - | 5.0/44.5/4.0 | 3 {'link_malformed': 3} | 1.94
+100 | coords (n=2) | 96.5 | 0.0 | 0.0 | 2.0 | 91.1 | 80.0 | 0.5 | 124.5 | 1.0 | 0 | - | 4.0/41.0/4.0 | 3 {'unplaced': 1, 'text_missing': 1, 'link_malformed': 1} | 1.94
+067 | overlay (n=2) | 89.1 | 12.0 | 2.0 | 16.5 | 93.9 | 60.0 | 1.3 | 122.0 | 0.0 | 0 | - | 5.5/45.0/4.0 | 2 {'link_malformed': 1, 'second_text': 1} | 1.95
+067 | coords (n=2) | 95.6 | 2.5 | 0.5 | 2.0 | 90.0 | 80.0 | 0.9 | 125.0 | 2.5 | 0 | - | 5.0/40.5/5.0 | 4 {'unplaced': 2, 'text_missing': 2} | 1.76
+050 | overlay (n=2) | 82.4 | 26.0 | 6.0 | 18.0 | 82.2 | 60.0 | 1.1 | 122.5 | 1.0 | 0 | - | 4.5/40.5/4.0 | 3 {'link_malformed': 2, 'second_text': 1} | 1.94
+050 | coords (n=2) | 95.3 | 2.0 | 0.5 | 2.0 | 86.7 | 80.0 | 0.4 | 125.0 | 1.0 | 0 | - | 7.0/40.5/4.0 | 10 {'rect_unplaced': 1, 'link_malformed': 9} | 1.88
+040 | overlay (n=2) | 66.3 | 76.0 | 14.0 | 18.5 | 65.8 | 50.0 | 2.7 | 119.0 | 5.0 | 0 | - | 8.0/41.0/4.5 | 3 {'second_text': 2, 'link_unknown_box': 1} | 1.94
+040 | coords (n=2) | 91.4 | 7.0 | 4.0 | 3.0 | 88.3 | 80.0 | 0.4 | 125.0 | 1.0 | 0 | - | 5.5/40.5/4.0 | 0 {} | 1.85
+030 | overlay (n=2) | 25.4 | 158.5 | 56.0 | 21.0 | 10.7 | 20.0 | 3.9 | 114.5 | 5.5 | 0 | - | 8.5/33.5/4.0 | 0 {} | 1.94
+030 | coords (n=2) | 73.9 | 24.0 | 27.5 | 8.0 | 87.7 | 50.0 | 1.1 | 123.0 | 2.0 | 0 | - | 3.5/42.0/5.0 | 1 {'link_malformed': 1} | 1.82
+025 | overlay (n=2) | 9.2 | 134.5 | 72.5 | 26.5 | 9.0 | 0.0 | 4.4 | 112.0 | 3.5 | 0 | - | 0.5/26.5/1.0 | 0 {} | 1.94
+025 | coords (n=2) | 48.7 | 43.5 | 64.0 | 12.5 | 76.5 | 20.0 | 3.5 | 115.5 | 4.5 | 0 | - | 7.0/36.0/6.5 | 5 {'rect_unplaced': 2, 'link_already_linked': 1, 'link_malformed': 2} | 1.76
+020 | overlay (n=2) | 1.9 | 40.5 | 22.0 | 34.5 | 7.9 | 0.0 | 31.4 | 20.0 | 4.0 | 0 | - | 0.0/15.5/1.5 | 0 {} | 1.76
+020 | coords (n=2) | 22.2 | 47.0 | 126.0 | 27.0 | 64.7 | 20.0 | 34.9 | 2.0 | 0.5 | 0 | - | 4.0/32.0/6.0 | 0 {} | 1.42
