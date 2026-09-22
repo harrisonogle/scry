@@ -1,6 +1,6 @@
 # Presentation notes: every number on every chart, with its source and a voice-over line
 
-Written 2026-09-21 on branch `presentation` from `rebase-boxes` at `f071ab7`; the cost chart was redrawn and the Gemini chart added from `rebase-boxes` at `fcc1860` (P10full, P11, compare-gemini); the hold-out charts and the local-model chart were added from `5c62ee6` (the hold-out comparison, ledger L76). Nothing was re-run; every number below is copied from a committed report, analysis or the ledger, and the source file is named beside it. The one paid call of this branch is the demo question in `demo.md` ($0.2142). Charts are 3840 x 2160 PNGs (1920 x 1080 at 2x), light background, drawn by a scratch matplotlib script that is not part of the repo.
+Written 2026-09-21 on branch `presentation` from `rebase-boxes` at `f071ab7`; the cost chart was redrawn and the Gemini chart added from `rebase-boxes` at `fcc1860` (P10full, P11, compare-gemini); the hold-out charts and the local-model chart were added from `5c62ee6` (the hold-out comparison, ledger L76); the per-question panel was redrawn from `b0c484d` (ledger L79). Nothing was re-run; every number below is copied from a committed report, analysis or the ledger, and the source file is named beside it. The one paid call of this branch is the demo question in `demo.md` ($0.2142). Charts are 3840 x 2160 PNGs (1920 x 1080 at 2x), light background, drawn by a scratch matplotlib script that is not part of the repo.
 
 ## 1. `cost-per-video.png`: dollars per 221-frame video by configuration
 
@@ -142,8 +142,11 @@ All from `docs/results/compare-gemini/hold-out.md` (Scores; The failed lines, cl
 |---|---|---|
 | questions correct of 5 | 5 in each of the four | 3 |
 | rubric lines passed of 16 | 16 in each | 13 |
-| $ per question | 0.349 (none), 0.372 (group-only 1.0), 0.381 (group-only 0.67), 0.392 (transcribing): shown as $0.35 to $0.39 | 0.060 |
+| $ per question, Opus agent on the four full indexes | 0.349 (none), 0.372 (group-only 1.0), 0.381 (group-only 0.67), 0.392 (transcribing) | 0.060 |
+| $ per question, the same five questions on the open-model span index (`docs/results/local/session-span/`, frames 12 to 33, ledger L78, L79) | Opus agent $0.238 (ask total $1.1921 over 5, `ask-judge.txt`), 5 of 5; Sonnet agent $0.058 (ask total $0.2879 over 5, `ask-judge-sonnet.txt`), 5 of 5 | |
 | seconds per question (not on the chart) | 34 to 43 | 28 |
+
+The third panel, "dollars per question, same five questions", has three bars: Gemini direct $0.06 (3 of 5); Scry with a Sonnet agent $0.06 (5 of 5; the mean $0.058 on the open-model span index, `ask-judge-sonnet.txt`, ledger L79); Scry with an Opus agent $0.24 to $0.39 (5 of 5; $0.238 on the span index, `ask-judge.txt`, and $0.349 to $0.392 on the four full indexes, drawn as the solid bar to $0.24 and a light segment to $0.39). The first two panels are the Opus agent on the four full indexes against Gemini, as in hold-out.md's Scores table. The span questions are Q4, Q8, Q13 of the discovery set verbatim and Q5, Q6 restricted to the span (L78), not the five draft questions of hold-out.md, so the panel's "same five questions" holds for the Gemini and the four-index figures; the span figures are the same agent on a different question set of five, as L79 states.
 
 The caption is the report's two failed Q1 and Q2 lines: Gemini wrote `FRONTDOOR-A-cnhedcc5b0d0h4e0.z01.azurefd.net` for `FRONTDOOR-A-cqhefshkhrgmgqf9.b02.azurefd.net`, the 44-character hostname in the find-on-page highlight on frame 0, on screen for 9 s (every pipeline index quotes it exactly, box `0:b116`); and it gave the added KQL line as `where requestUri_s contains "testHostDeviceAllocationServiceClientCertificate"` where frame 73 reads `"ServiceA/Certificate"`. One run per arm, so repeat noise is unknown; the four pipeline indexes, built and asked separately, agree on all 80 verdicts.
 
