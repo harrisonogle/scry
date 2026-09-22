@@ -14,7 +14,8 @@
     "Scene duration = the voice file's length + padSeconds; voice.sh regenerates public/voice/<id>.wav from the voice lines below.",
     "timelapse: public/img/<dir>/NN.png from `from` to `to`, played once across the scene, so the frame rate follows the voice line; assets.sh copies docs/presentation/session and docs/presentation/stages, placeholders.sh builds stand-ins from a run directory.",
     "Terminal blocks: cmd (the host's question, typed), note (assistant prose), call (a scry tool call with trimmed result lines), answer (markdown-ish: **bold**, `code`, ## heading; a leading 4-space indent keeps the line in place), meta (a dim footer line). keyCitations are drawn orange, every other id blue.",
-    "Frame cut-in: src is the image in docs/presentation/, width/height its pixel size, zoom the point (image pixels) the slow zoom moves towards and the final scale (the view never leaves the image), labels are pinned to image pixels and drawn in screen space."
+    "Frame cut-in: src is the image in docs/presentation/, width/height its pixel size, zoom the point (image pixels) the slow zoom moves towards and the final scale (the view never leaves the image), labels are pinned to image pixels and drawn in screen space.",
+    "card: tiles, an optional heading, `lines` (bold statements that appear in turn), `note` (small), and `list` with `listHeading` (a two-column list revealed item by item)."
   ],
   "scenes": [
     {
@@ -198,7 +199,32 @@
             "color": "orange"
           }
         ],
-        "note": "a separate test: the same 21 questions, asked one at a time of Scry and of Gemini, one blind judge"
+        "note": "a separate test: the same 21 questions, asked one at a time of Scry and of Gemini, one blind judge",
+        "listHeading": "the 21 questions",
+        "list": [
+          "What is the full hostname of the highlighted (selected) Front Door endpoint…",
+          "How does the KQL query in the FRONTDOOR-A Logs blade at the end of the video differ…",
+          "When does the \"Saved Traffic Manager profile changes\" notification appear…",
+          "When the Microsoft \"Pick an account\" sign-in dialog is shown, how many accounts…",
+          "Does the presenter delete an endpoint from any Traffic Manager profile…",
+          "What is this video about, overall? Give me the one-paragraph version.",
+          "Walk me through what the person did, step by step, with the time each step started.",
+          "What was the very first thing on screen, and what was the person doing there?",
+          "You said an endpoint was added. What exactly was entered in that form…",
+          "Which profiles got the new endpoint, in what order, and at what times?",
+          "Did each of those additions succeed? How do you know?",
+          "Where did the hostname that was pasted into the form come from?…",
+          "Was there any sign-in or account prompt during the session? What was chosen?",
+          "Near the end the person ran a query. What was the exact query text, line by line…",
+          "Did the query change while they worked on it? What changed?",
+          "Did the person use any application other than the browser? When, and for what?",
+          "Did anything go wrong, fail, or get deleted during the session?",
+          "Did the person create any new profile, or only change existing ones?",
+          "How long did the whole task take, and where did the person spend the most time?",
+          "If I wanted to reproduce what the person did, list every exact value I would need…",
+          "Is there anything about this session that the record cannot tell me?"
+        ],
+        "_source": "the 5 draft questions of docs/ground-truth/holdout-questions.md and the 16 of docs/presentation/mcp-discovery.md, each shown verbatim up to the ellipsis"
       },
       "caption": "A separate test: Scry 18 of 21 · Gemini video-to-text 12 of 21, one question at a time, one blind judge",
       "voice": "In a separate test, Gemini's new video-to-text, asked twenty-one questions about this session one at a time, got twelve right. It rewrote a hostname and invented a query filter. Scry got eighteen, every string exact."
@@ -214,7 +240,11 @@
             "color": "orange"
           }
         ],
-        "note": "open 27B model"
+        "note": "open 27B model",
+        "lines": [
+          "The index is plain, hierarchical text.",
+          "The video is never needed again."
+        ]
       },
       "caption": "Index once, ask forever",
       "voice": "Indexing this session cost about seventy-five cents on an open model. The index is plain, hierarchical text; the video is never needed again. Index once, ask forever."
