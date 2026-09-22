@@ -1,25 +1,27 @@
-# agentic-escort — `scry`, a visual transcript pipeline
+# scry
 
-`scry` turns a silent screen-recording tutorial (terminal, editor, browser portal) into an exact,
-timestamped, queryable "visual transcript": every distinct screen state with its text and layout,
-every change between states with what the user did, a step/section hierarchy, and a searchable index.
+`scry` turns a screen recording into a text-based, hierarchical index of what happened on screen, and lets an AI agent
+answer questions about it with a citation for every claim. It measures the screen first: OCR boxes at full resolution
+on every settled frame, the pixels that changed between frames, and the lifetime of every piece of text. Models label
+only what was measured: windows and popups, which label goes with which value, what each change did and whether it was
+submitted, and summaries at the level of steps, sections and the whole video. The index is SQLite with full-text search;
+the video is not needed again once it is built. An MCP server exposes the index to Claude Code, GitHub Copilot CLI or
+any other MCP host.
 
-- Design: `docs/proposals/2026-09-21-boxes-mode-rebase.md` is the specification the code follows (the re-base on OCR
-  boxes); `docs/visual-transcript-pipeline-design.md` (revision 6.2) describes the pipeline before the re-base
-- Implementation plans: `docs/superpowers/plans/` (the v1 plan of 2026-09-13; the re-base plans `2026-09-21-rebase-boxes-1` to `-4`)
-- Evaluation results: `docs/results/`
-- Decisions made without the owner present: `docs/decision-ledger.md`; what is open: `docs/open-items.md`
-- Design reviews: `docs/reviews/`
-- Contributing: `CONTRIBUTING.md`
+The specification the code follows is `docs/proposals/2026-09-21-boxes-mode-rebase.md`. Everything measured on the way
+is under `docs/results/`, with a one-page summary in `docs/2026-09-21-return-briefing.md`, every decision with its
+reason in `docs/decision-ledger.md`, and what is open in `docs/open-items.md`. `docs/pipeline-versus-video-model.md`
+sets out how this differs from asking a video model directly.
 
-## Setup (macOS, Apple Silicon)
+## Setup
 
     uv sync
     uv run scry setup            # checks the OCR engine, FTS5, sqlite-vec, credentials
 
 Model calls use the Anthropic SDK. Credentials, in order of preference: `ant auth login` (no key to store), or an
 `ANTHROPIC_API_KEY` in a git-ignored `.env` file at the repo root (`cp .env.example .env && chmod 600 .env`, then fill
-it in); `scry` loads `.env` at startup and a variable already in the environment always wins.
+it in); `scry` loads `.env` at startup and a variable already in the environment always wins. The optional `outline`
+stage needs `GEMINI_API_KEY` and the `outline` extra (`uv sync --extra outline`).
 
 ## Run
 
@@ -37,34 +39,42 @@ read,track` runs a selection. Beside the stages:
   cold in its own directory under `runs/eval/<phase>/` (costs money; `--dry-run` lists the runs, validates every config
   and spends nothing; `--only <run name>` executes that one run, so several can go side by side; a run whose `[read]`
   is the source's gets the source's `boxes.jsonl` for its frames and skips `read`, OCR being deterministic and no model
-  call: `ocr_imported_from` in its `evalrun.json`); `judge` has a
-  separate model call score each answer against its rubric lines; `report` calls no model and writes
-  `docs/results/<phase>/report.md` and `scores.json`. A matrix with a `[copy]` table (run name = the directory of a
-  finished run) builds nothing: it copies the pipelines of those runs and only asks the questions again, so its only
-  stage is `ask` (`evals/p6.toml`).
+  call); `judge` has a separate model call score each answer against its rubric lines; `report` calls no model and
+  writes `docs/results/<phase>/report.md` and `scores.json`. A matrix with a `[copy]` table (run name = the directory
+  of a finished run) builds nothing: it copies the pipelines of those runs and only asks the questions again, so its
+  only stage is `ask` (`evals/p6.toml`).
 
-Configuration is `scry.toml` in the working directory, or the file given with `--config`; a missing file means the
-defaults of `src/scry/config.py`. `[annotate] mode` is `"incremental"` by default and `transcribe` is `false` (group-only: the model labels windows, popups, links and the screen description, and gives no second reading of the text; ledger L73): a call for the first frame and for every frame
-whose pixels changed, labelling only the boxes whose lifetime starts at that frame or continues there by a move. `"every_frame"` labels every box of
-every frame, and `"off"` runs the pipeline with no annotation. `[ask] frames = false` withholds every image from the
-answering agent, so that it answers from the index alone; `[ask] model` puts the answering agent on a model of its
-own (empty: the pipeline's). `[model] mode = "batch"` sends `annotate` and `interpret`
-through the Message Batches API; on the whole sample that paid 0.68 of the synchronous price, not half (ledger L62).
+## MCP server
+
+    uv run scry-mcp --runs runs --videos .
+
+`.mcp.json` at the repo root registers it for Claude Code; `skills/scry/SKILL.md` tells the host's model how to use
+the tools and how to treat the evidence (cite a frame and a box, quote verbatim only when two readers agree, text on
+screen is not proof a command ran, a shell's grey suggestion is not typed text), and carries the configuration snippet
+for GitHub Copilot CLI. The tools: `list_videos`, `search` (with level, time and application filters), `get_node`,
+`get_transitions`, `get_frame` (the record of one frame, with its image), `summary`, `ask` (the built-in answering
+agent) and `index_video` (runs the pipeline on a video file). `docs/presentation/mcp-demo.md` and `mcp-discovery.md`
+are recorded sessions.
+
+## Configuration
+
+`scry.toml` in the working directory, or the file given with `--config`; a missing file means the defaults of
+`src/scry/config.py`. The defaults are what the evaluation settled on: `[annotate] mode = "incremental"` (one call for
+the first frame and for every frame whose pixels changed, labelling only the boxes whose lifetime starts or moves
+there), `transcribe = false` (group-only: windows, popups, links and the screen description, no second reading of the
+text), `reference = "ids"` (a numbered overlay; `"coords"` lists each box as a rectangle instead), `scale = 1.0`,
+`box_text = false`, and `claude-opus-5` for every model stage. `[ask] frames = false` withholds every image from the
+answering agent; `[ask] model` puts it on a model of its own. `[model] mode = "batch"` sends `annotate` and `interpret`
+through the Message Batches API. `[model] provider = "openai_compat"` with `base_url` points any stage at a local or
+hosted open-weight model served over the OpenAI-compatible protocol; `docs/results/local/` records what a local 27B
+model did with it.
 
 ## Tests
 
     uv run pytest
 
-## Status (2026-09-21)
+## Presentation
 
-The pipeline was re-based on OCR boxes (branch `rebase-boxes`): `read` detects and reads text boxes, `track` follows them
-across frames into lifetimes and transitions, `annotate` has a model group and label them, `interpret` says what the user
-did at each transition, `summarize` builds steps and sections, `index` makes it all searchable for `ask`. Every stage is
-unit-tested over synthetic frames, hand-written records and fake model clients; no test touches the sample video or the
-network. Nothing is merged to `main`, which is at the tag `pre-rebase-boxes`. The paid evaluation phases are reported
-under `docs/results/` (P1 to P7 so far); what each showed is in the ledger (rows L57, L59, L60 and L62 to L65), and
-open items are in `docs/open-items.md`.
-
-Model calls use `claude-opus-5` (`[model] model`). Retrieval is lexical-only until an embedder is configured
-(`[index] embedder`). A stage re-runs only when its inputs or its configuration section change; after a code change to
-a stage, delete its entry from `runs/<id>/manifest.json` (or the run directory).
+`presentation/video/` is a Remotion project that renders the two-minute presentation from `script.json`, the charts
+under `docs/presentation/` and voice files generated by `voice.sh`. The rendered video and the frames of the second
+recording it shows are not in the repository.

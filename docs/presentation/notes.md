@@ -1,5 +1,8 @@
 # Presentation notes: every number on every chart, with its source and a voice-over line
 
+> The frames of the second recording (`session/`, `stages/`, `holdout-frame-22*.png`), the rendered stills and the rendered video were removed from the repository before it was made public; `stages.py` and the Remotion project regenerate them from a run directory.
+
+
 Written 2026-09-21 on branch `presentation` from `rebase-boxes` at `f071ab7`; the cost chart was redrawn and the Gemini chart added from `rebase-boxes` at `fcc1860` (P10full, P11, compare-gemini); the hold-out charts and the local-model chart were added from `5c62ee6` (the hold-out comparison, ledger L76); the per-question panel was redrawn from `746b5f0` (ledger L80). Nothing was re-run; every number below is copied from a committed report, analysis or the ledger, and the source file is named beside it. The one paid call of this branch is the demo question in `demo.md` ($0.2142). Charts are 3840 x 2160 PNGs (1920 x 1080 at 2x), light background, drawn by a scratch matplotlib script that is not part of the repo.
 
 ## 1. `cost-per-video.png`: dollars per 221-frame video by configuration
