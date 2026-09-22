@@ -60,8 +60,12 @@ def scale_image(img: Image.Image, scale: float) -> Image.Image:
     return img.resize((round(img.width * scale), round(img.height * scale)), Image.LANCZOS)
 
 
-def _scale_box(box: BBox, scale: float) -> BBox:
-    x0, y0, x1, y1 = box  # rounded outward so the rectangle still encloses its text
+def scale_box(box: BBox, scale: float) -> BBox:
+    """The box in the pixels of the scaled image: rounded outward so the rectangle still encloses its text; unchanged
+    at 1.0. The overlay draws these, and under `reference = "coords"` the user turn lists these (scry.annotate.blocks)."""
+    if scale == 1.0:
+        return tuple(box)
+    x0, y0, x1, y1 = box
     return (math.floor(x0 * scale), math.floor(y0 * scale), math.ceil(x1 * scale), math.ceil(y1 * scale))
 
 
@@ -74,7 +78,7 @@ def draw_overlay(png_in: Path, boxes: list[Box], png_out: Path, cfg: OverlayConf
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer)
     font = _font(cfg)
-    rects = [_scale_box(b.bbox, scale) for b in boxes]
+    rects = [scale_box(b.bbox, scale) for b in boxes]
     tags: list[BBox] = []  # the tags placed so far on this frame: a later tag avoids them as it avoids the boxes
     clashes = 0
     for box, rect in zip(boxes, rects):

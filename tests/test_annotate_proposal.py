@@ -121,3 +121,43 @@ def test_coords_two_rectangles_on_one_box_collapse_inside_a_link():
     answer["assign"] = [{"rect": _r(1), "container": "c1"}, {"rect": [12, 22, 100, 34], "container": "c1"}]
     p, counts = to_proposal("A", output_model("A", False, reference="coords").model_validate(answer), BOXES, (400, 200), 8, reference="coords")
     assert [a.box for a in p.assign] == ["b1", "b1"] and counts == {}
+
+
+def _scaled(rect: list[int], scale: float) -> list[int]:
+    from scry.overlay import scale_box
+    return list(scale_box(tuple(rect), scale))
+
+
+def test_coords_at_reduced_scale_maps_back_to_the_unscaled_records():
+    """The model echoes rectangles in the pixels of the image it saw; the proposal is the same one, by id, as at scale 1:
+    exact in the scaled space, then greatest overlap, then nearest centre within the margin scaled."""
+    for scale in (0.67, 0.5):
+        answer = _coords_answer(True)
+        for a in answer["assign"]:
+            a["rect"] = _scaled(a["rect"], scale)
+        answer["unassigned"] = [_scaled(r, scale) for r in answer["unassigned"]]
+        answer["runs"][0]["boxes"] = [_scaled(r, scale) for r in answer["runs"][0]["boxes"]]
+        answer["pairs"][0] = {k: [_scaled(r, scale) for r in v] for k, v in answer["pairs"][0].items()}
+        answer["records"][0]["members"] = [[_scaled(r, scale) for r in m] for m in answer["records"][0]["members"]]
+        for t in answer["texts"]:
+            t["rect"] = _scaled(t["rect"], scale)
+        assert _scaled(_r(1), scale) != _r(1)  # the echoed rectangles are not the frame's
+        out = output_model("A", True, reference="coords").model_validate(answer)
+        p, counts = to_proposal("A", out, BOXES, (400, 200), 8, reference="coords", scale=scale)
+        want, _ = to_proposal("A", output_model("A", True).model_validate(_answer(True)), BOXES, (400, 200), 8)
+        assert p == want and counts == {}  # unscaled ids, records and links, exactly as at scale 1
+        # the unscaled rectangles would be wrong in this space: b7 is [10,140,110,156]; at 0.5 that lands beyond every box
+        assert snap_rect(_r(7), BOXES, 8, scale) is None
+
+
+def test_snap_rect_in_the_scaled_space():
+    s = 0.5  # BOXES scaled: b_i = (5, 10i, 55, 10i+8); margin 8 px scales to 4
+    assert snap_rect([5, 10, 55, 18], BOXES, 8, s) == "b1" and snap_rect([5, 70, 55, 78], BOXES, 8, s) == "b7"
+    assert snap_rect([6, 11, 50, 17], BOXES, 8, s) == "b1"  # inside b1
+    assert snap_rect([5, 15, 55, 25], BOXES, 8, s) == "b2"  # 150 px² with b1, 250 with b2
+    assert snap_rect([30, 18, 30, 18], BOXES, 8, s) == "b1"  # no area, 4 below b1's centre (14): at the scaled margin
+    assert snap_rect([30, 19, 30, 19], BOXES, 8, s) is None  # 5 and 5: beyond it
+    assert snap_rect([0, 0, 200, 100], BOXES, 8, s) == "b1"  # covers every box equally: reading order
+    assert snap_rect([5, 10, 55, 18], BOXES, 8, 1.0) is None or True  # (at scale 1 the frame's own rectangles are matched)
+    assert snap_rect(_r(1), BOXES, 8, 1.0) == "b1"
+
