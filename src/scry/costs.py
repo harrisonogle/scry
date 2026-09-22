@@ -9,6 +9,9 @@ PRICES = {  # $ per million tokens, input / output / cache read (2026-09-13 list
     "claude-sonnet-5": (2.0, 10.0, 0.2),
     "claude-haiku-4-5": (1.0, 5.0, 0.1),
 }
+# a model served on this machine through the openai_compat provider (an mlx-community conversion) bills nothing: price 0,
+# and no warning. The electricity and the wall time are the cost, and the run's log carries the seconds per call.
+LOCAL_MODEL_PREFIXES = ("mlx-community/",)
 USAGE_KEYS = ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")
 CACHE_WRITE_MULTIPLIER = 1.25  # × the input price: a write to the default five-minute prompt cache
 BATCH_MULTIPLIER = 0.5  # × everything: the Batches API discount
@@ -23,7 +26,10 @@ def add_usage(total: dict, usage: dict) -> dict:
 
 
 def estimate_cost(usage: dict, model: str, batch: bool = False) -> float:
-    """Dollars for a usage dict. An unknown model is priced as claude-opus-5, with one warning per model name."""
+    """Dollars for a usage dict. A local model (LOCAL_MODEL_PREFIXES) costs 0; any other unknown model is priced as
+    claude-opus-5, with one warning per model name."""
+    if model.startswith(LOCAL_MODEL_PREFIXES):
+        return 0.0
     if model not in PRICES and model not in _warned:
         _warned.add(model)
         log.warning("no price for model %r: priced as claude-opus-5", model)
