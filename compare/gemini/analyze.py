@@ -36,6 +36,16 @@ QS = {q.id: q for q in questions()}
 QIDS = list(QS)
 
 
+def configure(questions_path: Path | None = None, phases: dict | None = None) -> None:
+    """Point the tables at another question file and another set of pipeline runs (the hold-out comparison)."""
+    global QS, QIDS, PHASES
+    if questions_path is not None:
+        QS = {q.id: q for q in questions(questions_path)}
+        QIDS = list(QS)
+    if phases is not None:
+        PHASES = phases
+
+
 def arm(name: str) -> tuple[dict, dict]:
     return ({a["qid"]: a for a in read_jsonl(OUT / name / "answers.jsonl")},
             {j["qid"]: j for j in read_jsonl(OUT / name / "judgments.jsonl")})
@@ -45,8 +55,9 @@ def phase_judgments(phase: str) -> list[dict]:
     return [{j["qid"]: j for j in read_jsonl(MAIN / r / "judgments.jsonl")} for r in PHASES[phase]]
 
 
-def lines_passed(J: dict, qids=QIDS) -> tuple[int, int]:
+def lines_passed(J: dict, qids=None) -> tuple[int, int]:
     ok = n = 0
+    qids = QIDS if qids is None else qids
     for qid in qids:
         j = J.get(qid)
         if not j:
@@ -67,7 +78,7 @@ def score(J: dict, qids) -> str:
 def scores_table(arms: dict) -> str:
     pos = [q for q in QIDS if QS[q].polarity == "positive"]
     neg = [q for q in QIDS if QS[q].polarity == "negative"]
-    out = ["| arm | positive (of 22) | negative (of 5) | correct / partial / wrong | rubric lines passed |", "|---|---|---|---|---|"]
+    out = [f"| arm | positive (of {len(pos)}) | negative (of {len(neg)}) | correct / partial / wrong | rubric lines passed |", "|---|---|---|---|---|"]
     for name, (A, J) in arms.items():
         counts = {k: sum(1 for j in J.values() if j["label"] == k) for k in ("correct", "partial", "wrong")}
         ok, n = lines_passed(J)
@@ -97,9 +108,8 @@ def types_table(arms: dict) -> str:
 
 def verdict_table(arms: dict) -> str:
     phases = {p: phase_judgments(p) for p in PHASES}
-    out = ["| Q | type | " + " | ".join(f"{a} label" for a in arms) + " | " + " | ".join(f"{a} lines" for a in arms)
-           + " | " + " | ".join(f"{p} ({len(PHASES[p])} runs)" for p in PHASES) + " |",
-           "|---|---|" + "---|" * (2 * len(arms) + len(PHASES))]
+    cols = [f"{a} label" for a in arms] + [f"{a} lines" for a in arms] + [f"{p} ({len(PHASES[p])} runs)" for p in PHASES]
+    out = ["| Q | type | " + " | ".join(cols) + " |", "|---|---|" + "---|" * len(cols)]
     for qid in QIDS:
         row = [qid, QS[qid].style]
         for name, (A, J) in arms.items():

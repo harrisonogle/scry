@@ -13,24 +13,30 @@ from scry.evaluation.judge import judge_answers, judge_provider
 from scry.evaluation.questions import Answer
 
 
-def main() -> None:
-    setup()
+def judge_arm(out: Path, arm: str, qs: list, ledger: Ledger) -> list:
+    """Judge <out>/<arm>/answers.jsonl against the questions and write <out>/<arm>/judgments.jsonl."""
     cfg = load_config(REPO / "scry.toml")  # [model] claude-opus-5, the same base config the phases judged with
     cfg.model.concurrency = 8
+    answers = [Answer(**a) for a in read_jsonl(out / arm / "answers.jsonl")]
+    provider = judge_provider(cfg, out / "judge-cache")
+    js = judge_answers(arm, qs, answers, provider, effort="low")
+    write_jsonl(out / arm / "judgments.jsonl", js)
+    dollars = sum(j.dollars for j in js)
+    ledger.add("anthropic", "judge", arm, dollars, 0.0, all(j.error is None for j in js),
+               f"{len(js)} judged, hits {provider.stats['hits']}, misses {provider.stats['misses']}")
+    labels = {}
+    for j in js:
+        labels[j.label] = labels.get(j.label, 0) + 1
+    print(f"{arm}: {len(js)} judged, ${dollars:.4f}, {labels}, errors {[j.qid for j in js if j.error]}")
+    return js
+
+
+def main() -> None:
+    setup()
     qs = questions()
     ledger = Ledger()
     for arm in sys.argv[1:] or ["g1", "g2"]:
-        answers = [Answer(**a) for a in read_jsonl(OUT / arm / "answers.jsonl")]
-        provider = judge_provider(cfg, OUT / "judge-cache")
-        js = judge_answers(arm, qs, answers, provider, effort="low")
-        write_jsonl(OUT / arm / "judgments.jsonl", js)
-        dollars = sum(j.dollars for j in js)
-        ledger.add("anthropic", "judge", arm, dollars, 0.0, all(j.error is None for j in js),
-                   f"{len(js)} judged, hits {provider.stats['hits']}, misses {provider.stats['misses']}")
-        labels = {}
-        for j in js:
-            labels[j.label] = labels.get(j.label, 0) + 1
-        print(f"{arm}: {len(js)} judged, ${dollars:.4f}, {labels}, errors {[j.qid for j in js if j.error]}")
+        judge_arm(OUT, arm, qs, ledger)
 
 
 if __name__ == "__main__":
