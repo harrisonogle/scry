@@ -61,10 +61,6 @@ stands" says what is built.
       code for centre-inside, front-most and snapping (L61). Flagged with it: arm D, which the owner called promising,
       was built, lost in P5 (equal cost at 1.0, dearer below it, a silent whole-frame scramble in 5 of 264 calls) and
       was removed behind the tag `arm-d-evaluated` (L63).
-- [ ] **Whether to skip `annotate` calls that have no target.** 47 of the 221 incremental calls on the sample have
-      none; they cost about $2.30 a video, 19 % of `annotate`. They are kept because they refresh the per-frame
-      description, which the owner wants kept; skipping them would leave those frames with the previous description
-      (L62).
 - [ ] **Look at the branch; then merge and push.** Nothing has been pushed. `main` is untouched at the tag
       `pre-rebase-boxes`; everything is on `rebase-boxes` (L44). Merged branches and both tags are kept, with no
       squashing and no forced updates (L46): `rebase-boxes-eval`, `-incremental`, `-incfix`, `-outline`, `-armd`,
