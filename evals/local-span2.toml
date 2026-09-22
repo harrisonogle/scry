@@ -1,19 +1,22 @@
-# LOCAL SPAN2: `annotate` and `interpret` on the command span (frames 155-187) with a model served on this machine
-# (see evals/local-probe.toml). `interpret` at its default half scale. Scored with the P3/P5 label scripts and the honest
-# text-change contract of docs/results/p8/analysis.md.
+# LOCAL SPAN2: `interpret` alone on the command span (frames 155-187) with a model served on this machine (see
+# evals/local-probe.toml), no annotation, `interpret` at its default half scale. Scored with the honest text-change
+# contract of docs/results/p8/analysis.md: the grey suggestion recorded as entered_text on the typing transitions, false
+# runs of the never-run strings of docs/ground-truth/span2-commands.md, `submitted` claimed on page navigations.
 phase = "local-span2"
 source = "runs/p0"
 base_config = "evals/local-scry.toml"
-stages = ["read", "track", "annotate", "interpret"]
+stages = ["read", "track", "interpret"]
 repeats = 1
 
 [spans.span2]
 frames = "155-187"
 
+[axis.model.q27b]
+"model.model" = "mlx-community/Qwen3.8-27B-4bit"
+"model.base_url" = "http://127.0.0.1:8081/v1"
+"annotate.mode" = "off"
+
 [axis.model.q8b]
 "model.model" = "mlx-community/Qwen3-VL-8B-Instruct-4bit"
 "model.base_url" = "http://127.0.0.1:8080/v1"
-"annotate.mode" = "incremental"
-"annotate.transcribe" = true
-"annotate.reference" = "ids"
-"annotate.scale" = 1.0
+"annotate.mode" = "off"
