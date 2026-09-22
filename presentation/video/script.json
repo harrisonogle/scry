@@ -183,43 +183,6 @@
       "voice": "They ask, over Scry's MCP server: one conversation, sixteen questions in a row. Not one wrong answer. Not one invented fact."
     },
     {
-      "id": "frame",
-      "optional": true,
-      "visual": {
-        "kind": "frame",
-        "src": "holdout-frame-22.png",
-        "width": 2048,
-        "height": 1080,
-        "zoom": {
-          "cx": 449,
-          "cy": 1026,
-          "scale": 1.6
-        },
-        "labels": [
-          {
-            "x": 522,
-            "y": 1016,
-            "color": "orange",
-            "text": "22:b112 · \"Showing 1 - 2 of 2 results.\""
-          },
-          {
-            "x": 433,
-            "y": 502,
-            "color": "aqua",
-            "text": "22:b91 · b89 · b93 · the saved row"
-          },
-          {
-            "x": 1614,
-            "y": 280,
-            "color": "blue",
-            "text": "22:b55 · b58 · b60 · the toast"
-          }
-        ]
-      },
-      "caption": "Frame 22: the toast, the saved row and the row count the answer cited",
-      "voice": "The citation opens to the frame: the toast, the saved row and the row count the answer quoted, box by box."
-    },
-    {
       "id": "accuracy",
       "visual": {
         "kind": "card",
@@ -390,8 +353,8 @@
           }
         ]
       },
-      "caption": "text · frames · changes · steps · sections · session",
-      "voice": "All of it becomes one index at six levels: every text, every frame, every change and what it meant, steps, sections, the whole session. Search at any level; every entry cites its frames."
+      "caption": "One text-based index, six levels",
+      "voice": "All of it becomes one text-based index at six levels: every text, every frame, every change and what it meant, steps, sections, the whole session. Search at any level; every entry cites its frames."
     },
     {
       "id": "close",
@@ -407,5 +370,5 @@
     }
   ],
   "voiceTempo": 1.0,
-  "voiceName": "Umbriel"
+  "voiceName": "Puck"
 }
