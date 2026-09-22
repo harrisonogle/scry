@@ -11,62 +11,34 @@ stands" says what is built.
 
 ## Open now: needs the owner
 
-- [ ] **Correct the three draft question sets, and look at the second section of the command list**
-      (`docs/ground-truth/`). `span2-questions.md` (15 questions written from the command list of frames 155 to 187;
-      L50, L57), `smoke-questions.md` (18 graphical questions on frames 145 to 155; L57, L59) and `full-questions.md`
-      (27 questions on the whole video; L59, L62) each say "DRAFT, nothing here is accepted yet". Every judged answer so
-      far was scored against them as they stand. The two later sets end with a section "Frame content the agent was
-      unsure about". All three are saturated: every base scores at or near the ceiling (L57, L59, L62), and none asks
-      for what the owner wants annotation for as an experience: search by key, the application filter, a second opinion
-      on a doubtful text (L65). In `span2-commands.md` the executed list was accepted by the owner on 2026-09-21; the
-      second section ("Appeared on screen but was never run", the key of the *false run* metric) is kept at the owner's
-      request and the file records no acceptance of it.
-- [ ] **The question sets are blind to the honest text-change contract** (L66, L67). Every answer below was judged
-  correct: "retyped `kubectl get pods`" where only `kubectl ` was typed and the rest was the shell's grey suggestion
-  (all four Sonnet answers in P8); "corroborated by later scrollback" as evidence that commands ran (two Sonnet
-  answers in P9); two differing readings called "confirmed independently by the OCR-derived text" (P9). Until the
-  rubrics have lines for typed against suggested (Q16, Q18), for what counts as evidence that a command ran (Q17,
-  Q21) and for saying so when readers differ (Q19, Q20), a comparison of models or agents on these sets measures
-  recall of strings and times and little else. The sets are the owner's to correct, so nothing was added.
-- [ ] **Which model answers questions** (L66, L67). On Opus-built indexes a Sonnet 5 agent ties on score at a quarter
-  of the price ($0.053 to $0.062 a question against $0.216 to $0.263) and in under half the time. It opens a frame in
-  3 to 6 of 27 answers where Opus opens 14 to 23, and says that readers differ for 3 of 18 such texts where Opus says
-  so for 40 of 46. The default stays Opus 5; `[ask] model = "claude-sonnet-5"` is there for whoever wants the other
-  trade. `annotate`, `interpret` and `summarize` stay on Opus 5: on Sonnet the index itself records suggestions as
-  entered text (P7, P8).
-- [ ] **`summarize` can paraphrase the contract away** (L67). One Opus step summary says "type the command `kubectl
-  create deployment …`" where the transition it cites calls most of that line a suggestion. One step in one run; it
-  is the first sign of the contract leaking on Opus, and both agents then said "typed" on that question. Nothing was
-  changed: the fix is prompt wording for `summarize`, and the owner should see the case first
-  (`docs/results/p9/analysis.md`, last section).
-- [ ] **The owner's hold-out second video.** Not yet supplied. About $70 of the Anthropic budget is kept for it and
-      no further paid phase is started without a result that calls for one (L64, L65). It is the first outside test of
-      θpix and θmin, with `touched_share` on near-static pairs as the alarm (proposal §11), the place to find out
-      whether descriptions keep earning their place (L65), and, if it has narration, the first test of the outline
-      stage on audio (L58).
-- [ ] **Confirm or change the working default for `annotate`** (L57, L59, L62, L65). It is `mode = "incremental"`,
-      `transcribe = true`, `scale = 1.0`, referencing arm A, on Opus 5 (L59, L60, L63, L64), chosen without the owner.
-      What the phases say about this sample: no annotation ties on the command metrics and on the answers of P1 and P4
-      at about a quarter of the cost ($4.62 against $17.85 a video, L62); in P2 the one separation was the second
-      reading of a line being edited (L59); in P6, with the agent's pixels withheld, annotated indexes scored 27 of 27
-      and unannotated ones 26 and a partial, and what carried the difference was the description (L65). No answer in
-      any phase turned on a container, a link or a second reading; `annotate` is about three quarters of the pipeline's
-      cost ($13 of $17.85, L65). A description-only mode (the clean frame alone, only the description asked for,
-      roughly a third of the cost of full annotation) is unbuilt; L65 puts it to the owner as the first question on
-      return. Transcribing, group-only and none stay co-equal until the owner decides.
-- [ ] **Referencing arms B and C (position-based assignment) were never built, although the owner said "I do want it
-      evaluated"** (L61). Deferred because nothing measured since the tag fix (L53) points at id assignment as a live
-      problem (`mark_match` 93 to 94 % at scale 1.0). Under B and C every box is a target, so they cannot use
-      incremental annotation: evaluating them means every-frame annotation at about three times the cost, plus new
-      code for centre-inside, front-most and snapping (L61). Flagged with it: arm D, which the owner called promising,
-      was built, lost in P5 (equal cost at 1.0, dearer below it, a silent whole-frame scramble in 5 of 264 calls) and
-      was removed behind the tag `arm-d-evaluated` (L63).
-- [ ] **Look at the branch; then merge and push.** Nothing has been pushed. `main` is untouched at the tag
-      `pre-rebase-boxes`; everything is on `rebase-boxes` (L44). Merged branches and both tags are kept, with no
-      squashing and no forced updates (L46): `rebase-boxes-eval`, `-incremental`, `-incfix`, `-outline`, `-armd`,
-      `-batchfix`, `-askindex`, and `-docs` (this revision of the documents); tags `pre-rebase-boxes` and
-      `arm-d-evaluated`. Step 9 of the proposal's build order (rewrite the design document as revision 7, merge to
-      `main`) has not been done.
+- [ ] **Correct the question sets.** All four are drafts written by agents from the frames, for the owner to correct or
+  replace: `docs/ground-truth/span2-questions.md`, `smoke-questions.md`, `full-questions.md` (the sample video) and
+  `holdout-questions.md`, `holdout-discovery.md` (the second recording). The command list's executed section is
+  accepted; its never-run section is a scoring key only. The sets are blind to the honest text-change contract
+  (L66, L67): a rubric line for typed against suggested, for what counts as evidence that a command ran, and for saying
+  so when readers differ would make model and agent comparisons mean more.
+- [ ] **The annotation scale.** The default is group-only, numbered overlay, scale 1.0, Opus 5 (L73). Scale 0.67 was
+  measured at $12.62 against $16.30 on the sample and $7.68 against $9.32 on the session, both with every question
+  right and the labels within noise on the short spans (L69, L77); 1.0 is the setting not tuned to a video's text
+  size (L60). The owner's call.
+- [ ] **Which model answers questions** (L67, L80). Opus 5 is the default agent. A Sonnet 5 agent answered 5 of 5 on
+  the session at 15 cents a question against 35 to 39, and on the sample opened a sixth as many frames and said far
+  less often when readers differ. `[ask] model` is the switch.
+- [ ] **An open-weight model for the pipeline** (L75, L76, L78). On a 22-frame span of the session, Qwen 3.8 27B at
+  temperature 0 with the schema descriptions in the prompt built the whole index at a twelfth of the API's price and
+  its index answered 5 of 5, with 80 % of the API's label pairs and one dense table lost. The provider
+  (`openai_compat`) is config. Untested: `box_text` on the local model; the full 80-frame run was left unfinished.
+- [ ] **Referencing arms B and C (position-based assignment) were never built** although the owner said "I do want it
+  evaluated" (L61); arm D lost and was removed (L63); coordinates as the source of truth work and cost more (L69,
+  L72, L74). The question is whether it is still worth evaluating.
+- [ ] **`summarize` can paraphrase the contract away** (L67). One Opus step summary says a command was typed where the
+  transition it cites calls most of it a suggestion; both agents then said "typed" on that question. The fix is prompt
+  wording for `summarize`; the owner should see the case first (`docs/results/p9/analysis.md`, last section).
+- [ ] **What remains of the second recording in the repository** (L82). Its pixels and the person's identifiers were
+  removed from `main`'s history; the tenant's resource names and hostnames remain in the question sets, the
+  transcripts and the results. Scrub them the same way if they should not be public.
+- [ ] **Repository size.** The sample tutorial video (31 MB) sits in early history. A rewrite would drop it; a
+  shallow-clone hint in the README is the alternative.
 
 ## Open now: recorded and left alone
 
