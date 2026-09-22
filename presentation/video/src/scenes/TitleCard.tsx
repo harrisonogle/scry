@@ -12,7 +12,7 @@ const ease = (frame: number, from: number, to: number) =>
 
 // The headline card: the wordmark, one line, and three stat tiles from script.json that appear in turn
 // as the voice-over reaches them. A tile marked draft shows a DRAFT chip until its number is dropped in.
-export const TitleCard: React.FC<{headline: string; tiles: Tile[]}> = ({headline, tiles}) => {
+export const TitleCard: React.FC<{headline: string; tiles: Tile[]; footnote?: string}> = ({headline, tiles, footnote}) => {
   const frame = useCurrentFrame();
   const {fps, durationInFrames} = useVideoConfig();
   const word = ease(frame, 0, fps * 0.8);
@@ -76,6 +76,11 @@ export const TitleCard: React.FC<{headline: string; tiles: Tile[]}> = ({headline
           );
         })}
       </div>
+      {footnote ? (
+        <div style={{marginTop: 26, fontSize: 24, color: theme.faint, opacity: ease(frame, tileStart + (tiles.length - 1) * tileGap, tileStart + (tiles.length - 1) * tileGap + fps * 0.6)}}>
+          {footnote}
+        </div>
+      ) : null}
     </AbsoluteFill>
   );
 };

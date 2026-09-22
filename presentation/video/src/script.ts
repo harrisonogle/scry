@@ -12,7 +12,7 @@ export type FrameLabel = {x: number; y: number; color: 'blue' | 'orange' | 'aqua
 export type Tile = {value: string; label: string; draft?: boolean};
 
 export type Visual =
-  | {kind: 'title'; headline: string; tiles: Tile[]}
+  | {kind: 'title'; headline: string; tiles: Tile[]; footnote?: string}
   | {kind: 'close'; lines: string[]}
   | {
       kind: 'terminal';

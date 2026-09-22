@@ -6,7 +6,7 @@
   "padSeconds": 0.6,
   "maxSeconds": 118.0,
   "_notes": [
-    "Every word and number on screen or in the voice-over lives in this file; a scene marked draft:true carries numbers or wording not yet frozen (the bracketed [N cents] and [ratio] are the pending local-model figures).",
+    "Every word and number on screen or in the voice-over lives in this file; a scene marked draft:true carries numbers or wording not yet frozen.",
     "maxSeconds is the platform's ceiling for the rendered MP4 including every pad; the composition refuses to build and stills.mjs fails loudly when the scenes exceed it.",
     "Scenes marked optional:true are dropped automatically while their image is missing from public/img (run assets.sh after docs/presentation/ changes).",
     "Scene duration = the voice file's length + padSeconds; voice.sh regenerates public/voice/<id>.wav from the voice lines below.",
@@ -16,7 +16,6 @@
   "scenes": [
     {
       "id": "title",
-      "draft": true,
       "visual": {
         "kind": "title",
         "headline": "Screen recordings you can search.",
@@ -26,15 +25,15 @@
             "label": "Scry vs Gemini, same session, same questions"
           },
           {
-            "value": "$9.32 on Claude vs [N cents] on an open model",
-            "label": "to index a four-minute session",
-            "draft": true
+            "value": "$9.32 on Claude vs about 75¢ on an open model",
+            "label": "to index a four-minute session"
           },
           {
             "value": "every claim cited",
             "label": "frame, box, second"
           }
-        ]
+        ],
+        "footnote": "open-model figure extrapolated from 22 of 80 frames at a hosted rate"
       },
       "caption": "Screen recordings you can search",
       "voice": "Scry turns any screen recording into a searchable, hierarchical index of what happened on screen, at every level of detail. Every answer cites the frame, the box and the second. It beats Gemini's new video-to-text on exactness, and building the index costs under a dollar per session with an open model."
@@ -47,7 +46,7 @@
         "src": "us-vs-gemini-holdout.png"
       },
       "caption": "The same five questions about the same session: Scry 5 of 5 in every configuration, Gemini direct 3 of 5",
-      "voice": "Asked the same five questions about the same session, Gemini answered three. Scry answered all five, every string exact, in every configuration. Across both videos, Gemini read the exact strings wrong half the time and invented commands that never ran. And Gemini re-watches the whole video for every question. Scry reads it once."
+      "voice": "Asked the same five questions about the same session, Gemini answered three. Scry answered all five, every string exact, in every configuration. Across both videos, Gemini read the exact strings wrong half the time and invented commands that never ran."
     },
     {
       "id": "holdout-cost-per-config",
@@ -57,18 +56,17 @@
         "src": "holdout-cost-per-config.png"
       },
       "caption": "Indexing this four-minute session: $9.32 with the default settings, $2.94 to $11.42 across the four configurations",
-      "voice": "Indexing this four-minute session cost nine dollars on Claude,"
+      "voice": "Indexing this four-minute session cost nine dollars on Claude."
     },
     {
       "id": "local-vs-api",
       "optional": true,
-      "draft": true,
       "visual": {
         "kind": "image",
         "src": "local-vs-api.png"
       },
-      "caption": "DRAFT · An open 27B model indexes the session for [N cents], [ratio] times cheaper; after that every question costs cents and seconds",
-      "voice": "and [N cents] on an open 27-billion-parameter model, [ratio] times cheaper. After that, every question costs cents and seconds."
+      "caption": "An open 27B model: $0.0094 a frame against the API's $0.109, 11.6 times cheaper; about 75¢ for the whole session, extrapolated from 22 of 80 frames; 5 of 5 questions on the span",
+      "voice": "An open 27-billion-parameter model indexed a span of it end to end for a twelfth of the price, about 75 cents for the whole session, and answered five of five questions about that span. After that, every question costs cents and seconds."
     },
     {
       "id": "demo",
@@ -201,7 +199,7 @@
         ]
       },
       "caption": "An assistant that never saw the session asks over Scry's MCP server: questions 4 to 6 of 16",
-      "voice": "An AI assistant that has never seen the session is asked what happened, over Scry's MCP server. What was entered in the form: every field, read from frame 21, each value with its box. Which profiles got the endpoint, in what order. Did each save succeed: the toast and the row count, cited box by box. Sixteen questions in a row. Not one wrong answer. Not one invented fact."
+      "voice": "An AI assistant that has never seen the session is asked what happened, over Scry's MCP server. What was entered in the form: every field, read from frame 21, each value with its box. Did each save succeed: the toast and the row count, cited box by box. Sixteen questions in a row. Not one wrong answer. Not one invented fact."
     },
     {
       "id": "frame",
