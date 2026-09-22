@@ -1,0 +1,22 @@
+{
+  "_comment": "Numbers for local-vs-api.png. Edit these and re-run `uv run --with matplotlib python docs/presentation/local-vs-api.py`. Every value must be copied from a committed file named in `source`; the chart prints `dataset` as its subtitle so the reader knows which video the numbers come from.",
+  "dataset": "sample video, 11 frames (the smoke span)",
+  "source": "docs/decision-ledger.md L76; docs/results/local/report.md (hosted rate); docs/results/local/second-attempt/quality-table.txt (pairs)",
+  "api_label": "API: Opus 5",
+  "local_label": "local: Qwen 3.8 27B (4-bit)\nat a hosted open-weight rate",
+  "cost_per_frame": {
+    "title": "annotate, dollars per frame",
+    "api": 0.078,
+    "local": 0.005,
+    "note": "API at list price; local at OpenRouter's listed rate for the same model on 2026-09-21"
+  },
+  "pairs_reproduced_pct": {
+    "title": "reference pairs reproduced, %",
+    "api_low": 95,
+    "api_high": 97,
+    "local_low": 75,
+    "local_high": 77,
+    "note": "against the API's own reference runs; the API band is its repeat-to-repeat floor (r1 against r2), the local band is one run against each reference"
+  },
+  "caption": "Three quarters of the API's pairs for a small fraction of the price; temperature 0 and the schema's descriptions in the prompt are what got it there (ledger L76). A candidate, not a replacement."
+}
