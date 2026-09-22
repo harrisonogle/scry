@@ -1,0 +1,228 @@
+{
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "padSeconds": 0.7,
+  "scenes": [
+    {
+      "id": "title",
+      "visual": {
+        "kind": "title"
+      },
+      "caption": "A screen-recording tutorial, turned into a searchable record with a citation for every claim",
+      "voice": "Scry turns a screen-recording tutorial into a searchable record, with a citation for every claim."
+    },
+    {
+      "id": "pipeline",
+      "visual": {
+        "kind": "image",
+        "src": "pipeline.png",
+        "highlights": [
+          {
+            "rect": [
+              0.039,
+              0.229,
+              0.622,
+              0.268
+            ],
+            "from": 0.03,
+            "until": 0.44,
+            "color": "blue"
+          },
+          {
+            "rect": [
+              0.039,
+              0.578,
+              0.622,
+              0.265
+            ],
+            "from": 0.46,
+            "until": 0.97,
+            "color": "orange"
+          }
+        ]
+      },
+      "caption": "OCR at full resolution, changed pixels and text lifetimes are measured; models label only what was measured",
+      "voice": "It measures the screen first: OCR boxes at full resolution on every frame, the pixels that changed, and the lifetime of every piece of text. Models only label what was measured: windows and popups, links between boxes, a second reading, a description, what each change did, and summaries."
+    },
+    {
+      "id": "demo",
+      "visual": {
+        "kind": "terminal",
+        "title": "claude — scry-mcp over stdio · demo/aks-tutorial",
+        "status": "6 tool calls · 8 turns · 52 s",
+        "source": "docs/presentation/mcp-demo.md, 'Claude Code, question 1: the deployment command'; tool results trimmed to a line or two, answer sentences trimmed, none edited",
+        "blocks": [
+          {
+            "kind": "cmd",
+            "text": "In the video demo/aks-tutorial: which command created the deployment, when exactly was it run, and what did the terminal show right after?"
+          },
+          {
+            "kind": "note",
+            "text": "I'll answer this from the scry index: list the videos, search for the deployment command, then confirm the run and its output with transitions and frames."
+          },
+          {
+            "kind": "call",
+            "name": "list_videos",
+            "args": "",
+            "results": [
+              "demo/aks-tutorial   221 frames, 852.8 s, annotated   stages: decode, read, track, annotate, interpret, summarize, index   …"
+            ]
+          },
+          {
+            "kind": "call",
+            "name": "search",
+            "args": "video=\"demo/aks-tutorial\", query=\"\\\"kubectl create deployment\\\"\"",
+            "results": [
+              "L1592  \"PS C:\\Users\\msadmin> kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1\"   frames 191–195, 5 sightings, both readers agree",
+              "T196   \" --replicas\" added to the command line, 757.8–758.3 s   …"
+            ]
+          },
+          {
+            "kind": "call",
+            "name": "search",
+            "args": "video=\"demo/aks-tutorial\", query=\"deployment created\"",
+            "results": [
+              "T145   the portal's deployment page auto-updated: a new row with status Created, 559.8–562.8 s",
+              "144    \"Deployment is in progress … Deployment details … Created\"   …"
+            ]
+          },
+          {
+            "kind": "call",
+            "name": "get_transitions",
+            "args": "video=\"demo/aks-tutorial\", t_a=756, t_b=770",
+            "results": [
+              "T194   the user clicked inside the PowerShell console, entering selection mode, 756.4 s   T195   …"
+            ]
+          },
+          {
+            "kind": "call",
+            "name": "get_node",
+            "args": "video=\"demo/aks-tutorial\", node_id=\"aks:T198\"",
+            "results": [
+              "T198   frames 197–198, 759.43–759.47 s   \"The user pressed Enter to run the typed kubectl command.\"",
+              "\"deployment.apps/kodekloudapp created\" was printed and a fresh prompt appeared below   submitted: yes, confidence 0.94"
+            ]
+          },
+          {
+            "kind": "call",
+            "name": "get_frame",
+            "args": "video=\"demo/aks-tutorial\", frame=198, image=true",
+            "results": [
+              "Frame 198, t=759.47–763.30s. Description in force: … The last command creates a deployment named kodekloudapp from image hpranav/kodekloudappcs:v1 with one replica, which reports created, and a blinking cursor waits at a fresh prompt …",
+              "b89 L1611 \"deployment.apps/kodekloudapp created\" | seen 759.5–838.8s in 18 frames   [image: the frame, downscaled to 1280 px wide]"
+            ]
+          },
+          {
+            "kind": "answer",
+            "lines": [
+              "**The command** was `kubectl create deployment` for the kodekloudapp image with one replica. Both the OCR and the vision reader agree on this exact text (L1634, frames 202-215; the transition's own reading of the entered text on T198 matches), and I confirmed it by eye on frame 198:",
+              "",
+              "    `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1`",
+              "",
+              "**When it ran.** Enter was pressed at transition T198, between frames 197 and 198.",
+              "    Command line complete, not yet run                                T197       758.9 s",
+              "    Enter pressed, command executed (submitted: yes, confidence 0.94) T198       759.4 s (about 12:39)",
+              "    Output stays on screen, no new input                              frame 198  759.5 to 763.3 s",
+              "",
+              "**What the terminal showed right after.** Two new lines appeared under the command and nothing else (T198 records exactly three changed boxes on frame 198):",
+              "",
+              "    `deployment.apps/kodekloudapp created`",
+              "    `PS C:\\Users\\msadmin> _`",
+              "",
+              "The output line is 198:b89 (L1611, both readers agree, visible from 759.5 s for the rest of the session). The fresh empty prompt with a blinking cursor is 198:b91."
+            ]
+          }
+        ]
+      },
+      "caption": "The same agent through the project's MCP server, from Claude Code: 6 tool calls, 52 seconds",
+      "voice": "It is also an MCP server, so Claude Code or Copilot can ask the same questions of any indexed video. Ask which command created the deployment: the host lists the videos, searches the index twice, pulls the transitions, and opens the cited frame. The answer gives the exact command, the second it ran, and what the terminal showed next."
+    },
+    {
+      "id": "frame",
+      "visual": {
+        "kind": "frame",
+        "src": "demo-frame-198.png",
+        "zoom": {
+          "cx": 1102,
+          "cy": 770,
+          "scale": 2.0
+        },
+        "labels": [
+          {
+            "x": 974,
+            "y": 767,
+            "color": "orange",
+            "text": "198:b89 · L1611 · both readers agree"
+          },
+          {
+            "x": 1462,
+            "y": 729,
+            "color": "blue",
+            "text": "198:b88"
+          }
+        ]
+      },
+      "caption": "Frame 198, box b89: the cited output line, with the command above it",
+      "voice": "Every claim cites a frame and a box: here, frame 198 and box b89, the output line, with the command above it."
+    },
+    {
+      "id": "what-annotation-bought",
+      "visual": {
+        "kind": "image",
+        "src": "what-annotation-bought.png"
+      },
+      "caption": "27 of 27 with the frames open; one rubric line separates the indexes without them",
+      "voice": "On a 221-frame sample and 27 questions, every configuration answered everything with the frames in hand. With the frames withheld, the annotated index still answered everything; the unannotated one missed one line, carried by a frame description."
+    },
+    {
+      "id": "scale-cliff",
+      "visual": {
+        "kind": "image",
+        "src": "scale-cliff.png"
+      },
+      "caption": "Second readings collapse between half and forty percent scale; the cost barely moves",
+      "voice": "Labels fall off a cliff before the cost does: second readings hold to two-thirds scale and collapse below half, while the cost barely moves. The image scale stays at one."
+    },
+    {
+      "id": "cost-per-video",
+      "visual": {
+        "kind": "image",
+        "src": "cost-per-video.png"
+      },
+      "caption": "$17.85 a video on Opus 5, $12.11 in batch, $4.62 without annotation",
+      "voice": "The whole record costs 17 dollars 85 a video on Opus 5, 12 dollars 11 in batch mode, and 4 dollars 62 without annotation. Cheaper models cut the price by half and more, and broke the rule that suggested text is never recorded as typed."
+    },
+    {
+      "id": "per-question",
+      "visual": {
+        "kind": "image",
+        "src": "per-question.png"
+      },
+      "caption": "$0.263 and 22.5 s a question on Opus; the Sonnet agent at a quarter of the price opens far fewer frames",
+      "voice": "Answering costs 26 cents and 22 seconds a question on Opus. A Sonnet agent answers at a quarter of the price and ties on score, but opens a fraction of the frames and rarely says when the two readers differ."
+    },
+    {
+      "id": "us-vs-gemini",
+      "optional": true,
+      "visual": {
+        "kind": "image",
+        "src": "us-vs-gemini.png"
+      },
+      "caption": "Gemini direct: 17 of 22 questions, 7 of 14 exact strings; the pipeline: 22 of 22, 14 of 14",
+      "voice": "Asked directly, Gemini answered 17 of 22 questions and read 7 of 14 exact strings; the pipeline read all 14, and never invented a run."
+    },
+    {
+      "id": "close",
+      "visual": {
+        "kind": "close",
+        "lines": [
+          "measured on one video, 27 questions",
+          "and a decision ledger of 70 entries"
+        ]
+      },
+      "caption": "github.com/harrisonogle/scry",
+      "voice": "Measured on one video, 27 questions, and a decision ledger of seventy entries."
+    }
+  ]
+}
