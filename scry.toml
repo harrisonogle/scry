@@ -36,9 +36,9 @@ gap_ratio = 0.25
 margin = 0.5
 
 [annotate]
-# working default, for the owner to confirm: incremental transcribing (docs/decision-ledger.md, L59)
+# the owner's default (docs/decision-ledger.md, L73): incremental, group-only (no second reading), numbered overlay
 mode = "incremental"
-transcribe = true
+transcribe = false
 scale = 1.0
 reference = "ids"  # "ids": numbered overlay, answers by box id; "coords": boxes as rectangles, answers by the box's rectangle
 

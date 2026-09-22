@@ -46,8 +46,9 @@ def _run(tmp_path: Path):
 
 
 def _cfg(**annotate) -> Config:
-    """Every-frame unless a test says otherwise: the config's own default is incremental (ledger L59)."""
-    return Config.model_validate({"annotate": {"mode": "every_frame"} | annotate})
+    """Every-frame and transcribing unless a test says otherwise: these tests pin the transcribing path, which is not the
+    config's own default (incremental, group-only, ledger L73)."""
+    return Config.model_validate({"annotate": {"mode": "every_frame", "transcribe": True} | annotate})
 
 
 def _entry(run) -> dict:

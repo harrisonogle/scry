@@ -44,7 +44,7 @@ read,track` runs a selection. Beside the stages:
   stage is `ask` (`evals/p6.toml`).
 
 Configuration is `scry.toml` in the working directory, or the file given with `--config`; a missing file means the
-defaults of `src/scry/config.py`. `[annotate] mode` is `"incremental"` by default: a call for the first frame and for every frame
+defaults of `src/scry/config.py`. `[annotate] mode` is `"incremental"` by default and `transcribe` is `false` (group-only: the model labels windows, popups, links and the screen description, and gives no second reading of the text; ledger L73): a call for the first frame and for every frame
 whose pixels changed, labelling only the boxes whose lifetime starts at that frame or continues there by a move. `"every_frame"` labels every box of
 every frame, and `"off"` runs the pipeline with no annotation. `[ask] frames = false` withholds every image from the
 answering agent, so that it answers from the index alone; `[ask] model` puts the answering agent on a model of its

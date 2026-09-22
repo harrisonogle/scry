@@ -25,7 +25,7 @@ def test_sections_and_unknown_keys(tmp_path: Path):
 def test_repo_toml_loads():
     cfg = load_config(REPO / "scry.toml")
     assert cfg.read.engine == "rapid"
-    assert (cfg.annotate.mode, cfg.annotate.transcribe) == ("incremental", True)  # the working default (ledger L59)
+    assert (cfg.annotate.mode, cfg.annotate.transcribe) == ("incremental", False)  # the owner's default: incremental group-only (ledger L73)
     assert cfg.annotate.reference == "ids"  # the tagged overlay and box ids: today's call, byte for byte
     assert cfg.model.effort_annotate == "low"
     assert cfg.interpret.images == "scaled"
@@ -75,8 +75,8 @@ def test_ask_model_is_in_no_pipeline_stage_hash():
 
 def test_annotate_defaults():
     cfg = Config()
-    assert cfg.annotate.mode == "incremental"  # the working default: incremental transcribing (ledger L59)
-    assert cfg.annotate.transcribe is True
+    assert cfg.annotate.mode == "incremental"  # the owner's default: incremental group-only (ledger L73)
+    assert cfg.annotate.transcribe is False
     assert cfg.annotate.scale == 1.0
     assert cfg.model.effort_annotate == "low"
 

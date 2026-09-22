@@ -77,7 +77,7 @@ class AnnotateConfig(BaseModel):
     # serve, were never built.
     # The default is the working default of ledger L59 (incremental, transcribing), for the owner to confirm.
     mode: Literal["every_frame", "incremental", "off"] = "incremental"
-    transcribe: bool = True  # true: the call also returns a second reading (texts, missed); false: group-only
+    transcribe: bool = False  # true: the call also returns a second reading (texts, missed); false: group-only (the default, L73)
     scale: float = Field(1.0, gt=0, le=1)  # factor applied to every image sent; tags keep their pixel size
     # how the call refers to a box. "ids": the clean frame plus a second image with every box tagged with a number, and
     # the answer names boxes by id. "coords": the clean frame alone, every box listed as a rectangle in the unscaled
