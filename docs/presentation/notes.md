@@ -90,7 +90,24 @@ The caption, "Gemini invented terminal runs where the shell showed a grey sugges
 
 Voice-over: "Asked the same twenty-seven questions, Gemini gets every 'when' and every negative, misses half the exact strings by one character, and invents a terminal command exactly where the shell was showing a grey suggestion; the pipeline gets all of them, at three times the price per question." 
 
-## Hold-out frame 22
+## 10. `index-hierarchy.png`: one index, six levels
+
+The six-level index of one session, drawn from `runs/v2/grouponly-100` (the video the charts above call a four-minute session; the word hold-out is not on the figure). Every entry is real and comes from the run directory:
+
+| level (bottom to top) | count | what is drawn | example on the figure | source file |
+|---|---|---|---|---|
+| text lifetimes | 2,565 | one tile per lifetime from `first.t` to `last.t` (under 0.4 s drawn 0.4 s wide), packed into lanes: lifetimes under 2 s in the lower lanes, longer ones above; lanes carry no meaning | `L760` "AFDEndpoint", seen 50.0 to 73.5 s in 9 frames (the row the click added). The brief's "61.0 to 224 s" is not what `lifetimes.jsonl` holds: AFDEndpoint has eight lifetimes there (L365, L478, L760, L1451, L1490, L1580, L1649, L1827); L760 is the longest | `lifetimes.jsonl` |
+| frames | 80 | one tick per settled frame at `t_settled` | | `frames.jsonl` |
+| changes | 79 | one mark per transition at the end of its `t`; taller where the interpretation says `submitted: yes` | T22, 61.0 to 64.0 s, `submitted: yes`, action "The user clicked the blue "Add" button at the bottom of the Add endpoint panel.", result "The panel closed and the endpoint was created: a success toast "Saved Traffic Manager profile changes" appeared, and the endpoints table now lists two rows including the new disabled AFDEndpoint with weight 1 ..." (quoted with an ellipsis on the figure) | `changes.jsonl`, `interpretations.jsonl` |
+| steps | 12 | one band per step over its `t` | S4 "Add an external endpoint to tm-profile-ap" (41.4 to 64.0 s), S6 "Add an external endpoint to the EU Traffic Manager profile" (94.2 to 125.6 s), S10 "Run the query and inspect the timechart" (178.1 to 200.8 s) | `steps.jsonl` |
+| sections | 7 | one band per section, C1 to C7 | C2 "Add an external endpoint to the tm-profile-ap Traffic Manager profile" (24.6 to 64.0 s), C6 "Query Front Door access logs in Log Analytics" (161.6 to 200.8 s), C7 "Compare Kusto.Explorer and read the chart results" (200.8 to 223.9 s) | `sections.jsonl` |
+| session | 1 | one band with the video label | V "Add AFDEndpoint to Traffic Manager profiles and check Front Door logs" | `video.json` |
+
+Shared time axis 0 to 224 s (`frames.jsonl`, last `t_end` 224.0). Caption on the figure: "One index, six levels: every text box, every frame, every change and what it meant, steps, sections, the session. Search at any level; every entry cites its frames."
+
+Voice-over: "The index has six levels over one time axis: every piece of text and how long it lived, every frame, every change with what it meant, steps, sections, the session; you can search at any level, and every entry cites the frames it came from."
+
+## Session frame 22
 
 `holdout-frame-22.png`: `runs/v2/grouponly-100/frames/00022.png` (2048x1080) at full size with seven boxes from `runs/v2/grouponly-100/boxes.jsonl` (frame 22) drawn and tagged with their ids, in the style of `demo-frame-198.png`: the toast `b55` (1629,215,1846,237) "Saved Traffic Manager profile changes", `b58` (1617,239,1882,257), `b60` (1614,255,1820,275) in blue; the saved row `b91` (433,477,510,497) "AFDEndpoint", `b89` (721,476,774,497) "Disabled", `b93` (1644,481,1653,491) "1" in aqua; and the row count `b112` (380,1018,518,1035) "Showing 1 - 2 of 2 results." (OCR reads `Showina`) in orange, the key citation. `holdout-frame-22-crop.png` is the frame's region x 340 to 820, y 440 to 1060 at 2x (960x1240), holding the saved row and the row count.
 
@@ -98,7 +115,9 @@ Voice-over: "Asked the same twenty-seven questions, Gemini gets every 'when' and
 
 `demo.md`: one real question, the tool calls and the answer with its citations, the cited frame `runs/eval/p4/full-inc-transcribing-r1/frames/00198.png` and box `198:b89`, and the same frame with the boxes drawn in `demo-frame-198.png` and `demo-frame-198-crop.png`. Cost $0.2142, 54 s.
 
-## 7. `holdout-cost-per-config.png`: what the hold-out video costs to index
+## 7. `holdout-cost-per-config.png`: what a four-minute session costs to index
+
+On the chart the video is called "a four-minute session" (title "What a four-minute session costs to index"); the file name and this note keep the hold-out name.
 
 The hold-out video: `runs/videos/recording-2026-09-17.mp4`, 223.97 s, 2048x1080, 80 decoded frames (`docs/results/compare-gemini/hold-out.md`, What was run; the manifests' `duration`, `width`, `height`; `frames.jsonl` has 80 rows). One run per configuration. Each bar is the sum of the `annotate`, `interpret` and `summarize` `cost_usd` in the run's `manifest.json` (decode and OCR are free; the outline call in `runs/v2/grouponly-100`, $0.02, is not in its bar, as in the hold-out report's cost table).
 
@@ -113,7 +132,9 @@ The same four figures are the "build per video" column of `docs/results/compare-
 
 Voice-over: "On the hold-out video the owner's default index costs about nine dollars to build, the full second reading eleven and a half, and no annotation three; all four answer every question."
 
-## 8. `us-vs-gemini-holdout.png`: the hold-out video, the pipeline against Gemini asked directly
+## 8. `us-vs-gemini-holdout.png`: Scry against Gemini on the same session, same questions
+
+On the chart the video is called "a four-minute session" (title "Scry against Gemini on the same session, same questions"); the file name and this note keep the hold-out name.
 
 All from `docs/results/compare-gemini/hold-out.md` (Scores; The failed lines, classified; Cost and time).
 
