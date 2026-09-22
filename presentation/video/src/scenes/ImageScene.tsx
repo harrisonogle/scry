@@ -32,13 +32,13 @@ export const ImageScene: React.FC<{src: string; caption: string; highlights?: Hi
       >
         <Img src={staticFile(`img/${src}`)} style={{width: W, height: H, display: 'block'}} />
         {(highlights ?? []).map((h, i) => {
-          const fadeIn = 0.06;
-          const o = interpolate(
-            p,
-            [h.from, h.from + fadeIn, Math.max(h.from + fadeIn, h.until - fadeIn), h.until],
-            [0, 1, 1, 0],
-            {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.inOut(Easing.quad)},
-          );
+          // Fade over 6 % of the scene at each end, or less when the window is short (the range must stay increasing).
+          const fade = Math.min(0.06, (h.until - h.from) * 0.4);
+          const o = interpolate(p, [h.from, h.from + fade, h.until - fade, h.until], [0, 1, 1, 0], {
+            extrapolateLeft: 'clamp',
+            extrapolateRight: 'clamp',
+            easing: Easing.inOut(Easing.quad),
+          });
           const [x, y, w, hh] = h.rect;
           return (
             <div

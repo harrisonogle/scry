@@ -25,7 +25,7 @@
             "label": "Scry vs Gemini, same session, same questions"
           },
           {
-            "value": "index once for about 75¢, then cents a question",
+            "value": "index once for about 75¢, then 6¢ a question",
             "label": "open model, one four-minute session"
           },
           {
@@ -45,8 +45,8 @@
         "kind": "image",
         "src": "us-vs-gemini-holdout.png"
       },
-      "caption": "The same five questions about the same session: Scry 5 of 5 in every configuration, Gemini direct 3 of 5",
-      "voice": "Asked the same five questions about the same session, Gemini answered three. Scry answered all five, every string exact, in every configuration. Across both videos, Gemini read the exact strings wrong half the time and invented commands that never ran."
+      "caption": "The same five questions about the same session: Scry 5 of 5 in every configuration, Gemini direct 3 of 5 at 6¢ a question",
+      "voice": "Asked the same five questions about the same session, Gemini answered three, at six cents a question. Scry answered all five, every string exact, in every configuration."
     },
     {
       "id": "holdout-cost-per-config",
@@ -65,8 +65,8 @@
         "kind": "image",
         "src": "local-vs-api.png"
       },
-      "caption": "An open 27B model: $0.0094 a frame against the API's $0.109, 11.6 times cheaper; about 75¢ for the whole session, extrapolated from 22 of 80 frames; 5 of 5 questions on the span",
-      "voice": "An open 27-billion-parameter model indexed a span of it end to end for a twelfth of the price, about 75 cents for the whole session, and answered five of five questions about that span. After that, every question costs cents and seconds."
+      "caption": "$0.0094 a frame against $0.109; about 75¢ a session (22 of 80 frames); then 6¢ a question with a Sonnet agent, 5 of 5",
+      "voice": "An open 27-billion-parameter model indexed a span of it end to end for a twelfth of the price, about 75 cents for the whole session. Then every question costs six cents, and it answered five of five."
     },
     {
       "id": "demo",
@@ -199,7 +199,7 @@
         ]
       },
       "caption": "An assistant that never saw the session asks over Scry's MCP server: questions 4 to 6 of 16",
-      "voice": "An AI assistant that has never seen the session is asked what happened, over Scry's MCP server. What was entered in the form: every field, read from frame 21, each value with its box. Did each save succeed: the toast and the row count, cited box by box. Sixteen questions in a row. Not one wrong answer. Not one invented fact."
+      "voice": "An AI assistant that has never seen the session is asked what happened, over Scry's MCP server. What was entered in the form: every field, read from frame 21, each value with its box. Which profiles got the endpoint, in what order. Did each save succeed: the toast and the row count, cited box by box. Sixteen questions in a row. Not one wrong answer. Not one invented fact."
     },
     {
       "id": "frame",
@@ -242,40 +242,62 @@
       "id": "pipeline",
       "visual": {
         "kind": "image",
-        "src": "pipeline.png",
+        "src": "index-hierarchy.png",
         "highlights": [
           {
             "rect": [
-              0.039,
-              0.229,
-              0.622,
-              0.268
+              0.155,
+              0.6,
+              0.82,
+              0.195
             ],
-            "from": 0.03,
-            "until": 0.36,
+            "from": 0.04,
+            "until": 0.3,
             "color": "blue"
           },
           {
             "rect": [
-              0.039,
-              0.578,
-              0.622,
-              0.265
+              0.155,
+              0.48,
+              0.82,
+              0.052
             ],
-            "from": 0.38,
-            "until": 0.62,
+            "from": 0.31,
+            "until": 0.54,
             "color": "orange"
           },
           {
             "rect": [
-              0.685,
-              0.46,
-              0.278,
-              0.18
+              0.155,
+              0.338,
+              0.82,
+              0.075
             ],
-            "from": 0.64,
-            "until": 0.97,
+            "from": 0.56,
+            "until": 0.68,
             "color": "blue"
+          },
+          {
+            "rect": [
+              0.155,
+              0.256,
+              0.82,
+              0.072
+            ],
+            "from": 0.69,
+            "until": 0.8,
+            "color": "blue"
+          },
+          {
+            "rect": [
+              0.155,
+              0.156,
+              0.82,
+              0.088
+            ],
+            "from": 0.81,
+            "until": 0.96,
+            "color": "orange"
           }
         ]
       },
