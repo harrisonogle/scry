@@ -13,6 +13,7 @@ from typing import Callable, Literal
 from scry.config import Config
 from scry.evaluation.matrix import Matrix, RunSpec, config_for, expand
 from scry.jsonl import sha256_obj
+from scry.read import read_config_hash
 from scry.run import Run
 from scry.subset import make_subset
 
@@ -104,8 +105,11 @@ def check_copy(m: Matrix, spec: RunSpec) -> dict:
 
 def materialise(m: Matrix, spec: RunSpec, root: Path, identity: dict) -> Run:
     """The run directory `root/<phase>/<name>`: derived from the matrix's source with a private, empty call cache, or
-    reused when it was made from the same spec. Nothing is written under the source. A spec that copies a pipeline
-    gets every file of that finished run but NOT_PIPELINE, byte for byte, and is never cold; nothing is written there."""
+    reused when it was made from the same spec. Nothing is written under the source. The source's OCR comes along when
+    the run's [read] hashes as the source's (`ocr_imported_from` in its state; scry.subset.import_ocr): `read` then
+    finds itself up to date, and the run is as cold as ever, cold being about model answers and caches. A spec that
+    copies a pipeline gets every file of that finished run but NOT_PIPELINE, byte for byte, and is never cold; nothing
+    is written there."""
     out = Path(root) / spec.phase / spec.name
     state = out / "evalrun.json"
     spec_hash = _spec_hash(spec)
@@ -121,7 +125,8 @@ def materialise(m: Matrix, spec: RunSpec, root: Path, identity: dict) -> Run:
         shutil.copytree(src, out, ignore=lambda d, names: [n for n in names if n in NOT_PIPELINE] if Path(d) == src else [])
         run = Run(out)
     else:
-        run = make_subset(m.source, out, spec.span.frames, share_cache=False)
+        run = make_subset(m.source, out, spec.span.frames, share_cache=False, read_config_hash=read_config_hash(cfg))
+    imported = run.manifest_read().get("stages", {}).get("read", {}).get("imported_from") if spec.copy_from is None else None
     cache = run.cache_dir
     _write_json(out / "config.json", cfg.model_dump())
     _write_json(state, {
@@ -129,6 +134,7 @@ def materialise(m: Matrix, spec: RunSpec, root: Path, identity: dict) -> Run:
         "values": spec.values, "repeat": spec.repeat, "overrides": spec.overrides, "stages": list(spec.stages),
         "matrix": str(m.path), "spec_hash": spec_hash, "code": dict(identity),
         **({"copied_from": str(spec.copy_from)} if spec.copy_from is not None else {}),  # the pipeline was not built here
+        **({"ocr_imported_from": imported} if imported else {}),  # the source's boxes.jsonl, restricted to the span
         "cold": spec.copy_from is None and cache.is_dir() and not cache.is_symlink() and not any(cache.iterdir()),
         "started": None, "finished": None, "status": "new", "resumed": False, "seconds": {}, "error": None})
     return run

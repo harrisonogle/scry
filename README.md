@@ -35,7 +35,9 @@ read,track` runs a selection. Beside the stages:
 - `scry report <run-dir> [--frames 155-187] [--ground-truth <list>]` writes what `track` measured, with evidence sheets;
 - `scry eval run|judge|report <matrix.toml>` (the matrices are in `evals/`): `run` executes the matrix's runs, each
   cold in its own directory under `runs/eval/<phase>/` (costs money; `--dry-run` lists the runs, validates every config
-  and spends nothing; `--only <run name>` executes that one run, so several can go side by side); `judge` has a
+  and spends nothing; `--only <run name>` executes that one run, so several can go side by side; a run whose `[read]`
+  is the source's gets the source's `boxes.jsonl` for its frames and skips `read`, OCR being deterministic and no model
+  call: `ocr_imported_from` in its `evalrun.json`); `judge` has a
   separate model call score each answer against its rubric lines; `report` calls no model and writes
   `docs/results/<phase>/report.md` and `scores.json`. A matrix with a `[copy]` table (run name = the directory of a
   finished run) builds nothing: it copies the pipelines of those runs and only asks the questions again, so its only

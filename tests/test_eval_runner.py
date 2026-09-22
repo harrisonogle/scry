@@ -9,19 +9,29 @@ import pytest
 from eval_fixtures import QUESTIONS
 from eval_fixtures import source_run as _source
 
+from scry.config import Config
 from scry.evaluation.matrix import expand, load_matrix
 from scry.evaluation.runner import check_copy, execute, materialise, run_matrix
+from scry.read import read_config_hash, run_read
 from scry.run import Run
 
 IDENTITY = {"git_commit": "abc", "git_dirty": True}
 
 
-def _matrix(tmp_path: Path, src: Run, stages: str, repeats: int):
+def _matrix(tmp_path: Path, src: Run, stages: str, repeats: int, axis: str = ""):
     (tmp_path / "base.toml").write_text("")
     path = tmp_path / "p9.toml"
     path.write_text(f'phase = "p9"\nsource = "{src.root}"\nbase_config = "{tmp_path / "base.toml"}"\n'
-                    f'stages = {stages}\nrepeats = {repeats}\n[spans.smoke]\nframes = "1-2"\n')
+                    f'stages = {stages}\nrepeats = {repeats}\n[spans.smoke]\nframes = "1-2"\n{axis}')
     return load_matrix(path)
+
+
+def _with_ocr(src: Run) -> Run:
+    """The source after a finished `read` with the base config: what every source of a matrix holds."""
+    src.boxes.write_bytes(b"".join(b'{"frame": %d, "png": "frames/%05d.png", "engine": {}, "boxes": []}\n' % (n, n) for n in range(4)))
+    src.stage_done("read", [src.frames], read_config_hash(Config()), frames=4, boxes=0, dropped_empty=0, seconds=8.0,
+                   seconds_per_frame=2.0, engine={})
+    return src
 
 
 def _listing(root: Path):
@@ -55,6 +65,57 @@ def test_materialise_is_cold(tmp_path):
     run.cache_dir.symlink_to(src.cache_dir, target_is_directory=True)
     with pytest.raises(RuntimeError, match="share a call cache"):
         execute(m, spec, root, IDENTITY, stage_funcs={"read": lambda run, cfg: None, "track": lambda run, cfg: None})
+
+
+def test_materialise_imports_the_source_ocr_and_read_skips_itself(tmp_path, monkeypatch):
+    src = _with_ocr(_source(tmp_path))
+    m = _matrix(tmp_path, src, '["read", "track"]', 1)
+    [spec] = expand(m)
+    before = _listing(src.root)
+    root = tmp_path / "eval"
+    run = materialise(m, spec, root, IDENTITY)
+    lines = src.boxes.read_bytes().splitlines(keepends=True)
+    assert run.boxes.read_bytes() == lines[1] + lines[2]
+    assert run.stage_up_to_date("read", [run.frames], read_config_hash(Config()))
+    state = json.loads((run.root / "evalrun.json").read_text())
+    assert state["ocr_imported_from"] == str(src.root) and state["cold"] is True and state["status"] == "new"
+    assert run.cache_dir.is_dir() and not run.cache_dir.is_symlink() and not any(run.cache_dir.iterdir())
+    assert _listing(src.root) == before
+
+    def no_engine(cfg):
+        raise AssertionError("read ran: an OCR engine was built")
+
+    monkeypatch.setattr("scry.read.get_engine", no_engine)  # the real stage, which must find itself up to date
+    tracked = []
+    outcome = execute(m, spec, root, IDENTITY, stage_funcs={"read": run_read, "track": lambda run, cfg: tracked.append(run.root.name)},
+                      clock=_clock())
+    assert (outcome.status, outcome.seconds) == ("done", {"read": 1.5, "track": 1.5})
+    assert tracked == ["smoke-r1"]
+    assert run.boxes.read_bytes() == lines[1] + lines[2]  # untouched
+    state = json.loads((run.root / "evalrun.json").read_text())
+    assert state["ocr_imported_from"] == str(src.root) and state["status"] == "done"
+
+
+def test_read_runs_as_before_when_its_config_differs_or_the_source_was_never_read(tmp_path):
+    root = tmp_path / "eval"
+    src = _with_ocr(_source(tmp_path))
+    m = _matrix(tmp_path, src, '["read"]', 1, '[axis.read.gap]\n"read.gap_ratio" = 0.3\n')
+    [spec] = expand(m)
+    assert spec.name == "smoke-gap-r1" and spec.overrides == {"read.gap_ratio": 0.3}
+    run = materialise(m, spec, root, IDENTITY)
+    assert not run.boxes.exists() and "read" not in run.manifest_read()["stages"]
+    state = json.loads((run.root / "evalrun.json").read_text())
+    assert "ocr_imported_from" not in state and state["cold"] is True
+    read_calls = []
+    outcome = execute(m, spec, root, IDENTITY, stage_funcs={"read": lambda run, cfg: read_calls.append(cfg.read.gap_ratio)}, clock=_clock())
+    assert outcome.status == "done" and read_calls == [0.3]
+
+    never_read = _source(tmp_path / "unread")
+    m = _matrix(tmp_path, never_read, '["read"]', 1)
+    [spec] = expand(m)
+    run = materialise(m, spec, root, IDENTITY)
+    assert not run.boxes.exists() and "read" not in run.manifest_read()["stages"]
+    assert "ocr_imported_from" not in json.loads((run.root / "evalrun.json").read_text())
 
 
 def test_failed_run_is_resumed_and_finished_runs_are_skipped(tmp_path):
