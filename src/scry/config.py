@@ -78,6 +78,10 @@ class AnnotateConfig(BaseModel):
     mode: Literal["every_frame", "incremental", "off"] = "incremental"
     transcribe: bool = True  # true: the call also returns a second reading (texts, missed); false: group-only
     scale: float = Field(1.0, gt=0, le=1)  # factor applied to every image sent; tags keep their pixel size
+    # how the call refers to a box. "ids": the clean frame plus a second image with every box tagged with a number, and
+    # the answer names boxes by id. "coords": the clean frame alone, every box listed as a rectangle in the unscaled
+    # frame, and the answer names a box by a point inside it, which code snaps to the box (no id in either direction).
+    reference: Literal["ids", "coords"] = "ids"
 
 
 class OverlayConfig(BaseModel):
