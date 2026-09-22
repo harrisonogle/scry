@@ -1,5 +1,6 @@
 import base64
 import io
+import re
 from pathlib import Path
 
 import pytest
@@ -75,6 +76,7 @@ def test_every_frame_arm_a_end_to_end(tmp_path: Path):
     for n in (0, 1):
         assert Image.open(run.overlays_dir / f"{n:05d}.png").size == (128, 64)
     m = _entry(run)
+    assert (m["mode"], m["reference"], m["arm"]) == ("every_frame", "ids", "A")
     assert (m["frames"], m["calls"], m["boxes"], m["targets"]) == (2, 2, 4, 4)
     assert (m["errors"], m["transient_errors"], m["usage_lost"]) == (0, 0, 0)
     assert m["mark_match"] == {"hits": 2, "total": 4}  # "a" against "a" is 1.0; "B" against "b" is 0.0
@@ -238,3 +240,95 @@ def test_mark_match():
     nothing = [Annotation(frame=12, targets=["b1"], texts=[TextReading(box="b1", text="")], model="m", prompt_version="v"),
                Annotation(frame=12, targets=["b1"], texts=None, model="m", prompt_version="v")]
     assert mark_match(nothing, frames) == (0, 0)
+
+
+# ---------- reference = "coords": one image, rectangles out and back; downstream sees ids ----------
+def _rect(box) -> list[int]:
+    return list(box.bbox)
+
+
+def coords_answer_from(record: Annotation, boxes, kw: dict):
+    """A stored record's content as a coords answer: every box id replaced by that box's rectangle on its frame."""
+    at = {b.id: _rect(b) for b in boxes[record.frame].boxes}
+    links = {"run": [], "pair": [], "record": []}
+    for l in record.links:
+        if l.kind == "run":
+            links["run"].append({"boxes": [at[b] for b in l.boxes], "joiner": l.joiner})
+        elif l.kind == "pair":
+            links["pair"].append({"key": [at[b] for b in l.key], "value": [at[b] for b in l.value]})
+        else:
+            links["record"].append({"members": [[at[b] for b in cell] for cell in l.members], "header": [at[b] for b in l.header]})
+    data = {"containers": [c.model_dump(include={"id", "kind", "app", "name", "owner", "covers"}) for c in record.containers],
+            "assign": [{"rect": at[a.box], "container": a.container} for a in record.assign],
+            "unassigned": [at[b] for b in record.unassigned], "runs": links["run"], "pairs": links["pair"], "records": links["record"],
+            "description": record.description}
+    if "texts" in kw["output_model"].model_fields:
+        data |= {"texts": [{"rect": at[t.box], "text": t.text} for t in record.texts],
+                 "missed": [m.model_dump(include={"text", "container"}) for m in record.missed]}
+    return kw["output_model"].model_validate(data)
+
+
+def test_coords_incremental_group_only_end_to_end(tmp_path: Path):
+    frames, boxes, changes, lifetimes = fixture_t()
+    by_frame = {fb.frame: fb for fb in boxes}
+    stored = {10: record_a10(), 11: record_a11()}
+    provider = AnswerProvider(lambda kw: coords_answer_from(stored[call_frame(kw)], by_frame, kw))
+    run = write_run(tmp_path, frames, boxes, changes, lifetimes)
+    run_annotate(run, _cfg(mode="incremental", transcribe=False, reference="coords"), provider)
+    calls = {call_frame(kw): kw for kw in provider.calls}
+    assert sorted(calls) == [10, 11]
+    for kw in calls.values():
+        assert kw["system"] == system_prompt(transcribe=False, reference="coords")
+        assert kw["output_model"] is output_model("A", False, reference="coords")
+        assert kw["prompt_version"] == "annotate-v4+coords+grouponly"
+        assert _image_sizes(kw) == [(400, 200)] and kw["input_hashes"][1] == "-"
+        assert not any(re.search(r"\bb\d+\b", t) for t in _texts(kw))
+    assert "Targets: all boxes." in _texts(calls[10])
+    assert "Targets: 10,10,110,26; 10,100,200,116." in _texts(calls[11])  # b1 and b5 of frame 11, by rectangle
+    assert "Boxes, as x0,y0,x1,y1 in reading order: 10,10,110,26; 10,40,110,56; 130,40,200,56; 10,80,110,96; 10,100,200,116." in _texts(calls[11])
+    assert not run.overlays_dir.exists() or not any(run.overlays_dir.iterdir())  # no overlay drawn
+    records = run.load_annotations()
+    assert [r.frame for r in records] == [10, 11]
+    for got in records:  # the rectangles came back as today's ids: the record is the stored one, but for what group-only lacks
+        want = stored[got.frame]
+        for field in ("targets", "containers", "assign", "unassigned", "links", "description"):
+            assert getattr(got, field) == getattr(want, field), (got.frame, field)
+        assert got.texts is None and got.missed == [] and got.repairs == 0 and got.label_clashes == 0
+    m = _entry(run)
+    assert (m["mode"], m["reference"], m["transcribe"], m["prompt_version"]) == ("incremental", "coords", False, "annotate-v4+coords+grouponly")
+    assert (m["calls"], m["frames"], m["targets"], m["label_clashes"], m["mark_match"]) == (2, 3, 6, 0, None)
+    labels = run.load_labels()  # the join reads ids and knows nothing of the reference mode
+    assert labels.frame(12).links == [PairLink(key=["12:b2"], value=["12:b3"]), RunLink(boxes=["12:b4", "12:b5"], joiner=" ")]
+    assert labels.relinked == 1
+
+
+def test_coords_every_frame_transcribing_at_half_scale(tmp_path: Path):
+    frames, boxes = fixture_e()
+    by_frame = {fb.frame: fb for fb in boxes}
+
+    def answer(kw: dict):
+        at = {b.id: _rect(b) for b in by_frame[call_frame(kw)].boxes}
+        return kw["output_model"].model_validate({
+            "containers": [{"id": "c1", "kind": "window", "app": "x", "name": "w", "owner": None, "covers": []}],
+            "assign": [{"rect": at["b1"], "container": "c1"}, {"rect": [70, 40, 110, 56], "container": "c1"}], "unassigned": [],
+            "runs": [], "pairs": [{"key": [at["b1"]], "value": [[72, 6, 108, 18]]}], "records": [],
+            "texts": [{"rect": at["b1"], "text": "a"}, {"rect": at["b2"], "text": "B"}], "missed": [],
+            "description": f"d{call_frame(kw)}"})
+
+    run, provider = write_run(tmp_path, frames, boxes), AnswerProvider(answer)
+    run_annotate(run, _cfg(scale=0.5, reference="coords"), provider)
+    kw = provider.calls[0]
+    assert kw["prompt_version"] == "annotate-v4+coords+s0.5" and _image_sizes(kw) == [(64, 32)]
+    assert kw["output_model"] is output_model("A", True, reference="coords") and kw["system"] == system_prompt(reference="coords")
+    assert "Coordinates are pixels of the 128x64 frame: top-left origin, x1 and y1 exclusive. The image is scaled by 0.5; " \
+           "every coordinate is in the unscaled 128x64 frame." in _texts(kw)
+    r0 = run.load_annotations()[0]
+    assert [(a.box, a.container) for a in r0.assign] == [("b1", "c1")] and r0.unassigned == ["b2"]
+    assert r0.repair_counts == {"rect_unplaced": 1, "unplaced": 1} and r0.repairs == 2  # 70,40,110,56 is a box height below b2
+    assert r0.links == [PairLink(key=["b1"], value=["b2"])]  # 72,6,108,18 overlaps b2: matched
+    assert r0.texts == [TextReading(box="b1", text="a"), TextReading(box="b2", text="B")]
+    assert (r0.description, r0.prompt_version, r0.label_clashes) == ("d0", "annotate-v4+coords+s0.5", 0)
+    m = _entry(run)
+    assert m["reference"] == "coords" and m["mark_match"] == {"hits": 2, "total": 4}
+    assert m["repair_counts"] == {"rect_unplaced": 2, "unplaced": 2}
+    assert not (run.overlays_dir.exists() and any(run.overlays_dir.iterdir()))

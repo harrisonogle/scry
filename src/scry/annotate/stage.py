@@ -4,7 +4,9 @@ gates a measured record, and every request is built from measured records only, 
 
 An incremental call is the every-frame call with a shorter target list: the same system prompt, schema, images and
 prompt version; in the user turn only the `Targets:` line differs, naming fewer boxes (the sentence that keeps the
-description about the screen is in the shared system prompt, ledger L59). Which frames get a call and which boxes are
+description about the screen is in the shared system prompt, ledger L59). Under `reference = "coords"` the call sends
+the clean frame alone and names boxes by rectangle in both directions; `to_proposal` matches the answer back to ids,
+so nothing after it knows the reference. Which frames get a call and which boxes are
 targets is `plan_calls`' answer, read from track's records alone; what the labels mean at a later frame is the join's
 (`scry.annotate.join`)."""
 from __future__ import annotations
@@ -31,8 +33,10 @@ from scry.textdiff import similarity
 from scry.track.pixels import margin_px
 
 log = logging.getLogger(__name__)
-# The only referencing arm is A, the tagged overlay: arm D was evaluated and removed behind the tag `arm-d-evaluated`
-# (ledger L63); arms B and C were never built. The pane label is an evaluation switch that has not landed.
+# The only referencing arm is A: arm D was evaluated and removed behind the tag `arm-d-evaluated` (ledger L63); arms B
+# and C were never built. How arm A refers to a box is `[annotate] reference`: "ids" (the tagged overlay, answers by box
+# id) or "coords" (no overlay, boxes as rectangles, answers by rectangle). The pane label is an evaluation switch that
+# has not landed.
 ARM, PANE = "A", False
 
 
@@ -55,8 +59,8 @@ def mark_match(annotations: list[Annotation], frames: list[FrameBoxes], threshol
 async def _annotate_all(run: Run, cfg: Config, provider: VlmProvider, frames: dict[int, Frame], boxes: dict[int, FrameBoxes],
                         plans: list[CallPlan]) -> list[Annotation]:
     a = cfg.annotate
-    version = prompt_version(ARM, a.transcribe, PANE, a.scale)
-    system, model = system_prompt(ARM, a.transcribe, PANE), output_model(ARM, a.transcribe, PANE)
+    version = prompt_version(ARM, a.transcribe, PANE, a.scale, a.reference)
+    system, model = system_prompt(ARM, a.transcribe, PANE, a.reference), output_model(ARM, a.transcribe, PANE, a.reference)
     sem = asyncio.Semaphore(cfg.model.concurrency * 2)  # bounds the frames in flight: image payloads are built inside it
 
     async def one(plan: CallPlan) -> Annotation:
@@ -66,16 +70,18 @@ async def _annotate_all(run: Run, cfg: Config, provider: VlmProvider, frames: di
             frame_png = run.root / frame.png
             if not frame_png.exists():
                 return Annotation(**base, error="missing_png")
-            overlay_png = run.overlays_dir / f"{plan.frame:05d}.png"
-            clashes = draw_overlay(frame_png, fb.boxes, overlay_png, cfg.overlay, scale=a.scale)  # every box numbered
-            blocks = build_blocks(frame, fb, plan, ARM, a.scale, frame_png, overlay_png)
+            overlay_png, clashes = None, 0
+            if a.reference == "ids":  # every box numbered; under coords no overlay is drawn or sent
+                overlay_png = run.overlays_dir / f"{plan.frame:05d}.png"
+                clashes = draw_overlay(frame_png, fb.boxes, overlay_png, cfg.overlay, scale=a.scale)
+            blocks = build_blocks(frame, fb, plan, ARM, a.scale, frame_png, overlay_png, a.reference)
             res = await provider.complete(stage="annotate", system=system, blocks=blocks, output_model=model,
                                           effort=cfg.model.effort_annotate, prompt_version=version,
                                           input_hashes=input_hashes(frame, overlay_png, blocks))
         if res.parsed is None:
             return Annotation(**base, label_clashes=clashes, usage=res.usage, error=res.error)
         proposal, converted = to_proposal(ARM, res.parsed, fb.boxes, (frame.width, frame.height),
-                                          margin_px(fb.boxes, [], cfg.track.margin))
+                                          margin_px(fb.boxes, [], cfg.track.margin), a.reference)
         fixed = repair(proposal, plan.targets, [b.id for b in fb.boxes])
         counts = Counter(converted) + Counter(fixed.counts)
         return Annotation(**base, containers=fixed.containers, assign=fixed.assign, links=fixed.links, texts=fixed.texts,
@@ -88,7 +94,7 @@ async def _annotate_all(run: Run, cfg: Config, provider: VlmProvider, frames: di
 def run_annotate(run: Run, cfg: Config, provider: VlmProvider | None = None) -> None:
     a = cfg.annotate
     inputs = [run.frames, run.boxes] + ([run.changes, run.lifetimes] if a.mode == "incremental" else [])
-    version = prompt_version(ARM, a.transcribe, PANE, a.scale)
+    version = prompt_version(ARM, a.transcribe, PANE, a.scale, a.reference)
     ch = config_hash(cfg, "annotate", "model", "overlay", "track") + version
     frames = run.load_frames()
     if a.mode == "off":  # the "no annotation" base: no stale labels to read; the call cache keeps every paid answer
@@ -129,7 +135,7 @@ def run_annotate(run: Run, cfg: Config, provider: VlmProvider | None = None) -> 
     failed = [r for r in records if r.error is not None]
     hits, total = mark_match(records, frame_boxes) if a.transcribe else (0, 0)
     cost = estimate_cost(usage, provider.model, batch=cfg.model.mode == "batch")  # one figure, at the price paid (L52)
-    run.stage_done("annotate", inputs, ch, mode=a.mode, arm=ARM, transcribe=a.transcribe, prompt_version=version,
+    run.stage_done("annotate", inputs, ch, mode=a.mode, reference=a.reference, arm=ARM, transcribe=a.transcribe, prompt_version=version,
                    model=provider.model, frames=len(frames), calls=len(records), skipped_frames=len(frames) - len(records),
                    boxes=sum(len(boxes[r.frame].boxes) for r in records), targets=sum(len(r.targets) for r in records),
                    errors=len(failed), transient_errors=sum(is_transient(r.error) for r in failed),

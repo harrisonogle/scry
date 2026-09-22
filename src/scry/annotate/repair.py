@@ -1,5 +1,6 @@
 """Validation is repair, never abort (spec §6): a bad label is dropped and counted, and the run continues. Every
-dropped item adds 1 to exactly one key: the first check it fails, in the order written here."""
+dropped item adds 1 to exactly one key: the first check it fails, in the order written here. `rect_unplaced` is raised
+before repair, in the conversion (`to_proposal` under reference = "coords"): a rectangle that named no box."""
 from __future__ import annotations
 
 from collections import Counter
@@ -13,7 +14,7 @@ REPAIR_KEYS: tuple[str, ...] = (
     "dup_container", "bad_owner", "bad_covers", "bad_rect", "unknown_box", "not_target", "unknown_container",
     "second_assignment", "unplaced", "outside", "ambiguous", "link_unsnapped", "link_unknown_box", "link_malformed",
     "link_already_linked", "text_unknown_box", "text_not_target", "second_text", "text_missing", "missed_empty",
-    "missed_unknown_container")
+    "missed_unknown_container", "rect_unplaced")
 
 
 @dataclass

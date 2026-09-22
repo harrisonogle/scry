@@ -12,7 +12,7 @@ from scry.annotate.targets import CallPlan
 from scry.jsonl import sha256_file, sha256_obj
 from scry.overlay import scale_image
 from scry.providers import image_block, text_block
-from scry.schemas import Frame, FrameBoxes
+from scry.schemas import Box, Frame, FrameBoxes
 
 
 def frame_block(frame_png: Path, scale: float) -> dict:
@@ -25,26 +25,55 @@ def frame_block(frame_png: Path, scale: float) -> dict:
     return {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": data}}
 
 
+NO_TARGETS = "Targets: none. Label no box: return every list empty and give only the description."
+
+
+def _rect(box: Box) -> str:
+    return ",".join(str(v) for v in box.bbox)
+
+
 def build_blocks(frame: Frame, fb: FrameBoxes, plan: CallPlan, arm: str, scale: float, frame_png: Path,
-                 overlay_png: Path | None) -> list[dict]:
+                 overlay_png: Path | None, reference: str = "ids") -> list[dict]:
+    """The user turn. reference "ids": two images (the clean frame, the numbered overlay) and the boxes and targets by
+    id. reference "coords": the clean frame alone, every box and every target as a rectangle x0,y0,x1,y1 in the
+    unscaled frame, and no id anywhere (the answer names boxes by points). The targets line is the only thing an
+    incremental call changes; a call with no target is still made, for the description: said outright, or the model
+    labels every box anyway."""
     if arm != "A":
         raise ValueError(f"no user turn for arm {arm!r}")
+    if reference not in ("ids", "coords"):
+        raise ValueError(f"no user turn for reference {reference!r}")
+    coords = reference == "coords"
+    by_id = {b.id: b for b in fb.boxes}
+    name = (lambda ids: "; ".join(_rect(by_id[i]) for i in ids)) if coords else (lambda ids: ", ".join(ids))
     ids = [b.id for b in fb.boxes]
-    if not plan.targets:  # the call is still made, for the description; said outright, or the model labels every box anyway
-        targets = "Targets: none. Label no box: return every list empty and give only the description."
+    if not plan.targets:
+        targets = NO_TARGETS
     elif list(plan.targets) == ids:
         targets = "Targets: all boxes."
     else:
-        targets = f"Targets: {', '.join(plan.targets)}."
-    blocks = [
-        text_block(f"Image 1 (clean frame {frame.frame}, t={frame.t_settled:.2f}s):"), frame_block(frame_png, scale),
-        text_block("Image 2 (same frame with numbered boxes):"), image_block(overlay_png),
-        text_block(f"Boxes: {', '.join(ids)}." if ids else "Boxes: none."),
-        text_block(targets),
-    ]
+        targets = f"Targets: {name(plan.targets)}."
+    if coords:
+        w, h = frame.width, frame.height
+        where = f"Coordinates are pixels of the {w}x{h} frame: top-left origin, x1 and y1 exclusive."
+        if scale != 1.0:
+            where += f" The image is scaled by {scale:g}; every coordinate is in the unscaled {w}x{h} frame."
+        blocks = [
+            text_block(f"Screenshot (frame {frame.frame}, t={frame.t_settled:.2f}s):"), frame_block(frame_png, scale),
+            text_block(where),
+            text_block(f"Boxes, as x0,y0,x1,y1 in reading order: {name(ids)}." if ids else "Boxes: none."),
+            text_block(targets),
+        ]
+    else:
+        blocks = [
+            text_block(f"Image 1 (clean frame {frame.frame}, t={frame.t_settled:.2f}s):"), frame_block(frame_png, scale),
+            text_block("Image 2 (same frame with numbered boxes):"), image_block(overlay_png),
+            text_block(f"Boxes: {name(ids)}." if ids else "Boxes: none."),
+            text_block(targets),
+        ]
     animating = [b.id for b in fb.boxes if b.in_churn]
     if animating:
-        blocks.append(text_block(f"Boxes inside animating areas (low confidence): {', '.join(animating)}."))
+        blocks.append(text_block(f"Boxes inside animating areas (low confidence): {name(animating)}."))
     if not frame.settled:
         blocks.append(text_block("This frame was captured while the screen was still changing (not settled)."))
     blocks.append(text_block("Return the JSON object."))

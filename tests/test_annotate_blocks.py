@@ -1,5 +1,6 @@
 import base64
 import io
+import re
 from pathlib import Path
 
 from annotate_fixtures import fb, fixture_e, frame, mk
@@ -108,3 +109,54 @@ def test_input_hashes(tmp_path: Path):
     redrawn = hashes(("b1", "b2"))
     assert redrawn[0] == base[0] and redrawn[1] != base[1] and redrawn[2] == base[2]
     assert hashes(("b1", "b2"), overlay=None)[1] == "-"
+
+
+# ---------- reference = "coords": no overlay, no box id in either direction ----------
+COORDS = "Coordinates are pixels of the 128x64 frame: top-left origin, x1 and y1 exclusive."
+BOX_ID = re.compile(r"\bb\d+\b")
+
+
+def test_coords_blocks(tmp_path: Path):
+    frames, boxes = fixture_e()
+    frame_png, _ = _pngs(tmp_path)
+    blocks = build_blocks(frames[0], boxes[0], CallPlan(0, ("b1", "b2")), "A", 1.0, frame_png, None, reference="coords")
+    assert [b["type"] for b in blocks] == ["text", "image", "text", "text", "text", "text"]
+    assert _texts(blocks) == ["Screenshot (frame 0, t=0.00s):", COORDS,
+                              "Boxes, as x0,y0,x1,y1 in reading order: 4,4,40,20; 70,4,110,20.", "Targets: all boxes.",
+                              "Return the JSON object."]
+    assert blocks[1]["source"]["data"] == base64.standard_b64encode(frame_png.read_bytes()).decode()  # the clean frame, as it is
+    empty = build_blocks(frames[0], fb(0, []), CallPlan(0, ()), "A", 1.0, frame_png, None, reference="coords")
+    assert _texts(empty)[2:4] == ["Boxes: none.", NO_TARGETS]
+    churn = fb(0, [mk("b1", 4, 4, 40, 20, "a", in_churn=True), mk("b2", 70, 4, 110, 20, "b")])
+    partial = build_blocks(frame(0, 128, 64, settled=False), churn, CallPlan(0, ("b2",)), "A", 1.0, frame_png, None, reference="coords")
+    assert _texts(partial)[2:] == ["Boxes, as x0,y0,x1,y1 in reading order: 4,4,40,20; 70,4,110,20.", "Targets: 70,4,110,20.",
+                                   "Boxes inside animating areas (low confidence): 4,4,40,20.",
+                                   "This frame was captured while the screen was still changing (not settled).",
+                                   "Return the JSON object."]
+    for turn in (blocks, empty, partial):
+        assert not any(BOX_ID.search(t) for t in _texts(turn))  # no id anywhere: the answer comes back as points
+
+
+def test_coords_at_half_scale(tmp_path: Path):
+    frames, boxes = fixture_e()
+    frame_png, _ = _pngs(tmp_path)
+    before = sorted(p.name for p in tmp_path.iterdir())
+    half = build_blocks(frames[0], boxes[0], CallPlan(0, ("b2",)), "A", 0.5, frame_png, None, reference="coords")
+    assert Image.open(io.BytesIO(base64.standard_b64decode(half[1]["source"]["data"]))).size == (64, 32)
+    assert _texts(half) == ["Screenshot (frame 0, t=0.00s):",
+                            COORDS + " The image is scaled by 0.5; every coordinate is in the unscaled 128x64 frame.",
+                            "Boxes, as x0,y0,x1,y1 in reading order: 4,4,40,20; 70,4,110,20.", "Targets: 70,4,110,20.",
+                            "Return the JSON object."]  # the rectangles stay in the unscaled frame
+    assert sorted(p.name for p in tmp_path.iterdir()) == before  # nothing written: no overlay, no scaled frame
+
+
+def test_coords_sends_no_overlay_and_no_ocr_text(tmp_path: Path):
+    frames, _ = fixture_e()
+    frame_png, _ = _pngs(tmp_path)
+    boxes = fb(0, [mk("b1", 4, 4, 40, 20, "SECRET-A"), mk("b2", 70, 4, 110, 20, "SECRET-B")])
+    blocks = build_blocks(frames[0], boxes, CallPlan(0, ("b1", "b2")), "A", 1.0, frame_png, None, reference="coords")
+    assert not any("SECRET" in t for t in _texts(blocks))
+    hashes = input_hashes(frames[0], None, blocks)
+    assert hashes[0] == "sha-0" and hashes[1] == "-"
+    fewer = build_blocks(frames[0], boxes, CallPlan(0, ("b2",)), "A", 1.0, frame_png, None, reference="coords")
+    assert input_hashes(frames[0], None, fewer)[2] != hashes[2]  # the targets line is in the hashed text

@@ -40,6 +40,7 @@ margin = 0.5
 mode = "incremental"
 transcribe = true
 scale = 1.0
+reference = "ids"  # "ids": numbered overlay, answers by box id; "coords": boxes as rectangles, answers by the box's rectangle
 
 [interpret]
 images = "scaled"

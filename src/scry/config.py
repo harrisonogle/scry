@@ -72,12 +72,17 @@ class AnnotateConfig(BaseModel):
     # "incremental": the first frame and every frame whose incoming transition changed pixels, the targets being the
     # boxes whose lifetime starts there or continues there by a move; "off": the "no annotation" base. [model] mode =
     # "batch" works with each.
-    # There is no `arm` key: the only referencing arm is A, the tagged overlay. Arm D was evaluated and removed behind the
-    # tag `arm-d-evaluated` (ledger L63); arms B and C, which incremental annotation does not serve, were never built.
+    # There is no `arm` key: the only referencing arm is A; `reference` below says how it names a box. Arm D was evaluated
+    # and removed behind the tag `arm-d-evaluated` (ledger L63); arms B and C, which incremental annotation does not
+    # serve, were never built.
     # The default is the working default of ledger L59 (incremental, transcribing), for the owner to confirm.
     mode: Literal["every_frame", "incremental", "off"] = "incremental"
     transcribe: bool = True  # true: the call also returns a second reading (texts, missed); false: group-only
     scale: float = Field(1.0, gt=0, le=1)  # factor applied to every image sent; tags keep their pixel size
+    # how the call refers to a box. "ids": the clean frame plus a second image with every box tagged with a number, and
+    # the answer names boxes by id. "coords": the clean frame alone, every box listed as a rectangle in the unscaled
+    # frame, and the answer names a box by its rectangle, which code matches back to the box (no id in either direction).
+    reference: Literal["ids", "coords"] = "ids"
 
 
 class OverlayConfig(BaseModel):

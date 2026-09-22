@@ -97,3 +97,12 @@ def test_a_copy_table_names_the_runs_and_where_each_pipeline_comes_from(tmp_path
         _matrix(tmp_path, COPY.replace("span2-big-m050-r1 =", "span2-big-r1 ="))
     with pytest.raises(ValueError, match="stages"):  # a copied pipeline is never rebuilt: only the questions are asked
         _matrix(tmp_path, COPY.replace('stages = ["ask"]', 'stages = ["index", "ask"]'))
+
+
+def test_an_annotate_reference_entry_reaches_the_config(tmp_path):
+    coords = MATRIX.replace('"model.max_tokens" = 16000', '"model.max_tokens" = 16000\n"annotate.reference" = "coords"')
+    m = _matrix(tmp_path, coords)
+    by_name = {s.name: s for s in expand(m)}
+    big, small = by_name["smoke-big-m050-r1"], by_name["smoke-small-m050-r1"]
+    assert big.overrides["annotate.reference"] == "coords" and "annotate.reference" not in small.overrides
+    assert config_for(m, big).annotate.reference == "coords" and config_for(m, small).annotate.reference == "ids"

@@ -26,6 +26,7 @@ def test_repo_toml_loads():
     cfg = load_config(REPO / "scry.toml")
     assert cfg.read.engine == "rapid"
     assert (cfg.annotate.mode, cfg.annotate.transcribe) == ("incremental", True)  # the working default (ledger L59)
+    assert cfg.annotate.reference == "ids"  # the tagged overlay and box ids: today's call, byte for byte
     assert cfg.model.effort_annotate == "low"
     assert cfg.interpret.images == "scaled"
     assert cfg.ask.max_turns == 12 and cfg.ask.frames is True and cfg.ask.model == ""
@@ -43,6 +44,16 @@ def test_stage_sections_defaults():
     for mode in ("text", "crops"):
         with pytest.raises(pydantic.ValidationError):
             Config.model_validate({"interpret": {"images": mode}})
+
+
+def test_annotate_reference_key():
+    """How the call refers to boxes: "ids" (the numbered overlay, answers by box id) or "coords" (no overlay, the boxes
+    listed as rectangles, answers by a point inside the box); nothing else."""
+    assert Config().annotate.reference == "ids"
+    assert Config.model_validate({"annotate": {"reference": "coords"}}).annotate.reference == "coords"
+    for bad in ("boxes", "C", "", "IDS"):
+        with pytest.raises(pydantic.ValidationError):
+            Config.model_validate({"annotate": {"reference": bad}})
 
 
 def test_ask_frames_is_in_no_pipeline_stage_hash():
