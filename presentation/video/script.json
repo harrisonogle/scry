@@ -32,8 +32,8 @@
         "from": 0,
         "to": 79,
         "pad": 2,
-        "width": 2048,
-        "height": 1080,
+        "width": 1280,
+        "height": 675,
         "layout": "side",
         "questions": [
           "What was entered in the form?",
@@ -41,7 +41,8 @@
           "Did each save succeed?",
           "What was the query, line by line?",
           "Did anything get deleted?"
-        ]
+        ],
+        "ext": "jpg"
       },
       "caption": "a four-minute Azure portal session",
       "voice": "Here is a four-minute session in the Azure portal. Someone who never watched it wants to know what happened: what was typed into the form, which profiles were changed, whether each save went through, what the query said, whether anything was deleted."
@@ -261,8 +262,8 @@
         "from": 12,
         "to": 31,
         "pad": 2,
-        "width": 2048,
-        "height": 1080,
+        "width": 1280,
+        "height": 675,
         "layout": "full"
       },
       "caption": "1. Read: OCR boxes on every piece of text, full resolution",
@@ -276,8 +277,8 @@
         "from": 12,
         "to": 31,
         "pad": 2,
-        "width": 2048,
-        "height": 1080,
+        "width": 1280,
+        "height": 675,
         "layout": "full"
       },
       "caption": "2. Track: what appeared, changed or vanished between frames; every text gets a lifetime",
@@ -291,8 +292,8 @@
         "from": 12,
         "to": 31,
         "pad": 2,
-        "width": 2048,
-        "height": 1080,
+        "width": 1280,
+        "height": 675,
         "layout": "full"
       },
       "caption": "3. Label: windows, popups, and which label goes with which value",
@@ -306,8 +307,8 @@
         "from": 12,
         "to": 31,
         "pad": 2,
-        "width": 2048,
-        "height": 1080,
+        "width": 1280,
+        "height": 675,
         "layout": "full"
       },
       "caption": "4. Interpret: what each change did, and whether it was submitted",
@@ -322,67 +323,67 @@
           {
             "rect": [
               0.155,
-              0.6,
+              0.622,
               0.82,
-              0.195
+              0.169
             ],
-            "from": 0.05,
-            "until": 0.3,
+            "from": 0.2,
+            "until": 0.32,
             "color": "blue"
           },
           {
             "rect": [
               0.155,
-              0.535,
+              0.556,
               0.82,
-              0.045
+              0.04
             ],
-            "from": 0.31,
+            "from": 0.33,
             "until": 0.42,
             "color": "orange"
           },
           {
             "rect": [
               0.155,
-              0.48,
+              0.484,
               0.82,
-              0.052
+              0.058
             ],
             "from": 0.43,
-            "until": 0.58,
+            "until": 0.57,
             "color": "orange"
           },
           {
             "rect": [
               0.155,
-              0.338,
+              0.351,
               0.82,
-              0.075
+              0.071
             ],
-            "from": 0.59,
-            "until": 0.68,
+            "from": 0.58,
+            "until": 0.65,
             "color": "blue"
           },
           {
             "rect": [
               0.155,
-              0.256,
+              0.271,
               0.82,
-              0.072
+              0.065
             ],
-            "from": 0.69,
-            "until": 0.78,
+            "from": 0.66,
+            "until": 0.73,
             "color": "blue"
           },
           {
             "rect": [
               0.155,
-              0.156,
+              0.16,
               0.82,
-              0.088
+              0.076
             ],
-            "from": 0.79,
-            "until": 0.97,
+            "from": 0.74,
+            "until": 0.86,
             "color": "orange"
           }
         ]

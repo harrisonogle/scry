@@ -23,6 +23,7 @@ export type Visual =
       from: number;
       to: number;
       pad?: number;
+      ext?: string;
       width?: number;
       height?: number;
       layout?: 'full' | 'side';

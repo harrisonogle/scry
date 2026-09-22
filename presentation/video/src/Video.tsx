@@ -26,6 +26,7 @@ const SceneBody: React.FC<{scene: ResolvedScene}> = ({scene}) => {
           from={v.from}
           to={v.to}
           pad={v.pad}
+          ext={v.ext}
           width={v.width}
           height={v.height}
           layout={v.layout}

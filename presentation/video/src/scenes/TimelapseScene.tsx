@@ -9,6 +9,7 @@ type Props = {
   from: number;
   to: number;
   pad?: number;
+  ext?: string;
   width?: number;
   height?: number;
   layout?: 'full' | 'side';
@@ -18,7 +19,7 @@ type Props = {
 
 // A sequence of stills played once across the scene (its rate follows the voice-over's length), letterboxed
 // in a framed box; layout 'side' lists the questions beside it, appearing one by one.
-export const TimelapseScene: React.FC<Props> = ({dir, from, to, pad, width, height, layout, questions, caption}) => {
+export const TimelapseScene: React.FC<Props> = ({dir, from, to, pad, ext, width, height, layout, questions, caption}) => {
   const frame = useCurrentFrame();
   const {durationInFrames, fps} = useVideoConfig();
   const q = interpolate(frame, [FADE_FRAMES, durationInFrames - FADE_FRAMES], [0, 1], {
@@ -50,7 +51,7 @@ export const TimelapseScene: React.FC<Props> = ({dir, from, to, pad, width, heig
           boxShadow: '0 16px 48px rgba(0,0,0,0.22)',
         }}
       >
-        <Img src={staticFile(`img/${dir}/${name}.png`)} style={{width: boxW, height: boxH, display: 'block', objectFit: 'contain'}} />
+        <Img src={staticFile(`img/${dir}/${name}.${ext ?? 'png'}`)} style={{width: boxW, height: boxH, display: 'block', objectFit: 'contain'}} />
         <div
           style={{
             position: 'absolute',
