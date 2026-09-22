@@ -7,6 +7,8 @@ import {CloseCard} from './scenes/CloseCard';
 import {ImageScene} from './scenes/ImageScene';
 import {FrameScene} from './scenes/FrameScene';
 import {TerminalScene} from './scenes/TerminalScene';
+import {CardScene} from './scenes/CardScene';
+import {TimelapseScene} from './scenes/TimelapseScene';
 
 import {FADE_FRAMES} from './theme';
 
@@ -14,7 +16,24 @@ const SceneBody: React.FC<{scene: ResolvedScene}> = ({scene}) => {
   const v = scene.visual;
   switch (v.kind) {
     case 'title':
-      return <TitleCard headline={v.headline} tiles={v.tiles} footnote={v.footnote} />;
+      return <TitleCard headline={v.headline} tiles={v.tiles ?? []} footnote={v.footnote} />;
+    case 'card':
+      return <CardScene heading={v.heading} tiles={v.tiles} note={v.note} caption={scene.caption} />;
+    case 'timelapse':
+      return (
+        <TimelapseScene
+          dir={v.dir}
+          from={v.from}
+          to={v.to}
+          pad={v.pad}
+          ext={v.ext}
+          width={v.width}
+          height={v.height}
+          layout={v.layout}
+          questions={v.questions}
+          caption={scene.caption}
+        />
+      );
     case 'close':
       return <CloseCard caption={scene.caption} lines={v.lines} />;
     case 'image':

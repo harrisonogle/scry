@@ -1,15 +1,16 @@
 {
-  "version": 3,
+  "version": 4,
   "fps": 30,
   "width": 1920,
   "height": 1080,
   "padSeconds": 0.6,
   "maxSeconds": 118.0,
   "_notes": [
-    "Every word and number on screen or in the voice-over lives in this file; a scene marked draft:true carries numbers or wording not yet frozen.",
+    "Every word and number on screen or in the voice-over lives in this file.",
     "maxSeconds is the platform's ceiling for the rendered MP4 including every pad; the composition refuses to build and stills.mjs fails loudly when the scenes exceed it.",
     "Scenes marked optional:true are dropped automatically while their image is missing from public/img (run assets.sh after docs/presentation/ changes).",
     "Scene duration = the voice file's length + padSeconds; voice.sh regenerates public/voice/<id>.wav from the voice lines below.",
+    "timelapse: public/img/<dir>/NN.png from `from` to `to`, played once across the scene, so the frame rate follows the voice line; assets.sh copies docs/presentation/session and docs/presentation/stages, placeholders.sh builds stand-ins from a run directory.",
     "Terminal blocks: cmd (the host's question, typed), note (assistant prose), call (a scry tool call with trimmed result lines), answer (markdown-ish: **bold**, `code`, ## heading; a leading 4-space indent keeps the line in place), meta (a dim footer line). keyCitations are drawn orange, every other id blue.",
     "Frame cut-in: src is the image in docs/presentation/, width/height its pixel size, zoom the point (image pixels) the slow zoom moves towards and the final scale (the view never leaves the image), labels are pinned to image pixels and drawn in screen space."
   ],
@@ -18,55 +19,33 @@
       "id": "title",
       "visual": {
         "kind": "title",
-        "headline": "Screen recordings you can search.",
-        "tiles": [
-          {
-            "value": "5 of 5 vs 3 of 5",
-            "label": "Scry vs Gemini, same session, same questions"
-          },
-          {
-            "value": "index once for about 75¢, then about 15¢ a question",
-            "label": "open model, one four-minute session"
-          },
-          {
-            "value": "every claim cited",
-            "label": "frame, box, second"
-          }
-        ],
-        "footnote": "open model, one four-minute session; open-model figure extrapolated from 22 of 80 frames"
+        "headline": "Screen recordings you can search."
       },
       "caption": "Screen recordings you can search",
-      "voice": "Scry turns any screen recording into a searchable, hierarchical index of what happened on screen, at every level of detail. Every answer cites the frame, the box and the second. It beats Gemini's new video-to-text on exactness, and building the index costs under a dollar per session with an open model."
+      "voice": "Scry turns a screen recording into a hierarchical index of what happened on screen, and any AI agent can ask it questions over MCP."
     },
     {
-      "id": "us-vs-gemini-holdout",
-      "optional": true,
+      "id": "session",
       "visual": {
-        "kind": "image",
-        "src": "us-vs-gemini-holdout.png"
+        "kind": "timelapse",
+        "dir": "session",
+        "from": 0,
+        "to": 79,
+        "pad": 2,
+        "width": 1280,
+        "height": 675,
+        "layout": "side",
+        "questions": [
+          "What was entered in the form?",
+          "Which profiles got the endpoint, in what order?",
+          "Did each save succeed?",
+          "What was the query, line by line?",
+          "Did anything get deleted?"
+        ],
+        "ext": "jpg"
       },
-      "caption": "The same five questions about the same session: Scry 5 of 5 in every configuration, Gemini direct 3 of 5 at 6¢ a question",
-      "voice": "Asked the same five questions about the same session, Gemini answered three, at six cents a question. Scry answered all five, every string exact, in every configuration."
-    },
-    {
-      "id": "holdout-cost-per-config",
-      "optional": true,
-      "visual": {
-        "kind": "image",
-        "src": "holdout-cost-per-config.png"
-      },
-      "caption": "Indexing this four-minute session: $9.32 with the default settings, $2.94 to $11.42 across the four configurations",
-      "voice": "Indexing this four-minute session cost nine dollars on Claude."
-    },
-    {
-      "id": "local-vs-api",
-      "optional": true,
-      "visual": {
-        "kind": "image",
-        "src": "local-vs-api.png"
-      },
-      "caption": "$0.0094 a frame against $0.109; about 75¢ a session (22 of 80 frames); 5 of 5 questions on the span; then about 15¢ a question with a Sonnet agent",
-      "voice": "An open 27-billion-parameter model indexed a span of it end to end for a twelfth of the price, about 75 cents for the whole session, and its index answered five of five questions about that span. After that, every question costs about fifteen cents."
+      "caption": "a four-minute Azure portal session",
+      "voice": "Here is a four-minute session in the Azure portal. Someone who never watched it wants to know what happened: what was typed into the form, which profiles were changed, whether each save went through, what the query said, whether anything was deleted."
     },
     {
       "id": "demo",
@@ -91,7 +70,7 @@
             "name": "get_transitions",
             "args": "video=\"v2/grouponly-100\", t_a=41, t_b=64",
             "results": [
-              "T14   frames 13–14, 38.4–41.4 s   \"No user action is evident; the Endpoints blade finished loading.\"   a table with one row: ap.endpoint, Enabled, Degraded, External endpoint, weight 100   …"
+              "T14   f13→f14, 38.4–41.4 s   \"No user action is evident; the Endpoints blade finished loading.\"   a table with one row: ap.endpoint, Enabled, Degraded, External endpoint, weight 100   …"
             ]
           },
           {
@@ -135,7 +114,7 @@
             "name": "get_transitions",
             "args": "video=\"v2/grouponly-100\", t_a=122, t_b=152",
             "results": [
-              "T42   frames 41–42, 121.1–123.5 s   \"The user switched browser tabs — clicking back to the 'Add endpoint' tab showing the EU01 Traffic Manager profile.\"   …"
+              "T42   f41→f42, 121.1–123.5 s   \"The user switched browser tabs — clicking back to the 'Add endpoint' tab showing the EU01 Traffic Manager profile.\"   …"
             ]
           },
           {
@@ -198,8 +177,8 @@
           }
         ]
       },
-      "caption": "An assistant that never saw the session asks over Scry's MCP server: questions 4 to 6 of 16",
-      "voice": "An AI assistant that has never seen the session is asked what happened, over Scry's MCP server. What was entered in the form: every field, read from frame 21, each value with its box. Which profiles got the endpoint, in what order. Did each save succeed: the toast and the row count, cited box by box. Sixteen questions in a row. Not one wrong answer. Not one invented fact."
+      "caption": "An assistant that never watched the session asks over Scry's MCP server: questions 4 to 6 of 16",
+      "voice": "They ask, over Scry's MCP server. What was entered in the form: every field read from the frame, each value with its box. Which profiles got the endpoint, in what order. Did each save succeed: the toast and the row count on the frame after each save, cited box by box. Sixteen questions in a row. Not one wrong answer. Not one invented fact."
     },
     {
       "id": "frame",
@@ -239,7 +218,104 @@
       "voice": "The citation opens to the frame: the toast, the saved row and the row count the answer quoted, box by box."
     },
     {
-      "id": "pipeline",
+      "id": "accuracy",
+      "visual": {
+        "kind": "card",
+        "heading": "Same session, same five questions",
+        "tiles": [
+          {
+            "value": "5 of 5",
+            "label": "Scry, every string exact",
+            "color": "blue"
+          },
+          {
+            "value": "3 of 5",
+            "label": "Gemini video-to-text: rewrote a hostname, invented a query filter",
+            "color": "orange"
+          }
+        ]
+      },
+      "caption": "Scry 5 of 5 · Gemini video-to-text 3 of 5, same session, same questions",
+      "voice": "Gemini's new video-to-text, asked the same questions about this session, got three of five: it rewrote a hostname and invented a query filter. Scry got five of five, every string exact."
+    },
+    {
+      "id": "cost",
+      "visual": {
+        "kind": "card",
+        "tiles": [
+          {
+            "value": "about 75¢",
+            "label": "to index this session",
+            "color": "orange"
+          }
+        ],
+        "note": "open 27B model; extrapolated from a 22-frame span"
+      },
+      "caption": "Index once, ask forever",
+      "voice": "Indexing this session cost about seventy-five cents on an open model. Index once, ask forever."
+    },
+    {
+      "id": "stages-read",
+      "visual": {
+        "kind": "timelapse",
+        "dir": "stages/read",
+        "from": 12,
+        "to": 31,
+        "pad": 2,
+        "width": 1280,
+        "height": 675,
+        "layout": "full"
+      },
+      "caption": "1. Read: OCR boxes on every piece of text, full resolution",
+      "voice": "First it reads every piece of text on every frame at full resolution."
+    },
+    {
+      "id": "stages-track",
+      "visual": {
+        "kind": "timelapse",
+        "dir": "stages/track",
+        "from": 12,
+        "to": 31,
+        "pad": 2,
+        "width": 1280,
+        "height": 675,
+        "layout": "full"
+      },
+      "caption": "2. Track: what appeared, changed or vanished between frames; every text gets a lifetime",
+      "voice": "Then it tracks what appeared, changed or vanished, so every text has a lifetime."
+    },
+    {
+      "id": "stages-annotate",
+      "visual": {
+        "kind": "timelapse",
+        "dir": "stages/annotate",
+        "from": 12,
+        "to": 31,
+        "pad": 2,
+        "width": 1280,
+        "height": 675,
+        "layout": "full"
+      },
+      "caption": "3. Label: windows, popups, and which label goes with which value",
+      "voice": "Then a model labels windows, popups, and which label goes with which value."
+    },
+    {
+      "id": "stages-interpret",
+      "visual": {
+        "kind": "timelapse",
+        "dir": "stages/interpret",
+        "from": 12,
+        "to": 31,
+        "pad": 2,
+        "width": 1280,
+        "height": 675,
+        "layout": "full"
+      },
+      "caption": "4. Interpret: what each change did, and whether it was submitted",
+      "voice": "Then it records what each change did, and whether it was submitted."
+    },
+    {
+      "id": "hierarchy",
       "visual": {
         "kind": "image",
         "src": "index-hierarchy.png",
@@ -247,83 +323,85 @@
           {
             "rect": [
               0.155,
-              0.6,
+              0.622,
               0.82,
-              0.195
+              0.169
             ],
-            "from": 0.04,
-            "until": 0.3,
+            "from": 0.2,
+            "until": 0.32,
             "color": "blue"
           },
           {
             "rect": [
               0.155,
-              0.48,
+              0.556,
               0.82,
-              0.052
+              0.04
             ],
-            "from": 0.31,
-            "until": 0.54,
+            "from": 0.33,
+            "until": 0.42,
             "color": "orange"
           },
           {
             "rect": [
               0.155,
-              0.338,
+              0.484,
               0.82,
-              0.075
+              0.058
             ],
-            "from": 0.56,
-            "until": 0.68,
+            "from": 0.43,
+            "until": 0.57,
+            "color": "orange"
+          },
+          {
+            "rect": [
+              0.155,
+              0.351,
+              0.82,
+              0.071
+            ],
+            "from": 0.58,
+            "until": 0.65,
             "color": "blue"
           },
           {
             "rect": [
               0.155,
-              0.256,
+              0.271,
               0.82,
-              0.072
+              0.065
             ],
-            "from": 0.69,
-            "until": 0.8,
+            "from": 0.66,
+            "until": 0.73,
             "color": "blue"
           },
           {
             "rect": [
               0.155,
-              0.156,
+              0.16,
               0.82,
-              0.088
+              0.076
             ],
-            "from": 0.81,
-            "until": 0.96,
+            "from": 0.74,
+            "until": 0.86,
             "color": "orange"
           }
         ]
       },
       "caption": "text · frames · changes · steps · sections · session",
-      "voice": "Under the hood it reads every pixel of text at full resolution, tracks what changed between frames, and records what each change did. That becomes a hierarchical index of what happened: every piece of text and how long it stayed, every change and what it meant, steps, sections, and a summary of the whole session, searchable at every level."
-    },
-    {
-      "id": "scale-cliff",
-      "visual": {
-        "kind": "image",
-        "src": "scale-cliff.png"
-      },
-      "caption": "Every setting measured: image scale, annotation mode, model tier, batch mode, open models",
-      "voice": "Every setting was measured: image scale, annotation mode, model tier, batch mode, open models."
+      "voice": "All of it becomes one index at six levels: every text, every frame, every change and what it meant, steps, sections, the whole session. Search at any level; every entry cites its frames."
     },
     {
       "id": "close",
       "visual": {
         "kind": "close",
         "lines": [
-          "Plugs into GitHub Copilot and Claude Code today",
+          "Plugs into GitHub Copilot and Claude Code over MCP.",
           "Screen recordings you can search."
         ]
       },
       "caption": "github.com/harrisonogle/scry",
-      "voice": "It plugs into GitHub Copilot and Claude Code today. Scry. Screen recordings you can search."
+      "voice": "It plugs into GitHub Copilot and Claude Code over MCP. Scry. Screen recordings you can search."
     }
   ]
 }
