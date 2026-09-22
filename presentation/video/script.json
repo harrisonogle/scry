@@ -6,6 +6,7 @@
   "padSeconds": 0.7,
   "_notes": [
     "Every word and number on screen or in the voice-over lives in this file; a scene marked draft:true carries numbers or wording that the coordinator has not frozen.",
+    "maxSeconds is the platform's ceiling for the rendered MP4 including every pad; the composition refuses to build and stills.mjs fails loudly when the scenes exceed it.",
     "Scenes marked optional:true are dropped automatically while their image is missing from public/img (run assets.sh after docs/presentation/ changes).",
     "Scene duration = the voice file's length + padSeconds; voice.sh regenerates public/voice/<id>.wav from the voice lines below.",
     "Terminal blocks: cmd (the host's question, typed), note (assistant prose), call (a scry tool call with trimmed result lines), answer (markdown-ish: **bold**, `code`, ## heading; a leading 4-space indent keeps the line in place), meta (a dim footer line). keyCitations are drawn orange, every other id blue.",
@@ -51,7 +52,7 @@
         ]
       },
       "caption": "OCR at full resolution, changed pixels and text lifetimes are measured; models label only what was measured",
-      "voice": "It measures the screen first: OCR boxes at full resolution on every frame, the pixels that changed, and the lifetime of every piece of text. Models label only what was measured: windows and popups, links between boxes, what each change did, and summaries."
+      "voice": "It measures the screen first, OCR boxes, changed pixels and text lifetimes, and models only label what was measured."
     },
     {
       "id": "demo",
@@ -184,7 +185,7 @@
         ]
       },
       "caption": "The hold-out video, asked about through the MCP server by someone who never saw it: questions 4 to 6 of 16",
-      "voice": "It is also an MCP server. Here, someone who has never seen the hold-out video asks Claude Code about it, in one conversation. What was entered in the form: every field is read from frame 21, each value with its box. Which profiles got the endpoint, in what order. Did each addition succeed: the toast and the row count on the frame after each save, cited box by box."
+      "voice": "It is also an MCP server: someone who never saw the hold-out video asks Claude Code. What was in the form: each field from frame 21, with its box. Which profiles got the endpoint, in what order. Did each succeed: the toast and row count, box by box."
     },
     {
       "id": "frame",
@@ -222,7 +223,7 @@
         "src": "holdout-cost-per-config.png"
       },
       "caption": "DRAFT · What the hold-out video costs to index, per configuration",
-      "voice": "On the hold-out video, four configurations were indexed from the same frames: group-only annotation at full scale, the owner's default, group-only at two-thirds scale, transcribing, and no annotation. Their prices are on the chart."
+      "voice": "On the hold-out video, four configurations were indexed from the same frames: group-only annotation at full scale, the default, group-only at two-thirds scale, transcribing, and no annotation. Their prices are on the chart."
     },
     {
       "id": "local-vs-api",
@@ -265,15 +266,6 @@
       "voice": "Second readings hold to two-thirds scale and collapse below half, while the cost barely moves; the image scale stays at one."
     },
     {
-      "id": "per-question",
-      "visual": {
-        "kind": "image",
-        "src": "per-question.png"
-      },
-      "caption": "$0.263 and 22.5 s a question on Opus; the Sonnet agent at a quarter of the price opens far fewer frames",
-      "voice": "Answering costs 26 cents and 22 seconds a question on Opus; a Sonnet agent answers at a quarter of the price but opens a fraction of the frames."
-    },
-    {
       "id": "close",
       "draft": true,
       "visual": {
@@ -286,5 +278,6 @@
       "caption": "github.com/harrisonogle/scry",
       "voice": "Measured on one video, 27 questions, and a hold-out, with a decision ledger of 76 entries."
     }
-  ]
+  ],
+  "maxSeconds": 118.0
 }

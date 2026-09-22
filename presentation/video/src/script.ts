@@ -56,6 +56,8 @@ export type Script = {
   width: number;
   height: number;
   padSeconds: number;
+  // The platform's ceiling for the rendered video, pads included; the build refuses to exceed it.
+  maxSeconds?: number;
   scenes: Scene[];
 };
 
