@@ -5,10 +5,11 @@
   stages/track/NN.png    the change records of the transition INTO the frame (changes.jsonl): appeared boxes filled green at
                          25 % alpha, changed/reread/appended/truncated boxes filled orange at 25 % alpha, removed boxes as a
                          thin red outline at the rectangle the record holds (where the text was on the previous frame)
-  stages/annotate/NN.png the labels in force at the frame (scry.annotate.join.Labels, the view the index uses): each
-                         container's bounding rectangle over the boxes assigned to it, windows blue and popups orange, with
-                         the container name as a small tag; every pair link as a thin aqua line from the key box's right
-                         edge to the value box's left edge; every run as a violet bracket under its boxes
+  stages/annotate/NN.png the labels in force at the frame (scry.annotate.join.Labels, the view the index uses): one blue
+                         outline around every box assigned to any window; each popup as its own orange outline tagged by
+                         its kind ("popup: toast", "popup: panel", "popup: dropdown", read from the name, else "popup");
+                         every pair link as a thin aqua line from the key box's right edge to the value box's left edge;
+                         every run as a violet bracket under its boxes
   stages/interpret/NN.png the frame with a card in the top-left corner holding the transition's action, entered_text and
                          submitted (interpretations.jsonl), trimmed to three lines
 
@@ -124,20 +125,36 @@ def main() -> None:
         dr = ImageDraw.Draw(im)
         n_pairs = n_runs = 0
         if labels is not None:
-            groups: dict[tuple[str, str], list[list[int]]] = {}
+            windows: list[list[int]] = []  # every box assigned to any window: one outline, no tag
+            popups: dict[str, list[list[int]]] = {}  # popups collapsed by kind (a panel labelled under two names is one)
+
+            def popup_kind(name: str) -> str:
+                low = (name or "").lower()
+                kind = next((k for k in ("toast", "notification", "panel", "blade", "dropdown", "menu", "results", "dialog", "tooltip") if k in low), "")
+                kind = {"notification": "toast", "blade": "panel", "menu": "dropdown", "results": "dropdown"}.get(kind, kind)
+                if not kind and low.startswith("add endpoint"):
+                    kind = "panel"
+                return kind
+
             for bid, b in fb.items():
                 lab = labels.box(f"{n}:{bid}")
                 if lab is None or lab.container is None:
                     continue
-                groups.setdefault((lab.container.kind, lab.container.name), []).append(list(b.bbox))
-            for (kind, name), rects in groups.items():
-                x0 = min(r[0] for r in rects) - 4
-                y0 = min(r[1] for r in rects) - 4
-                x1 = max(r[2] for r in rects) + 4
-                y1 = max(r[3] for r in rects) + 4
-                colour = ORANGE if kind == "popup" else BLUE
-                dr.rectangle([x0, y0, x1, y1], outline=colour, width=2)
-                tag(dr, x0, max(0, y0 - 28), f"{kind}: {name[:60]}", colour)
+                if lab.container.kind == "popup":
+                    popups.setdefault(popup_kind(lab.container.name), []).append(list(b.bbox))
+                else:
+                    windows.append(list(b.bbox))
+
+            def hull(rects: list[list[int]]) -> list[int]:  # 4 px outside the boxes, kept inside the image
+                return [max(2, min(r[0] for r in rects) - 4), max(2, min(r[1] for r in rects) - 4),
+                        min(im.width - 3, max(r[2] for r in rects) + 4), min(im.height - 3, max(r[3] for r in rects) + 4)]
+
+            if windows:
+                dr.rectangle(hull(windows), outline=BLUE, width=2)
+            for kind, rects in popups.items():
+                x0, y0, x1, y1 = hull(rects)
+                dr.rectangle([x0, y0, x1, y1], outline=ORANGE, width=2)
+                tag(dr, x0, max(0, y0 - 28), f"popup: {kind}" if kind else "popup", ORANGE)
             for link in labels.frame(n).links:
                 if link.kind == "pair":
                     keys = [fb[r.split(":")[1]] for r in link.key if r.split(":")[1] in fb]
