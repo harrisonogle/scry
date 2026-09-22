@@ -2,7 +2,7 @@
 import json, sys, re
 from collections import Counter, defaultdict
 from pathlib import Path
-ROOT = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/.claude/worktrees/localvlm/runs/eval/p3')
+ROOT = Path('<repo>/.claude/worktrees/localvlm/runs/eval/p3')
 span = sys.argv[1]
 EXTRA = [Path(p) for p in sys.argv[2:]]
 def load(n, path=None):

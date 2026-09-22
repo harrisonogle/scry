@@ -10,7 +10,7 @@ from scry.annotate.proposal import snap_rect, _overlap
 from scry.overlay import scale_box
 from scry.track.pixels import margin_px
 verbose = '-v' in sys.argv
-ROOT = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/p13')
+ROOT = Path('<repo>/runs/eval/p13')
 def rects_of(p):
     out = []
     for a in p['assign']: out.append(('assign', a['rect']))

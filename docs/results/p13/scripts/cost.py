@@ -6,7 +6,7 @@ Savings against (a) the overlay at the same scale, (b) P3 s100, (c) P10 ids100. 
 import json, sys
 from collections import defaultdict
 from pathlib import Path
-E = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval')
+E = Path('<repo>/runs/eval')
 SPANS = ['smoke', 'span2']
 CT = ['ct100', 'ct067', 'ct050', 'ct040', 'ct030', 'ct025', 'ct020']
 CG = ['cg040', 'cg030', 'cg025', 'cg020']

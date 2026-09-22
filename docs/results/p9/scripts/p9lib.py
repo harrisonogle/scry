@@ -1,7 +1,7 @@
 """P9 analysis library. Free: reads run directories only; no model calls."""
 import json, re
 from pathlib import Path
-REPO = Path("/Users/harrisonogle/src/harrisonogle/agentic-escort")
+REPO = Path("<repo>")
 S = Path(__file__).parent
 # set -> short run name -> run dir (relative to the repo). O/O: Opus agent, Opus index (P4). S/O: Sonnet agent, Opus index (P9).
 # S/S: Sonnet agent, Sonnet index (P8).

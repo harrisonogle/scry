@@ -2,7 +2,7 @@
 import json, sys, re
 from collections import Counter, defaultdict
 from pathlib import Path
-BASE = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval')
+BASE = Path('<repo>/runs/eval')
 SCALES = ['s100', 's067', 's050', 'd100', 'd067', 'd050']
 def rootof(n): return BASE / ('p5' if '-d' in n else 'p3')
 span = sys.argv[1]

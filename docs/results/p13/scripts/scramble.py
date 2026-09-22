@@ -12,7 +12,7 @@ from rapidfuzz import fuzz
 from scry.run import Run
 from scry.annotate.join import agreement
 from scry.textdiff import norm
-E = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval')
+E = Path('<repo>/runs/eval')
 span = sys.argv[1]; verbose = '-v' in sys.argv
 SC = ['100', '067', '050', '040', '030', '025', '020']
 names = []

@@ -18,7 +18,7 @@ log = logging.getLogger("compare.gemini")
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent  # the worktree root (runs/ and .env are symlinks to the main checkout's)
-MAIN = Path("/Users/harrisonogle/src/harrisonogle/agentic-escort")
+MAIN = Path("<repo>")
 OUT = REPO / "runs" / "compare-gemini"
 QUESTIONS = REPO / "docs" / "ground-truth" / "full-questions.md"
 GEMINI_MODEL = "gemini-3.8-flash"

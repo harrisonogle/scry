@@ -7,7 +7,7 @@ from scry.config import Config
 from scry.run import Run
 from scry.evaluation.commands import score_commands
 
-ROOT = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/.claude/worktrees/localvlm')
+ROOT = Path('<repo>/.claude/worktrees/localvlm')
 GT = ROOT / 'docs/ground-truth/span2-commands.md'
 REF = {'O inc r1': 'runs/eval/p4/full-inc-transcribing-r1', 'O inc r2': 'runs/eval/p4/full-inc-transcribing-r2',
        'O none r1': 'runs/eval/p4/full-none-r1', 'S none r1': 'runs/eval/p8/full-none-sonnet5-r1',

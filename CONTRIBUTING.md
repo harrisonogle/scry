@@ -1,9 +1,10 @@
 # Contributing
 
-`scry` turns silent screen-recording tutorials into an exact, timestamped, queryable visual transcript. The design
-document is the contract; the code implements it. This file is the sequence a contributor follows, from clone to pull
-request. It assumes a Mac with Apple Silicon: the OCR baseline is Apple Vision, and everything else is portable
-(design §20.8 covers Linux and Windows).
+`scry` turns a screen recording into a text-based, hierarchical index of what happened on screen, which an AI agent
+can query with a citation for every claim. The specification is `docs/proposals/2026-09-21-boxes-mode-rebase.md`; the
+code implements it. This file is the sequence a contributor follows, from clone to pull request. It was developed on a
+Mac with Apple Silicon; the OCR engine is RapidOCR (ONNX, bundled models, downloaded at first use), and nothing in the
+pipeline is macOS-only.
 
 ## Get running
 
@@ -18,8 +19,8 @@ request. It assumes a Mac with Apple Silicon: the OCR baseline is Apple Vision, 
 
        uv run scry setup
 
-   It reports Apple Vision OCR, SQLite FTS5, sqlite-vec, and whether credentials are visible.
-4. **Credentials, only if you will run the model stages.** The local stages (decode, OCR, overlay, merge, diff, index)
+   It reports the OCR engine, SQLite FTS5, sqlite-vec, and whether credentials are visible.
+4. **Credentials, only if you will run the model stages.** The local stages (decode, read, track, index)
    need none. Otherwise either log in with the Anthropic CLI (`brew install anthropics/tap/ant`, then `ant auth login`),
    or create a git-ignored `.env` at the repo root:
 
@@ -35,13 +36,14 @@ request. It assumes a Mac with Apple Silicon: the OCR baseline is Apple Vision, 
    They take a couple of seconds, use no network and no video.
 6. **Try the pipeline on the sample without spending anything:**
 
-       uv run scry run assets/create-aks-cluster-tutorial.mp4 --out runs/aks --stages decode,ocr,overlay
+       uv run scry run <a screen recording>.mp4 --out runs/aks --stages decode,read,track
 
-   Outputs land in `runs/aks/` (git-ignored). Dropping `--stages` runs the model stages too, which costs money
-   (design §19.6 estimates the sample at $18–45 on `claude-opus-5`; `[model] mode = "batch"` in `scry.toml` halves it).
-7. **Read, in this order:** `README.md` (status and commands), `docs/visual-transcript-pipeline-design.md` (the spec:
-   §10 is the data model, §16 the parameters, §24 the revision history), `docs/decision-ledger.md` (why things are the
-   way they are), and `docs/reviews/` (what independent reviewers found and how it was resolved).
+   Outputs land in `runs/aks/` (git-ignored). Dropping `--stages` runs the model stages too, which costs money: a
+   four-minute portal session cost $9.32 and a fourteen-minute tutorial $16.30 at the default configuration on
+   `claude-opus-5` (`docs/results/`); `[model] mode = "batch"` paid about 0.68 of that.
+7. **Read, in this order:** `README.md` (commands and configuration), `docs/proposals/2026-09-21-boxes-mode-rebase.md`
+   (the specification), `docs/decision-ledger.md` (why things are the way they are), `docs/results/` (what was
+   measured), and `docs/reviews/` (what independent reviewers found and how it was resolved).
 
 ## Make a change
 

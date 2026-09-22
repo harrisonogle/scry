@@ -1,7 +1,7 @@
 """Terminal targets (both Opus refs put them in a terminal window): in a PowerShell container of kind window / of kind popup / elsewhere.
 Plus frame 171 b87 in all runs."""
 import json
-BASE='/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/'
+BASE='<repo>/runs/eval/'
 def isterm(c): 
     s=(c['app']+' '+c['name']).lower() if c else ''
     return 'powershell' in s or 'terminal' in s or 'pwsh' in s

@@ -10,7 +10,7 @@ from scry.run import Run
 from scry.schemas import parse_box_ref
 from scry.costs import PRICES, CACHE_WRITE_MULTIPLIER
 
-REFDIR = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/v2/grouponly-100')
+REFDIR = Path('<repo>/runs/v2/grouponly-100')
 LOCAL = Path(sys.argv[1])
 lo, hi = (int(v) for v in (sys.argv[2] if len(sys.argv) > 2 else '12-33').split('-'))
 FR = list(range(lo, hi + 1))

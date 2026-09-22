@@ -2,7 +2,7 @@
 import json, sys, re
 from collections import Counter, defaultdict
 from pathlib import Path
-ROOT = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/p3')
+ROOT = Path('<repo>/runs/eval/p3')
 SCALES = ['s100', 's067', 's050', 's040', 's030', 's025', 's020']
 span = sys.argv[1]
 def load(n):

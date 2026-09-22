@@ -1,7 +1,7 @@
 """interpret on the terminal part (T155..T207): entered_text and submitted against a by-eye truth table (crops in scratchpad/crops).
 Free: reads files only."""
 import json, os, re, sys, collections
-ROOT='/Users/harrisonogle/src/harrisonogle/agentic-escort'
+ROOT='<repo>'
 RUNS={
  'O none r1':'runs/eval/p4/full-none-r1','O none r2':'runs/eval/p4/full-none-r2',
  'O inc r1':'runs/eval/p4/full-inc-transcribing-r1','O inc r2':'runs/eval/p4/full-inc-transcribing-r2',

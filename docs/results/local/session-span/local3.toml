@@ -3,7 +3,7 @@
 # frames 12-33 (22 of 80) of runs/v2/grouponly-100 (owner's default, Opus 5). Frames and OCR imported by the harness.
 phase = "local3"
 source = "runs/v2/grouponly-100"
-base_config = "/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/local3/local3-scry.toml"
+base_config = "<scratch>/local3/local3-scry.toml"
 stages = ["read", "track", "annotate"]
 repeats = 1
 

@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 from scry.run import Run
 from scry.schemas import parse_box_ref
-BASE = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval')
+BASE = Path('<repo>/runs/eval')
 T = [('b33','b34'),('b38','b37'),('b40','b39'),('b43','b44'),('b47','b48'),('b49','b50'),('b54','b55'),
      ('b69','b70'),('b72','b73'),('b83','b84'),('b89','b88'),('b94','b93'),('b105','b104'),('b110','b109'),('b119','b118'),
      ('b67','b68'),('b74','b75'),('b81','b82'),('b87','b86'),('b90','b91'),('b95','b96'),('b99','b98'),('b103','b102'),('b107','b108'),

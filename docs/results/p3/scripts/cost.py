@@ -1,6 +1,6 @@
 import json, sys, os
 from collections import defaultdict
-ROOT='/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/p3'
+ROOT='<repo>/runs/eval/p3'
 scales=['s100','s067','s050','s040','s030','s025','s020']
 tot=0
 for span in ['smoke','span2']:

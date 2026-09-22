@@ -3,7 +3,7 @@ runs, restricted to the transitions the span holds. Truth tables copied from doc
 Usage: interp_local.py <run-dir>...   (a run's changes.jsonl maps its transition ids to source frames). Free: reads files only."""
 import json, os, re, sys, collections
 from pathlib import Path
-ROOT = '/Users/harrisonogle/src/harrisonogle/agentic-escort/.claude/worktrees/localvlm'
+ROOT = '<repo>/.claude/worktrees/localvlm'
 RUNS = {'O inc r1': 'runs/eval/p4/full-inc-transcribing-r1', 'O inc r2': 'runs/eval/p4/full-inc-transcribing-r2',
         'S inc r1': 'runs/eval/p8/full-inc-transcribing-sonnet5-r1', 'S inc r2': 'runs/eval/p8/full-inc-transcribing-sonnet5-r2'}
 for p in sys.argv[1:]:

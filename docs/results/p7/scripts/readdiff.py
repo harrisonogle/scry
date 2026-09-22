@@ -1,6 +1,6 @@
 """Every target where a Sonnet reading differs from both Opus s100 readings (whitespace-normalised, case kept). Usage: readdiff.py <span>"""
 import json, sys, re
-BASE='/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/'
+BASE='<repo>/runs/eval/'
 span=sys.argv[1]
 names=[f'p3/{span}-s100-r1',f'p3/{span}-s100-r2',f'p7/{span}-sonnet5-r1',f'p7/{span}-sonnet5-r2']
 R={n:{json.loads(l)['frame']:json.loads(l) for l in open(BASE+n+'/annotations.jsonl')} for n in names}

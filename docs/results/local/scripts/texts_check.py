@@ -57,7 +57,7 @@ def variant(name, temperature=None, min_items=None):
           f"assign {len(d.get('assign', []))}, pairs {len(d.get('pairs', []))}, records {len(d.get('records', []))}")
     for t in texts[:6]:
         print(f"      {t['box']:>5} model={t['text'][:45]!r:50} ocr={ocr.get(t['box'], '<none>')[:45]!r}")
-    Path(f"/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/localvlm/results/texts-check-{name}.json").write_text(text)
+    Path(f"<scratch>/localvlm/results/texts-check-{name}.json").write_text(text)
 
 
 if which in ("a", "both"):

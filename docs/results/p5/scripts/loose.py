@@ -8,7 +8,7 @@ from rapidfuzz import fuzz
 from scry.run import Run
 from scry.annotate.join import agreement
 from scry.textdiff import norm
-BASE = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval')
+BASE = Path('<repo>/runs/eval')
 verbose = '-v' in sys.argv
 def gap(a, b): return max(0, max(a[0], b[0]) - min(a[2], b[2])), max(0, max(a[1], b[1]) - min(a[3], b[3]))
 print('run | readings | another box\'s text (loose) | own is icon glyph | other box: line above/below (dy<=12,dx==0) | beside (dy==0) | elsewhere | frames')

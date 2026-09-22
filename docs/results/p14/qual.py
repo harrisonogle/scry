@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from scry.run import Run
 from scry.schemas import parse_box_ref
-EVAL = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval')
+EVAL = Path('<repo>/runs/eval')
 ROOT = EVAL / 'p10'
 span = sys.argv[1]
 WHERE = {'ids100': ROOT, 'plain': EVAL / 'p14', 'boxtext': EVAL / 'p14'}

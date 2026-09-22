@@ -8,7 +8,7 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from scry.run import Run
 from scry.schemas import parse_box_ref
-E = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval')
+E = Path('<repo>/runs/eval')
 span = sys.argv[1]
 SETS = [('p10', 'ids100'), ('p10', 'coords100'), ('p10', 'ids067'), ('p12' if span == 'smoke' else 'p10', 'coords067'), ('p10', 'ids050'), ('p12' if span == 'smoke' else 'p10', 'coords050'),
         ('p13', 'cg040'), ('p13', 'cg030'), ('p13', 'cg025'), ('p13', 'cg020')]

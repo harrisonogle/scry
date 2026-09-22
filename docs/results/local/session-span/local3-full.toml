@@ -3,7 +3,7 @@
 # group-only), annotate, interpret, summarize and index. Same phase directory as the 22-frame span run.
 phase = "local3"
 source = "runs/v2/grouponly-100"
-base_config = "/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/local3/local3-scry.toml"
+base_config = "<scratch>/local3/local3-scry.toml"
 stages = ["read", "track", "annotate", "interpret", "summarize", "index"]
 repeats = 1
 

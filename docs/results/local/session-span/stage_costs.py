@@ -4,7 +4,7 @@ import json, sys
 from collections import Counter
 from pathlib import Path
 from scry.costs import PRICES, CACHE_WRITE_MULTIPLIER
-REF = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/v2/grouponly-100')
+REF = Path('<repo>/runs/v2/grouponly-100')
 LOC = Path(sys.argv[1]); lo, hi = (int(v) for v in (sys.argv[2] if len(sys.argv) > 2 else '12-33').split('-'))
 FR = set(range(lo, hi + 1)); nfr = len(FR)
 QP, QC = 0.42, 3.00  # $/M prompt, completion: OpenRouter qwen/qwen3.8-27b (docs/results/local/report.md, read 2026-09-21)

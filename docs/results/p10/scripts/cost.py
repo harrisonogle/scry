@@ -1,7 +1,7 @@
 """P10 cost table in P3's form. Mean of repeats per reference x scale, smoke | span2."""
 import json
 from collections import defaultdict
-ROOT='/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/p10'
+ROOT='<repo>/runs/eval/p10'
 REFS=['coords100','coords067','coords050','ids100','ids067','ids050']
 P3={'smoke':0.0782,'span2':0.0614}
 tot=0; res={}

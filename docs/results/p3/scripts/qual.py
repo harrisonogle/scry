@@ -10,7 +10,7 @@ from scry.annotate.join import agreement
 from scry.textdiff import norm
 from scry.schemas import link_members
 
-ROOT = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/p3')
+ROOT = Path('<repo>/runs/eval/p3')
 SCALES = ['s100', 's067', 's050', 's040', 's030', 's025', 's020']
 span = sys.argv[1]
 
@@ -136,4 +136,4 @@ for n, x in runs.items():
     store[n] = dict(empties=empties, wrongs=wrongs, offs=offs)
     fmt = lambda v: '-' if v is None else f'{v:.1f}'
     print(f"{n} | {cont:.2f} | {pops} | {unas} | {fmt(cds[0])},{fmt(cds[-1])} | | {lk['run']}/{lk['pair']}/{lk['record']} | {x.labels.relinked} | {fmt(prs[0])},{fmt(prs[-1])} | {fmt(rrs[0])},{fmt(rrs[-1])} | {ag}/{tot} {100*ag/max(1,tot):.1f} | {er} | {wr}+{len(offs)}off | {missed}")
-json.dump({n: {k: v for k, v in s.items()} for n, s in store.items()}, open(f'/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/qual-{span}-detail.json', 'w'), indent=0, default=str)
+json.dump({n: {k: v for k, v in s.items()} for n, s in store.items()}, open(f'<scratch>/qual-{span}-detail.json', 'w'), indent=0, default=str)

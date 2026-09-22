@@ -6,8 +6,8 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from scry.run import Run
 from scry.schemas import parse_box_ref
-ROOT = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/p10')
-ROOT12 = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/p12')
+ROOT = Path('<repo>/runs/eval/p10')
+ROOT12 = Path('<repo>/runs/eval/p12')
 REFS = ['ids100', 'coords100', 'ids067', 'coords067', 'ids050', 'coords050', 'p12c067', 'p12c050']
 span = sys.argv[1]
 

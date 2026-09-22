@@ -8,7 +8,7 @@ from rapidfuzz import fuzz
 from scry.run import Run
 from scry.annotate.join import agreement
 from scry.textdiff import norm
-BASE = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval')
+BASE = Path('<repo>/runs/eval')
 SCALES = ['s100', 'sonnet5']
 span = sys.argv[1]; verbose = '-v' in sys.argv
 def rootof(n): return BASE / ('p7' if 'sonnet5' in n else 'p3')
@@ -67,7 +67,7 @@ for n, (ann, boxes) in runs.items():
     detail[n] = hits
     if verbose:
         for h in hits: print('     ', h)
-json.dump(detail, open(f'/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/p7/neigh-{span}.json', 'w'), indent=0)
+json.dump(detail, open(f'<scratch>/p7/neigh-{span}.json', 'w'), indent=0)
 
 # links: those in neither s100 reference; distance between the linked boxes
 def linkitems(ann, boxes):

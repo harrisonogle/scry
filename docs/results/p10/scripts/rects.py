@@ -8,7 +8,7 @@ from scry.annotate.proposal import snap_rect, _overlap
 from scry.track.pixels import margin_px
 phase = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith('-') else 'p10'
 verbose = '-v' in sys.argv
-ROOT = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval') / phase
+ROOT = Path('<repo>/runs/eval') / phase
 def rects_of(p):
     out = []
     for a in p['assign']: out.append(('assign', a['rect']))

@@ -4,7 +4,7 @@ sys.argv = ['qual.py', sys.argv[1]]
 import io, contextlib
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
-    exec(open('/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/qual.py').read())
+    exec(open('<scratch>/qual.py').read())
 from scry.schemas import parse_box_ref
 print('scale | contdiff% targets (mean over repeats x refs) | contdiff% all boxes | pairs repro% | runs repro% | strict agree% r1/r2 | wrongbox r1/r2 | off r1/r2 | empty_real r1/r2 | pairs n | runs n | records n | popups | cont/rec')
 for s in SCALES:

@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from scry.run import Run
 from scry.schemas import parse_box_ref
-ROOT = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/.claude/worktrees/localvlm/runs/eval/p10')
+ROOT = Path('<repo>/.claude/worktrees/localvlm/runs/eval/p10')
 REFS = ['ids100']
 span = sys.argv[1]
 EXTRA = [Path(p) for p in sys.argv[2:]]

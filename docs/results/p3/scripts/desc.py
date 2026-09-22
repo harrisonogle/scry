@@ -1,5 +1,5 @@
 import json, sys
-ROOT='/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/p3'
+ROOT='<repo>/runs/eval/p3'
 frames=[int(x) for x in sys.argv[1].split(',')]
 for s in sys.argv[2:]:
     for r in (1,2):

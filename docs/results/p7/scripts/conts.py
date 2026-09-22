@@ -1,7 +1,7 @@
 """Container sets per frame: kind, app, name, owner, covers, and how many targets each holds. Opus s100 beside Sonnet. Usage: conts.py <span> [frames]"""
 import json, sys
 from collections import Counter
-BASE='/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/'
+BASE='<repo>/runs/eval/'
 span=sys.argv[1]; only=[int(x) for x in sys.argv[2].split(',')] if len(sys.argv)>2 else None
 names=[f'p3/{span}-s100-r1',f'p3/{span}-s100-r2',f'p7/{span}-sonnet5-r1',f'p7/{span}-sonnet5-r2']
 R={n:{json.loads(l)['frame']:json.loads(l) for l in open(BASE+n+'/annotations.jsonl')} for n in names}

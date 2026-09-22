@@ -2,8 +2,8 @@
 stop reasons and errors from the call cache; price check."""
 import json, glob, sys
 from collections import Counter
-BASE='/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/'
-sys.path.insert(0,'/Users/harrisonogle/src/harrisonogle/agentic-escort/src')
+BASE='<repo>/runs/eval/'
+sys.path.insert(0,'<repo>/src')
 from scry.costs import estimate_cost, PRICES
 def recs(p):
     return {json.loads(l)['frame']:json.loads(l) for l in open(BASE+p+'/annotations.jsonl')}

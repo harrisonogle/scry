@@ -1,7 +1,7 @@
 """Per frame: billed output tokens against the size of the stored answer text (call cache 'text'), both models.
 Cache files are matched to frames by the description string."""
 import json, glob
-BASE='/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/'
+BASE='<repo>/runs/eval/'
 for span in ('smoke','span2'):
     names=[f'p3/{span}-s100-r1',f'p3/{span}-s100-r2',f'p7/{span}-sonnet5-r1',f'p7/{span}-sonnet5-r2']
     data={}

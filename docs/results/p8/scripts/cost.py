@@ -1,6 +1,6 @@
 """Cost, wall time, tokens, errors per stage. Usage: cost.py (reads P4 and P8 run dirs). Free: reads files only."""
 import json, glob, os, sys, collections
-ROOT='/Users/harrisonogle/src/harrisonogle/agentic-escort'
+ROOT='<repo>'
 PRICES={"claude-opus-5":(5.0,25.0,0.5),"claude-sonnet-5":(2.0,10.0,0.2)}
 def price(u,model):
     pin,pout,pc=PRICES[model]

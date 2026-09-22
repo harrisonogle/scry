@@ -7,7 +7,7 @@ Usage: byeye.py"""
 import json, re
 from collections import Counter
 from pathlib import Path
-E = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval')
+E = Path('<repo>/runs/eval')
 SC = ['100', '067', '050', '040', '030', '025', '020']
 def load(phase, n):
     d = E / phase / n

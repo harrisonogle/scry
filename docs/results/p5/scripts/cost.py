@@ -1,7 +1,7 @@
 """P3's cost.py, adapted: arm A (P3 s100/s067/s050) beside arm D (P5 d100/d067/d050)."""
 import json, sys, os
 from collections import defaultdict
-BASE='/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval'
+BASE='<repo>/runs/eval'
 SETS=[('p3',['s100','s067','s050']),('p5',['d100','d067','d050'])]
 res={}
 for phase,scales in SETS:

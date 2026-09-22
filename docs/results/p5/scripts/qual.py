@@ -11,9 +11,9 @@ from scry.annotate.join import agreement
 from scry.textdiff import norm
 from scry.schemas import link_members, parse_box_ref
 
-BASE = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval')
+BASE = Path('<repo>/runs/eval')
 SETS = [('p3', ['s100', 's067', 's050']), ('p5', ['d100', 'd067', 'd050'])]
-OUT = Path('/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/p5')
+OUT = Path('<scratch>/p5')
 span = sys.argv[1]
 
 class R:

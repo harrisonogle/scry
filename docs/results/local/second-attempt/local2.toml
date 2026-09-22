@@ -4,7 +4,7 @@
 # L2: L1 with the model's default temperature (1.0).  L3: L1's settings on Qwen3.5-35B-A3B-4bit.
 phase = "local2"
 source = "runs/p0"
-base_config = "/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/local2/local2-scry.toml"
+base_config = "<scratch>/local2/local2-scry.toml"
 stages = ["read", "track", "annotate"]
 repeats = 1
 

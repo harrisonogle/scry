@@ -3,7 +3,7 @@ span = sys.argv[1]
 sys.argv = ['qual.py', span]
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
-    exec(open('/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/p5/qual.py').read())
+    exec(open('<scratch>/p5/qual.py').read())
 def cname(x, f, b):
     a = x.ann[f]; cid = assign_map(a).get(b); c = next((c for c in a.containers if c.id == cid), None)
     return 'none' if c is None else f'{c.kind}:{c.app}/{c.name[:30]}'

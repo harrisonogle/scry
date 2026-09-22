@@ -2,7 +2,7 @@
 Measured on stored records; both arms. Usage: offrow.py [-v]"""
 import json, sys
 from collections import Counter
-BASE='/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/'
+BASE='<repo>/runs/eval/'
 verbose='-v' in sys.argv
 def load(p):
     ann={}; boxes={}

@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from scry.run import Run
 F = int(sys.argv[1])
-REF = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval/p10/smoke-ids100-r1')
+REF = Path('<repo>/runs/eval/p10/smoke-ids100-r1')
 for p in [REF] + [Path(x) for x in sys.argv[2:]]:
     run = Run(p); a = {x.frame: x for x in run.load_annotations()}[F]; fb = {x.frame: x for x in run.load_boxes()}[F]
     t = {b.id: b for b in fb.boxes}

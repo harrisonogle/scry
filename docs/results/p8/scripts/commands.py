@@ -1,6 +1,6 @@
 """Command metrics per run from scorecard.json. Free: reads files only."""
 import json, os
-ROOT='/Users/harrisonogle/src/harrisonogle/agentic-escort'
+ROOT='<repo>'
 RUNS={
  'O none r1':'runs/eval/p4/full-none-r1','O none r2':'runs/eval/p4/full-none-r2',
  'S none r1':'runs/eval/p8/full-none-sonnet5-r1','S none r2':'runs/eval/p8/full-none-sonnet5-r2',

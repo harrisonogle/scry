@@ -18,7 +18,7 @@ from scry.providers.base import text_block
 from scry.providers.cache import CallCache
 from scry.textdiff import norm
 
-OUT = Path("/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/localvlm/results")
+OUT = Path("<scratch>/localvlm/results")
 root, model_name, port, frame_no = Path(sys.argv[1]), sys.argv[2], sys.argv[3], int(sys.argv[4])
 run = Run(root)
 cfg = Config.model_validate(json.load(open(root / "config.json")))

@@ -11,7 +11,7 @@ from scry.run import Run
 from scry.annotate.join import agreement
 from scry.textdiff import norm
 from scry.schemas import parse_box_ref
-E = Path('/Users/harrisonogle/src/harrisonogle/agentic-escort/runs/eval')
+E = Path('<repo>/runs/eval')
 SC = ['100', '067', '050', '040', '030', '025', '020']
 span = sys.argv[1]
 
@@ -186,4 +186,4 @@ for sc in SC:
         s = summary[(sc, mode)]
         print(f"{sc} | {mode} (n={n}) | {s['mark']:.1f} | {s['wrong']:.1f} | {s['off']:.1f} | {s['empty']:.1f} | {s['pairs']:.1f} | {s['runs']:.1f} | {s['contdiff']:.1f} | {s['term']:.1f} | {s['false']:.1f} | {s['tooltip']} | {'-' if f150 is None else f'{f150[0]}/{f150[2]}/{f150[3]} (partial {f150[1]})'} | {'/'.join(f'{v:.1f}' for v in links)} | {sum(rk.values())} {dict(rk)} | {s['cont']:.2f}")
 json.dump({n: {k: v for k, v in m.items() if k in ('wrongs', 'empties', 'offs', 'term_missed', 'term_false', 'tooltips', 'f150_detail')} for n, m in M.items()},
-          open(f'/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/p13-analysis/qual-ct-{span}-detail.json', 'w'), indent=0, default=str)
+          open(f'<scratch>/p13-analysis/qual-ct-{span}-detail.json', 'w'), indent=0, default=str)
