@@ -96,8 +96,12 @@ Effort = Literal["low", "medium", "high", "xhigh", "max"]
 
 class ModelConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    provider: Literal["anthropic"] = "anthropic"
+    # "anthropic": the Claude API. "openai_compat": any server speaking OpenAI's /v1/chat/completions with json_schema
+    # output, at base_url (a model served on this machine: mlx_vlm.server, llama.cpp); effort_* are ignored there, and
+    # mode must be "sync". Its key comes from the OPENAI_COMPAT_API_KEY environment variable, "none" when unset.
+    provider: Literal["anthropic", "openai_compat"] = "anthropic"
     model: str = "claude-opus-5"
+    base_url: str = ""  # openai_compat only, e.g. "http://127.0.0.1:8080/v1"
     max_tokens: int = 16000
     retry_max_tokens: int = 32000
     concurrency: int = 4
