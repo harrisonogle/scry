@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
+import threading
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -151,7 +153,9 @@ class Tools:
                 break
             if df.t >= next_t:
                 p = out_dir / f"{df.t:09.3f}.png"
-                df.frame.to_image().save(p, format="PNG", compress_level=1)
+                tmp = p.with_name(f"{p.name}.{threading.get_ident()}.tmp")  # a question on another thread may save this same frame
+                df.frame.to_image().save(tmp, format="PNG", compress_level=1)
+                os.replace(tmp, p)  # so what is read below is a whole file, this thread's or the other's, never a half-written one
                 blocks += [text_block(f"t={df.t:.2f}s:"), image_block(p)]
                 next_t += 1.0 / fps
         return blocks or [text_block("no frames in range")]
