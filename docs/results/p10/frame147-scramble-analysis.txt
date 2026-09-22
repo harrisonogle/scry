@@ -1,0 +1,63 @@
+terminal window (unscaled, measured): x 660 1662  dark body rows 352 853  => rect (660, 319, 1662, 853)
+boxes mostly inside the terminal (ground truth for c2): ['b39', 'b40', 'b42', 'b46']
+
+=== smoke-coords067-r2 scale 0.67: 22 boxes misassigned to the terminal
+  terminal in the scaled image: (442, 214, 1114, 572)
+    b20 [657, 221, 710, 243] 'Delete'                     as-scaled-overlaps-scaled-terminal=True  r*s=[440, 148, 476, 163] in-term=False r/s=[981, 330, 1060, 363] in-term=True  dist-to-terminal=76px
+    b21 [732, 221, 793, 242] 'Refresh'                    as-scaled-overlaps-scaled-terminal=True  r*s=[490, 148, 531, 162] in-term=False r/s=[1093, 330, 1184, 361] in-term=True  dist-to-terminal=77px
+    b62 [344, 538, 477, 555] 'Kubernetes services'        as-scaled-overlaps-scaled-terminal=True  r*s=[230, 360, 320, 372] in-term=False r/s=[513, 803, 712, 828] in-term=True  dist-to-terminal=183px
+    b64 [345, 565, 446, 585] 'Encryption type'            as-scaled-overlaps-scaled-terminal=True  r*s=[231, 379, 299, 392] in-term=False r/s=[515, 843, 666, 873] in-term=True  dist-to-terminal=214px
+    b65 [562, 565, 663, 585] 'Encryption at-re'           as-scaled-overlaps-scaled-terminal=True  r*s=[377, 379, 444, 392] in-term=False r/s=[839, 843, 990, 873] in-term=True  dist-to-terminal=0px
+    b67 [345, 590, 462, 613] 'Virtual node pools'         as-scaled-overlaps-scaled-terminal=False r*s=[231, 395, 310, 411] in-term=False r/s=[515, 881, 690, 915] in-term=False dist-to-terminal=198px
+    b68 [561, 592, 644, 611] 'Not enabled'                as-scaled-overlaps-scaled-terminal=False r*s=[376, 397, 431, 409] in-term=False r/s=[837, 884, 961, 912] in-term=False dist-to-terminal=16px
+    b73 [343, 640, 426, 661] 'Node pools'                 as-scaled-overlaps-scaled-terminal=False r*s=[230, 429, 285, 443] in-term=False r/s=[512, 955, 636, 987] in-term=False dist-to-terminal=234px
+    b74 [345, 667, 423, 688] 'Node pools'                 as-scaled-overlaps-scaled-terminal=False r*s=[231, 447, 283, 461] in-term=False r/s=[515, 996, 631, 1027] in-term=False dist-to-terminal=237px
+    b75 [562, 667, 642, 688] '1 node pool'                as-scaled-overlaps-scaled-terminal=False r*s=[377, 447, 430, 461] in-term=False r/s=[839, 996, 958, 1027] in-term=False dist-to-terminal=18px
+    b77 [562, 695, 612, 716] '1.24.10'                    as-scaled-overlaps-scaled-terminal=False r*s=[377, 466, 410, 480] in-term=False r/s=[839, 1037, 913, 1069] in-term=False dist-to-terminal=48px
+    b78 [345, 696, 471, 713] 'Kubernetes versions'        as-scaled-overlaps-scaled-terminal=False r*s=[231, 466, 316, 478] in-term=False r/s=[515, 1039, 703, 1064] in-term=False dist-to-terminal=189px
+    b80 [561, 722, 661, 745] 'Standard_DS2_V'             as-scaled-overlaps-scaled-terminal=False r*s=[376, 484, 443, 499] in-term=False r/s=[837, 1078, 987, 1112] in-term=False dist-to-terminal=0px
+    b81 [345, 724, 418, 743] 'Node sizes'                 as-scaled-overlaps-scaled-terminal=False r*s=[231, 485, 280, 498] in-term=False r/s=[515, 1081, 624, 1109] in-term=False dist-to-terminal=242px
+    b83 [345, 771, 443, 794] 'Configuration'              as-scaled-overlaps-scaled-terminal=False r*s=[231, 517, 297, 532] in-term=False r/s=[515, 1151, 661, 1185] in-term=False dist-to-terminal=217px
+    b85 [561, 798, 613, 819] '1.24.10'                    as-scaled-overlaps-scaled-terminal=False r*s=[376, 535, 411, 549] in-term=False r/s=[837, 1191, 915, 1222] in-term=False dist-to-terminal=47px
+    b86 [345, 800, 465, 817] 'Kubernetes version'         as-scaled-overlaps-scaled-terminal=False r*s=[231, 536, 312, 547] in-term=False r/s=[515, 1194, 694, 1219] in-term=False dist-to-terminal=195px
+    b88 [561, 826, 603, 848] 'Patch'                      as-scaled-overlaps-scaled-terminal=False r*s=[376, 553, 404, 568] in-term=False r/s=[837, 1233, 900, 1266] in-term=False dist-to-terminal=57px
+    b89 [345, 828, 468, 848] 'Auto Upgrade Type'          as-scaled-overlaps-scaled-terminal=False r*s=[231, 555, 314, 568] in-term=False r/s=[515, 1236, 699, 1266] in-term=False dist-to-terminal=192px
+    b93 [346, 856, 793, 875] 'Authentication and Autho'   as-scaled-overlaps-scaled-terminal=False r*s=[232, 574, 531, 586] in-term=False r/s=[516, 1278, 1184, 1306] in-term=False dist-to-terminal=3px
+    b97 [561, 882, 617, 903] 'Enabled'                    as-scaled-overlaps-scaled-terminal=False r*s=[376, 591, 413, 605] in-term=False r/s=[837, 1316, 921, 1348] in-term=False dist-to-terminal=52px
+    b98 [345, 883, 440, 903] 'Local accounts'             as-scaled-overlaps-scaled-terminal=False r*s=[231, 592, 295, 605] in-term=False r/s=[515, 1318, 657, 1348] in-term=False dist-to-terminal=222px
+  H1 listed-rect-read-as-scaled-pixels: 5/22 land in the scaled terminal
+  H1' rect*scale in unscaled terminal: 0/22;  rect/scale in unscaled terminal: 5/22
+  H2 the 22 nearest non-terminal boxes: ['b59', 'b65', 'b80', 'b91', 'b92', 'b51', 'b93', 'b31', 'b34', 'b38', 'b63', 'b68', 'b75', 'b95', 'b96', 'b99', 'b85', 'b77', 'b97', 'b88', 'b19', 'b20']
+  overlap with misassigned: 10/22; ranks of misassigned by distance: [1, 2, 6, 11, 12, 16, 17, 18, 19, 21, 22, 39, 41, 42, 43, 44, 49, 50, 51, 52, 53, 54] (of 109)
+  distances of misassigned: [76, 77, 183, 214, 0, 198, 16, 234, 237, 18, 48, 189, 0, 242, 217, 47, 195, 57, 192, 3, 52, 222]
+  misassigned within 20px of the terminal's left edge or clipped by it (x1>=640): ['b20', 'b21', 'b65', 'b68', 'b75', 'b80', 'b93']
+
+=== smoke-coords050-r2 scale 0.5: 5 boxes misassigned to the terminal
+  terminal in the scaled image: (330, 160, 831, 426)
+    b56 [309, 487, 388, 507] 'Get started'                as-scaled-overlaps-scaled-terminal=False r*s=[154, 244, 194, 254] in-term=False r/s=[618, 974, 776, 1014] in-term=False dist-to-terminal=272px
+    b57 [407, 487, 484, 508] 'Properties'                 as-scaled-overlaps-scaled-terminal=False r*s=[204, 244, 242, 254] in-term=False r/s=[814, 974, 968, 1016] in-term=False dist-to-terminal=176px
+    b58 [500, 487, 582, 508] 'Monitoring'                 as-scaled-overlaps-scaled-terminal=False r*s=[250, 244, 291, 254] in-term=False r/s=[1000, 974, 1164, 1016] in-term=False dist-to-terminal=78px
+    b59 [601, 487, 662, 508] 'Capabilit'                  as-scaled-overlaps-scaled-terminal=False r*s=[300, 244, 331, 254] in-term=False r/s=[1202, 974, 1324, 1016] in-term=False dist-to-terminal=0px
+    b62 [344, 538, 477, 555] 'Kubernetes services'        as-scaled-overlaps-scaled-terminal=False r*s=[172, 269, 238, 278] in-term=False r/s=[688, 1076, 954, 1110] in-term=False dist-to-terminal=183px
+  H1 listed-rect-read-as-scaled-pixels: 0/5 land in the scaled terminal
+  H1' rect*scale in unscaled terminal: 0/5;  rect/scale in unscaled terminal: 0/5
+  H2 the 5 nearest non-terminal boxes: ['b59', 'b65', 'b80', 'b91', 'b92']
+  overlap with misassigned: 1/5; ranks of misassigned by distance: [0, 24, 37, 39, 56] (of 109)
+  distances of misassigned: [272, 176, 78, 0, 183]
+  misassigned within 20px of the terminal's left edge or clipped by it (x1>=640): ['b59']
+
+boxes partly under the terminal (clipped), not counted as inside: ["b59'Capabilit'", "b65'Encryption at-'", "b80'Standard_DS2_V'", "b91'Not enabied'", "b92'Authorized IP '"]
+
+output tokens (thinking + answer) on frame 147, all smoke runs:
+  smoke-coords050-r1     out= 8078 in= 1909 c2 size=5
+  smoke-coords050-r2     out= 3769 in= 1909 c2 size=5
+  smoke-coords067-r1     out= 6930 in= 2405 c2 size=4
+  smoke-coords067-r2     out= 3890 in= 2405 c2 size=22
+  smoke-coords100-r1     out= 5199 in= 3866 c2 size=5
+  smoke-coords100-r2     out= 5397 in= 3866 c2 size=4
+  smoke-ids050-r1        out= 4419 in= 1810 c2 size=4
+  smoke-ids050-r2        out= 4252 in= 1810 c2 size=4
+  smoke-ids067-r1        out= 3128 in= 2802 c2 size=4
+  smoke-ids067-r2        out= 3089 in= 2802 c2 size=4
+  smoke-ids100-r1        out= 2895 in= 5792 c2 size=4
+  smoke-ids100-r2        out= 2921 in= 5792 c2 size=4
