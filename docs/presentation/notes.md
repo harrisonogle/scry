@@ -179,4 +179,4 @@ Strokes are 2 px at full resolution before the downscale, so about 1.25 px at 12
 
 ## `index-hierarchy.png`, second version
 
-The C2/C7 callout now sits in clear space above the sections band with a leader line to C2; the T22 callout is one line in the gap above the changes band, to the right of the T22 mark: T22, 61.0 to 64.0 s, submitted: yes: "The user clicked the blue Add button" ... "a success toast ... appeared"; the L760 label and the frames note sit in the gap between the frames and lifetimes bands. No text crosses a band.
+The C2/C7 callout now sits in clear space above the sections band with a leader line to C2; the T22 callout is one line in the gap above the changes band, to the right of the T22 mark: T22, 61.0 to 64.0 s, submitted: yes: "The user clicked the blue Add button" ... "a success toast ... appeared"; the L760 label and the frames note ("one tick per captured moment") sit in the gap between the frames and lifetimes bands; the subtitle reads "(224 s)". No text crosses a band.
