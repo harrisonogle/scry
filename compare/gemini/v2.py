@@ -26,16 +26,36 @@ from compare.gemini.common import (ANSWER_INSTRUCTION, ANTHROPIC_CONCURRENCY, GE
 from compare.gemini.judge import judge_arm
 from scry.evaluation.questions import Answer
 
+import os
+
 OUT = REPO / "runs" / "compare-gemini-v2"
-QUESTIONS = OUT / "questions.md"
+# COMPARE_SET=disc: the 16 questions of docs/ground-truth/holdout-discovery.md (questions-disc.md, arms *-disc, ledger
+# spend-disc.jsonl, cap $12); unset: the 5 draft questions (questions.md, cap $10)
+SET = os.environ.get("COMPARE_SET", "")
+SUFFIX = f"-{SET}" if SET else ""
+QUESTIONS = OUT / (f"questions-{SET}.md" if SET else "questions.md")
 VIDEO = MAIN / "runs" / "videos" / "recording-2026-09-17-silent.mp4"
 RUN_DIR = MAIN / "runs" / "v2" / "grouponly-100"
+VIEW_DIR = OUT / "view-grouponly-100"  # a symlink view of the run: `ask` writes its redecoded frames here, never into the run
 RUN_CONFIG = MAIN / "runs" / "v2" / "scry-v2.toml"
-CAP_USD = 10.0
+CAP_USD = 12.0 if SET else 10.0
 
 
 def ledger() -> Ledger:
-    return Ledger(OUT / "spend.jsonl")
+    return Ledger(OUT / f"spend{SUFFIX}.jsonl")
+
+
+def view_of_run(root: Path) -> Path:
+    """A directory of symlinks to every entry of the run directory except redecode/, so a Run opened on it reads the
+    run's files and writes only here."""
+    VIEW_DIR.mkdir(parents=True, exist_ok=True)
+    for entry in root.iterdir():
+        if entry.name == "redecode":
+            continue
+        link = VIEW_DIR / entry.name
+        if not link.is_symlink():
+            link.symlink_to(entry)
+    return VIEW_DIR
 
 
 def spent() -> float:
@@ -62,7 +82,7 @@ def g1() -> None:
     client = gemini_client()
     uri, mime, _ = uploaded_video(client, VIDEO, OUT / "upload.json")
     qs = [q for q in questions(QUESTIONS) if not sys.argv[2:] or q.id in sys.argv[2:]]
-    arm = OUT / "g1"
+    arm = OUT / f"g1{SUFFIX}"
     done, lock = _resumable(arm, qs)
     led = ledger()
 
@@ -95,6 +115,7 @@ def _run_and_config(name: str):
 
     if name in RUNS:
         root, cfg_path = RUNS[name]
+        root = view_of_run(root)
         cfg = load_config(cfg_path)
     else:
         root = MAIN / "runs" / "eval" / "v2" / name
@@ -137,7 +158,7 @@ def pipe() -> None:
     name = sys.argv[2]
     run, cfg = _run_and_config(name)
     qs = [q for q in questions(QUESTIONS) if not sys.argv[3:] or q.id in sys.argv[3:]]
-    arm = OUT / f"pipe-{name}"
+    arm = OUT / f"pipe-{name}{SUFFIX}"
     done, lock = _resumable(arm, qs)
     led = ledger()
 
@@ -162,7 +183,7 @@ def pipe() -> None:
             except Exception as e:
                 failures.append(f"pipe {q.id} attempt {attempt}: {type(e).__name__}: {str(e)[:300]}")
         seconds = round(time.perf_counter() - t0, 1)
-        led.add("anthropic", f"pipe-{name}", q.id, out.dollars if out else None, seconds, out is not None, "; ".join(failures))
+        led.add("anthropic", f"pipe-{name}{SUFFIX}", q.id, out.dollars if out else None, seconds, out is not None, "; ".join(failures))
         base = dict(qid=q.id, key=q.key, polarity=q.polarity, question=q.question)
         if out is None:
             a = Answer(**base, answer="", error="; ".join(failures)[:500], seconds=seconds)
@@ -180,7 +201,8 @@ def pipe() -> None:
 
 
 def arms_present() -> list[str]:
-    return sorted(p.parent.name for p in OUT.glob("*/answers.jsonl"))
+    names = sorted(p.parent.name for p in OUT.glob("*/answers.jsonl"))
+    return [n for n in names if (n.endswith(SUFFIX) if SET else not n.endswith("-disc"))]
 
 
 def judge() -> None:
@@ -262,8 +284,8 @@ def pipeline_readings(arms: dict) -> str:
 def do_analyze() -> None:
     analyze.configure(QUESTIONS, {})
     arms = {}
-    for arm in ["g1"] + [a for a in arms_present() if a.startswith("pipe-")]:
-        arms["G1" if arm == "g1" else arm] = ({a["qid"]: a for a in read_jsonl(OUT / arm / "answers.jsonl")},
+    for arm in [f"g1{SUFFIX}"] + [a for a in arms_present() if a.startswith("pipe-")]:
+        arms["G1" if arm == f"g1{SUFFIX}" else arm] = ({a["qid"]: a for a in read_jsonl(OUT / arm / "answers.jsonl")},
                                              {j["qid"]: j for j in read_jsonl(OUT / arm / "judgments.jsonl")})
     sections = {"scores": analyze.scores_table, "verdicts": analyze.verdict_table, "failed": analyze.failed_lines, "exact": analyze.exact_check,
                 "pipeline_readings": pipeline_readings, "cost": cost_table, "perq": per_question, "citations": analyze.citations}
