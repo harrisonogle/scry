@@ -164,3 +164,19 @@ Drawn by `local-vs-api.py` from `local-vs-api.json`, so the numbers can be repla
 The "15.6x cheaper" label is computed from the two cost figures in the JSON (L75 says 14 to 16 times). The caption is L76's finding: temperature 0 and the schema's field descriptions in the prompt took the 27B from 28 % of the API's pairs (L75) to 75 to 77 %; L76 (a) keeps it a candidate, not a replacement.
 
 Voice-over: "A local twenty-seven-billion-parameter model reproduces three quarters of the API's labels at a fifteenth of the price once it is run at temperature zero with the schema's descriptions in the prompt: a candidate, not yet a replacement."
+
+## 11. `session/` and `stages/`: the frames and the stage overlays, made by `stages.py`
+
+`uv run --with pillow python docs/presentation/stages.py runs/v2/grouponly-100 docs/presentation 12 31` produced both from the run's own records (nothing re-run, no model called).
+
+- `session/00.jpg` to `79.jpg`: the 80 settled frames of `frames.jsonl` downscaled from 2048x1080 to 1280x675 with LANCZOS, JPEG quality 90 (the PNG set was over 15 MB; the JPEG set is 10.2 MB).
+- `stages/read/12.png` to `31.png` (20 frames, the add-endpoint flow): every OCR box of `boxes.jsonl` for the frame as a thin blue (#2a78d6) outline. 98 to 184 boxes a frame.
+- `stages/track/NN.png`: the change records of the transition INTO frame NN (`changes.jsonl`, `to_frame == NN`): `appeared` boxes filled aqua-green (#1baf7a) at 25 % alpha; `changed`, `reread`, `appended` and `truncated` boxes filled orange (#eb6834) at 25 % alpha; `removed` boxes as a thin red (#e34948) outline at the rectangle the record holds, which is where the text sat on the previous frame; unchanged and moved boxes untouched. Frame 21 (the mouse moving onto Add) has no records and is drawn bare.
+- `stages/annotate/NN.png`: the labels in force at the frame as `scry.annotate.join.Labels` joins them (the view the index uses, so a box labelled on an earlier frame of its lifetime keeps that label): each container's bounding rectangle over the boxes of the frame assigned to it, windows blue and popups orange, tagged "window: name" or "popup: name" with the name the model gave when it labelled those boxes (so a tab that was later renamed can carry its earlier title); every pair link in force as a thin aqua line from the key box's right edge to the value box's left edge; every run in force as a thin violet (#4a3aa7) bracket under its boxes. Record links (tables) are not drawn. Boxes with no label in force are untouched.
+- `stages/interpret/NN.png`: the frame with a card in the top-left corner holding the transition's id and `action` (two lines), then `entered_text` and `submitted`, from `interpretations.jsonl`; three lines at most.
+
+Strokes are 2 px at full resolution before the downscale, so about 1.25 px at 1280 wide.
+
+## `index-hierarchy.png`, second version
+
+The C2/C7 callout now sits in clear space above the sections band with a leader line to C2; the T22 callout is one line in the gap above the changes band, to the right of the T22 mark: T22, 61.0 to 64.0 s, submitted: yes: "The user clicked the blue Add button" ... "a success toast ... appeared"; the L760 label and the frames note sit in the gap between the frames and lifetimes bands. No text crosses a band.
