@@ -18,7 +18,7 @@ const SceneBody: React.FC<{scene: ResolvedScene}> = ({scene}) => {
     case 'title':
       return <TitleCard headline={v.headline} tiles={v.tiles ?? []} footnote={v.footnote} />;
     case 'card':
-      return <CardScene heading={v.heading} tiles={v.tiles} note={v.note} caption={scene.caption} />;
+      return <CardScene heading={v.heading} tiles={v.tiles} line={v.line} note={v.note} caption={scene.caption} />;
     case 'timelapse':
       return (
         <TimelapseScene

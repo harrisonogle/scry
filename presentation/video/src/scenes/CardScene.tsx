@@ -15,7 +15,7 @@ const accentOf = (t: Tile, i: number) =>
   t.color === 'blue' ? theme.blue : t.color === 'orange' ? theme.orange : t.color === 'ink' ? theme.ink : i === 0 ? theme.blue : theme.orange;
 
 // A statement card: a heading, one or two large tiles that appear in turn, and a small note.
-export const CardScene: React.FC<{heading?: string; tiles: Tile[]; note?: string; caption: string}> = ({heading, tiles, note, caption}) => {
+export const CardScene: React.FC<{heading?: string; tiles: Tile[]; line?: string; note?: string; caption: string}> = ({heading, tiles, line, note, caption}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const head = ease(frame, 0, fps * 0.6);
@@ -51,8 +51,11 @@ export const CardScene: React.FC<{heading?: string; tiles: Tile[]; note?: string
             );
           })}
         </div>
+        {line ? (
+          <div style={{marginTop: 44, fontSize: 40, fontWeight: 700, color: theme.ink, opacity: ease(frame, fps * 2.0, fps * 2.6)}}>{line}</div>
+        ) : null}
         {note ? (
-          <div style={{marginTop: 40, fontSize: 28, color: theme.faint, opacity: ease(frame, fps * 1.6, fps * 2.2)}}>{note}</div>
+          <div style={{marginTop: line ? 14 : 40, fontSize: 28, color: theme.faint, opacity: ease(frame, fps * (line ? 2.3 : 1.6), fps * (line ? 2.9 : 2.2))}}>{note}</div>
         ) : null}
       </div>
       <Caption text={caption} />
