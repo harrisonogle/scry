@@ -234,7 +234,9 @@
             "label": "Gemini video-to-text: rewrote a hostname, invented a query filter",
             "color": "orange"
           }
-        ]
+        ],
+        "line": "21 questions about this session: Scry 18 right, Gemini 12",
+        "note": "single-shot agent, one question at a time; rubric lines 81 of 87 vs 71 of 87"
       },
       "caption": "Scry 5 of 5 · Gemini video-to-text 3 of 5, same session, same questions",
       "voice": "Gemini's new video-to-text, asked the same questions about this session, got three of five: it rewrote a hostname and invented a query filter. Scry got five of five, every string exact."
