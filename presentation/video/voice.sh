@@ -8,6 +8,7 @@ set -eu
 cd "$(dirname "$0")"
 mkdir -p public/voice
 tempo=$(node -e 'console.log(require("./script.json").voiceTempo ?? 1)')
+export GEMINI_TTS_VOICE="${GEMINI_TTS_VOICE:-$(node -e 'console.log(require("./script.json").voiceName ?? "Kore")')}"
 ffmpeg_dir=node_modules/@remotion/compositor-darwin-arm64
 node -e '
   const s = require("./script.json");
