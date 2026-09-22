@@ -1,0 +1,94 @@
+# P13 (ledger L73): coordinates at small scales, the owner's ask. Under `reference = "coords"` nothing is drawn on the
+# image, so the tag crowding that broke the overlay below 0.5 (P3, L60) cannot happen; the question is whether coords
+# holds labels at scales where the overlay collapsed. Corrected listing (L72: rectangles in the pixels of the image
+# sent). Transcribing at every scale 1.0 to 0.2 (the second reading is the measure that falls first); group-only at
+# 0.4 to 0.2 (group-only coords at 1.0 is P10 coords100, at 0.67 and 0.5 is P12). Both short spans, two cold repeats.
+# Judged on the labels with P3's, P10's and P12's scripts against the overlay at the same scale (P3 transcribing,
+# P10 group-only) and against the overlay at 1.0.
+phase = "p13"
+source = "runs/p0"
+stages = ["read", "track", "annotate"]
+repeats = 2
+
+[spans.smoke]
+frames = "145-155"
+
+[spans.span2]
+frames = "155-187"
+
+[axis.ref.ct100]
+"model.concurrency" = 8
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.reference" = "coords"
+"annotate.scale" = 1.0
+
+[axis.ref.ct067]
+"model.concurrency" = 8
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.reference" = "coords"
+"annotate.scale" = 0.67
+
+[axis.ref.ct050]
+"model.concurrency" = 8
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.reference" = "coords"
+"annotate.scale" = 0.5
+
+[axis.ref.ct040]
+"model.concurrency" = 8
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.reference" = "coords"
+"annotate.scale" = 0.4
+
+[axis.ref.ct030]
+"model.concurrency" = 8
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.reference" = "coords"
+"annotate.scale" = 0.3
+
+[axis.ref.ct025]
+"model.concurrency" = 8
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.reference" = "coords"
+"annotate.scale" = 0.25
+
+[axis.ref.ct020]
+"model.concurrency" = 8
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.reference" = "coords"
+"annotate.scale" = 0.2
+
+[axis.ref.cg040]
+"model.concurrency" = 8
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 0.4
+
+[axis.ref.cg030]
+"model.concurrency" = 8
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 0.3
+
+[axis.ref.cg025]
+"model.concurrency" = 8
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 0.25
+
+[axis.ref.cg020]
+"model.concurrency" = 8
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 0.2
