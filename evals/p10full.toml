@@ -17,12 +17,14 @@ ground_truth = "docs/ground-truth/span2-commands.md"
 questions = "docs/ground-truth/full-questions.md"
 
 [axis.base.coords050-sync]
+"model.concurrency" = 16  # requests in flight; a wall-time setting only (ledger L68)
 "annotate.mode" = "incremental"
 "annotate.transcribe" = false
 "annotate.reference" = "coords"
 "annotate.scale" = 0.5
 
 [axis.base.coords050-batch]
+"model.concurrency" = 16  # requests in flight; a wall-time setting only (ledger L68)
 "annotate.mode" = "incremental"
 "annotate.transcribe" = false
 "annotate.reference" = "coords"
@@ -30,12 +32,14 @@ questions = "docs/ground-truth/full-questions.md"
 "model.mode" = "batch"
 
 [axis.base.coords067-sync]
+"model.concurrency" = 16  # requests in flight; a wall-time setting only (ledger L68)
 "annotate.mode" = "incremental"
 "annotate.transcribe" = false
 "annotate.reference" = "coords"
 "annotate.scale" = 0.67
 
 [axis.base.coords067-batch]
+"model.concurrency" = 16  # requests in flight; a wall-time setting only (ledger L68)
 "annotate.mode" = "incremental"
 "annotate.transcribe" = false
 "annotate.reference" = "coords"

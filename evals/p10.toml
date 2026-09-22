@@ -20,36 +20,42 @@ frames = "145-155"
 frames = "155-187"
 
 [axis.ref.coords100]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
 "annotate.mode" = "incremental"
 "annotate.transcribe" = false
 "annotate.reference" = "coords"
 "annotate.scale" = 1.0
 
 [axis.ref.coords067]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
 "annotate.mode" = "incremental"
 "annotate.transcribe" = false
 "annotate.reference" = "coords"
 "annotate.scale" = 0.67
 
 [axis.ref.coords050]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
 "annotate.mode" = "incremental"
 "annotate.transcribe" = false
 "annotate.reference" = "coords"
 "annotate.scale" = 0.5
 
 [axis.ref.ids100]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
 "annotate.mode" = "incremental"
 "annotate.transcribe" = false
 "annotate.reference" = "ids"
 "annotate.scale" = 1.0
 
 [axis.ref.ids067]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
 "annotate.mode" = "incremental"
 "annotate.transcribe" = false
 "annotate.reference" = "ids"
 "annotate.scale" = 0.67
 
 [axis.ref.ids050]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
 "annotate.mode" = "incremental"
 "annotate.transcribe" = false
 "annotate.reference" = "ids"
