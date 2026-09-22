@@ -7,9 +7,16 @@ import {FrameLabel} from '../script';
 
 // The cited frame (1920 x 1080, boxes already drawn on it) with a slow zoom towards `zoom` (a point in frame
 // pixels and the final scale) and small labels placed in frame pixels, all from script.json.
-type Props = {src: string; caption: string; zoom: {cx: number; cy: number; scale: number}; labels: FrameLabel[]};
+type Props = {
+  src: string;
+  width?: number;
+  height?: number;
+  caption: string;
+  zoom: {cx: number; cy: number; scale: number};
+  labels: FrameLabel[];
+};
 
-export const FrameScene: React.FC<Props> = ({src, caption, zoom, labels}) => {
+export const FrameScene: React.FC<Props> = ({src, width, height, caption, zoom, labels}) => {
   const frame = useCurrentFrame();
   const {durationInFrames, fps} = useVideoConfig();
   const p = interpolate(frame, [fps * 0.6, durationInFrames - fps * 0.8], [0, 1], {
@@ -17,9 +24,15 @@ export const FrameScene: React.FC<Props> = ({src, caption, zoom, labels}) => {
     extrapolateRight: 'clamp',
     easing: Easing.inOut(Easing.cubic),
   });
-  const s = 1 + p * (zoom.scale - 1);
-  const tx = p * (960 - zoom.cx * zoom.scale);
-  const ty = p * (540 - zoom.cy * zoom.scale);
+  // The image is fitted into the canvas (k), then zoomed so that (cx, cy) lands at the canvas centre at k * scale.
+  const W = width ?? 1920;
+  const H = height ?? 1080;
+  const k = Math.min(1920 / W, 1080 / H);
+  const ox = (1920 - W * k) / 2;
+  const oy = (1080 - H * k) / 2;
+  const s = k * (1 + p * (zoom.scale - 1));
+  const tx = (1 - p) * ox + p * (960 - zoom.cx * k * zoom.scale);
+  const ty = (1 - p) * oy + p * (540 - zoom.cy * k * zoom.scale);
   const label = interpolate(p, [0.75, 1], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   return (
     <AbsoluteFill style={{overflow: 'hidden'}}>
@@ -28,13 +41,13 @@ export const FrameScene: React.FC<Props> = ({src, caption, zoom, labels}) => {
           position: 'absolute',
           left: 0,
           top: 0,
-          width: 1920,
-          height: 1080,
+          width: W,
+          height: H,
           transform: `translate(${tx}px, ${ty}px) scale(${s})`,
           transformOrigin: '0 0',
         }}
       >
-        <Img src={staticFile(`img/${src}`)} style={{width: 1920, height: 1080, display: 'block'}} />
+        <Img src={staticFile(`img/${src}`)} style={{width: W, height: H, display: 'block'}} />
         {labels.map((l, i) => (
           <div
             key={i}

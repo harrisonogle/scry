@@ -1,16 +1,24 @@
 {
+  "version": 2,
   "fps": 30,
   "width": 1920,
   "height": 1080,
   "padSeconds": 0.7,
+  "_notes": [
+    "Every word and number on screen or in the voice-over lives in this file; a scene marked draft:true carries numbers or wording that the coordinator has not frozen.",
+    "Scenes marked optional:true are dropped automatically while their image is missing from public/img (run assets.sh after docs/presentation/ changes).",
+    "Scene duration = the voice file's length + padSeconds; voice.sh regenerates public/voice/<id>.wav from the voice lines below.",
+    "Terminal blocks: cmd (the host's question, typed), note (assistant prose), call (a scry tool call with trimmed result lines), answer (markdown-ish: **bold**, `code`, ## heading; a leading 4-space indent keeps the line in place), meta (a dim footer line). keyCitations are drawn orange, every other id blue.",
+    "Frame cut-in: src is the image in docs/presentation/, width/height its pixel size, zoom the point (image pixels) the slow zoom ends on and the final scale, labels are placed in image pixels."
+  ],
   "scenes": [
     {
       "id": "title",
       "visual": {
         "kind": "title"
       },
-      "caption": "A screen-recording tutorial, turned into a searchable record with a citation for every claim",
-      "voice": "Scry turns a screen-recording tutorial into a searchable record, with a citation for every claim."
+      "caption": "A screen recording, turned into a searchable record with a citation for every claim",
+      "voice": "Scry turns a screen recording into a searchable record, with a citation for every claim."
     },
     {
       "id": "pipeline",
@@ -26,7 +34,7 @@
               0.268
             ],
             "from": 0.03,
-            "until": 0.44,
+            "until": 0.5,
             "color": "blue"
           },
           {
@@ -36,135 +44,207 @@
               0.622,
               0.265
             ],
-            "from": 0.46,
+            "from": 0.52,
             "until": 0.97,
             "color": "orange"
           }
         ]
       },
       "caption": "OCR at full resolution, changed pixels and text lifetimes are measured; models label only what was measured",
-      "voice": "It measures the screen first: OCR boxes at full resolution on every frame, the pixels that changed, and the lifetime of every piece of text. Models only label what was measured: windows and popups, links between boxes, a second reading, a description, what each change did, and summaries."
+      "voice": "It measures the screen first: OCR boxes at full resolution on every frame, the pixels that changed, and the lifetime of every piece of text. Models label only what was measured: windows and popups, links between boxes, what each change did, and summaries."
     },
     {
       "id": "demo",
       "visual": {
         "kind": "terminal",
-        "title": "claude — scry-mcp over stdio · demo/aks-tutorial",
-        "status": "6 tool calls · 8 turns · 52 s",
-        "source": "docs/presentation/mcp-demo.md, 'Claude Code, question 1: the deployment command'; tool results trimmed to a line or two, answer sentences trimmed, none edited",
+        "title": "claude — scry-mcp over stdio · v2/grouponly-100, the hold-out video",
+        "status": "16 questions in one conversation · 14 correct, 2 partial, 0 wrong",
+        "source": "docs/presentation/mcp-discovery.md, questions 4 to 6 of the sixteen; tool results trimmed to a line, answer sentences and table columns trimmed, none edited",
+        "hold": 0.28,
+        "keyCitations": [
+          "22:b112",
+          "21:b80",
+          "21:b99"
+        ],
         "blocks": [
           {
             "kind": "cmd",
-            "text": "In the video demo/aks-tutorial: which command created the deployment, when exactly was it run, and what did the terminal show right after?"
-          },
-          {
-            "kind": "note",
-            "text": "I'll answer this from the scry index: list the videos, search for the deployment command, then confirm the run and its output with transitions and frames."
-          },
-          {
-            "kind": "call",
-            "name": "list_videos",
-            "args": "",
-            "results": [
-              "demo/aks-tutorial   221 frames, 852.8 s, annotated   stages: decode, read, track, annotate, interpret, summarize, index   …"
-            ]
-          },
-          {
-            "kind": "call",
-            "name": "search",
-            "args": "video=\"demo/aks-tutorial\", query=\"\\\"kubectl create deployment\\\"\"",
-            "results": [
-              "L1592  \"PS C:\\Users\\msadmin> kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1\"   frames 191–195, 5 sightings, both readers agree",
-              "T196   \" --replicas\" added to the command line, 757.8–758.3 s   …"
-            ]
-          },
-          {
-            "kind": "call",
-            "name": "search",
-            "args": "video=\"demo/aks-tutorial\", query=\"deployment created\"",
-            "results": [
-              "T145   the portal's deployment page auto-updated: a new row with status Created, 559.8–562.8 s",
-              "144    \"Deployment is in progress … Deployment details … Created\"   …"
-            ]
+            "text": "You said an endpoint was added. What exactly was entered in that form: every field and its value?"
           },
           {
             "kind": "call",
             "name": "get_transitions",
-            "args": "video=\"demo/aks-tutorial\", t_a=756, t_b=770",
+            "args": "video=\"v2/grouponly-100\", t_a=41, t_b=64",
             "results": [
-              "T194   the user clicked inside the PowerShell console, entering selection mode, 756.4 s   T195   …"
-            ]
-          },
-          {
-            "kind": "call",
-            "name": "get_node",
-            "args": "video=\"demo/aks-tutorial\", node_id=\"aks:T198\"",
-            "results": [
-              "T198   frames 197–198, 759.43–759.47 s   \"The user pressed Enter to run the typed kubectl command.\"",
-              "\"deployment.apps/kodekloudapp created\" was printed and a fresh prompt appeared below   submitted: yes, confidence 0.94"
+              "T14   frames 13–14, 38.4–41.4 s   \"No user action is evident; the Endpoints blade finished loading.\"   a table with one row: ap.endpoint, Enabled, Degraded, External endpoint, weight 100   …"
             ]
           },
           {
             "kind": "call",
             "name": "get_frame",
-            "args": "video=\"demo/aks-tutorial\", frame=198, image=true",
+            "args": "video=\"v2/grouponly-100\", frame=21, image=true",
             "results": [
-              "Frame 198, t=759.47–763.30s. Description in force: … The last command creates a deployment named kodekloudapp from image hpranav/kodekloudappcs:v1 with one replica, which reports created, and a blinking cursor waits at a fresh prompt …",
-              "b89 L1611 \"deployment.apps/kodekloudapp created\" | seen 759.5–838.8s in 18 frames   [image: the frame, downscaled to 1280 px wide]"
+              "Frame 21, t=60.40–60.97s. Description in force: … An 'Add endpoint' side panel is open on the right, with Type set to External endpoint, a name filled in, an unchecked Enable Endpoint box, an FQDN value, a weight of 1 …   [frame image]"
+            ]
+          },
+          {
+            "kind": "call",
+            "name": "get_frame",
+            "args": "video=\"v2/grouponly-100\", frame=50, image=true",
+            "results": [
+              "Frame 50, t=147.50–147.50s. Description in force: … the Traffic Manager profile tm-profile-NA on its Endpoints page … a blade titled 'Add endpoint' is open …   [frame image]"
             ]
           },
           {
             "kind": "answer",
             "lines": [
-              "**The command** was `kubectl create deployment` for the kodekloudapp image with one replica. Both the OCR and the vision reader agree on this exact text (L1634, frames 202-215; the transition's own reading of the entered text on T198 matches), and I confirmed it by eye on frame 198:",
-              "",
-              "    `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1`",
-              "",
-              "**When it ran.** Enter was pressed at transition T198, between frames 197 and 198.",
-              "    Command line complete, not yet run                                T197       758.9 s",
-              "    Enter pressed, command executed (submitted: yes, confidence 0.94) T198       759.4 s (about 12:39)",
-              "    Output stays on screen, no new input                              frame 198  759.5 to 763.3 s",
-              "",
-              "**What the terminal showed right after.** Two new lines appeared under the command and nothing else (T198 records exactly three changed boxes on frame 198):",
-              "",
-              "    `deployment.apps/kodekloudapp created`",
-              "    `PS C:\\Users\\msadmin> _`",
-              "",
-              "The output line is 198:b89 (L1611, both readers agree, visible from 759.5 s for the rest of the session). The fresh empty prompt with a blinking cursor is 198:b91."
+              "The form I called \"added\" was the Add endpoint panel on the tm-profile-ap Traffic Manager profile, submitted at 61 to 64 s (T22, submitted: yes, confidence 0.93). I read frame 21 (60.4 s), the last capture before Add was clicked. The values were:",
+              "    Field · Value · Evidence",
+              "    Type · External endpoint · 21:b73",
+              "    Name · AFDEndpoint, with a green validation check · 21:b80",
+              "    Enable Endpoint · checkbox unchecked · image of frame 21",
+              "    Fully-qualified domain name (FQDN) or IP address · FRONTDOOR-A-cqhefshkhrgmgqf9… (truncated on screen), green check · 21:b99",
+              "    Weight · 1 · 21:b107"
             ]
+          },
+          {
+            "kind": "meta",
+            "text": "4 turns, 3 tool calls, 34 s, $0.67."
+          },
+          {
+            "kind": "cmd",
+            "text": "Which profiles got the new endpoint, in what order, and at what times?"
+          },
+          {
+            "kind": "call",
+            "name": "get_transitions",
+            "args": "video=\"v2/grouponly-100\", t_a=122, t_b=152",
+            "results": [
+              "T42   frames 41–42, 121.1–123.5 s   \"The user switched browser tabs — clicking back to the 'Add endpoint' tab showing the EU01 Traffic Manager profile.\"   …"
+            ]
+          },
+          {
+            "kind": "answer",
+            "lines": [
+              "Three profiles received the new AFDEndpoint during the video, in this order:",
+              "    # · Profile · Add clicked · Evidence",
+              "    1 · tm-profile-ap · 61.0 to 64.0 s · T22, submitted: yes, confidence 0.93",
+              "    2 · tm-profile-EU · not captured; between 125.6 s and 132.2 s · T43 (form complete, unsubmitted at 125.6 s), T45 (saved state visible)",
+              "    3 · tm-profile-NA · 147.5 to 148.0 s · T51 and T52, both submitted: yes"
+            ]
+          },
+          {
+            "kind": "meta",
+            "text": "2 turns, 1 tool calls, 36 s, $0.68."
+          },
+          {
+            "kind": "cmd",
+            "text": "Did each of those additions succeed? How do you know?"
+          },
+          {
+            "kind": "call",
+            "name": "get_frame",
+            "args": "video=\"v2/grouponly-100\", frame=22, image=true",
+            "results": [
+              "Frame 22, t=63.97–63.97s. Description in force: … A green-check toast in the top right reports that configuration changes were saved successfully, with a close X …   [frame image]"
+            ]
+          },
+          {
+            "kind": "call",
+            "name": "get_frame",
+            "args": "video=\"v2/grouponly-100\", frame=45, image=true",
+            "results": [
+              "Frame 45, t=132.17–132.17s. Description in force: … The endpoint list shows two rows: eu.endpoint, Enabled, Degraded, external endpoint, weight 100, and AFDEndpoint, Disabl…   [frame image]"
+            ]
+          },
+          {
+            "kind": "call",
+            "name": "get_frame",
+            "args": "video=\"v2/grouponly-100\", frame=52, image=true",
+            "results": [
+              "Frame 52, t=151.67–151.67s. Description in force: … the Azure portal page for the Traffic Manager profile tm-profile-NA, on its Endpoints blade …   [frame image]"
+            ]
+          },
+          {
+            "kind": "answer",
+            "lines": [
+              "Yes, all three saved. In each case the portal showed the profile-specific success toast and the endpoint table went from one row to two, with the new AFDEndpoint row present. I looked at the three post-save frames myself.",
+              "",
+              "**tm-profile-ap** · frame 22, 64.0 s · toast \"Saved Traffic Manager profile changes\" / \"Successfully saved configuration changes to Traffic Manager profile 'tm-profile-ap'\" (22:b55, b58, b60) · new row AFDEndpoint, Disabled, Disabled, External endpoint, weight 1 (22:b91, b89, b93) · \"Showing 1 - 2 of 2 results.\" (22:b112), up from 1 of 1 at frame 21 (21:b127)",
+              "**tm-profile-EU** · frame 45, 132.2 s · same toast naming 'tm-profile-EU' (45:b61, b64, b66) · AFDEndpoint, Disabled, Disabled, External endpoint, weight 1 (45:b98, b97, b99) · 2 of 2 (45:b119), up from the single eu.endpoint row at T36",
+              "**tm-profile-NA** · frame 52, 151.7 s · same toast naming 'tm-profile-NA' (52:b62, b65, b67) · AFDEndpoint, Disabled, Disabled, External endpoint, weight 1 (52:b96, b97) · 2 of 2 (52:b118), up from 1 of 1 at frame 50 (50:b130)",
+              "",
+              "**Saved, but disabled.** Every new row reads Disabled with weight 1, matching the unchecked Enable Endpoint box. The additions took effect, but the endpoint receives no traffic in this state, and nothing in the video enables it."
+            ]
+          },
+          {
+            "kind": "meta",
+            "text": "4 turns, 3 tool calls, 33 s, $0.58."
           }
         ]
       },
-      "caption": "The same agent through the project's MCP server, from Claude Code: 6 tool calls, 52 seconds",
-      "voice": "It is also an MCP server, so Claude Code or Copilot can ask the same questions of any indexed video. Ask which command created the deployment: the host lists the videos, searches the index twice, pulls the transitions, and opens the cited frame. The answer gives the exact command, the second it ran, and what the terminal showed next."
+      "caption": "The hold-out video, asked about through the MCP server by someone who never saw it: questions 4 to 6 of 16",
+      "voice": "It is also an MCP server. Here, someone who has never seen the hold-out video asks Claude Code about it, in one conversation. What was entered in the form: every field is read from frame 21, each value with its box. Which profiles got the endpoint, in what order. Did each addition succeed: the toast and the row count on the frame after each save, cited box by box."
     },
     {
       "id": "frame",
+      "optional": true,
+      "draft": true,
       "visual": {
         "kind": "frame",
-        "src": "demo-frame-198.png",
+        "src": "holdout-frame-22.png",
+        "width": 2048,
+        "height": 1080,
         "zoom": {
-          "cx": 1102,
-          "cy": 770,
+          "cx": 1024,
+          "cy": 540,
           "scale": 2.0
         },
         "labels": [
           {
-            "x": 974,
-            "y": 767,
+            "x": 0,
+            "y": 0,
             "color": "orange",
-            "text": "198:b89 · L1611 · both readers agree"
-          },
-          {
-            "x": 1462,
-            "y": 729,
-            "color": "blue",
-            "text": "198:b88"
+            "text": "22:b112 · DRAFT"
           }
-        ]
+        ],
+        "_draft": "DRAFT: the hold-out cut-in image is not committed yet. Set src to the file named in mcp-discovery.md or docs/ground-truth/holdout-discovery.md (frame 22 suggested: the toast, the AFDEndpoint row and \"Showing 1 - 2 of 2 results.\" that Q6 cites), width/height to its pixel size, zoom to the cited boxes and labels to the box ids."
       },
-      "caption": "Frame 198, box b89: the cited output line, with the command above it",
-      "voice": "Every claim cites a frame and a box: here, frame 198 and box b89, the output line, with the command above it."
+      "caption": "DRAFT · Frame 22 of the hold-out: the saved row and the row count the answer cited",
+      "voice": "The citation opens to the frame: the toast, the saved row and the row count that the answer quoted, box by box."
+    },
+    {
+      "id": "holdout-cost-per-config",
+      "optional": true,
+      "draft": true,
+      "visual": {
+        "kind": "image",
+        "src": "holdout-cost-per-config.png"
+      },
+      "caption": "DRAFT · What the hold-out video costs to index, per configuration",
+      "voice": "On the hold-out video, four configurations were indexed from the same frames: group-only annotation at full scale, the owner's default, group-only at two-thirds scale, transcribing, and no annotation. Their prices are on the chart."
+    },
+    {
+      "id": "local-vs-api",
+      "optional": true,
+      "draft": true,
+      "visual": {
+        "kind": "image",
+        "src": "local-vs-api.png"
+      },
+      "caption": "DRAFT · A local 27B model against the API on group-only annotation",
+      "voice": "A local 27-billion-parameter model on this Mac, at temperature zero, reproduces 75 to 77 percent of the API's label pairs, up from 28 percent in the first attempt, for no API cost."
+    },
+    {
+      "id": "us-vs-gemini-holdout",
+      "optional": true,
+      "draft": true,
+      "visual": {
+        "kind": "image",
+        "src": "us-vs-gemini-holdout.png"
+      },
+      "caption": "DRAFT · Hold-out: Gemini direct 3 of 5 questions, 13 of 16 rubric lines; every pipeline index 5 of 5, 16 of 16",
+      "voice": "Asked directly about the hold-out, Gemini answered 3 of 5 questions and passed 13 of 16 rubric lines; every pipeline index answered 5 of 5 and passed all 16."
     },
     {
       "id": "what-annotation-bought",
@@ -172,8 +252,8 @@
         "kind": "image",
         "src": "what-annotation-bought.png"
       },
-      "caption": "27 of 27 with the frames open; one rubric line separates the indexes without them",
-      "voice": "On a 221-frame sample and 27 questions, every configuration answered everything with the frames in hand. With the frames withheld, the annotated index still answered everything; the unannotated one missed one line, carried by a frame description."
+      "caption": "The sample: 27 of 27 with the frames open; one rubric line separates the indexes without them",
+      "voice": "On the sample video, every configuration answered all 27 questions with the frames in hand; with the frames withheld, one rubric line separated the annotated index from the bare one."
     },
     {
       "id": "scale-cliff",
@@ -182,16 +262,7 @@
         "src": "scale-cliff.png"
       },
       "caption": "Second readings collapse between half and forty percent scale; the cost barely moves",
-      "voice": "Labels fall off a cliff before the cost does: second readings hold to two-thirds scale and collapse below half, while the cost barely moves. The image scale stays at one."
-    },
-    {
-      "id": "cost-per-video",
-      "visual": {
-        "kind": "image",
-        "src": "cost-per-video.png"
-      },
-      "caption": "$17.85 a video on Opus 5, $12.11 in batch, $4.62 without annotation",
-      "voice": "The whole record costs 17 dollars 85 a video on Opus 5, 12 dollars 11 in batch mode, and 4 dollars 62 without annotation. Cheaper models cut the price by half and more, and broke the rule that suggested text is never recorded as typed."
+      "voice": "Second readings hold to two-thirds scale and collapse below half, while the cost barely moves; the image scale stays at one."
     },
     {
       "id": "per-question",
@@ -200,29 +271,20 @@
         "src": "per-question.png"
       },
       "caption": "$0.263 and 22.5 s a question on Opus; the Sonnet agent at a quarter of the price opens far fewer frames",
-      "voice": "Answering costs 26 cents and 22 seconds a question on Opus. A Sonnet agent answers at a quarter of the price and ties on score, but opens a fraction of the frames and rarely says when the two readers differ."
-    },
-    {
-      "id": "us-vs-gemini",
-      "optional": true,
-      "visual": {
-        "kind": "image",
-        "src": "us-vs-gemini.png"
-      },
-      "caption": "Gemini direct: 17 of 22 questions, 7 of 14 exact strings; the pipeline: 22 of 22, 14 of 14",
-      "voice": "Asked directly, Gemini answered 17 of 22 questions and read 7 of 14 exact strings; the pipeline read all 14, and never invented a run."
+      "voice": "Answering costs 26 cents and 22 seconds a question on Opus; a Sonnet agent answers at a quarter of the price but opens a fraction of the frames."
     },
     {
       "id": "close",
+      "draft": true,
       "visual": {
         "kind": "close",
         "lines": [
-          "measured on one video, 27 questions",
-          "and a decision ledger of 70 entries"
+          "measured on one video, 27 questions, and a hold-out",
+          "and a decision ledger of 76 entries"
         ]
       },
       "caption": "github.com/harrisonogle/scry",
-      "voice": "Measured on one video, 27 questions, and a decision ledger of seventy entries."
+      "voice": "Measured on one video, 27 questions, and a hold-out, with a decision ledger of 76 entries."
     }
   ]
 }
