@@ -40,6 +40,11 @@ export const Root: React.FC = () => {
       calculateMetadata={async () => {
         const scenes = await resolveScenes();
         const total = scenes.reduce((n, s) => n + s.durationInFrames, 0);
+        if (script.maxSeconds !== undefined && total > script.maxSeconds * script.fps) {
+          throw new Error(
+            `the composition is ${(total / script.fps).toFixed(2)} s, over the ${script.maxSeconds} s ceiling in script.json (pads included); shorten the voice lines`,
+          );
+        }
         return {durationInFrames: total, props: {scenes}};
       }}
     />
