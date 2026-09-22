@@ -15,6 +15,7 @@ dependencies = [
   "typer>=0.12",
   "rapidocr>=3.9",
   "onnxruntime>=1.20",
+  "mcp>=2.2.0",
 ]
 
 [project.optional-dependencies]
@@ -23,6 +24,7 @@ outline = ["google-genai>=2.23"]  # 2.23.0 is the version the agentic interactio
 
 [project.scripts]
 scry = "scry.cli:app"
+scry-mcp = "scry.mcp.server:main"
 
 [dependency-groups]
 dev = ["pytest>=8"]

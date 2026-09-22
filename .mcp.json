@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "scry": {
+      "command": "uv",
+      "args": ["run", "scry-mcp", "--runs", "runs", "--videos", "."]
+    }
+  }
+}
