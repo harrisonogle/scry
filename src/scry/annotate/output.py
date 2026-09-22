@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, create_model
+from pydantic import BaseModel, Field, RootModel, create_model
 
 
 class OutContainer(BaseModel):
@@ -48,29 +48,65 @@ class OutMissed(BaseModel):
     container: str | None = Field(description="Id of its container, or null.")
 
 
-_MODELS: dict[tuple[str, bool, bool], type[BaseModel]] = {}
+# reference = "coords": the same shape, with a point [x, y] wherever the ids schema holds a box id. The point is described
+# here once, in its $defs entry (a description beside a $ref is dropped by the SDK's strict transform); the prompt says it
+# once more. A wrong-length list is not a point: code drops the reference (point_unplaced), so no schema constraint.
+class OutPoint(RootModel[list[int]]):
+    """A point [x, y]: a pixel inside the box's text, near its middle, in the unscaled frame's coordinates."""
 
 
-def output_model(arm: str = "A", transcribe: bool = True, pane: bool = False) -> type[BaseModel]:
+class OutAssignAt(BaseModel):
+    point: OutPoint
+    container: str = Field(description="Id of the container the box belongs to.")
+
+
+class OutRunAt(BaseModel):
+    boxes: list[OutPoint] = Field(description="One point per box, in reading order.")
+    joiner: Literal["", " "] = Field(description="'' when a word was cut in two, ' ' otherwise.")
+
+
+class OutPairAt(BaseModel):
+    key: list[OutPoint] = Field(description="One point per box of the label.")
+    value: list[OutPoint] = Field(description="One point per box of its value.")
+
+
+class OutRecordAt(BaseModel):
+    members: list[list[OutPoint]] = Field(description="The row's cells, left to right, each a list of points, one per box.")
+    header: list[OutPoint] = Field(description="One point per column heading when they are visible, otherwise [].")
+
+
+class OutTextAt(BaseModel):
+    point: OutPoint
+    text: str = Field(description="Verbatim text inside the box; '' for an icon.")
+
+
+_MODELS: dict[tuple[str, bool, bool, str], type[BaseModel]] = {}
+
+
+def output_model(arm: str = "A", transcribe: bool = True, pane: bool = False, reference: str = "ids") -> type[BaseModel]:
     """The answer class of a variant, built once: equal arguments return the same class, and each variant has its own
     name, so its own JSON-schema title and schema hash in the call-cache key."""
     if arm != "A":
         raise ValueError(f"no output schema for arm {arm!r}")
     if pane:
         raise ValueError("no output schema with a pane label")
-    key = (arm, transcribe, pane)
+    if reference not in ("ids", "coords"):
+        raise ValueError(f"no output schema for reference {reference!r}")
+    key = (arm, transcribe, pane, reference)
     if key not in _MODELS:
+        coords = reference == "coords"
         fields: dict = {
             "containers": (list[OutContainer], ...),
-            "assign": (list[OutAssign], ...),
-            "unassigned": (list[str], Field(description="Target box ids that belong to no container.")),
-            "runs": (list[OutRun], ...),
-            "pairs": (list[OutPair], ...),
-            "records": (list[OutRecord], ...),
+            "assign": (list[OutAssignAt if coords else OutAssign], ...),
+            "unassigned": (list[OutPoint], Field(description="One point per target that belongs to no container.")) if coords
+            else (list[str], Field(description="Target box ids that belong to no container.")),
+            "runs": (list[OutRunAt if coords else OutRun], ...),
+            "pairs": (list[OutPairAt if coords else OutPair], ...),
+            "records": (list[OutRecordAt if coords else OutRecord], ...),
         }
         if transcribe:
-            fields["texts"] = (list[OutText], ...)
+            fields["texts"] = (list[OutTextAt if coords else OutText], ...)
             fields["missed"] = (list[OutMissed], ...)
         fields["description"] = (str, Field(description="What the boxes cannot express about this screen, in plain prose."))
-        _MODELS[key] = create_model("AnnotateOut" + arm + ("T" if transcribe else "G"), **fields)
+        _MODELS[key] = create_model("AnnotateOut" + arm + ("Coords" if coords else "") + ("T" if transcribe else "G"), **fields)
     return _MODELS[key]

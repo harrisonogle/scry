@@ -56,8 +56,10 @@ def test_coords_prompt_differs_only_where_a_box_is_named():
     assert [i for i in range(7) if coords[i] != coords_g[i]] == [5]
     for prompt in (system_prompt(reference="coords"), system_prompt(transcribe=False, reference="coords")):
         assert not re.search(r"\bb\d+\b", prompt)  # no "b1"-style id anywhere
-        for phrase in ("box id", "Image 1", "Image 2", "numbered", "overlay"):
+        for phrase in ("Image 1", "Image 2", "numbered", "overlay"):
             assert phrase not in prompt, phrase
+        # the shared description paragraph keeps its "never mention box numbers, box ids" sentence; no other paragraph says "box id"
+        assert "box id" not in "\n\n".join(prompt.split("\n\n")[:6])
     assert coords[1].startswith("You are shown one screenshot.")
     for phrase in ("rectangle", "targets", "point", "inside"):
         assert phrase in coords[1], phrase
