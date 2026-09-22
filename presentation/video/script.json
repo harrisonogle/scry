@@ -9,6 +9,7 @@
     "Every word and number on screen or in the voice-over lives in this file.",
     "maxSeconds is the platform's ceiling for the rendered MP4 including every pad; the composition refuses to build and stills.mjs fails loudly when the scenes exceed it.",
     "Scenes marked optional:true are dropped automatically while their image is missing from public/img (run assets.sh after docs/presentation/ changes).",
+    "voiceName: the Gemini text-to-speech voice voice.sh asks for.",
     "voiceTempo: the generated voice files are time-stretched by this factor (ffmpeg atempo, pitch kept) by voice.sh, so the same words fit the ceiling; 1.0 leaves them as spoken.",
     "Scene duration = the voice file's length + padSeconds; voice.sh regenerates public/voice/<id>.wav from the voice lines below.",
     "timelapse: public/img/<dir>/NN.png from `from` to `to`, played once across the scene, so the frame rate follows the voice line; assets.sh copies docs/presentation/session and docs/presentation/stages, placeholders.sh builds stand-ins from a run directory.",
@@ -46,16 +47,16 @@
         "ext": "jpg"
       },
       "caption": "a four-minute Azure portal session",
-      "voice": "Here is a four-minute session in the Azure portal. Someone who never watched it wants to know what happened: what was typed into the form, which profiles were changed, whether each save went through, what the query said, whether anything was deleted."
+      "voice": "Here is a four-minute session on a secure workstation: a cloud portal and a query tool. Someone who never watched it wants to know what happened: what was typed into the form, which profiles were changed, whether each save went through, what the query said, whether anything was deleted."
     },
     {
       "id": "demo",
       "visual": {
         "kind": "terminal",
         "title": "claude — scry-mcp over stdio · v2/grouponly-100, a four-minute session",
-        "status": "16 questions in one conversation · 14 correct, 2 partial, 0 wrong",
+        "status": "one conversation · 16 questions · 0 wrong",
         "source": "docs/presentation/mcp-discovery.md, questions 4 to 6 of the sixteen; tool results trimmed to a line, answer sentences and table columns trimmed, none edited",
-        "hold": 0.28,
+        "hold": 0.3,
         "keyCitations": [
           "22:b112",
           "21:b80",
@@ -179,7 +180,7 @@
         ]
       },
       "caption": "An assistant that never watched the session asks over Scry's MCP server: questions 4 to 6 of 16",
-      "voice": "They ask, over Scry's MCP server. What was entered in the form: every field read from the frame, each value with its box. Which profiles got the endpoint, in what order. Did each save succeed: the toast and the row count on the frame after each save, cited box by box. Sixteen questions in a row. Not one wrong answer. Not one invented fact."
+      "voice": "They ask, over Scry's MCP server: one conversation, sixteen questions in a row. Not one wrong answer. Not one invented fact."
     },
     {
       "id": "frame",
@@ -222,24 +223,22 @@
       "id": "accuracy",
       "visual": {
         "kind": "card",
-        "heading": "Same session, same five questions",
         "tiles": [
           {
-            "value": "5 of 5",
-            "label": "Scry, every string exact",
+            "value": "18 of 21",
+            "label": "Scry",
             "color": "blue"
           },
           {
-            "value": "3 of 5",
-            "label": "Gemini video-to-text: rewrote a hostname, invented a query filter",
+            "value": "12 of 21",
+            "label": "Gemini video-to-text",
             "color": "orange"
           }
         ],
-        "line": "21 questions about this session: Scry 18 right, Gemini 12",
-        "note": "single-shot agent, one question at a time; rubric lines 81 of 87 vs 71 of 87"
+        "note": "a separate test: the same 21 questions, asked one at a time of Scry and of Gemini, one blind judge"
       },
-      "caption": "Scry 5 of 5 · Gemini video-to-text 3 of 5, same session, same questions",
-      "voice": "Gemini's new video-to-text, asked the same questions about this session, got three of five: it rewrote a hostname and invented a query filter. Scry got five of five, every string exact."
+      "caption": "A separate test: Scry 18 of 21 · Gemini video-to-text 12 of 21, one question at a time, one blind judge",
+      "voice": "In a separate test, Gemini's new video-to-text, asked twenty-one questions about this session one at a time, got twelve right. It rewrote a hostname and invented a query filter. Scry got eighteen, every string exact."
     },
     {
       "id": "cost",
@@ -252,10 +251,10 @@
             "color": "orange"
           }
         ],
-        "note": "open 27B model; extrapolated from a 22-frame span"
+        "note": "open 27B model"
       },
       "caption": "Index once, ask forever",
-      "voice": "Indexing this session cost about seventy-five cents on an open model. Index once, ask forever."
+      "voice": "Indexing this session cost about seventy-five cents on an open model. The index is plain, hierarchical text; the video is never needed again. Index once, ask forever."
     },
     {
       "id": "stages-read",
@@ -407,5 +406,6 @@
       "voice": "It plugs into GitHub Copilot and Claude Code over MCP. Scry. Screen recordings you can search."
     }
   ],
-  "voiceTempo": 1.08
+  "voiceTempo": 1.0,
+  "voiceName": "Umbriel"
 }
