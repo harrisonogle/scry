@@ -1,6 +1,6 @@
 # The pipeline against a video model asked directly
 
-Written 2026-09-21 for the question "why not send the video to Gemini's video-to-text API and ask it everything?". The pipeline already uses that API for one thing it is good at: the optional outline stage asks it for chapter boundaries, at about $0.10 a video (ledger L58). This page separates what is structural from what has to be measured. The measured part is in `docs/results/compare-gemini/` once the comparison has run; until then every claim about Gemini's answers below is a hypothesis.
+Written 2026-09-21 for the question "why not send the video to Gemini's video-to-text API and ask it everything?". The pipeline already uses that API for one thing it is good at: the optional outline stage asks it for chapter boundaries, at about $0.10 a video (ledger L58). This page separates what is structural from what has to be measured. The measured part is in `docs/results/compare-gemini/report.md` (ledger L70): Gemini direct answered 17 of 22 positive questions against the pipeline's 22 of 22, read 7 of 14 exact strings against 14 of 14, and invented terminal runs where the shell showed a grey suggestion; it cost $0.079 a question against $0.263.
 
 ## Structural differences
 

@@ -1,0 +1,2416 @@
+{
+ "phase": "p11",
+ "matrix": "evals/p11.toml",
+ "date": "2026-09-21",
+ "scorecards": [
+  {
+   "run": {
+    "phase": "p11",
+    "name": "full-ids100-grouponly-r1",
+    "config_id": "full-ids100-grouponly",
+    "span": "full",
+    "frames": [
+     0,
+     220
+    ],
+    "values": {
+     "base": "ids100-grouponly"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "ab3fd982cba922a0a95b5a4ada758819f18ceb7c",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": "26330e42b6635ddda27c5abfe1365b19d289b0af10f957474054fb7dfa729f15",
+    "questions_sha256": "08fd9d6c5461a39cb56229a353d04ded039e2892d779ea2b03f1931244417a92"
+   },
+   "counts": {
+    "frames": 221,
+    "transitions": 220,
+    "lifetimes": 1794
+   },
+   "commands": {
+    "entries": [
+     {
+      "n": 1,
+      "text": "az account show",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1220"
+      },
+      "first_frame_error": {
+       "ocr": 0,
+       "any": 0
+      },
+      "first_t_error": {
+       "ocr": 0.0
+      },
+      "found": true,
+      "rank": 1,
+      "level": "lifetime",
+      "node_id": "aks:L1220",
+      "submitted": true,
+      "claim": "T158",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 2,
+      "text": "az configure --defaults group=RG1-KodeKloud-AKS",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1240"
+      },
+      "first_frame_error": {
+       "ocr": 0,
+       "any": 0
+      },
+      "first_t_error": {
+       "ocr": 0.0
+      },
+      "found": true,
+      "rank": 1,
+      "level": "lifetime",
+      "node_id": "aks:L1240",
+      "submitted": true,
+      "claim": "T164",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 3,
+      "text": "az aks get-Credentials --name AKS1-KodeKloudApp",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1247"
+      },
+      "first_frame_error": {
+       "ocr": 1,
+       "any": 1
+      },
+      "first_t_error": {
+       "ocr": 0.87
+      },
+      "found": true,
+      "rank": 2,
+      "level": "transition",
+      "node_id": "aks:T167",
+      "submitted": false,
+      "claim": null,
+      "submit_frame_error": null
+     },
+     {
+      "n": 4,
+      "text": "Y",
+      "scorable": false,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L250"
+      },
+      "first_frame_error": {
+       "ocr": -123,
+       "any": -123
+      },
+      "first_t_error": {
+       "ocr": -398.07
+      },
+      "found": null,
+      "rank": null,
+      "level": null,
+      "node_id": null,
+      "submitted": true,
+      "claim": "T170",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 5,
+      "text": "y",
+      "scorable": false,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L9"
+      },
+      "first_frame_error": {
+       "ocr": -168,
+       "any": -168
+      },
+      "first_t_error": {
+       "ocr": -654.53
+      },
+      "found": null,
+      "rank": null,
+      "level": null,
+      "node_id": null,
+      "submitted": true,
+      "claim": "T171",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 6,
+      "text": "kubectl config current-context",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1264"
+      },
+      "first_frame_error": {
+       "ocr": 0,
+       "any": 0
+      },
+      "first_t_error": {
+       "ocr": 0.0
+      },
+      "found": true,
+      "rank": 2,
+      "level": "transition",
+      "node_id": "aks:T176",
+      "submitted": true,
+      "claim": "T177",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 7,
+      "text": "kubectl get nodes",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1275"
+      },
+      "first_frame_error": {
+       "ocr": 0,
+       "any": 0
+      },
+      "first_t_error": {
+       "ocr": 0.0
+      },
+      "found": true,
+      "rank": 1,
+      "level": "lifetime",
+      "node_id": "aks:L1275",
+      "submitted": true,
+      "claim": "T180",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 8,
+      "text": "kubectl get deployment",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1466"
+      },
+      "first_frame_error": {
+       "ocr": 0,
+       "any": 0
+      },
+      "first_t_error": {
+       "ocr": 0.0
+      },
+      "found": true,
+      "rank": 1,
+      "level": "lifetime",
+      "node_id": "aks:L1466",
+      "submitted": true,
+      "claim": "T186",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 9,
+      "text": "kubectl get pods",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1487"
+      },
+      "first_frame_error": {
+       "ocr": 0,
+       "any": 0
+      },
+      "first_t_error": {
+       "ocr": 0.0
+      },
+      "found": true,
+      "rank": 1,
+      "level": "lifetime",
+      "node_id": "aks:L1487",
+      "submitted": true,
+      "claim": "T187",
+      "submit_frame_error": 0
+     }
+    ],
+    "never_run": [
+     {
+      "text": "az login",
+      "false_run": false,
+      "claim": null
+     },
+     {
+      "text": "az aks scale --resource-group RG1-KodeKloud-AKS --name AKS1-KodeKloudApp --node-count 2",
+      "false_run": false,
+      "claim": null
+     },
+     {
+      "text": "kubectl rollout undo deployment/kodekloudapp",
+      "false_run": false,
+      "claim": null
+     },
+     {
+      "text": "kubectl config current-context",
+      "false_run": false,
+      "claim": null
+     },
+     {
+      "text": "kubectl get svc",
+      "false_run": false,
+      "claim": null
+     }
+    ],
+    "rates": {
+     "found": [
+      7,
+      7
+     ],
+     "exact": {
+      "ocr": [
+       7,
+       7
+      ],
+      "any": [
+       7,
+       7
+      ]
+     },
+     "submitted": [
+      6,
+      7
+     ],
+     "false_run": [
+      0,
+      5
+     ]
+    },
+    "first_frame_error_abs_mean": {
+     "ocr": 0.14,
+     "any": 0.14
+    },
+    "first_frame_error_abs_n": {
+     "ocr": 7,
+     "any": 7
+    },
+    "submit_frame_error_abs_mean": 0.0,
+    "submit_frame_error_abs_n": 6,
+    "units": {
+     "exact.ocr": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "6": 1.0,
+      "7": 1.0,
+      "8": 1.0,
+      "9": 1.0
+     },
+     "exact.any": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "6": 1.0,
+      "7": 1.0,
+      "8": 1.0,
+      "9": 1.0
+     },
+     "first_frame_error_abs.any": {
+      "1": 0.0,
+      "2": 0.0,
+      "3": 1.0,
+      "6": 0.0,
+      "7": 0.0,
+      "8": 0.0,
+      "9": 0.0
+     },
+     "found": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "6": 1.0,
+      "7": 1.0,
+      "8": 1.0,
+      "9": 1.0
+     },
+     "submitted": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 0.0,
+      "6": 1.0,
+      "7": 1.0,
+      "8": 1.0,
+      "9": 1.0
+     },
+     "submit_frame_error_abs": {
+      "1": 0.0,
+      "2": 0.0,
+      "6": 0.0,
+      "7": 0.0,
+      "8": 0.0,
+      "9": 0.0
+     },
+     "false_run": {
+      "N1": 0.0,
+      "N2": 0.0,
+      "N3": 0.0,
+      "N4": 0.0,
+      "N5": 0.0
+     }
+    }
+   },
+   "questions": {
+    "positive": {
+     "n": 22,
+     "correct": 22,
+     "partial": 0,
+     "wrong": 0,
+     "unscored": 0,
+     "mean": 1.0
+    },
+    "negative": {
+     "n": 5,
+     "correct": 5,
+     "partial": 0,
+     "wrong": 0,
+     "unscored": 0,
+     "mean": 1.0
+    },
+    "answers": [
+     {
+      "qid": "Q1",
+      "key": "Q1@94d1fe",
+      "polarity": "positive",
+      "answer": "**The kube-scheduler** \u2014 the \"Kubernetes Components\" slide describes it as the control-plane component that **\"Determines the node to run the workload.\"**\n\nWhen it's on screen:\n- It first appears (with the other three control-plane tiles) in the initial 2\u00d72 build of the Control Plane box, frames 8\u201310, t \u2248 21.7\u201348.7 s (frame 8: \"a calendar-grid icon labeled kube-scheduler\").\n- Its captioned introduction comes at transition **T19** (frames 18\u219219, t \u2248 84.0\u201384.2 s): the slide animation adds the kube-scheduler icon, its label (19:b16 \"kube-scheduler\") and the caption split over two lines \u2014 19:b12 \"Determines the node\" / 19:b13 \"to run the workload\". It stays up through **frame 19** until t \u2248 91.8 s, when the deck clears to the empty \"Node\" box (T20, t \u2248 92.0 s).\n- Later, on the full architecture slide (frames 25\u201339, t \u2248 124.8\u2013226.6 s), kube-scheduler appears again as a tile in the Control Plane region, and at T32\u2013T33 (within step S2) arrows are drawn from the API Server's Pod box down to kube-scheduler and across to kubelet.\n\nNote on confidence: this record has only the OCR reader for these labels (no second independent reading), but the caption text is corroborated by the frame-19 screenshot and the slide description, and the label \"kube-scheduler\" reads consistently across frames 8, 19 and 25.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "**The kube-scheduler**",
+       "M2": "frame 19** until t \u2248 91.8 s",
+       "X1": ""
+      },
+      "dollars": 0.1928,
+      "seconds": 22.1,
+      "error": null
+     },
+     {
+      "qid": "Q2",
+      "key": "Q2@13f8d0",
+      "polarity": "positive",
+      "answer": "**The two pills are \"HCL\" and \"HNS\", and the arrow to their right leads to an \"Endpoint\" tile.**\n\nWhere this is seen:\n- The diagram is the \"Kubernetes Components\" architecture slide (kubectl \u2192 Control Plane / Node), built up click by click between ~124 s and ~219 s [step S2].\n- An empty white rounded box first appears in the Node region, between Container Runtime and Pods, at frame 26 (125.5 s) [T26]; Container Runtime then gets a short downward arrow into it at frame 35 (192.1 s) [T35].\n- The box is labelled **HCL** at frame 36 (201.1 s), together with an arrow from it down to the Pods tile [T36]; then a second chip, **HNS**, appears beside it and an **Endpoint** tile appears to its right at frame 37 (206.5 s) [T37].\n- Frame 38 (214.9\u2013218.6 s) shows the finished arrangement: inside the Node box, Container Runtime points down into a bordered panel holding the two lighter-blue pills HCL (38:b17, lifetime L86) and HNS (38:b18, L87); a grey arrow runs from that panel rightwards into the **Endpoint** tile (38:b19, L88), while further lines drop from the panel down to Kube-proxy (38:b25) and Pods (38:b24). I read the screenshot of frame 38 myself and it matches.\n\nCaveat on the text: these labels come from a single OCR reader (no second reading), and \"HCL\" is almost certainly the Windows networking term **HCN** (Host Compute Network) alongside **HNS** (Host Network Service) \u2014 but as rendered/read on screen at frames 36\u201339 it reads \"HCL\". If exact wording matters, frames 36\u201339 (201\u2013219 s) are the range to re-inspect.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "The two pills are \"HCL\" and \"HNS\"",
+       "M2": "\"HCL\" and \"HNS\"",
+       "M3": "the arrow to their right leads to an \"Endpoint\" tile",
+       "X1": ""
+      },
+      "dollars": 0.1792,
+      "seconds": 26.9,
+      "error": null
+     },
+     {
+      "qid": "Q3",
+      "key": "Q3@607454",
+      "polarity": "positive",
+      "answer": "**The slide deck ends at ~3:46\u20133:49 and the Azure portal appears at ~3:49 (229.4 s).**\n\n- The slide walkthrough (the \"Kubernetes Components\" / architecture diagram) runs until frame 39, t = 226.6 s. At that point the presenter advances to a title card (transition T40, frames 39\u219240, 226.6\u2013228.0 s).\n- The title card is on screen as **frame 40, t = 228.0\u2013229.0 s**. It reads, across two tilted lines between thin white diagonal rules on a pale cream\u2011to\u2011blue gradient: **\"Deploying an Azure Kubernetes Service (AKS Cluster)\"** (frame 40 boxes 40:b1 \"Deploying an Azure Kubernetes\" (L89) and 40:b2 \"Service (AKS Cluster)\" (L90) \u2014 a single wrapped text; I read it from the screenshot myself, and it matches the frame description).\n- The cut to the recorded Azure portal is transition **T41 (frames 40\u219241, 229.03\u2192229.37 s)**: \"the video cut from the title slide to the recorded Azure portal screen\" \u2014 the Azure portal **home page** (blue top bar with search, Azure services icon row, Resources/Navigate/Tools/Useful links), first visible in **frame 41, t = 229.37 s** (it stays through frame 42, to 241.9 s).\n\nNote this is the first *portal* screen; the video's opening is pure slides from 0:00 (section C1, frames 0\u201339). The next title card of the same style comes later, at frame 146 (564.3\u2013565.5 s), reading \"Deploying our sample application to AKS Cluster\".",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "the Azure portal appears at ~3:49 (229.4 s)",
+       "M2": "\"Deploying an Azure Kubernetes Service (AKS Cluster)\"",
+       "X1": "first visible in **frame 41, t = 229.37 s**"
+      },
+      "dollars": 0.1662,
+      "seconds": 28.0,
+      "error": null
+     },
+     {
+      "qid": "Q4",
+      "key": "Q4@22b88f",
+      "polarity": "positive",
+      "answer": "**Name: `RG1-KodeKloud-AKS` \u2014 and it was a brand-new group, not an existing one.**\n\n- At 267.8s (\u22484:28, frame 48) the presenter clicked the **\"Create new\"** link under the Resource group field, which opened the inline dialog \"A resource group is a container that holds related resources for an Azure solution.\" with an empty focused Name box and a greyed OK button [T48, frame 48].\n- The name was typed in stages between \u2248269s and \u2248275s (\u22484:29\u20134:35): \"RG1\" [T49, 269.4\u2013270.5s], \"RG1-Kode\" with a green validation check [T50, frame 50 at 271.6s], \"RG1-KodeKloud\" [T51, 272.2\u2013273.2s], \"RG1-KodeKloud-\" [T52, frame 52 at 274.3s], finishing as \"RG1-KodeKloud-AKS\" [T53, 274.8\u2013277.8s].\n- OK was clicked and took effect at 277.8\u2013278.9s (\u22484:38): the dialog closed and the Resource group field read **\"(New) RG1-KodeKloud-AKS\"** \u2014 the \"(New)\" prefix confirming a newly created group [T54, submitted: yes, frame 54].\n\nCorroboration later in the video: the Advanced tab's infrastructure resource group read \"MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia\" (frame 130, 511.8s), and the deployment toasts read \"Initializing template deployment to resource group 'RG1-KodeKloud-AKS'.\" (frame 139, 544.7s) and \"Submitting the deployment template for resource group 'RG1-KodeKloud-AKS'.\" (frame 141, 550.7s).\n\nOne caveat on certainty: these lifetimes carry only the OCR reading (no independent second reader), but the string is consistent across the dialog, the Resource group field, the infrastructure-RG name and both deployment toasts, and the transition's independently-read entered_text also gives \"RG1-KodeKloud-AKS\".",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "Name: `RG1-KodeKloud-AKS`",
+       "M2": "brand-new group, not an existing one",
+       "M3": "At 267.8s (\u22484:28, frame 48)",
+       "X1": "not an existing one"
+      },
+      "dollars": 0.1822,
+      "seconds": 28.8,
+      "error": null
+     },
+     {
+      "qid": "Q5",
+      "key": "Q5@6eae39",
+      "polarity": "positive",
+      "answer": "**Final region: \u201c(Asia Pacific) Southeast Asia.\u201d**\n\nThat is the value the Region field held when the cluster was submitted: at frame 70 (t\u2248333 s) the Basics tab reads Region * = \"(Asia Pacific) Southeast Asia\" (box 70:b38, lifetime L458), and the Review + create summary at frames 134\u2013141 (t\u2248529\u2013551 s) shows \"Region  Southeast Asia\" (L907) just before Create was clicked (T138/T139, t\u2248538.7\u2013544.7 s, submitted: yes). The Advanced tab confirms it in the infrastructure resource group name \"MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia\" (T130, t\u2248511.8 s), and the finished cluster's overview shows \"Location : Southeast Asia\" (L1075, from t\u2248565.8 s).\n\nValues the Region field held before that, in order:\n\n1. **\"(US) West US\"** \u2014 the portal's default, filled in when the Basics form finished loading (T47, frames 46\u219247, t\u2248261.7\u2013263.1 s). It was still showing when the resource-group dialog closed (T54, t\u2248278.9 s).\n2. **\"(Asia Pacific) Southeast Asia\"** \u2014 first chosen after typing \"south\" into the dropdown filter (T62, frames 61\u219262, t\u2248295.6 s).\n3. **\"(Asia Pacific) Australia Southeast\"** \u2014 selected after filtering the list with \"australia\"; Availability zones then greyed out with \"No availability zones are available for the location you have selected.\" (T68, frames 67\u219268, t\u2248326.2\u2013329.3 s).\n4. Then back to **\"(Asia Pacific) Southeast Asia\"** (T69/T70, frames 68\u219270, t\u2248329.3\u2013333.3 s), which is what remained.\n\nNote: these Region readings come from a single OCR reader (no second reading recorded), but the same string appears consistently across many frames and in the derived resource name \"\u2026_southeastasia\", so the region is not in doubt.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "Final region: \u201c(Asia Pacific) Southeast Asia.\u201d",
+       "M2": "\"(US) West US\" \u2014 the portal's default",
+       "M3": "Then back to **\"(Asia Pacific) Southeast Asia\"**",
+       "X1": "Final region: \u201c(Asia Pacific) Southeast Asia.\u201d"
+      },
+      "dollars": 0.3436,
+      "seconds": 32.1,
+      "error": null
+     },
+     {
+      "qid": "Q6",
+      "key": "Q6@2094d0",
+      "polarity": "positive",
+      "answer": "## What the form had\n\nThe Kubernetes version field was left at the portal's default, **1.24.9 (default)** \u2014 the user opened the dropdown but did not change it:\n\n- At frame 73 (t\u2248337.8\u2013357.6s) the version dropdown is open, listing `1.26.0 (preview)`, `1.25.5`, `1.25.4`, `1.24.9 (default)` (highlighted), `1.24.6`, `1.23.15`, `1.23.12` (transition T73, \"The user clicked the Kubernetes version dropdown\", confidence 0.93).\n- T75 (t\u2248357.6\u2013358.2s) closes the list: \"Kubernetes version still reads 1.24.9 (default)\". The value text lifetime L467 reads `1.24.9 (default)` across frames 71\u201381.\n- On the Review + create tab, frame 134 (t\u2248528.9s) box 134:b29/b28 shows the pair **Kubernetes version \u2192 `1.24.9`** (lifetimes L911/L910, seen in 8 frames), just above `Automatic upgrade \u2192 Patch`.\n\n## What the running cluster reports\n\n**No \u2014 it reports 1.24.10, one patch higher.**\n\n- On the AKS1-KodeKloudApp overview page, frame 147 (t\u2248565.8\u2013586.1s): Essentials shows `Kubernetes version : 1.24.10` (147:b34/b31), and in the Properties tab `Node pools \u2192 Kubernetes versions 1.24.10` (147:b78/b77) and `Configuration \u2192 Kubernetes version 1.24.10` (147:b86/b85). These persist through frames 147\u2013180 (to t\u2248706.7s).\n- The cluster itself agrees from the command line: transition T180 (t\u2248702.0s, submitted **yes**, entered_text `kubectl get nodes`) printed one node `aks-agentpool-18097611-vmss000000  Ready  agent  44m  v1.24.10` (visible in frame 180).\n\n## Note on certainty and a caveat\n\nThese readings come from a single OCR reader (no independent VLM reading, `agree: null`), but the version appears in many frames and in three independent places on the portal page plus the kubectl output, so 1.24.9 \u2192 1.24.10 is solid.\n\nOne thing worth flagging: the deployment submitted in the video is `microsoft.aks-20230404212734` (section C2), while the overview page shown later has breadcrumb `microsoft.aks-20230410195123` (147:b15) and the node is `44m` old \u2014 so the cluster inspected at ~9:30 onward was created in a later session, which plausibly explains the extra patch release (`Auto Upgrade Type: Patch`, 147:b89/b88).",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "**1.24.9 (default)**",
+       "M2": "it reports 1.24.10, one patch higher",
+       "X1": "**No \u2014 it reports 1.24.10"
+      },
+      "dollars": 0.2521,
+      "seconds": 36.7,
+      "error": null
+     },
+     {
+      "qid": "Q7",
+      "key": "Q7@4d6680",
+      "polarity": "positive",
+      "answer": "## Answer\n\n**Final setting: the pool can grow to 1 machine. It started at 5.**\n\nThe pool uses the autoscaler (\"Autoscale \u2011 Recommended\" radio selected), so the growth ceiling is the maximum of the **Node count range**.\n\n**As it started (the portal default)**\n- On the Basics tab, the Primary node pool showed Scale method = Autoscale with the node count range slider at **min 1 / max 5** \u2014 frame 76 (t \u2248 359\u2013380 s), whose screen description reads \"Node count range uses a slider between min 1 and max 5 text boxes\".\n- The same 1\u20135 range reappeared in the per\u2011pool blade when it was opened: the \"Update node pool\" blade for AKS1-KodeKloudApp showed \"node count range 1\u20135\" and Max pods per node 110 \u2014 transition T91, frame 91 (t \u2248 419.8 s).\n\n**How it was lowered**\n1. On Basics, the presenter dragged the slider's right (maximum) handle fully left, so the maximum box changed **from 5 to 1** \u2014 transition T79, frames 78\u219279 (t \u2248 373.7\u2013376.7 s); both boxes then read 1 (T80, frame 80).\n2. In the \"Update node pool\" blade he clicked into the maximum field, cleared the \"5\" (T99, frames 98\u219299, t \u2248 429.7\u2013431.5 s) and typed **\"1\"** (T100, entered_text \"1\", frames 99\u2192100, t \u2248 433\u2013436 s).\n3. He clicked the blue **Update** button \u2014 transition T101 (frames 100\u2192101, t \u2248 436.0\u2013436.6 s), **submitted: yes** \u2014 and the Node pools table row then read `agentpool | System | Linux | 1-1 | Standard_DS2_v2` (frame 101, boxes 101:b31 \"1-1\", 101:b32 \"Standard_DS2_v2\", t = 436.6\u2013440.2 s).\n\nSo the accepted configuration is a min/max of **1\u20131**, i.e. the pool cannot grow beyond a single node; the default it replaced allowed up to **5**.\n\nTwo side notes for context:\n- The blade's slider label showed the service-side ceiling \"Max: 1000\" (frame 91), so 1000 was the largest value the control would have permitted \u2014 but the value actually set was 1.\n- The cluster as deployed did run a single node: `kubectl get nodes` returned only `aks-agentpool-18097611-vmss000000`, and the scale set Overview read Status \"1 out of 1 succeeded\", Size \"Standard_DS2_v2 (1 instance)\" (step S13, t \u2248 666\u2013721 s).",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "the pool can grow to 1 machine",
+       "M2": "It started at 5.",
+       "X1": "the value actually set was 1"
+      },
+      "dollars": 0.3969,
+      "seconds": 47.3,
+      "error": null
+     },
+     {
+      "qid": "Q8",
+      "key": "Q8@f91014",
+      "polarity": "positive",
+      "answer": "**Yes \u2014 it complained mid-typing. The value went from 110 down to 30.**\n\n**Where:** the \"Update node pool\" blade for the `agentpool` node pool of AKS1-KodeKloudApp, field \"Max pods per node * \u24d8\" (lifetime aks:L661).\n\n**Sequence**\n\n| time | frame | what was on screen |\n|---|---|---|\n| 419.8 s | frame 91 | Blade opens with **Max pods per node = 110**, the value selected/highlighted, green tick, helper text \"30 - 250\" (aks:L660; transition T91 describes the blade opening with \"Max pods per node 110\") |\n| 423.2 s | frame 94 | The user types over the selected \"110\"; the field now holds a single digit, read as **\"3\"** (transition T94, entered_text \"3\", confidence 0.6 \u2014 the digit is small and seen only in this frame) |\n| 423.8 s | frame 95 | **The portal complains.** Two red error messages appear under the field and the Update button goes grey/disabled (transition T95) |\n| 425.9 s | frame 96 | The user completes the value to **\"30\"**; errors clear, green tick returns with helper text \"30 - 250\", Update turns blue again (transition T96, entered_text \"30\") |\n| 436.0 s | frames 100\u2192101 | \"Update\" is clicked and the blade closes; the node pool row reads System / Linux / 1-1 / Standard_DS2_v2 (transition T101, submitted: **yes**) \u2014 this is the evidence the 30 actually took effect |\n\n**The complaint, verbatim** (frame 95, t \u2248 423.8\u2013424.3 s; both texts were seen in that single frame, single OCR reader):\n- \"The minimum required number of pods for a system node pool is 30. With 1 node as the minimum scale value, the minimum pods per node is 30.\" (aks:L680 + L681, a two-line wrapped run)\n- \"The value must be between 30 and 250.\" (aks:L682)\n\nSo the complaint was transient: it was triggered by the intermediate value \"3\" while the number was still being typed, and vanished as soon as the second digit made it \"30\". Note the \"3\" itself is only attested by one OCR frame and the model's reading of it \u2014 the frame-95 screen description independently says \"the Max pods per node field contains 3\", which corroborates it.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "The value went from 110 down to 30.",
+       "M2": "Max pods per node = 110",
+       "M3": "The value must be between 30 and 250.",
+       "X1": ""
+      },
+      "dollars": 0.3267,
+      "seconds": 28.1,
+      "error": null
+     },
+     {
+      "qid": "Q9",
+      "key": "Q9@1cbeae",
+      "polarity": "positive",
+      "answer": "## Answer\n\nEach cluster node is a **Standard_DS2_v2** VM: **2 vCPUs and 7 GiB of RAM**. The cluster has only one such node (node count range set to 1\u20111).\n\n### Where it can be seen\n\n**1. During cluster creation \u2014 the \"Update node pool\" blade (agentpool), frames 91\u2013100, \u2248419.8 s\u2013436.0 s (6:59\u20137:16)**\n\nThe Node size field reads \"Standard DS2 v2\" with the subtitle \"2 vcpus, 7 GiB memory\":\n- lifetime L646 \"Standard DS2 v2\" and L647 \"2 vcpus, 7 GiB memory\", both seen in 10 frames, 419.77\u2013436.00 s (e.g. frame 91, box 91:b\u2026 \u2014 the frame lists the pair as \"Node size * \u24d8 Standard DS2 v2 2 vcpus, 7 GiB memory\").\n- The same text is still on screen in the transition where the user clicks Update (T101, frames 100\u2192101, t=436.0 s, submitted: yes), after which the node pool row reads System / Linux / 1\u20111 / **Standard_DS2_v2**.\n\nEarlier, on the Basics tab, the node size shows as \"Standard DS2 v2\" without the vCPU/memory subtitle (lifetime L270, frames 46\u201372, 261.2\u2013337.0 s; and frame 76, 359.0 s).\n\n**2. After creation \u2014 the VM scale set's Overview \u25b8 Properties, frame 183, t \u2248 709.8 s (11:50)**\n\nOn the `aks-agentpool-18097611-vmss` Overview blade, the right-hand **Size** panel lists (frame 183):\n- Size \u2192 \"Standard_DS2_v2\" (183:b85 / 183:b86)\n- vCPUs \u2192 \"2\" (183:b88 / 183:b89)\n- RAM \u2192 \"7 GiB\" (183:b92 / 183:b93)\n\nand the Essentials header shows Size \": Standard_DS2_v2 (1 instance)\" (183:b33/183:b35), with Instance count 1 (183:b106/183:b107). I checked the screenshot of frame 183 directly, so these readings are confirmed visually; note that the vCPUs/RAM rows were captured in only this one frame (a single-frame sighting), though the Standard_DS2_v2 size label itself appears over 22 frames (709.7\u2013777.9 s).",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "2 vCPUs and 7 GiB of RAM",
+       "M2": "Standard_DS2_v2",
+       "X1": ""
+      },
+      "dollars": 0.3016,
+      "seconds": 33.3,
+      "error": null
+     },
+     {
+      "qid": "Q10",
+      "key": "Q10@870d58",
+      "polarity": "positive",
+      "answer": "**Answer: the presenter switched from Kubenet to Azure CNI, and the new cluster subnet is \"(new) default (10.224.0.0/16)\".**\n\n**Before the change** \u2014 on the Networking tab of the *Create Kubernetes cluster* wizard, **Kubenet** was the selected Network configuration radio (frame 107, t\u2248453 s, box 107:b22 \"Kubenet\"; the screenshot shows the Kubenet radio filled and the Azure network-policy option greyed out with the note \"The Azure network policy is not compatible with kubenet networking\", 107:b37).\n\n**The change** \u2014 transition T108 (frames 107\u2192108, t\u2248455.7\u2192457.2 s): \"The user clicked the 'Azure CNI' radio button under Network configuration.\" Azure CNI became selected and the hidden fields appeared.\n\n**Revealed values** (frame 108, t\u2248457.2 s, and still there at frame 110, t\u2248460\u2013464 s):\n- Virtual network: (New) RG1-KodeKloud-AKS-vnet\n- **Cluster subnet: (new) default (10.224.0.0/16)**\n- Kubernetes service address range: 10.0.0.0/16 (lifetime L780)\n- Kubernetes DNS service IP address: 10.0.0.10\n- Docker Bridge address: 172.17.0.1/16\n\nAlso confirmed downstream: the Review + create summary (frames 134\u2013141, t\u2248529\u2013551 s) lists \"Cluster subnet (new) default\" with service range 10.0.0.0/16, and the deployed app later reports a pod IP of ::ffff:10.224.0.31 (T218, t\u2248842 s), consistent with the 10.224.0.0/16 cluster subnet.\n\nCaveat on confidence: these networking texts have only the OCR reader (no second vision reading), so the exact strings come from one reader; the frame 108 screenshot description independently corroborates that Azure CNI is the selected radio and the address fields are filled and valid.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "switched from Kubenet to Azure CNI",
+       "M2": "Cluster subnet: (new) default (10.224.0.0/16)",
+       "X1": "Azure CNI became selected"
+      },
+      "dollars": 0.2006,
+      "seconds": 31.6,
+      "error": null
+     },
+     {
+      "qid": "Q11",
+      "key": "Q11@ff4d49",
+      "polarity": "positive",
+      "answer": "**Name: `crkodekloud`** \u2014 **SKU: Basic** (changed down from the default Standard).\n\nHow the record shows it:\n\n- On the Integrations tab of the Create Kubernetes cluster wizard, \"Create new\" under Container registry opened the **Create container registry** blade, which came up with SKU **Standard** by default (frame 113, 471.7 s; transition T113).\n- The Registry name was typed in stages: \"cr\" at 483.4 s (T115), which triggered the red rule \"Resource names may contain alpha numeric characters only and must be between 5 and 50 characters.\" (T116, frame 116), then \"crkodel\" (T117) and finally **\"crkodekloud\"**, at which point the error cleared (T118, 488.1 s) and a green validation check appeared (T121, 490.6 s). The name is visible as box 124:b11 (lifetime L854, \"crkodekloud\"), with the fixed suffix `.azurecr.io` beside it (124:b20).\n- The SKU dropdown was opened at 494\u2013497.2 s showing Basic / Standard / Premium (T123), and **\"Basic\"** was clicked (T124, 497.2 s); frame 124 shows the SKU field reading \"Basic\" (124:b45, value of \"SKU* \u2460\" at 124:b41).\n- Clicking **Ok** committed it: the Integrations form's Container registry dropdown changed from \"None\" to **\"(New) crkodekloud\"** (T125, 497.8\u2192499.5 s, submitted: yes; visible in frame 125).\n\nSmall caveats: the SKU label itself was read both as \"SKU* \u2460\" and \"SKU * \u2460\" (spacing only), and the value \"Basic\" was captured in just two frames (124\u2013125 region, 497.2\u2013497.8 s) because the blade closed right after \u2014 but the screenshot of frame 124 confirms it plainly, and the deployment therefore carried registry `crkodekloud` on the Basic tier.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "Name: `crkodekloud`",
+       "M2": "SKU: Basic",
+       "X1": "changed down from the default Standard"
+      },
+      "dollars": 0.1998,
+      "seconds": 29.8,
+      "error": null
+     },
+     {
+      "qid": "Q12",
+      "key": "Q12@d8c285",
+      "polarity": "positive",
+      "answer": "## The name\n\n**`MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia`** \u2014 AKS's auto\u2011generated \"infrastructure\" (node) resource group, built from the pattern `MC_<resource group>_<cluster>_<region>` using the user's resource group `RG1-KodeKloud-AKS`, cluster `AKS1-KodeKloudApp` and region Southeast Asia.\n\n## Where it appears\n\n**1. In the create wizard, Advanced tab (~8:32\u20138:41, frames 130\u2013131)**\n- Frame 130 (t = 511.8 s) shows the Advanced tab with the read-only field **\"Infrastructure resource group \u2460\"** (130:b18, lifetime L885) whose value is `MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia` (130:b19, lifetime L886), with a green validation tick and an \"Edit\" link beneath it (130:b20). I read the field myself in the screenshot; it matches the OCR exactly. The record labels the two as a label/value pair. The user left it untouched and clicked \"Next : Tags >\" (transition T130, and step S10/S9 describes the same).\n- Note: this lifetime was captured in only 2 frames and has just one reader (OCR), but the frame image confirms the text.\n\n**2. Later, on the VM scale set blade (~11:49 onward, frames 182\u2013203)**\nWhen the presenter opens the cluster's node VM scale set `aks-agentpool-18097611-vmss`, the same group name shows up three ways (transition T182 at t = 709.7 s, frame 182):\n- the breadcrumb `Home > Resource groups > MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia >` (lifetime L1294 at frames 182\u2013183; then L1395, ending in \"> aks-agentpool-18097611-vmss\", for frames 184\u2013203, t = 713.5\u2013777.9 s);\n- the browser URL `\u2026/resourceGroups/MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia/providers/Microsoft.Compute/virtualMachineScaleSets/a\u2026` (lifetime L1292, frames 182\u2013203);\n- the Essentials field **\"Resource group (move)\"**, which OCR read as `MC RG1-KodeKloud-AKS AKS1-KodeKloudApp southeastasia` (underscores dropped by OCR) \u2014 on the same blade whose \"Resource group\" for the cluster itself reads `RG1-KodeKloud-AKS`, which is exactly the two-group split your question describes.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "**`MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia`**",
+       "M2": "In the create wizard, Advanced tab",
+       "X1": ""
+      },
+      "dollars": 0.2615,
+      "seconds": 32.1,
+      "error": null
+     },
+     {
+      "qid": "Q13",
+      "key": "Q13@7f431d",
+      "polarity": "positive",
+      "answer": "## Answer\n\n**Final validation passed at \u2248 536.6 s (8:56.6), frame 137**\n\n- Transition **T137** (frames 136 \u2192 137, 535.37 s \u2192 536.57 s): \"No user action is evident; the portal's final validation finished on its own. The blue 'Running final validation...' banner was replaced by a green 'Validation passed' banner, and the summary text became fully rendered/un-greyed (node pool count '1' now readable); the Create button remains enabled.\"\n- The banner text itself is lifetime **L952** \"Validation passed\", first seen 536.57 s (frame 137), last seen 550.70 s (frame 141), 5 sightings. Only one reader (OCR) recorded it, so it is a single-reader reading, but it is corroborated by the frame-137 screen description (\"A green check banner near the top states validation passed\", frame 137, t = 536.57 s).\n- Before that, frames 134\u2013136 (528.93 s \u2013 535.37 s) showed the blue banner \"Running final validation...\" (frame **f134**).\n\n**The \"Deployment is in progress\" page came up at \u2248 553.7 s (9:13.7), frame 142**\n\n- Transition **T142** (frames 141 \u2192 142, 550.70 s \u2192 553.70 s), submitted: **yes** \u2014 the Create button click took effect and \"the portal navigated to the deployment blade 'microsoft.aks-20230404212734 | Overview', showing 'Deployment is in progress' \u2026 and a Deployment details table reading 'No results.'\"\n- Lifetime **L975** \"Deployment is in progress\" is first seen at 553.70 s (frame 142) and runs to 562.77 s (frame 145), 4 sightings (OCR only).\n\nIntermediate steps for context: the Create click is transition **T138** (frames 137 \u2192 138, 538.7 s \u2192 541.7 s, submitted: yes), followed by the \"Initializing deployment...\" toast and then the \"Submitting deployment...\" toast visible at frame 141 (550.70 s).",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "Final validation passed at \u2248 536.6 s (8:56.6), frame 137",
+       "M2": "came up at \u2248 553.7 s (9:13.7), frame 142",
+       "X1": "'Validation passed' banner"
+      },
+      "dollars": 0.164,
+      "seconds": 25.3,
+      "error": null
+     },
+     {
+      "qid": "Q14",
+      "key": "Q14@2e3ce4",
+      "polarity": "positive",
+      "answer": "The page is the Azure deployment blade that opens right after Create is clicked.\n\n**Deployment name:** `microsoft.aks-20230404212734` \u2014 shown both in the blade title \"microsoft.aks-20230404212734 | Overview\" (142:b8) and in the summary line \"Deployment name: microsoft.aks-20230404212734\" (142:b21), on the page headed \"Deployment is in progress\" (142:b17), at frame 142, t\u2248553.7 s.\n\n**Start time:** `4/4/2023, 9:32:34 PM` (142:b22, lifetime L980) \u2014 i.e. the line reads \"Start time: 4/4/2023, 9:32:34 PM\". Note the start time (21:32:34) is later than the timestamp embedded in the deployment name (212734 = 21:27:34); I read both directly off the screenshot of frame 142, so this mismatch is what the portal itself showed.\n\nContext: the portal navigated to this blade when the Create button was submitted (transition T142, frames 141\u2192142, t 550.7\u2192553.7 s, submitted: yes). The same name and start time stay on screen through frames 142\u2013145 (t 553.7\u2013562.8 s), while the Deployment details table goes from \"No results.\" to five, then six resource rows.\n\nCaveat: these texts have only one reader (OCR) in the record, but I confirmed both strings visually in the frame 142 screenshot.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "`microsoft.aks-20230404212734`",
+       "M2": "4/4/2023, 9:32:34 PM",
+       "X1": ""
+      },
+      "dollars": 0.2205,
+      "seconds": 29.1,
+      "error": null
+     },
+     {
+      "qid": "Q15",
+      "key": "Q15@b2c284",
+      "polarity": "positive",
+      "answer": "## What's shown\n\n**Docker Hub** \u2014 the presenter briefly brings a second Edge window to the front showing the repository page at `hub.docker.com/repository/docker/hpranav/kodekloudappcs/general` (frame 188, box 188:b20, t\u2248731.7 s).\n\n| Detail | On screen |\n|---|---|\n| Site | Docker Hub (`dockerhub` logo, 188:b28; \"Search Docker Hub\", 188:b30) |\n| Repository | **hpranav / kodekloudappcs** \u2014 highlighted in yellow on the page (188:b64), matching the URL |\n| Tags | \"**This repository contains 2 tag(s).**\" (188:b80). Only the first row is visible in the Tags table: tag **v2**, Type Image, Pulled \"---\", Pushed 7 hours ago (188:b92, 188:b93, 188:b91); the banner above also reads \"Last pushed: 7 hours ago\" (188:b73) |\n\n## When\n\n- Transition **T188** (t = 730.83 \u2192 731.70 s, \u224812:11) is the window switch that brings the Docker Hub page to the front over the Azure portal and PowerShell console.\n- The page is on screen for frame 188 only, t \u2248 **731.7\u2013734.7 s (\u224812:12\u201312:15)**.\n- At **T189** (t = 734.7 \u2192 735.7 s) the Docker Hub window is dismissed and PowerShell comes back to the front; the deployment is then typed and run in step S14, finishing as `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1`, which reports \"deployment.apps/kodekloudapp created\" at T198.\n\nCaveats: all the Docker Hub texts were captured in a single frame (seen_once, one reader only), so the readings above come from that one OCR pass \u2014 I checked them against the screenshot of frame 188 and they match what is legible. Note the small inconsistency worth knowing: the page says 2 tags, but only the **v2** row is visible in the captured frame (the second row is cut off below the fold), while the image the presenter actually deploys is tagged **:v1**.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "M4": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "`hub.docker.com/repository/docker/hpranav/kodekloudappcs/general`",
+       "M2": "**Docker Hub**",
+       "M3": "This repository contains 2 tag(s).",
+       "M4": "frame 188, box 188:b20, t\u2248731.7 s",
+       "X1": ""
+      },
+      "dollars": 0.2172,
+      "seconds": 36.7,
+      "error": null
+     },
+     {
+      "qid": "Q16",
+      "key": "Q16@425b1f",
+      "polarity": "positive",
+      "answer": "## The command\n\n```\nkubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1\n```\n\nI read this myself off the screenshot of **frame 198** (box `198:b88`, t = 759.5 s), so the text is reliable despite OCR having intermittently rendered `kubectl` as `kubect1` in earlier frames (see the char\u2011diff in transition T198, which notes exactly that misread).\n\n## How it was typed and when it ran\n\n- `kubectl create deployment` typed at **frame 190, t \u2248 740 s** \u2014 PSReadLine offered the grey suggestion `kodekloudapp --image=hpranav/kodekloudappcs:v1`; nothing had run yet (T190, submitted: no).\n- Line completed to `... --image=hpranav/kodekloudappcs:v1` (**frame 191, t \u2248 745.7 s**, T191), then ` --replicas` (**frame 196, t \u2248 758.3 s**, T196) and `=1` (**frame 197, t \u2248 758.9 s**, T197).\n- **Enter pressed between frames 197 and 198, t \u2248 759.43\u2013759.47 s (\u2248 12:39)** \u2014 transition **T198** records `submitted: yes` with confidence 0.95, because the output line and a fresh prompt appeared.\n\n## What it printed\n\nOne line:\n\n```\ndeployment.apps/kodekloudapp created\n```\n\n(`198:b89`, lifetime L1611, first seen 759.5 s, visible in 18 frames up to 838.8 s; two readers are not available here, but I verified it in the frame 198 screenshot.) A new empty prompt `PS C:\\Users\\msadmin>` followed (`198:b91`).\n\n## Follow-up confirmation (same step, S14)\n\n- `kubectl get deployment` at **frame 202, t \u2248 769.8 s** showed kodekloudapp 1/1 ready, 1 up\u2011to\u2011date, 1 available, age 20s (T201).\n- `kubectl get pods` at **frame 203, t \u2248 773.5 s** listed `kodekloudapp-67ffc758c5-mm42w 1/1 Running 0 34s` (T203).",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1",
+       "M2": "Enter pressed between frames 197 and 198, t \u2248 759.43\u2013759.47 s (\u2248 12:39)",
+       "M3": "deployment.apps/kodekloudapp created",
+       "X1": ""
+      },
+      "dollars": 0.2366,
+      "seconds": 30.4,
+      "error": null
+     },
+     {
+      "qid": "Q17",
+      "key": "Q17@70de0c",
+      "polarity": "positive",
+      "answer": "## Two runs, both in the Administrator PowerShell console\n\n**Run 1 \u2014 ~716.9 s (\u224811:57), frame 185 \u2192 186**\n\nThe command line `kubectl get deployment` was already typed when the console was brought to the front (T185, frame 185, 716.5 s), and Enter was pressed at T186 (submitted: **yes**, confidence 0.9). Output:\n\n> `No resources found in default namespace.`\n\nThis is visible as the persistent scrollback pair 81:L1583 (`PS C:\\Users\\msadmin> kubectl get deployment`) + 82:L1584 (`No resources found in default namespace.`) in frame 201. The step summary S13 records the same thing (`kubectl get deployment` and then `kubectl get pods` both reporting no resources).\n\n**Run 2 \u2014 ~768.0 s (\u224812:48), frame 200 \u2192 201**\n\nAfter `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1` printed \"deployment.apps/kodekloudapp created\", the line was typed again (T200 at 766.9 s shows `kubectl get deplo` with `yment` as a grey prediction) and run at T201 (submitted: **yes**, confidence 0.94). Output was the deployment table:\n\n```\nNAME           READY   UP-TO-DATE   AVAILABLE   AGE\nkodekloudapp   1/1     1            1           20s\n```\n\nConfirmed on frame 201 (768.0\u2013769.8 s) by boxes 92:L1620 `NAME`, 93:L1621 `READY`, 94:L1622 `UP-TO-DATE`, 95:L1623 `AVAILABLE`, 91:L1619 `AGE`, and the row 98:L1625 `kodekloudapp`, 99:L1626 `1/1`, 100/101 `1`/`1`, 97:L1624 `20s` \u2014 and by the screenshot of that frame.\n\nNotes on certainty: only an OCR reader is present for these terminal lines (no independent VLM reading), but both output blocks stayed on screen for many frames (L1584 for 27 frames, the second table for 15 frames, to 838.8 s) and are legible in the frame\u2011201 screenshot. No third run of `kubectl get deployment` appears anywhere in the scrollback through the end of the console segment (last shown at 838.8 s, frame 215).",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "No resources found in default namespace.",
+       "M2": "kodekloudapp   1/1",
+       "X1": "Two runs"
+      },
+      "dollars": 0.24,
+      "seconds": 23.9,
+      "error": null
+     },
+     {
+      "qid": "Q18",
+      "key": "Q18@36d562",
+      "polarity": "positive",
+      "answer": "## Answer: twice\n\n`kubectl get pods` was submitted and produced output exactly **two** times, both in the PowerShell console during the AKS section (~12:00\u201313:00). No other run appears anywhere else in the video (before ~9:20 the screen is slides and the Azure portal only \u2014 the first kubectl commands begin at ~11:00).\n\n**Run 1 \u2014 t \u2248 721 s, frame 187 (transition T187, frames 186\u2192187, submitted: yes)**\n- Result: `No resources found in default namespace.` (frame 187, box 187:b88 is the command line, 187:b87 the output \u2014 the cluster had nothing deployed yet)\n- It followed `kubectl get deployment`, which had given the same message (T186, frame 186).\n\n**Run 2 \u2014 t \u2248 773.5 s, frame 203 (transition T203, frames 202\u2192203, submitted: yes)**\n- Result: the pod table with header `NAME READY STATUS RESTARTS AGE` and one row:\n  `kodekloudapp-67ffc758c5-mm42w   1/1   Running   0   34s` (frame 203, boxes 203:b97/b94/b95/b96/b93 headers and 203:b102 `kodekloudapp-67ffc758c5-mm42w`, b100 `1/1`, b98 `Running`, b103 `0`, b99 `34s`)\n- This was right after `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1` (\"deployment.apps/kodekloudapp created\", T198) and `kubectl get deployment` (kodekloudapp 1/1, age 20s, T201).\n\n**A third, near-miss that never ran:** between t \u2248 778.8 s and 781.4 s (frames 204\u2192207) the user typed `ku` \u2192 `kubect` \u2192 `kubectl` with PSReadLine showing the grey history suggestion ` get pods` (T205, T206, T207 \u2014 all submitted: no). At t \u2248 786.8 s that line was replaced by `kubectl expose deployment \u2026` (T208), so the suggested `kubectl get pods` was never executed. Note the OCR on those prompt lines is unstable (`kubect1`/`kuhectl` variants, e.g. lifetime L1636), but the frames show it is only suggestion text.\n\nAfter that the terminal only runs `kubectl expose \u2026` (T210, \"service/kodekloudapp exposed\") and `kubectl get service` (T213); the video ends at 852 s with the browser and the closing logo slide.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "## Answer: twice",
+       "M2": "`No resources found in default namespace.`",
+       "X1": "exactly **two** times"
+      },
+      "dollars": 0.4084,
+      "seconds": 29.4,
+      "error": null
+     },
+     {
+      "qid": "Q19",
+      "key": "Q19@79e9e3",
+      "polarity": "positive",
+      "answer": "## Answer\n\nAfter `kubectl expose deployment kodekloudapp --type=LoadBalancer --port=80 --target-port=80` was run (transition T210, frames 209\u2192210 at ~829 s, submitted: yes \u2014 PowerShell printed \"service/kodekloudapp exposed\", box 213:b99), the service's addresses were read with **`kubectl get service`**.\n\n- **Command that showed them:** `kubectl get service` \u2014 typed and submitted at transition **T213** (frames 212\u2192213, t \u2248 834.9\u2013835.6 s, submitted: **yes**; the services table appeared immediately after).\n- **External IP:** **20.247.251.108** (frame 213, box **213:b115**, lifetime L1738, first seen 835.6 s)\n- **Cluster IP:** **10.0.199.121** (frame 213, box **213:b114**, lifetime L1737)\n\nThe full row in frame 213 reads: `kodekloudapp   LoadBalancer   10.0.199.121   20.247.251.108   80:30895/TCP   15s` (boxes b111, b113, b114, b115, b112, b110); below it the default `kubernetes ClusterIP 10.0.0.1 <none> 443/TCP 51m` (b122, b119, b120, b123, b121, b118).\n\nConfidence note: these texts have only an OCR reading (no second reader), but I checked the screenshot of frame 213 myself and the terminal line reads `10.0.199.121` and `20.247.251.108`. Corroboration: the user then selected that external IP in the console (T214, t \u2248 836.2 s) and Chrome offered \"Paste and go to 20.247.251.108\" (frame 217, t \u2248 840.4 s), navigating successfully to the KodeKloudApp page (T218, submitted: yes).",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "**External IP:** **20.247.251.108**",
+       "M2": "**Cluster IP:** **10.0.199.121**",
+       "M3": "`kubectl get service`",
+       "X1": "kubernetes ClusterIP 10.0.0.1 <none>"
+      },
+      "dollars": 0.2577,
+      "seconds": 18.5,
+      "error": null
+     },
+     {
+      "qid": "Q20",
+      "key": "Q20@508485",
+      "polarity": "positive",
+      "answer": "## What the page reports vs. what the address bar shows\n\nThey are **not** the same address.\n\n**In the address bar:** `20.247.251.108` \u2014 shown as \"Not secure | 20.247.251.108\" (frame 218, t\u2248842.2 s, box 218:b6, read by OCR as \"Not secure20.247.251.108\"). This is the LoadBalancer's external IP that was read from `kubectl get service` and then pasted via the context-menu item \"Paste and go to 20.247.251.108\" (transition T218, frames 217\u2192218, entered_text `20.247.251.108`, submitted: **yes**).\n\n**On the page itself:** the last line of the Welcome page reads `IP address: ::ffff:10.224.0.31` (frame 218, box 218:b17). Note the OCR reading of that box is garbled \u2014 \"IP address:ff:10.224.0.31\" \u2014 and it was seen in only one captured frame, so I checked the screenshot of frame 218 myself: it clearly reads \"IP address: ::ffff:10.224.0.31\", which matches the transition's own description (\"IP address ::ffff:10.224.0.31\", T218). The bare address `10.224.0.31` was also on screen earlier in the terminal/portal (lifetime L1707, t\u2248777.9\u2013838.8 s), consistent with that value.\n\n**Why they differ:** `20.247.251.108` is the public IP of the `LoadBalancer` service created by `kubectl expose \u2026 --type=LoadBalancer` (step S15), whereas `::ffff:10.224.0.31` is the pod's own address inside the cluster's Azure CNI subnet `10.224.0.0/16` (the \"Cluster subnet (new) default (10.224.0.0/16)\" chosen at frame 108, t\u2248457 s), written in IPv4-mapped-IPv6 form by the ASP.NET app. The page also confirms the request was served by the pod named in the same frame: \"System name: kodekloudapp-67ffc758c5-mm42w\" (218:b16).",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "`IP address: ::ffff:10.224.0.31`",
+       "M2": "**In the address bar:** `20.247.251.108`",
+       "X1": "They are **not** the same address."
+      },
+      "dollars": 0.1973,
+      "seconds": 26.2,
+      "error": null
+     },
+     {
+      "qid": "Q21",
+      "key": "Q21@29885d",
+      "polarity": "positive",
+      "answer": "**Order: (c) \u2192 (b) \u2192 (e) \u2192 (a) \u2192 (d)**\n\n| # | Moment | When | Evidence |\n|---|--------|------|----------|\n| 1 | **(c)** Slide explaining kubelet, kube-proxy and the container runtime | ~0:26 onward | Transition T10 (frames 9\u219210, t\u224826.4 s): \"The empty Node panel filled in with three icon tiles and captions: kubelet, Kube-proxy, and Container Runtime.\" The explanatory build-up follows: kubelet \"Processes orchestration request from the controller plane\" (T21, frame 21, t\u224892.8 s), Kube-proxy \"Routes network traffic and manages IP addresses\u2026\" (T23, frame 23, t\u2248103.5 s), Container Runtime \"Allows containerized applications to run\u2026\" (T24, frame 24, t\u2248113.3 s). |\n| 2 | **(b)** Network plugin switched to Azure CNI | ~7:37 | Transition T108 (frames 107\u2192108, t\u2248457.2 s): \"The user clicked the 'Azure CNI' radio button under Network configuration\", revealing the vnet/subnet/service-range fields. Frame 108 shows Azure CNI selected (step S7, \"Configure Access and Networking tabs (select Azure CNI)\"). |\n| 3 | **(e)** Container registry given its name | ~7:44\u20138:19 | On the Integrations tab the \"Create new\" registry blade opens (T113, frames 112\u2192113, t\u2248468.7 s); the name is typed \"cr\" \u2192 \"crkodel\" \u2192 \"crkodekloud\" (T115\u2013T118), and after Ok the dropdown reads \"(New) crkodekloud\" (T125, frames 124\u2192125, t\u2248497.8\u2013499.5 s, submitted: yes). |\n| 4 | **(a)** Docker Hub page shown | ~12:11 | Transition T188 (frames 187\u2192188, t\u2248730.8 s) brings the Docker Hub repository page hpranav/kodekloudappcs to the front; frame 188 (t\u2248731.7 s) shows the General tab and the Tags table with tag v2 \"Last pushed: 7 hours ago\". It is dismissed again at T189 (t\u2248734.7 s). |\n| 5 | **(d)** Deployment exposed through a load balancer | ~13:49 | The line `kubectl expose deployment kodekloudapp --type=LoadBalancer --port=80 --target-port=80` is completed at T209 (frames 208\u2192209, t\u2248789.1 s) and run at T210 (frames 209\u2192210, t\u2248829.2\u2013829.4 s, submitted: **yes**), printing \"service/kodekloudapp exposed\"; `kubectl get service` then shows external IP 20.247.251.108 (T213, frame 213, t\u2248835.6 s). |\n\nNote on doubtful text: the OCR of the command line often reads \"kubect1\" instead of \"kubectl\" (lifetime L1714, marked unstable); the model's reading of the frames (entered_text on T209/T210) gives \"kubectl\", which is what the successful output confirms.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "**Order: (c) \u2192 (b) \u2192 (e) \u2192 (a) \u2192 (d)**",
+       "X1": "(a) Docker Hub page shown | ~12:11"
+      },
+      "dollars": 0.2852,
+      "seconds": 23.8,
+      "error": null
+     },
+     {
+      "qid": "Q22",
+      "key": "Q22@34ac2f",
+      "polarity": "positive",
+      "answer": "## Order: credentials \u2192 scale\u2011set blades \u2192 Docker Hub\n\nThe three events happen in the reverse of the order you listed them. The bracketing endpoints are:\n\n- **Cluster deployment submitted** \u2014 the blue **Create** button clicked on Review + create at **538.7 s (~8:59)**, frame 137\u2192138 (T138, submitted: yes); the \"Initializing deployment\u2026\" toast follows at 541.7 s (T139).\n- **`kubectl create deployment \u2026 --replicas=1` run** \u2014 Enter pressed at **759.5 s (~12:39)**, frame 197\u2192198 (T198, submitted: yes), printing \"deployment.apps/kodekloudapp created\" (frame 202, 769.8 s).\n\n### 1. Credentials fetched with the Azure CLI \u2014 ~10:54\u201311:04 (654\u2013664 s)\nAfter a title slide and `az account show` / `az configure --defaults group=RG1-KodeKloud-AKS`, the line is built up as `az ak` (T165, 654.1 s) \u2192 `az aks get` (T166, 655.6 s) \u2192 the inline suggestion accepted so the full line reads `az aks get-credentials --name AKS1-KodeKloudApp` (T167, 657.1 s), then **Enter at 659.3 s** (T184\u2026 precisely T169, frame 168\u2192169, submitted: yes), which warns the object already exists and asks \"Overwrite? (y/n):\". `Y` is answered at 660.6 s (T170) and `y` at 663.9 s (T171), finishing with \"Merged \\\"AKS1-KodeKloudApp\\\" as current context in C:\\Users\\msadmin\\.kube\\config\" (T171). Note the OCR of the prompt line reads `az aks get-Credentials \u2026` with a capital C (e.g. L1247, frames 167\u2013181), while the transition's independent reading is the lowercase `get-credentials`; the capital is almost certainly an OCR artefact.\n\nVerification with `kubectl config current-context` \u2192 \"AKS1-KodeKloudApp\" (T177, 677.0 s) and `kubectl get nodes` \u2192 one Ready node (T180, 702.0 s) sits between this and the next event.\n\n### 2. Scale\u2011set portal pages opened \u2014 ~11:47\u201311:54 (706.7\u2013713.5 s)\nThe user switches from the console to Edge and opens the VM scale set **aks-agentpool-18097611-vmss**: the Overview blade loads (T182, frames 181\u2192182, 706.7\u2013709.7 s) and settles showing Status \": 1 out of 1 succeeded\", Size \": Standard_DS2_v2 (1 instance)\" (T183, 709.7 s); then **Instances** is clicked in the left menu, listing aks-agentpool-18097611-vmss_0 Running / Succeeded / Latest model Yes (T184, 710.5\u2013713.5 s, frame 184). PowerShell comes back on top at 716.5 s (T185), where `kubectl get deployment` (T186, 716.9 s) and `kubectl get pods` (T187, 719.8 s) both report \"No resources found in default namespace.\"\n\n### 3. Docker Hub repository shown \u2014 ~12:11\u201312:15 (730.8\u2013734.7 s), only briefly\nA second Edge window is brought to the front (T188, frames 187\u2192188, 730.8\u2013731.7 s) showing **hub.docker.com/repository/docker/hpranav/kodekloudappcs/general**: the General tab, \"This repository contains 2 tag(s).\" and a Tags table with tag v2 \"Last pushed: 7 hours ago\" (frame 188). This is a single captured frame, alive 731.7\u2013734.7 s; the window is switched away again at 734.7 s (T189), and typing of `kubectl create deployment` begins at 737.8 s (T190).\n\nSo: credentials (~11:00) \u2192 VMSS Overview + Instances blades (~11:47\u201311:54) \u2192 Docker Hub repo page (~12:11, for about three seconds) \u2192 the deployment command runs at ~12:39.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "Order: credentials \u2192 scale\u2011set blades \u2192 Docker Hub",
+       "M2": "~10:54\u201311:04 ... ~11:47\u201311:54 ... ~12:11\u201312:15",
+       "X1": "credentials (~11:00) \u2192 VMSS Overview + Instances blades (~11:47\u201311:54) \u2192 Docker Hub repo page"
+      },
+      "dollars": 0.4376,
+      "seconds": 54.2,
+      "error": null
+     },
+     {
+      "qid": "Q23",
+      "key": "Q23@6df2a4",
+      "polarity": "negative",
+      "answer": "**No \u2014 the cluster was deployed with local Kubernetes accounts, not Azure AD.** The presenter only looked at the Azure AD options and then left the default in place.\n\nWhat the record shows:\n\n- **The Access tab opened with the default.** Clicking \"Next : Access >\" brought up the Access tab with the \"Authentication and Authorization \" field reading **\"Local accounts with Kubernetes RBAC\"** (transition T103, frames 102\u2192103, 441.1\u2013441.9 s; frame 103, box 103:b24-equivalent).\n- **The dropdown was opened and its Azure AD choices were shown, but nothing was picked.** At frame 105 (445.5\u2013450.3 s) the open dropdown lists three options \u2014 \"Local accounts with Kubernetes RBAC\" (highlighted under the pointer, matching the current value), \"Azure AD authentication with Kubernetes RBAC\" (105:b29) and \"Azure AD authentication with Azure RBAC\" (105:b31). I looked at the screenshot: the field itself still reads \"Local accounts with Kubernetes RBAC\" (105:b24) and the highlighted row is the local-accounts one. Each Azure AD option text was seen in just this one frame, so those lifetimes are single-sighting (OCR only, no second reader), but the screenshot confirms them.\n- **The dropdown was dismissed with the value unchanged.** Transition T106 (frames 105\u2192106, 450.3\u2013452.4 s): \"The user dismissed the dropdown (keeping 'Local accounts with Kubernetes RBAC') and clicked 'Next : Networking >'\".\n- **The final summary confirms it.** On the Review + create tab, the Access section reads \"Authentication and Authorization **Local accounts with Kubernetes RBAC**\" (frame 137, 536.6\u2013538.7 s, and frame 138 at 541.7 s) \u2014 and that same summary is on screen when \"Create\" is clicked and the portal shows the \"Submitting deployment...\" toast (frame 141, 550.7 s).\n\nSo the only Azure AD involvement was browsing the dropdown for about five seconds around 445\u2013450 s; the deployed cluster signs users in with local Kubernetes accounts and uses Kubernetes RBAC.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "No \u2014 the cluster was deployed with local Kubernetes accounts, not Azure AD.",
+       "X1": "nothing was picked"
+      },
+      "dollars": 0.2278,
+      "seconds": 27.8,
+      "error": null
+     },
+     {
+      "qid": "Q24",
+      "key": "Q24@95543e",
+      "polarity": "negative",
+      "answer": "**No \u2014 the app was deployed imperatively with `kubectl create deployment`, not from a YAML manifest.**\n\nWhat the record shows in the \"Deploy, expose and browse the app on AKS\" section (aks:C4, frames 187\u2013218, ~730\u2013842 s):\n\n1. **Deployment created imperatively.** At 759.4 s (frames 197\u2192198) the user pressed Enter on `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1`; the console printed \"deployment.apps/kodekloudapp created\" \u2014 transition T198, submitted: **yes**. (OCR reads the line as \"kubect1\" in one pass and \"kubectl\" in another \u2014 the usual l/1 confusion; the model's entered_text reads `kubectl`.)\n2. **Service created imperatively too.** At 829.2 s (frames 209\u2192210) `kubectl expose deployment kodekloudapp --type=LoadBalancer --port=80 --target-port=80` was run, printing \"service/kodekloudapp exposed\" \u2014 transition T210, submitted: **yes**. Then `kubectl get service` at 835.6 s (T213) showed external IP 20.247.251.108.\n3. **Verification only, no manifests:** `kubectl get deployment` (T201, 768 s) and `kubectl get pods` (T203, 773.5 s, pod kodekloudapp-67ffc758c5-mm42w 1/1 Running).\n\nNegative evidence:\n- A search for `\"kubectl apply -f\"` returns **no hits** anywhere in the record, and no transition shows a text editor, a `.yaml`/`.yml` file, or a manifest being written or applied.\n- The only \"YAML\" text on screen (lifetime aks:L1658, frames 204\u2013215, 777.9\u2013838.8 s) is the **left-hand blade menu item** of the Azure portal node page \"aks-agentpool-18097611-vmss000000 | Current workloads\" (see frame 204) \u2014 it is a portal navigation label, not a manifest, and there's no transition showing it being clicked.\n- The video-level summary (aks:V) likewise describes only the imperative `create deployment` / `expose deployment` path.\n\nSo the record positively shows imperative deployment, and shows no sign of `kubectl apply -f` at any point.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "No \u2014 the app was deployed imperatively with `kubectl create deployment`, not from a YAML manifest.",
+       "X1": "returns **no hits** anywhere in the record"
+      },
+      "dollars": 0.3092,
+      "seconds": 26.5,
+      "error": null
+     },
+     {
+      "qid": "Q25",
+      "key": "Q25@c78069",
+      "polarity": "negative",
+      "answer": "**No \u2014 the record never shows the portal's \"Your deployment is complete\" page.**\n\nWhat the video does show:\n\n- The deployment is submitted at ~550\u2013554 s: transition **T142** (frames 141\u2192142, 550.7\u2192553.7 s, submitted: yes) records the click on **Create** and the portal navigating to the blade \"microsoft.aks-20230404212734 | Overview\", which reads **\"Deployment is in progress\"** with a Deployment details table saying \"No results.\"\n- The blade is watched for about ten seconds: at **frame 144** (559.8 s) five sub-deployments appear (SolutionDeployment \"Created\", Vnet/Acr/Workspace/InsightsActionGroup \"OK\"), and at **frame 145** (562.8 s) the row \"AKS1-KodeKloudApp \u2014 Microsoft.ContainerService/managedClusters \u2014 Created\" appears. The frame description at 145 still shows the spinning progress indicator next to the heading **\"Deployment is in progress\"**, with the AKS cluster row still in progress.\n- Immediately after, transition **T146** (frames 145\u2192146, 562.8\u2192564.3 s) cuts the recording away: the whole blade is replaced by a title slide \"Deploying our sample application to AKS Cluster\". The portal deployment blade is never shown again in the record (no later frame matches a completion banner).\n\nThe closest thing to a \"done\" statement is on a different page: after the cut, the portal shows the cluster's own Overview blade with **\"Status : Succeeded (Running)\"** \u2014 lifetime L1066, visible from **frame 147 (565.8 s) through frame 181 (706.7 s)**, e.g. frame 148 at 587.9 s. Also, at frame 183 the scale set Overview reads \"1 out of 1 succeeded\" (step S13, ~706\u2013721 s).\n\nSo: the cluster is shown as successfully provisioned, but only via the resource Overview/scale-set blades; the deployment blade is only ever seen saying \"Deployment is in progress\" (562.8 s), and the video cuts away before it could report completion. If you want to check the gap yourself, the interval worth re-decoding is ~562\u2013565 s.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "No \u2014 the record never shows the portal's \"Your deployment is complete\" page.",
+       "X1": "the deployment blade is only ever seen saying \"Deployment is in progress\""
+      },
+      "dollars": 0.5424,
+      "seconds": 28.8,
+      "error": null
+     },
+     {
+      "qid": "Q26",
+      "key": "Q26@ea47b0",
+      "polarity": "negative",
+      "answer": "**Neither \u2014 the recording shows no cleanup at all.**\n\nThe video ends immediately after the app is verified in the browser, with no delete action of any kind:\n\n- **T218** (frames 217\u2192218, 840.9\u2013842.2 s, submitted: yes) \u2014 the presenter uses the address-bar context menu item \"Paste and go to 20.247.251.108\", and the KodeKloudApp home page loads (\"Message: Hello World from AppSettings.json\", pod `kodekloudapp-67ffc758c5-mm42w`).\n- **T219** (frames 218\u2192219, 846.8\u2013849.8 s) \u2014 \"No user action is evident; the video cut from the screen recording to the KodeKloud outro branding slide.\" The browser window is replaced by a full-screen white KodeKloud logo.\n- **T220** (frames 219\u2192220, 849.8\u2013852.8 s) \u2014 only the logo animation continues; the record ends at frame 220 (852.8 s).\n\nThe closing section is described simply as the \"KodeKloud outro\" (section C5, frames 218\u2013220), and the video summary likewise ends at the KodeKloud logo slide with no teardown step.\n\nSupporting checks:\n- A search for `\"az group delete\"` returns no hits; no `kubectl delete` command appears anywhere in the record (the last PowerShell commands are `kubectl expose ...` at T210 and `kubectl get service` at T213, ~835 s).\n- Every \"Delete\" text in the record is just an Azure portal toolbar/menu button that was never clicked \u2014 e.g. the greyed-out Delete on the deployment blade (frame 145, 562.8 s), the Delete in the AKS cluster's command bar (frame 147, 565.8 s), the scale-set Instances command bar (T184, 713.5 s, submitted: no) and Chrome's context-menu \"Delete\" (frame 217, 840.4 s).\n\nSo the cluster, the resource group `RG1-KodeKloud-AKS`, the registry `crkodekloud` and the LoadBalancer service are all left in place; if you want to double-check visually, the only unexamined window is 842\u2013853 s, which the transitions show as the outro slide.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "Neither \u2014 the recording shows no cleanup at all.",
+       "X1": "are all left in place"
+      },
+      "dollars": 0.2663,
+      "seconds": 27.1,
+      "error": null
+     },
+     {
+      "qid": "Q27",
+      "key": "Q27@622b26",
+      "polarity": "negative",
+      "answer": "**No \u2014 the image came from Docker Hub, not from the ACR that was created with the cluster.**\n\nWhat the record shows:\n\n1. **An ACR was created as part of the cluster wizard.** On the Integrations tab the user clicked \"Create new\" under Container registry (frame 113, ~471.7 s) and named it `crkodekloud` with SKU Basic; after clicking Ok the dropdown read \"(New) crkodekloud\" (transition T125, frames 124\u2192125, 499.5 s, submitted: yes). It was actually deployed: the deployment-details table shows a row `AcrDeployment-a0d89b37-513f-46e8-a768-76b5b95 \u2026 Microsoft.Resources/deployments \u2026 OK` (frame 144, 559.8 s).\n\n2. **The app was deployed from a Docker Hub image.** The command that ran was\n\n   `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1`\n\n   Enter was pressed at transition T198 (frames 197\u2192198, 759.47 s, submitted: yes) and the console printed \"deployment.apps/kodekloudapp created\". The image reference has no registry prefix \u2014 no `crkodekloud.azurecr.io/\u2026` \u2014 so it resolves to Docker Hub's `hpranav/kodekloudappcs`.\n\n3. **Corroboration that the source was Docker Hub:** just before typing the command the user brought up the Docker Hub repository page for that image \u2014 address bar `hub.docker.com/repository/docker/hpranav/kodekloudappcs/general`, heading \"hpranav / kodekloudappcs\", Tags table listing an Image tag with \"Last pushed: 7 hours ago\" (transition T188 / frame 188, 731.7 s). Note the tags table there reads **v2** (box 188:b92) while the deployment used **:v1**.\n\nSo the `crkodekloud` registry was created and attached during cluster creation, but nothing in the recording shows an image being pushed to it or pulled from it; the running pod (`kodekloudapp-67ffc758c5-mm42w`, seen 1/1 Running at frame 203-ish, ~772 s) was created from the Docker Hub image.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "No \u2014 the image came from Docker Hub, not from the ACR",
+       "X1": "nothing in the recording shows an image being pushed to it or pulled from it"
+      },
+      "dollars": 0.4032,
+      "seconds": 24.0,
+      "error": null
+     }
+    ],
+    "dollars_per_question": 0.2747,
+    "ask_dollars": 7.4166,
+    "judge_dollars": 0.2452,
+    "seconds_per_question": 29.9,
+    "stale": 0
+   },
+   "counters": {
+    "annotate": {
+     "repairs": 10,
+     "repair_counts": {
+      "link_already_linked": 9,
+      "link_malformed": 1
+     },
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {
+     "errors": 0,
+     "invalid_citations": 0,
+     "submitted": {
+      "no": 193,
+      "unclear": 2,
+      "yes": 25
+     }
+    }
+   },
+   "cost": {
+    "frames": 221,
+    "projection_frames": 221,
+    "dollars": 16.3043,
+    "per_frame": 0.0738,
+    "per_video": 16.3,
+    "seconds": 338.5,
+    "seconds_per_frame": 1.5,
+    "question_seconds": 83.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 10.461,
+      "per_frame": 0.0473,
+      "per_video": 10.46,
+      "seconds": 155.7,
+      "calls": 221,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 48560,
+       "cache_read_input_tokens": 622175,
+       "input_tokens": 1255642,
+       "output_tokens": 142729
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "index": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 1.1,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "interpret": {
+      "dollars": 4.8903,
+      "per_frame": 0.0221,
+      "per_video": 4.89,
+      "seconds": 74.2,
+      "calls": 220,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 45200,
+       "cache_read_input_tokens": 576300,
+       "input_tokens": 633676,
+       "output_tokens": 46049
+      }
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "summarize": {
+      "dollars": 0.953,
+      "per_frame": 0.0043,
+      "per_video": 0.95,
+      "seconds": 42.1,
+      "calls": 25,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 23826,
+       "cache_read_input_tokens": 11037,
+       "input_tokens": 91683,
+       "output_tokens": 13607
+      }
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 65.4,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "exact.ocr": {
+     "1": 1.0,
+     "2": 1.0,
+     "3": 1.0,
+     "6": 1.0,
+     "7": 1.0,
+     "8": 1.0,
+     "9": 1.0
+    },
+    "exact.any": {
+     "1": 1.0,
+     "2": 1.0,
+     "3": 1.0,
+     "6": 1.0,
+     "7": 1.0,
+     "8": 1.0,
+     "9": 1.0
+    },
+    "first_frame_error_abs.any": {
+     "1": 0.0,
+     "2": 0.0,
+     "3": 1.0,
+     "6": 0.0,
+     "7": 0.0,
+     "8": 0.0,
+     "9": 0.0
+    },
+    "found": {
+     "1": 1.0,
+     "2": 1.0,
+     "3": 1.0,
+     "6": 1.0,
+     "7": 1.0,
+     "8": 1.0,
+     "9": 1.0
+    },
+    "submitted": {
+     "1": 1.0,
+     "2": 1.0,
+     "3": 0.0,
+     "6": 1.0,
+     "7": 1.0,
+     "8": 1.0,
+     "9": 1.0
+    },
+    "submit_frame_error_abs": {
+     "1": 0.0,
+     "2": 0.0,
+     "6": 0.0,
+     "7": 0.0,
+     "8": 0.0,
+     "9": 0.0
+    },
+    "false_run": {
+     "N1": 0.0,
+     "N2": 0.0,
+     "N3": 0.0,
+     "N4": 0.0,
+     "N5": 0.0
+    },
+    "cost.per_question": {
+     "Q1@94d1fe": 0.1928,
+     "Q2@13f8d0": 0.1792,
+     "Q3@607454": 0.1662,
+     "Q4@22b88f": 0.1822,
+     "Q5@6eae39": 0.3436,
+     "Q6@2094d0": 0.2521,
+     "Q7@4d6680": 0.3969,
+     "Q8@f91014": 0.3267,
+     "Q9@1cbeae": 0.3016,
+     "Q10@870d58": 0.2006,
+     "Q11@ff4d49": 0.1998,
+     "Q12@d8c285": 0.2615,
+     "Q13@7f431d": 0.164,
+     "Q14@2e3ce4": 0.2205,
+     "Q15@b2c284": 0.2172,
+     "Q16@425b1f": 0.2366,
+     "Q17@70de0c": 0.24,
+     "Q18@36d562": 0.4084,
+     "Q19@79e9e3": 0.2577,
+     "Q20@508485": 0.1973,
+     "Q21@29885d": 0.2852,
+     "Q22@34ac2f": 0.4376,
+     "Q23@6df2a4": 0.2278,
+     "Q24@95543e": 0.3092,
+     "Q25@c78069": 0.5424,
+     "Q26@ea47b0": 0.2663,
+     "Q27@622b26": 0.4032
+    },
+    "questions.positive": {
+     "Q1@94d1fe": 1.0,
+     "Q2@13f8d0": 1.0,
+     "Q3@607454": 1.0,
+     "Q4@22b88f": 1.0,
+     "Q5@6eae39": 1.0,
+     "Q6@2094d0": 1.0,
+     "Q7@4d6680": 1.0,
+     "Q8@f91014": 1.0,
+     "Q9@1cbeae": 1.0,
+     "Q10@870d58": 1.0,
+     "Q11@ff4d49": 1.0,
+     "Q12@d8c285": 1.0,
+     "Q13@7f431d": 1.0,
+     "Q14@2e3ce4": 1.0,
+     "Q15@b2c284": 1.0,
+     "Q16@425b1f": 1.0,
+     "Q17@70de0c": 1.0,
+     "Q18@36d562": 1.0,
+     "Q19@79e9e3": 1.0,
+     "Q20@508485": 1.0,
+     "Q21@29885d": 1.0,
+     "Q22@34ac2f": 1.0
+    },
+    "questions.negative": {
+     "Q23@6df2a4": 1.0,
+     "Q24@95543e": 1.0,
+     "Q25@c78069": 1.0,
+     "Q26@ea47b0": 1.0,
+     "Q27@622b26": 1.0
+    },
+    "cost.per_frame": {
+     "run": 0.0738
+    },
+    "seconds.per_frame": {
+     "run": 1.5
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p11",
+    "name": "full-ids067-grouponly-r1",
+    "config_id": "full-ids067-grouponly",
+    "span": "full",
+    "frames": [
+     0,
+     220
+    ],
+    "values": {
+     "base": "ids067-grouponly"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "ab3fd982cba922a0a95b5a4ada758819f18ceb7c",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": "26330e42b6635ddda27c5abfe1365b19d289b0af10f957474054fb7dfa729f15",
+    "questions_sha256": "08fd9d6c5461a39cb56229a353d04ded039e2892d779ea2b03f1931244417a92"
+   },
+   "counts": {
+    "frames": 221,
+    "transitions": 220,
+    "lifetimes": 1794
+   },
+   "commands": {
+    "entries": [
+     {
+      "n": 1,
+      "text": "az account show",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1220"
+      },
+      "first_frame_error": {
+       "ocr": 0,
+       "any": 0
+      },
+      "first_t_error": {
+       "ocr": 0.0
+      },
+      "found": true,
+      "rank": 1,
+      "level": "lifetime",
+      "node_id": "aks:L1220",
+      "submitted": true,
+      "claim": "T158",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 2,
+      "text": "az configure --defaults group=RG1-KodeKloud-AKS",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1240"
+      },
+      "first_frame_error": {
+       "ocr": 0,
+       "any": 0
+      },
+      "first_t_error": {
+       "ocr": 0.0
+      },
+      "found": true,
+      "rank": 1,
+      "level": "lifetime",
+      "node_id": "aks:L1240",
+      "submitted": true,
+      "claim": "T164",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 3,
+      "text": "az aks get-Credentials --name AKS1-KodeKloudApp",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1247"
+      },
+      "first_frame_error": {
+       "ocr": 1,
+       "any": 1
+      },
+      "first_t_error": {
+       "ocr": 0.87
+      },
+      "found": true,
+      "rank": 2,
+      "level": "transition",
+      "node_id": "aks:T168",
+      "submitted": false,
+      "claim": null,
+      "submit_frame_error": null
+     },
+     {
+      "n": 4,
+      "text": "Y",
+      "scorable": false,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L250"
+      },
+      "first_frame_error": {
+       "ocr": -123,
+       "any": -123
+      },
+      "first_t_error": {
+       "ocr": -398.07
+      },
+      "found": null,
+      "rank": null,
+      "level": null,
+      "node_id": null,
+      "submitted": true,
+      "claim": "T170",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 5,
+      "text": "y",
+      "scorable": false,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L9"
+      },
+      "first_frame_error": {
+       "ocr": -168,
+       "any": -168
+      },
+      "first_t_error": {
+       "ocr": -654.53
+      },
+      "found": null,
+      "rank": null,
+      "level": null,
+      "node_id": null,
+      "submitted": true,
+      "claim": "T171",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 6,
+      "text": "kubectl config current-context",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1264"
+      },
+      "first_frame_error": {
+       "ocr": 0,
+       "any": 0
+      },
+      "first_t_error": {
+       "ocr": 0.0
+      },
+      "found": true,
+      "rank": 2,
+      "level": "transition",
+      "node_id": "aks:T176",
+      "submitted": true,
+      "claim": "T177",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 7,
+      "text": "kubectl get nodes",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1275"
+      },
+      "first_frame_error": {
+       "ocr": 0,
+       "any": 0
+      },
+      "first_t_error": {
+       "ocr": 0.0
+      },
+      "found": true,
+      "rank": 1,
+      "level": "lifetime",
+      "node_id": "aks:L1275",
+      "submitted": true,
+      "claim": "T180",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 8,
+      "text": "kubectl get deployment",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1466"
+      },
+      "first_frame_error": {
+       "ocr": 0,
+       "any": 0
+      },
+      "first_t_error": {
+       "ocr": 0.0
+      },
+      "found": true,
+      "rank": 1,
+      "level": "lifetime",
+      "node_id": "aks:L1466",
+      "submitted": true,
+      "claim": "T186",
+      "submit_frame_error": 0
+     },
+     {
+      "n": 9,
+      "text": "kubectl get pods",
+      "scorable": true,
+      "exact": {
+       "ocr": true,
+       "any": true
+      },
+      "lifetime": {
+       "ocr": "L1487"
+      },
+      "first_frame_error": {
+       "ocr": 0,
+       "any": 0
+      },
+      "first_t_error": {
+       "ocr": 0.0
+      },
+      "found": true,
+      "rank": 1,
+      "level": "lifetime",
+      "node_id": "aks:L1487",
+      "submitted": true,
+      "claim": "T187",
+      "submit_frame_error": 0
+     }
+    ],
+    "never_run": [
+     {
+      "text": "az login",
+      "false_run": false,
+      "claim": null
+     },
+     {
+      "text": "az aks scale --resource-group RG1-KodeKloud-AKS --name AKS1-KodeKloudApp --node-count 2",
+      "false_run": false,
+      "claim": null
+     },
+     {
+      "text": "kubectl rollout undo deployment/kodekloudapp",
+      "false_run": false,
+      "claim": null
+     },
+     {
+      "text": "kubectl config current-context",
+      "false_run": false,
+      "claim": null
+     },
+     {
+      "text": "kubectl get svc",
+      "false_run": false,
+      "claim": null
+     }
+    ],
+    "rates": {
+     "found": [
+      7,
+      7
+     ],
+     "exact": {
+      "ocr": [
+       7,
+       7
+      ],
+      "any": [
+       7,
+       7
+      ]
+     },
+     "submitted": [
+      6,
+      7
+     ],
+     "false_run": [
+      0,
+      5
+     ]
+    },
+    "first_frame_error_abs_mean": {
+     "ocr": 0.14,
+     "any": 0.14
+    },
+    "first_frame_error_abs_n": {
+     "ocr": 7,
+     "any": 7
+    },
+    "submit_frame_error_abs_mean": 0.0,
+    "submit_frame_error_abs_n": 6,
+    "units": {
+     "exact.ocr": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "6": 1.0,
+      "7": 1.0,
+      "8": 1.0,
+      "9": 1.0
+     },
+     "exact.any": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "6": 1.0,
+      "7": 1.0,
+      "8": 1.0,
+      "9": 1.0
+     },
+     "first_frame_error_abs.any": {
+      "1": 0.0,
+      "2": 0.0,
+      "3": 1.0,
+      "6": 0.0,
+      "7": 0.0,
+      "8": 0.0,
+      "9": 0.0
+     },
+     "found": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "6": 1.0,
+      "7": 1.0,
+      "8": 1.0,
+      "9": 1.0
+     },
+     "submitted": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 0.0,
+      "6": 1.0,
+      "7": 1.0,
+      "8": 1.0,
+      "9": 1.0
+     },
+     "submit_frame_error_abs": {
+      "1": 0.0,
+      "2": 0.0,
+      "6": 0.0,
+      "7": 0.0,
+      "8": 0.0,
+      "9": 0.0
+     },
+     "false_run": {
+      "N1": 0.0,
+      "N2": 0.0,
+      "N3": 0.0,
+      "N4": 0.0,
+      "N5": 0.0
+     }
+    }
+   },
+   "questions": {
+    "positive": {
+     "n": 22,
+     "correct": 22,
+     "partial": 0,
+     "wrong": 0,
+     "unscored": 0,
+     "mean": 1.0
+    },
+    "negative": {
+     "n": 5,
+     "correct": 5,
+     "partial": 0,
+     "wrong": 0,
+     "unscored": 0,
+     "mean": 1.0
+    },
+    "answers": [
+     {
+      "qid": "Q1",
+      "key": "Q1@94d1fe",
+      "polarity": "positive",
+      "answer": "**The kube-scheduler** \u2014 the slide pairs its calendar icon with the note \"Determines the node to run the workload\".\n\nWhere it is on screen:\n\n- **Frame 19, t = 84.2\u201391.8 s** \u2014 the \"Kubernetes Components\" Control Plane slide. The scheduler tile and its note appear here as boxes 19:b16 (\"kube-scheduler\", L51), 19:b12 (\"Determines the node\") and 19:b13 (\"to run the workload\"), the latter two being one wrapped line: \"Determines the node to run the workload\". I read this directly off the frame image, so the wording is reliable; note each of those three texts was captured in only this one frame.\n- It was revealed by the slide advance at **transition T19, t = 84.0\u219284.2 s** (frames 18\u219219), described as: a calendar-like kube-scheduler icon appearing with the note \"Determines the node to run the workload\".\n- The name alone also appears earlier and later: on the first components slide at **frames 8\u201310, t = 21.7\u201348.7 s** (lifetime L30, added by T8 at 21.7 s), and on the full architecture diagram at **frames 25\u201339, t = 124.8\u2013226.6 s** (L84/L85), where arrows are drawn from the API Server's Pod box into kube-scheduler (T32, t \u2248 181 s) and from kube-scheduler into the Node's kubelet (T33, t \u2248 187 s).",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "**The kube-scheduler**",
+       "M2": "Frame 19, t = 84.2\u201391.8 s",
+       "X1": ""
+      },
+      "dollars": 0.1236,
+      "seconds": 21.4,
+      "error": null
+     },
+     {
+      "qid": "Q2",
+      "key": "Q2@13f8d0",
+      "polarity": "positive",
+      "answer": "**The two small boxes are \"HCL\" and \"HNS\", and the arrow beside them (to the right) leads to the \"Endpoint\" tile.**\n\nDetails from the architecture slide \"Kubernetes Components\" (the diagram that traces a request from kubectl through the Control Plane into the Node):\n\n- In the Node box the flow runs kubelet \u2192 **Container Runtime** \u2192 a white rounded container holding two small cyan chips labelled **HCL** (box 38:b17, lifetime L86, first seen 201.1 s) and **HNS** (38:b18, L87, first seen 206.5 s) \u2192 down to **Pods** (38:b24).\n- The arrow leaving that pair to the right points into the **Endpoint** tile (38:b19, L88, appeared with HNS at 206.5 s); a further arrow then runs from the Endpoint/HNS group left and down into Kube-proxy.\n\nBuild order confirming this: the empty placeholder rectangle appears below Container Runtime at f26 (125.5 s, T26); the arrow from Container Runtime down into it at f35 (192.1 s, T35); \"HCL\" plus an arrow down to Pods at f36 (201.1 s, T36); \"HNS\" plus the \"Endpoint\" tile at f37 (206.5 s, T37); the Endpoint\u2192Kube-proxy arrow at f38 (214.9 s, T38). I read the labels off frame 38 (214.9\u2013218.6 s) myself in the screenshot; note that only one reader (OCR) is available for these three labels, and \"HCL\"/\"HNS\" are the kind of three-letter chips OCR can garble (the Windows-container terms are usually rendered HCS/HNS), so treat the first chip's exact letters as slightly uncertain \u2014 the pixels at frame 38 do read \"HCL\".",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "\"HCL\" and \"HNS\"",
+       "M2": "**HNS** (38:b18",
+       "M3": "leads to the \"Endpoint\" tile",
+       "X1": "kubelet \u2192 **Container Runtime** \u2192"
+      },
+      "dollars": 0.1712,
+      "seconds": 23.4,
+      "error": null
+     },
+     {
+      "qid": "Q3",
+      "key": "Q3@607454",
+      "polarity": "positive",
+      "answer": "**The slides end at ~3:46\u20133:49 (frames 39\u219240\u219241).**\n\n- The slide deck runs from the start through the Kubernetes architecture diagram, section C1 ending at frame 39, t = 219.0s (aks:C1, last slide animation at T39, frames 38\u219239, 218.6\u2013219.0s).\n- At **T40 (frames 39\u219240, 226.6\u2013228.0s)** the diagram slide is replaced entirely (~96% of the screen changed) by a full-screen pastel title card.\n- At **T41 (frames 40\u219241, 229.0\u2013229.4s)** the video cuts from that title card to the **Microsoft Azure portal home page** \u2014 the first appearance of the portal, visible in frame 41 (t = 229.37s) with the dark blue Azure top bar, \"Azure services\" shortcut row (Create a resource, Resource groups, Subscriptions, \u2026), Recent resources table, Navigate, Tools and Useful links.\n\n**The title card just before the portal (frame 40, t = 228.00\u2013229.03s) reads:**\n\n> **\"Deploying an Azure Kubernetes Service (AKS Cluster)\"**\n\nIt is set as two tilted lines between white diagonal stripes \u2014 box 40:b1 \"Deploying an Azure Kubernetes\" (L89) and 40:b2 \"Service (AKS Cluster)\" (L90), recorded as one wrapped run. Note that each line was seen in only this single captured frame; I read the frame image myself and it matches the OCR text exactly.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "frame 41 (t = 229.37s)",
+       "M2": "\"Deploying an Azure Kubernetes Service (AKS Cluster)\"",
+       "X1": "229.4s"
+      },
+      "dollars": 0.1279,
+      "seconds": 24.6,
+      "error": null
+     },
+     {
+      "qid": "Q4",
+      "key": "Q4@22b88f",
+      "polarity": "positive",
+      "answer": "## Answer\n\n**Name:** `RG1-KodeKloud-AKS`\n\n**Was it existing? No \u2014 it was newly created.** The presenter clicked the **\"Create new\"** link under the Resource group field, which opened the small popup explaining \"A resource group is a container that holds related resources for an Azure solution.\" with an empty focused Name field and a greyed\u2011out OK button (transition T48, frame 48 at 4:27.8). After OK, the field read **\"(New) RG1-KodeKloud-AKS\"** \u2014 the \"(New)\" prefix confirming it did not already exist (T54, frames 53\u219254, 4:38.9). It had previously read just \"(New) Resource group\" as a placeholder (lifetime L244, frames 46\u201353).\n\n**When the name was entered:** typed character-by-character between roughly **4:28 and 4:38** (267.8 s \u2013 277.8 s):\n\n| Transition | Time | Field read |\n|---|---|---|\n| T49 | 4:30 (270.5 s) | `RG1` \u2014 OK button turned from grey to active blue |\n| T50 | 4:31 (271.6 s) | `RG1-Kode` |\n| T51 | ~4:33 (273.7 s) | `RG1-KodeKloud` |\n| T52 | 4:34 (274.3 s) | `RG1-KodeKloud-` |\n| T53 | 4:37.8 (277.8 s) | `RG1-KodeKloud-AKS` |\n| T54 | 4:38.9 (278.9 s) | OK clicked \u2014 **submitted: yes**, field becomes \"(New) RG1-KodeKloud-AKS\" |\n\n**Corroboration later in the video:** the toast at frame 139 (9:04.7) reads \"Initializing template deployment to resource group 'RG1-KodeKloud-AKS'.\" and the Review + create summary shows \"Resource group (new) RG1-KodeKloud-AKS\"; the Advanced tab's auto-generated infrastructure group was `MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia` (frame 130, 8:31.8).\n\nOne caveat on reading confidence: these texts come from a single OCR reader (no independent vision reading, `agree: null`), but the name is consistent across many independent places \u2014 the popup, the \"(New)\" field, the container-registry blade (T113, 7:51), the MC_ infrastructure group, the deployment toasts, and later the PowerShell command `az configure --defaults group=RG1-KodeKloud-AKS` \u2014 so the spelling is reliable.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "`RG1-KodeKloud-AKS`",
+       "M2": "No \u2014 it was newly created",
+       "M3": "frame 48 at 4:27.8",
+       "X1": "the Advanced tab's auto-generated infrastructure group was `MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia`"
+      },
+      "dollars": 0.1448,
+      "seconds": 24.8,
+      "error": null
+     },
+     {
+      "qid": "Q5",
+      "key": "Q5@6eae39",
+      "polarity": "positive",
+      "answer": "## Answer\n\n**The cluster was created in \"(Asia Pacific) Southeast Asia.\"**\n\nConfirmation at creation time:\n- On the Review + create tab the summary reads `Region` / `Southeast Asia` (frame 137, 536.6 s \u2014 the same frame that shows the green \"Validation passed\" banner, T137).\n- The auto\u2011generated Infrastructure resource group on the Advanced tab is `MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia` (frame 130, 511.8 s, T130), which encodes the region.\n- Create was clicked and the deployment submitted: T138/T139 (538.7\u2013544.7 s, \"Initializing deployment\u2026\"), T141 (\"Submitting deployment\u2026\", 547.7 s), both `submitted: yes`; the deployment blade then lists `AKS1-KodeKloudApp` (Microsoft.ContainerService/managedClusters, Created) at T145, 562.8 s.\n- Afterwards the cluster Overview shows `Location : Southeast Asia` (lifetime L1075, frames 147\u2013183) and the API server `\u2026hcp.southeastasia.azmk8s.io`.\n\n## Earlier values in the Region field\n\n| Order | Value | Where / when |\n|---|---|---|\n| 1 | `Loading...` | while the Basics form was still loading \u2014 frame 46, 261.2 s (L254) |\n| 2 | `(US) West US` \u2014 the portal default | T47, frame 47, 263.1 s (\"Region changed from Loading\u2026 to (US) West US\") |\n| 3 | `(Asia Pacific) Southeast Asia` | user opened the dropdown (T60), typed `south` (T61) and clicked the entry \u2014 T62, frame 62, 295.6 s, submitted: yes |\n| 4 | `(Asia Pacific) Australia Southeast` | dropdown reopened (T66), typed `australia` (T67), selected it \u2014 T68, frame 68, 329.3 s; Availability zones then greyed out with \"No availability zones are available for the location you have selected.\" |\n| 5 | `(Asia Pacific) Southeast Asia` (final) | dropdown reopened (T69) and Southeast Asia re\u2011selected \u2014 T70, frames 69\u219270, 333.3 s |\n\nSo before settling on Southeast Asia, the field held \"Loading...\", the default \"(US) West US\", and briefly \"(Asia Pacific) Australia Southeast\" (with Southeast Asia chosen once before that as well).\n\nNote on reliability: these region strings come from a single OCR reader (no second reading recorded), but each is corroborated by the transition interpretation and, for the final value, by the independent `\u2026_southeastasia` resource\u2011group name and the `Location : Southeast Asia` row later in the video.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "The cluster was created in \"(Asia Pacific) Southeast Asia.\"",
+       "M2": "`(US) West US` \u2014 the portal default",
+       "M3": "briefly \"(Asia Pacific) Australia Southeast\"",
+       "X1": "created in \"(Asia Pacific) Southeast Asia.\""
+      },
+      "dollars": 0.3115,
+      "seconds": 33.2,
+      "error": null
+     },
+     {
+      "qid": "Q6",
+      "key": "Q6@2094d0",
+      "polarity": "positive",
+      "answer": "## Answer\n\n**In the creation form: 1.24.9 (default).** **Later, the running cluster reports 1.24.10** \u2014 so no, the versions do not match exactly (the cluster came up on the next patch release).\n\n### The form\n\n- On the Basics tab, Kubernetes version was left at its default value. At frame 73 (t\u2248337.8\u2013340.3 s) the user has the **Kubernetes version** dropdown open, listing `1.26.0 (preview)`, `1.25.5`, `1.25.4`, `1.24.9 (default)`, `1.24.6`, `1.23.15`, `1.23.12`, with `1.24.9 (default)` highlighted as the current selection (73:b44 is the field value \"1.24.9 (default)\", 73:b52 the highlighted list item).\n- Transition T75 (frames 74\u219275, t\u2248357.6\u2013358.2 s) records the dropdown being closed with \"Kubernetes version still reads 1.24.9 (default)\" \u2014 i.e. no change was made.\n- The Review + create summary confirms it before submission: \"**Kubernetes version 1.24.9**\" (lifetime L910, frames 134\u2013141, t\u2248528.9\u2013550.7 s; see frame 137 with the green \"Validation passed\" banner). Create was then clicked (T138/T139, t\u2248538.7\u2013544.7 s, submitted: yes).\n\n### The running cluster\n\n- Azure portal Overview \u2192 Essentials for AKS1-KodeKloudApp shows the pair **Kubernetes version : 1.24.10** (lifetime L1115, 35 frames, frames 147\u2013181, t\u2248565.8\u2013706.7 s; e.g. frame 147 at t\u2248565.8 s).\n- From the CLI: transition T180 (frames 179\u2192180, t\u2248702.0 s) shows `kubectl get nodes` being entered and submitted (submitted: yes), printing `aks-agentpool-18097611-vmss000000  Ready  agent  44m  **v1.24.10**` (frame 180; lifetime L1283/L1412).\n\nCaveat on confidence: these readings come from a single reader (OCR only, `vlm: null`), but they are stable \u2014 \"1.24.9 (default)\" over 11 frames with one consistent reading, and \"1.24.10\"/\"v1.24.10\" over 35 and 27 frames respectively, none marked unstable \u2014 and I verified the form value visually in the frame 73 screenshot.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "**In the creation form: 1.24.9 (default).**",
+       "M2": "the running cluster reports 1.24.10",
+       "X1": "the versions do not match exactly"
+      },
+      "dollars": 0.4652,
+      "seconds": 40.5,
+      "error": null
+     },
+     {
+      "qid": "Q7",
+      "key": "Q7@4d6680",
+      "polarity": "positive",
+      "answer": "## Answer\n\n**Final setting: a maximum of 1 machine (node count range 1\u20131). At first the maximum was 5 (range 1\u20135).**\n\nThe pool is on **Autoscale \u2013 Recommended**, so the \"how many machines it can grow to\" is the autoscaler's maximum node count.\n\n### How it got there\n\n| When | What the screen showed |\n|---|---|\n| frame 76, t\u2248359\u2013380 | Basics tab, Primary node pool: Scale method **Autoscale**, node count range slider **1 to 5** \u2014 the default |\n| T79, frames 78\u219279, t 373.7\u2013376.7 | User dragged the slider's right (maximum) handle to the far left: \"The maximum node count field changed from 5 to 1\" |\n| frame 86 (t\u2248391) and frame 90 (t\u2248417) | Node pools tab still listed the agentpool row as **\"1-5\"**, Standard_DS2_v2 \u2014 so the Basics drag had not stuck |\n| frame 91, t\u2248419.8 | \"Update node pool\" blade for agentpool: Node count range **1  5**, with the slider labelled **Min: 1, Max: 1000** (the highest value the field would accept) |\n| T99\u2013T100, t 429.7\u2013436.0 | Clicked the maximum field and cleared the \"5\"; the field then displayed **1** and the max handle moved left (entered_text \"1\", submitted \"unclear\" on T100) |\n| T101, frames 100\u2192101, t 436.0\u2013436.6 | Clicked the blue **Update** button; the blade closed and the agentpool row now reads **System, Linux, 1-1, Standard_DS2_v2** (frame 101, box 101:b31 = \"1-1\", readings agree) |\n\nThat 1\u20131 pool is what was deployed: Create was pressed at t\u2248538.7\u2013547.7 (T138/T141, submitted **yes**), and afterwards `kubectl get nodes` showed the single node `aks-agentpool-18097611-vmss000000`, with the scale set reporting \"Standard_DS2_v2 (1 instance)\" (step S11, t\u2248697\u2013736).\n\nCaveat: the value \"1\" in the max field at t\u2248433\u2013436 comes from the transition record's reading of an unsettled frame (T100, confidence 0.5); the agreed, stable evidence for the final limit is the \"1-1\" Node count cell in frame 101.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "Final setting: a maximum of 1 machine (node count range 1\u20131)",
+       "M2": "At first the maximum was 5 (range 1\u20135)",
+       "X1": ""
+      },
+      "dollars": 0.5,
+      "seconds": 48.1,
+      "error": null
+     },
+     {
+      "qid": "Q8",
+      "key": "Q8@f91014",
+      "polarity": "positive",
+      "answer": "# Max pods per node: 110 \u2192 30, and yes, the portal complained mid-typing\n\n**The change**\n- When the \"Update node pool\" blade for AKS1-KodeKloudApp opened at 419.8 s (frame 91), **Max pods per node** held **110**, selected/highlighted in blue (91:b27 label \"Max pods per node * \u2460\", value lifetime L660 = \"110\", hint \"30 - 250\" below).\n- The presenter typed over that selection: at 423.2 s (T94, frames 93\u219294) the field held a single character, read as **\"3\"**.\n- At 424.3\u2013425.9 s (T96, frames 95\u219296) he completed it to **\"30\"**; the field then shows 30 with a green check and the 30\u2011250 hint (frame 96, lifetime L683).\n\n**The complaint while typing**\nYes \u2014 with just \"3\" in the box, frame 95 (423.8\u2013424.3 s) shows the field outlined in red with **two** validation errors and the **Update button greyed out/disabled**:\n\n- 95:b29/b30 (wrapped, one line): \"The minimum required number of pods for a system node pool is 30. With 1 node as the minimum scale value, the minimum pods per node is 30.\"\n- 95:b31: \"The value must be between 30 and 250.\"\n\nBoth error texts were seen in a single frame only (frame 95) and come from one reader (OCR); I checked the screenshot of frame 95 myself and it matches the quoted wording. Typing the second digit cleared both errors and re\u2011enabled the blue Update button (T96, frame 96 at 425.9 s).\n\n**Aftermath (for context)**\nThe Update button was then pressed at 426.3\u2013427.4 s (T97/T98), and in the same blade the node\u2011count maximum was cleared from 5 to 1 before the final Update closed the blade, leaving the agentpool row as System, Linux, 1\u20111, Standard_DS2_v2 (step S5, T99\u2013T101, up to 440.5 s).",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "110 \u2192 30",
+       "M2": "held **110**",
+       "M3": "frame 95 (423.8\u2013424.3 s) shows the field outlined in red with **two** validation errors",
+       "X1": ""
+      },
+      "dollars": 0.209,
+      "seconds": 23.9,
+      "error": null
+     },
+     {
+      "qid": "Q9",
+      "key": "Q9@1cbeae",
+      "polarity": "positive",
+      "answer": "## Answer\n\nEach node (VM) in the cluster is a **Standard_DS2_v2** with **2 vCPUs and 7 GiB of memory**, and the cluster runs a single such node.\n\n### Where it can be seen\n\n**1. During cluster creation \u2014 the \"Update node pool\" blade (\u22487:00\u20137:16, frames 91\u2013100)**\n\nThe Node size row reads `Standard DS2 v2` with the sub-caption `2 vcpus, 7 GiB memory` (frame 91, t=419.8 s, lifetimes L646 and L647; the same text stays on screen through frame 100, t=436.0 s). Frame 91's description confirms \"node size Standard DS2 v2 with a 'Choose a size' link\". This is where the presenter also changes Max pods per node to 30 and the node-count maximum to 1 (step S11/S5).\n\n**2. After deployment \u2014 the VM scale set Overview \u2192 Properties pane (\u224811:50, frame 183)**\n\nLooking at frame 183 (t=709.77\u2013710.53 s) on the `aks-agentpool-18097611-vmss` Overview blade, the Size group in the Properties tab lists:\n\n- `Size` : `Standard_DS2_v2` (183:b85 / 183:b86)\n- `vCPUs` : `2` (183:b88 / 183:b89)\n- `RAM` : `7 GiB` (183:b92 / 183:b93)\n\nThe Essentials panel of the same frame shows `Size : Standard_DS2_v2 (1 instance)` (183:b33/183:b35) and `Status : 1 out of 1 succeeded` \u2014 i.e. one machine of that size. Transition T183 (t=709.7\u2192709.77) is the moment that Overview blade finished loading and filled in those fields.\n\n**Corroborating detail:** the cluster really has just one machine \u2014 `kubectl get nodes` at \u224811:37 printed a single node row, `aks-agentpool-18097611-vmss000000`, Ready, agent, 44m, v1.24.10 (step S11, transition T180), and the Instances blade at frame 184 (t=713.5 s) lists the one instance `aks-agentpool-18097611-vmss_0`, Running/Succeeded.\n\n### Confidence note\n\nThese values come from a single OCR reader (no independent vision reading is recorded for these lifetimes, `vlm: null`), and the RAM/vCPU pair in frame 183 was captured in only one frame (`seen_once: true`). I inspected that screenshot directly and the Size group plainly reads Standard_DS2_v2 / 2 / 7 GiB, which matches the \"2 vcpus, 7 GiB memory\" caption seen ten frames' worth of the creation wizard, so the figures are solid.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "2 vCPUs and 7 GiB of memory",
+       "M2": "Standard_DS2_v2",
+       "X1": ""
+      },
+      "dollars": 0.2552,
+      "seconds": 33.2,
+      "error": null
+     },
+     {
+      "qid": "Q10",
+      "key": "Q10@870d58",
+      "polarity": "positive",
+      "answer": "**Answer: Azure CNI, replacing the default Kubenet; the new cluster subnet is \"(new) default (10.224.0.0/16)\".**\n\nDetails and evidence:\n\n- **Before:** When the wizard opened the Networking tab (transition T106, frames 105\u2192106, t\u2248452 s), Network configuration showed **Kubenet** selected \u2014 frame 106 describes \"Network configuration uses radio buttons with Kubenet selected and Azure CNI unselected\", and the Azure network-policy option was greyed out with the note \"The Azure network policy is not compatible with kubenet networking.\"\n\n- **The pick:** Transition **T108** (frames 107\u2192108, t = 455.7\u2192457.2 s): \"The user clicked the 'Azure CNI' radio button under Network configuration\u2026 Azure CNI became selected instead of Kubenet\", revealing pre-filled Virtual network, Cluster subnet, service address range, DNS service IP and Docker Bridge fields. Frame 108 confirms visually: the Azure CNI radio is filled blue (108:b24 \"Azure CNI\", label 108:b23 \"Network configuration\").\n\n- **New cluster subnet:** Frame 108 (t = 457.2 s), box **108:b32**, the value of \"Cluster subnet *\" (108:b33), reads **\"(new) default (10.224.0.0/16)\"** \u2014 i.e. a new subnet named *default* with range **10.224.0.0/16**. The same value reappears on the Integrations transition T111 (\"(new) default (10.224.0.0/16)\", t\u2248465 s) and on the Review + create summary as \"Cluster subnet (new) default\" (frame 134, t\u2248529 s).\n\nRelated values revealed at the same time (frame 108): Virtual network \"(New) RG1-KodeKloud-AKS-vnet\" (b30), Kubernetes service address range 10.0.0.0/16 (b34), DNS service IP 10.0.0.10 (b36), Docker Bridge 172.17.0.1/16 (b39). The choice stuck: after deployment the cluster Overview shows \"Network type (plugin) : Azure CNI\" (lifetime L1150, frames 148\u2013153, t\u2248588\u2013598 s).\n\nOne caveat: these texts come from a single OCR reader (no second vision reading recorded), but I verified the cluster-subnet string against the frame 108 screenshot myself, where it reads \"(new) default (10.224.0.0/16)\".",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "Azure CNI, replacing the default Kubenet",
+       "M2": "\"(new) default (10.224.0.0/16)\"",
+       "X1": "Azure CNI became selected instead of Kubenet"
+      },
+      "dollars": 0.1999,
+      "seconds": 28.6,
+      "error": null
+     },
+     {
+      "qid": "Q11",
+      "key": "Q11@ff4d49",
+      "polarity": "positive",
+      "answer": "**Registry name: `crkodekloud`** (i.e. `crkodekloud.azurecr.io`) \u2014 **SKU: Basic**\n\nHow the record shows it:\n\n- On the Integrations tab of the Create Kubernetes cluster wizard, the presenter clicked \"Create new\" under the Container registry dropdown, opening the \"Create container registry\" blade with an empty name field and **SKU Standard** by default (transition T113, frames 112\u2192113, t\u2248468.7\u2013471.7s).\n- He typed the name in stages: \"cr\" (T116, t\u2248484.1s, which raised the red validation error \"Resource names may contain alpha numeric characters only and must be between 5 and 50 characters.\"), then \"crkodel\" (T117), then the full **\"crkodekloud\"** at T118 (frames 117\u2192118, t\u2248488.1s), at which point the validation error disappeared. The field is visible as `crkodekloud` in frame 124 (box 124:b11, lifetime L854, seen 488.1\u2013497.8s).\n- He then opened the SKU dropdown, which listed Basic / Standard / Premium (T123, frames 122\u2192123, t\u2248497.2s), and clicked **\"Basic\"** (T124). Frame 124 (t\u2248497.3s) shows the SKU field reading \"Basic\" (box 124:b45, labelled \"SKU* \u2460\").\n- Clicking **Ok** submitted the blade: transition T125 (frames 124\u2192125, t\u2248497.8\u2013499.5s, submitted: yes), after which the Integrations page shows Container registry = **\"(New) crkodekloud\"** (frame 125, box lifetime L862), and that value carries forward to the Advanced tab (T130, t\u2248511.8s).\n\nNote on reading confidence: the name and SKU come from a single OCR reader (no second reader on these lifetimes), but \"crkodekloud\" is also the entered_text a model read from the frames on T118/T125, and \"Basic\" is confirmed by the frame-124 screenshot and its screen description, so both are solid.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "Registry name: `crkodekloud`",
+       "M2": "SKU: Basic",
+       "X1": "SKU Standard by default"
+      },
+      "dollars": 0.233,
+      "seconds": 26.3,
+      "error": null
+     },
+     {
+      "qid": "Q12",
+      "key": "Q12@d8c285",
+      "polarity": "positive",
+      "answer": "**The group is `MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia`** \u2014 Azure's auto\u2011generated \"MC_<resource group>_<cluster name>_<region>\" name, built from the resource group `RG1-KodeKloud-AKS`, the cluster `AKS1-KodeKloudApp` and the region Southeast Asia.\n\nIt is shown in two places in the video:\n\n**1. During cluster creation, on the wizard's Advanced tab** \u2014 as the pre\u2011filled **\"Infrastructure resource group\"** field, with a green validation tick and an \"Edit\" link below it (frame 130, t = 511.8 s; box 130:b19, lifetime L886 \u2014 \"MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia\"; the label is 130:b18 \"Infrastructure resource group\"). The wizard arrived there when the user clicked \"Next : Advanced >\" (transition T130, frames 129\u2192130). I read the field myself in the screenshot of frame 130 and it matches the OCR. The user left it unchanged and clicked \"Next : Tags >\" (step S8), so this is the name AKS itself generated.\n\n**2. Later, on the node's VM scale set blade** \u2014 when the user opens `aks-agentpool-18097611-vmss` (transition T182, frames 181\u2192182, t \u2248 709.7 s), the same name appears three times on frame 183 (t = 709.8 s):\n- the browser URL: `.../resourceGroups/MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia/providers/Microsoft.Compute/virtualMachineScaleSets/a...` (183:b7)\n- the breadcrumb: \"Home > Resource groups > MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia >\" (183:b15)\n- the Essentials panel's **Resource group (move)** value (183:b30)\n\nNote that on the AKS cluster's own Overview blade the Resource group reads just `RG1-KodeKloud-AKS` (see T182), which is the contrast the tutorial is illustrating: the cluster object lives in your group, its VMs in the MC_ group.\n\nOne caveat on the text: only the OCR reader has readings for these boxes (no independent second reading), but the underscore\u2011separated name is consistent across the Advanced field, the URL, the breadcrumb and the Essentials row, and I confirmed it on the frame 130 and frame 183 screenshots. Where OCR dropped the underscores (e.g. \"MC RG1-KodeKloud-AKS AKS1-KodeKloudApp southeastasia\" in 183:b30), the image shows underscores.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "`MC_RG1-KodeKloud-AKS_AKS1-KodeKloudApp_southeastasia`",
+       "M2": "\"Infrastructure resource group\" field",
+       "X1": "its VMs in the MC_ group"
+      },
+      "dollars": 0.2996,
+      "seconds": 31.4,
+      "error": null
+     },
+     {
+      "qid": "Q13",
+      "key": "Q13@7f431d",
+      "polarity": "positive",
+      "answer": "## Answer\n\n**1. Final validation passed \u2014 536.6 s (\u22488:57), frame 137**\n\n- Transition **T137** (frames 136\u2192137, 535.37 s \u2192 536.57 s): \"No user action is evident; the portal finished its background validation. The blue *'Running final validation...'* banner changed to a green *'Validation passed'* banner\u2026 the Create button remains available.\" (submitted: no \u2014 it was a background result, not a user action.)\n- The text **\"Validation passed\"** lives as lifetime **L952**, first seen at **536.57 s (frame 137)** and last at 550.7 s (frame 141), 5 sightings. Before that, frames 134\u2013136 (528.9\u2013535.4 s) showed **\"Running final validation...\"** (frame **f134**).\n- Note: only the OCR reader reports this text (vlm: null), so it is a single-reader reading, though it is stable across 5 frames and matches the frame description (\"A green check with 'Validation passed' sits at the top under the breadcrumb\", frame 137).\n\n**2. \"Deployment is in progress\" page came up \u2014 553.7 s (\u22489:14), frame 142**\n\n- Transition **T142** (frames 141\u2192142, 550.7 s \u2192 553.7 s): the Review + create summary \"was replaced by the deployment blade 'microsoft.aks-20230404212734 | Overview' showing 'Deployment is in progress' \u2026 an empty Deployment details table ('No results.') \u2026 the 'Submitting deployment...' toast disappeared.\" This transition is marked **submitted: yes**.\n- Lifetime **L975** (\"Deployment is in progress\") is first seen at **553.7 s (frame 142)** and runs to 562.77 s (frame 145), 4 sightings (OCR only).\n\n## Order in between\n\n- **T138** (frames 137\u2192138, 538.7 s \u2192 541.7 s): the user **clicked the blue Create button**; it greyed out and loading dots appeared \u2014 submitted: yes.\n- T139\u2013T141 (\u2248541.7\u2013550.7 s): toasts \"Initializing deployment...\" for resource group 'RG1-KodeKloud-AKS', then \"Submitting deployment...\", which then dismissed (step **S8**).\n- After the progress page: at 559.77 s (frame 144) the Deployment details table filled with SolutionDeployment/Vnet/Acr/Workspace/InsightsActionGroup rows, and at 562.77 s (frame 145, **T145**) the row **AKS1-KodeKloudApp** (Microsoft.ContainerService/managedClusters, status Created) appeared at the top.\n\nSo: validation passed at **536.6 s**, Create was clicked ~2 s later (**538.7\u2013541.7 s**), and the in-progress deployment blade appeared at **553.7 s** \u2014 about 17 s after validation passed.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "536.6 s (\u22488:57), frame 137",
+       "M2": "553.7 s (\u22489:14), frame 142",
+       "X1": "'Validation passed'"
+      },
+      "dollars": 0.147,
+      "seconds": 27.0,
+      "error": null
+     },
+     {
+      "qid": "Q14",
+      "key": "Q14@2e3ce4",
+      "polarity": "positive",
+      "answer": "**Deployment name: `microsoft.aks-20230404212734` \u2014 Start time: 4/4/2023, 9:32:34 PM**\n\nEvidence:\n- The Azure portal deployment blade appears at frame 142 (t \u2248 553.7 s), titled \"microsoft.aks-20230404212734 | Overview\" (142:b8) with the heading \"Deployment is in progress\" (142:b17, lifetime L975).\n- The summary fields on that page read \"Deployment name: microsoft.aks-20230404212734\" (142:b21) and \"Start time: 4/4/2023, 9:32:34 PM\" (142:b22, lifetime L980). I confirmed both by looking at the screenshot of frame 142, where the line reads \"Start time: 4/4/2023, 9:32:34 PM\"; also on screen are Subscription: sub-global (142:b24), Resource group: RG1-KodeKloud-AKS (142:b26) and Correlation ID: 00000000-0000-0000-0000-000000000000 (142:b25).\n- The page arrived automatically after the Create click was submitted (transition T142, frames 141\u2192142, submitted: yes), and the same name/start time stay on screen through frame 145 (t \u2248 562.8 s) while the details table fills in.\n\nNote: these texts have only a single OCR reading (no second reader), but I verified the name and start time visually in the frame 142 screenshot.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "`microsoft.aks-20230404212734`",
+       "M2": "Start time: 4/4/2023, 9:32:34 PM",
+       "X1": ""
+      },
+      "dollars": 0.1986,
+      "seconds": 24.2,
+      "error": null
+     },
+     {
+      "qid": "Q15",
+      "key": "Q15@b2c284",
+      "polarity": "positive",
+      "answer": "## What is shown\n\n**Docker Hub** \u2014 the presenter switches to a second browser window (Microsoft Edge) whose address bar reads `hub.docker.com/repository/docker/hpranav/kodekloudappcs/general` (frame 188, box 188:b20, t = 731.7 s).\n\n| Item | Value | Evidence |\n|---|---|---|\n| Site | Docker Hub (`dockerhub` logo in the blue header, 188:b28) | frame 188 |\n| Repository | **hpranav / kodekloudappcs** \u2014 shown highlighted in yellow on the General tab | 188:b64 (also breadcrumb `hpranav` 188:b46 \u203a `Repositories` 188:b47 \u203a `kodekloudappcs` 188:b44) |\n| Tags | **2** \u2014 \"This repository contains 2 tag(s).\" | 188:b80 (lifetime L1524); the Tags table row visible is `v2`, Type `Image`, Pushed `7 hours ago` (188:b92, 188:b93, 188:b91) |\n| Also shown | \"Last pushed: 7 hours ago\" and \"This repository does not have a description\" | 188:b73, 188:b71 |\n\n## When\n\nAt **t \u2248 731.7\u2013734.7 s (about 12:12\u201312:15)**, frame 188. Transition T188 (frames 187\u2192188, t = 730.8\u2192731.7 s) records the user switching to the Docker Hub browser window over the Azure portal and PowerShell; at T189 (t = 734.7\u2192735.7 s) the Docker Hub window is dismissed and PowerShell comes back to the front. So the Docker Hub page is on screen for roughly three seconds.\n\nThis falls at the very end of section C3 (\"Connect to the AKS cluster and check its empty state\", step S11), just after `kubectl get deployment` / `kubectl get pods` reported \"No resources found in default namespace.\" and immediately before the deployment is created with `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1` (section C4).\n\nCaveats: the Docker Hub texts were each seen in only this one captured frame and have a single reader (OCR, no independent VLM reading) \u2014 but I checked the screenshot of frame 188 myself and it reads as quoted. Only the `v2` tag row is visible in the viewport; the second of the 2 tags (presumably `v1`, the one deployed) is below the fold.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "M4": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "hub.docker.com/repository/docker/hpranav/kodekloudappcs/general",
+       "M2": "**Docker Hub**",
+       "M3": "This repository contains 2 tag(s).",
+       "M4": "about 12:12\u201312:15), frame 188",
+       "X1": ""
+      },
+      "dollars": 0.2147,
+      "seconds": 42.0,
+      "error": null
+     },
+     {
+      "qid": "Q16",
+      "key": "Q16@425b1f",
+      "polarity": "positive",
+      "answer": "## The command\n\n```\nkubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1\n```\n\nI read this directly off the screenshot of **frame 198** (box `198:b88`, lifetime L1592/L1610), where the console line reads `PS C:\\Users\\msadmin> kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1`. The OCR's alternate readings differ only in spacing/`kubect1` confusions (`kubectl createdeployment`), and the transition's independent model reading of the frames gives the same text as entered_text, so the command string above is solid.\n\n## When it ran\n\n- It was typed in pieces: the base command appeared at **frame 190, t\u2248740 s** (transition T190, submitted: no), then ` --replicas` at **frame 196, t\u2248758.3 s** (T196, submitted: no), then `=1` at **frame 197, t\u2248758.9 s** (T197, submitted: no).\n- Enter was pressed at the transition **frames 197\u2192198, t\u2248759.43\u2013759.47 s (\u224812:39)** \u2014 transition `aks:T198`, **submitted: yes**, interpreted as \"The user pressed Enter to run the kubectl create deployment command.\"\n\n## What it printed\n\nOne line of output:\n\n```\ndeployment.apps/kodekloudapp created\n```\n\nvisible from frame 198 onward (`198:b89`, lifetime L1611, seen 759.5\u2013838.8 s in 18 frames), followed by a fresh prompt `PS C:\\Users\\msadmin>` (`198:b91`).\n\nConfirmation that followed (step S12): `kubectl get deployment` printed `kodekloudapp 1/1 1 1 20s` (T201, ~t\u2248769 s), and `kubectl get pods` listed `kodekloudapp-67ffc758c5-mm42w  1/1  Running  0  34s` (T203).",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1",
+       "M2": "t\u2248759.43\u2013759.47 s (\u224812:39)",
+       "M3": "deployment.apps/kodekloudapp created",
+       "X1": ""
+      },
+      "dollars": 0.1937,
+      "seconds": 26.8,
+      "error": null
+     },
+     {
+      "qid": "Q17",
+      "key": "Q17@70de0c",
+      "polarity": "positive",
+      "answer": "`kubectl get deployment` was run **twice**, both in the \"Administrator: PowerShell 7-preview (x64)\" console.\n\n**Run 1 \u2014 ~11:57 (t \u2248 716.9 s, frame 186): \"No resources found in default namespace.\"**\n- The line `PS C:\\Users\\msadmin> kubectl get deployment` was typed while switching back from the Azure portal at t \u2248 716.5 s (frame 185, transition T185, submitted: no).\n- Transition T186 (frames 185\u2192186, t = 716.5\u2192716.9 s) shows Enter pressed and is marked **submitted: yes**; the console then printed \"No resources found in default namespace.\" (frame 186, box 186:b94, with a fresh prompt at 186:b95). This was before any deployment existed \u2014 the empty-cluster check of step S11.\n\n**Run 2 \u2014 ~12:48 (t \u2248 768.0 s, frame 201): the deployment table**\n- After `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1` printed \"deployment.apps/kodekloudapp created\" (frame 201, 201:b88, first seen t \u2248 759.5 s), the user typed `kubectl get deplo` with \"yment\" offered as a grey PSReadLine suggestion (T200, t \u2248 766.9 s, submitted: no).\n- Transition T201 (frames 200\u2192201, t = 767.7\u2192768.0 s) is **submitted: yes**: the table appeared with headings NAME / READY / UP-TO-DATE / AVAILABLE / AGE (201:b90\u2013b95) and the row `kodekloudapp  1/1  1  1  20s` (201:b97\u2013b101), followed by a new prompt (201:b99... prompt at 201:b102).\n\nBoth outputs are legible in the frame screenshots, so the readings are solid; note that in frame 201 the OCR splits the row's two \"1\" values into separate boxes (201:b100, 201:b101), which is why some collapsed frame listings render it as \"kodekloudapp 1/1 1 AVAILABLE 20s\". That output stayed on screen until the console was left at t \u2248 838.8 s.\n\nNo third run of `kubectl get deployment` appears in the record; later commands at that prompt are `kubectl get pods`, `kubectl expose deployment ...` and `kubectl get service`.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "\"No resources found in default namespace.\"",
+       "M2": "`kodekloudapp  1/1  1  1  20s`",
+       "X1": "was run **twice**"
+      },
+      "dollars": 0.2535,
+      "seconds": 22.3,
+      "error": null
+     },
+     {
+      "qid": "Q18",
+      "key": "Q18@36d562",
+      "polarity": "positive",
+      "answer": "## Answer: twice\n\n`kubectl get pods` was actually executed **two times** in the video. Both runs are in the \"Administrator: PowerShell 7\u2011preview (x64)\" console, and both are backed by a transition with `submitted: yes`.\n\n**Run 1 \u2014 ~12:01 (t \u2248 719.8\u2192721.0 s, frames 186\u2192187)** \u2014 transition T187: *\"The user typed `kubectl get pods` and pressed Enter\u2026 the console printed 'No resources found in default namespace.' followed by a new prompt.\"*\nFrame 187 (t = 721.0 s) shows it in the scrollback: `PS C:\\Users\\msadmin> kubectl get pods` (187:b88) immediately followed by `No resources found in default namespace.` (187:b86/L1486) \u2014 the default namespace was still empty, just as the preceding `kubectl get deployment` had reported (187:b85, 187:b87).\n\n**Run 2 \u2014 ~12:53 (t \u2248 770.5\u2192773.5 s, frames 202\u2192203)** \u2014 transition T203: *\"The command echoed at the prompt and output a pod table \u2026 with a new prompt below.\"*\nFrame 203 (t = 773.5 s) shows the command (203:b92) and the table: headings `NAME READY STATUS RESTARTS AGE` (203:b93\u2013b97) with the row `kodekloudapp-67ffc758c5-mm42w  1/1  Running  0  34s` (203:b102, b100, b98, b103, b99). This was after `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1` succeeded (T198, \"deployment.apps/kodekloudapp created\") and `kubectl get deployment` showed `kodekloudapp 1/1 1 1 20s` (T201).\n\n### A third occurrence that was never run\nBetween ~778.8 s and 781.4 s the user retyped the command letter by letter \u2014 \"ku\" (T205), \"kubect\" (T206), \"kubectl\" (T207) \u2014 with PSReadLine showing the rest, `get pods`, as a **grey inline suggestion** (visible on frames 204\u2013207). That line was then overwritten at t \u2248 787.8 s by `kubectl expose deployment kodekloudapp --type=LoadBalancer --port=80 --target-port=80` (T208), so it never executed. Don't count the text on those frames as a third run.\n\nNote on reading: several OCR readings of these prompt lines render \"kubectl\" as \"kubect1\" (e.g. lifetimes L1585, L1636, marked unstable); the frame images at 187 and 203 confirm the text is `kubectl get pods`. Only one reader (OCR) is present for these lifetimes, but the transition interpretations agree.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "was actually executed **two times**",
+       "M2": "No resources found in default namespace.` ... `kodekloudapp-67ffc758c5-mm42w  1/1  Running  0  34s`",
+       "X1": "twice"
+      },
+      "dollars": 0.3836,
+      "seconds": 27.5,
+      "error": null
+     },
+     {
+      "qid": "Q19",
+      "key": "Q19@79e9e3",
+      "polarity": "positive",
+      "answer": "## Answer\n\n**Command:** `kubectl get service` \u2014 typed at the PowerShell prompt and submitted at **frame 213, t \u2248 835.6 s** (transition T213, `submitted: yes`; entered_text \"kubectl get service\"). It followed `kubectl expose deployment kodekloudapp --type=LoadBalancer --port=80 --target-port=80`, which ran at frame 210, t \u2248 829.4 s and printed \"service/kodekloudapp exposed\" (transition T210, submitted: yes; box 213:b99).\n\n**Result line for the `kodekloudapp` service** (visible in frame 213, t = 835.6\u2013838.8 s):\n\n| Field | Value | Box |\n|---|---|---|\n| NAME | kodekloudapp | 213:b111 |\n| TYPE | LoadBalancer | 213:b113 |\n| CLUSTER-IP | **10.0.199.121** | 213:b114 |\n| EXTERNAL-IP | **20.247.251.108** | 213:b115 |\n| PORT(S) | 80:30895/TCP | 213:b112 |\n| AGE | 15s | 213:b110 |\n\nThe table also listed the built-in `kubernetes` service as ClusterIP 10.0.0.1, `<none>` external IP, 443/TCP, 51m (boxes 213:b122, b119, b120, b123, b121, b118).\n\nCorroboration: the external IP 20.247.251.108 was then selected in the console (step S13, frame 214) and used in Chrome via \"Paste and go to 20.247.251.108\" to load the KodeKloudApp page (step S14, frames 216\u2013218, ~t 838\u2013842 s).\n\nNote on reading confidence: this screen has only the OCR reader (no second reader), but I read the same values directly off the frame 213 screenshot \u2014 the console line reads `kodekloudapp   LoadBalancer   10.0.199.121   20.247.251.108   80:30895/TCP   15s`.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "M3": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "EXTERNAL-IP | **20.247.251.108**",
+       "M2": "CLUSTER-IP | **10.0.199.121**",
+       "M3": "**Command:** `kubectl get service`",
+       "X1": "built-in `kubernetes` service as ClusterIP 10.0.0.1, `<none>`"
+      },
+      "dollars": 0.2082,
+      "seconds": 14.9,
+      "error": null
+     },
+     {
+      "qid": "Q20",
+      "key": "Q20@508485",
+      "polarity": "positive",
+      "answer": "## What the final page shows\n\nThe app is opened at **frame 218 (842.2\u2013846.8 s)** \u2014 the last content frame before the outro card.\n\n**The page reports a different address from the one in the address bar.**\n\n| Where | Value |\n|---|---|\n| Browser address bar | `Not secure | 20.247.251.108` (frame 218, box 218:b6, lifetime L1783) |\n| Line on the page itself | `IP address: ::ffff:10.224.0.31` (frame 218, box 218:b17, lifetime L1792) |\n\nThe page body reads, in order (frame 218):\n- 218:b15 \u2014 \"Message: Hello World from AppSettings.json\"\n- 218:b16 \u2014 \"System name: kodekloudapp-67ffc758c5-mm42w\"\n- 218:b17 \u2014 the IP address line\n\nA caveat on that last line: OCR recorded it as `IP address:ff:10.224.0.31`, and it was seen in only a single captured frame, so I looked at the screenshot myself \u2014 it reads **`IP address: ::ffff:10.224.0.31`**, i.e. the IPv4-mapped-IPv6 form of **10.224.0.31**. The OCR simply dropped part of the `::ffff:` prefix.\n\n## Why they differ\n\n`20.247.251.108` is the **external IP of the LoadBalancer service**, read from `kubectl get service` earlier and pasted into the omnibox: the user clicked \"Paste and go to 20.247.251.108\" and the tab navigated there (transition T218, frames 217\u2192218, submitted: yes, entered_text `20.247.251.108`).\n\n`10.224.0.31` is the **pod's internal cluster IP**. That is corroborated independently in the Azure portal: the Current workloads Pods table lists `kodekloudapp-67ffc758c5-mm42w  default  1/1  Running  0  1 minute  10.224.0.31` (frame 204, t\u2248777.9 s; also frames 205\u2013208), the same pod name the page prints as its \"System name\".\n\nSo the address bar holds the public service IP you connect to, while the page reports the private pod IP the request was actually served from \u2014 they are not the same address.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "`IP address: ::ffff:10.224.0.31`",
+       "M2": "Browser address bar | `Not secure | 20.247.251.108`",
+       "X1": "they are not the same address"
+      },
+      "dollars": 0.2093,
+      "seconds": 22.8,
+      "error": null
+     },
+     {
+      "qid": "Q21",
+      "key": "Q21@29885d",
+      "polarity": "positive",
+      "answer": "**Order: (c) \u2192 (b) \u2192 (e) \u2192 (a) \u2192 (d)**\n\n| # | Moment | When | Evidence |\n|---|---|---|---|\n| 1 | **(c)** Slide explaining kubelet, kube-proxy and the container runtime | ~0:26\u20130:28 (frame 10, t=27.7 s) | Transition T10: \"The previously empty Node panel filled in with three icon tiles and captions: kubelet, Kube-proxy and Container Runtime.\" Frame 10 shows the \"Kubernetes Components\" slide with the Node box. (The deck later expands each of these with its description slide \u2014 Kubelet ~1:33, Kube-proxy, Container Runtime at frame 24, t=114 s, T24.) |\n| 2 | **(b)** Network plugin switched to Azure CNI | 7:37 (frames 107\u2192108, t=457.2 s) | Transition T108: \"The user clicked the 'Azure CNI' radio button under Network configuration\u2026 Azure CNI became selected instead of Kubenet\", revealing the virtual-network/subnet/Docker bridge fields (frame 108). |\n| 3 | **(e)** Container registry given its name | ~8:07\u20138:20 (frames 117\u2192118, t=488.1 s; confirmed at frame 125, t=499.5 s) | T118: typing completes the Registry name as \"crkodekloud\" and the length-validation error clears; T125 (\"The user clicked the Ok button\", submitted: yes) leaves the Integrations page showing Container registry \"(New) crkodekloud\" (frame 125). |\n| 4 | **(a)** Docker Hub page shown | 12:11 (frames 187\u2192188, t=731.7 s) | T188: the user switched to a browser window on Docker Hub; frame 188 shows hub.docker.com/repository/docker/hpranav/kodekloudappcs/general with the v2 tag and \"Last pushed: 7 hours ago\". It is closed again at t=735.7 s (T189). |\n| 5 | **(d)** Deployment exposed through a load balancer | 13:49 (frames 209\u2192210, t=829.4 s) | T210: Enter pressed on `kubectl expose deployment kodekloudapp --type=LoadBalancer --port=80 --target-port=80`; the console printed \"service/kodekloudapp exposed\" \u2014 submitted: **yes**. (The line was first typed at t=787.8 s, T208.) |\n\nNote on the command text: the OCR of the prompt line reads \"kubect1\" in several frames (e.g. frame 209), which is an OCR rendering of `kubectl`; the vision reading of the same frames gives `kubectl expose deployment kodekloudapp --type=LoadBalancer --port=80 --target-port=80`.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "**Order: (c) \u2192 (b) \u2192 (e) \u2192 (a) \u2192 (d)**",
+       "X1": "(e) Container registry given its name | ~8:07"
+      },
+      "dollars": 0.3265,
+      "seconds": 20.2,
+      "error": null
+     },
+     {
+      "qid": "Q22",
+      "key": "Q22@34ac2f",
+      "polarity": "positive",
+      "answer": "## Short answer\n\nThe order is **not** the order in the question. Between the portal Create click and the `kubectl create deployment` run, the sequence was: **Azure CLI credentials first, then the scale\u2011set portal pages, then Docker Hub.**\n\n## The sequence with evidence\n\n**0. Deployment submitted in the portal** \u2014 T138, frames 137\u2192138, 538.7\u2013541.7 s (~8:59): \"The user clicked the blue Create button\", submitted: yes; the \"Initializing deployment\u2026 to resource group 'RG1-KodeKloud-AKS'\" toast follows at T139 (541.7\u2013544.7 s). The deployment blade then fills in through frame 145 (~562 s).\n\n**1. Credentials fetched with the Azure CLI \u2014 ~10:00\u201311:17 (600\u2013677 s)** [step S10, frames 153\u2013177]\n- `az account show` and `az configure --defaults group=RG1-KodeKloud-AKS` are run first (visible in frame 167 at 657.1 s).\n- `az aks get-credentials --name AKS1-KodeKloudApp` is submitted at **T169, frames 168\u2192169, 659.3 s** (submitted: yes) \u2014 it prints the kubeconfig-conflict warning and \"Overwrite? (y/n):\".\n- Answered \"Y\" (T170, 660.6 s) and \"y\" (T171, 663.9\u2013664.1 s), after which the console prints `Merged \"AKS1-KodeKloudApp\" as current context in C:\\Users\\msadmin\\.kube\\config` (frame 185 confirms this text).\n- Confirmed with `kubectl config current-context` \u2192 `AKS1-KodeKloudApp` (T177, end of S10, ~677 s). Note the OCR renders the command as `az aks get-Credentials` (lifetime L1247, capital C); the transition's independent reading is `az aks get-credentials --name AKS1-KodeKloudApp`.\n\n**2. The scale set's portal pages opened \u2014 ~11:50\u201311:54 (709.7\u2013713.5 s)** [step S11]\n- After `kubectl get nodes` lists `aks-agentpool-18097611-vmss000000` Ready, the user clicks the scale-set link: **T182, frames 181\u2192182, 709.7 s** opens `aks-agentpool-18097611-vmss` **Overview** (frame 182 shows it mid-load; T183 fills in Status \"1 out of 1 succeeded\", Size \"Standard_DS2_v2 (1 instance)\").\n- **T184, frames 183\u2192184, 713.5 s** \u2014 clicks **\"Instances\"** in the left nav; frame 184 shows the single instance `aks-agentpool-18097611-vmss_0`, Running / Succeeded / Latest model Yes.\n\n**3. Docker Hub repository shown \u2014 ~12:11\u201312:15 (730.8\u2013735.7 s)**\n- **T188, frames 187\u2192188, 730.8\u2013731.7 s**: the user switches to the other browser window showing `hub.docker.com/repository/docker/hpranav/kodekloudappcs/general` \u2014 the `hpranav / kodekloudappcs` General tab with \"This repository does not have a description\", \"Last pushed: 7 hours ago\" and \"This repository contains 2 tag(s).\" (frame 188, on screen until 734.7 s).\n- **T189, frames 188\u2192189, 735.7 s**: back to PowerShell, over the Instances blade.\n- (In between step 2 and 3, `kubectl get deployment` and `kubectl get pods` were run and both returned \"No resources found in default namespace.\" \u2014 T185\u2013T187, ~716\u2013731 s.)\n\n**4. `kubectl create deployment`** \u2014 typing begins at T190 (737.8\u2013740.0 s), is completed with `--replicas` (T196, 758.3 s) and `=1` (T197, 758.9 s), and is submitted at **T198, frames 197\u2192198, 759.4 s** (~12:39): `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1`, output \"deployment.apps/kodekloudapp created\" (frame 198), submitted: yes.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "M2": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "Azure CLI credentials first, then the scale\u2011set portal pages, then Docker Hub",
+       "M2": "The scale set's portal pages opened \u2014 ~11:50\u201311:54",
+       "X1": "Docker Hub repository shown \u2014 ~12:11\u201312:15"
+      },
+      "dollars": 0.3702,
+      "seconds": 42.1,
+      "error": null
+     },
+     {
+      "qid": "Q23",
+      "key": "Q23@6df2a4",
+      "polarity": "negative",
+      "answer": "**No \u2014 he looked at the Azure AD options but deliberately kept the default local-accounts setting.**\n\nWhat the record shows, in order:\n\n1. **Access tab appears with the default already set** \u2014 clicking \"Next : Access >\" brings up the Access tab where \"Authentication and Authorization\" reads \"Local accounts with Kubernetes RBAC\" (transition T103, frame 103, t\u2248441.9s; box 103 shows the dropdown closed on that value).\n\n2. **The dropdown was opened only to inspect it** \u2014 at frame 105 (t\u2248445.5\u2013450.3s) the dropdown is open and lists all three choices: \"Local accounts with Kubernetes RBAC\" (105:b26, highlighted under the cursor and still the value in the closed field), \"Azure AD authentication with Kubernetes RBAC\" (105:b29) and \"Azure AD authentication with Azure RBAC\" (105:b31). The screenshot confirms the field itself still reads \"Local accounts with Kubernetes RBAC\". Note that these three option texts were seen in a single frame each (`seen_once: true`, one reader), though the screenshot corroborates them.\n\n3. **No Azure AD option was chosen** \u2014 transition T106 (frames 105\u2192106, t\u2248450.3\u2013452.4s) is interpreted as \"the user dismissed the dropdown (keeping 'Local accounts with Kubernetes RBAC') and clicked 'Next : Networking >'\". The next screen is the Networking tab; nothing shows a click on either Azure AD entry.\n\n4. **The setting carried through to deployment** \u2014 on the Review + create summary the Access section reads \"Authentication and Authorization: Local accounts with Kubernetes RBAC\" (L924, frames 134\u2013141, t\u2248528.9\u2013550.7s), and after the cluster was created the AKS1-KodeKloudApp Overview blade still shows \"Authentication and Authorization: Local accounts with Kubernetes RBAC\" (T148/frame 148, t\u2248587.9s; and persisting through frames 154\u2013181, t\u2248598.7\u2013706.7s).\n\nSo the cluster was created with local Kubernetes accounts and Kubernetes RBAC; Azure AD sign-in was shown and explained in the dropdown at ~7:25 (t\u2248445\u2013450s) but never selected. (Resource identity was left at \"System-assigned managed identity\", frame 105:b18 \u2014 a managed identity for the cluster itself, not user sign-in via Azure AD.)",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "No \u2014 he looked at the Azure AD options but deliberately kept the default local-accounts setting.",
+       "X1": "No Azure AD option was chosen"
+      },
+      "dollars": 0.238,
+      "seconds": 23.0,
+      "error": null
+     },
+     {
+      "qid": "Q24",
+      "key": "Q24@95543e",
+      "polarity": "negative",
+      "answer": "**No \u2014 the app was deployed imperatively, not from a YAML manifest.** There is no `kubectl apply -f` anywhere in the record (a search for the exact string `\"kubectl apply -f\"` and for `.yaml`/`.yml` returns nothing), and no editor or manifest file is ever shown.\n\nWhat was actually done, in the PowerShell console (~12:30\u201314:00):\n\n- The command was typed in stages \u2014 `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1` (T190, frames 189\u2192190, 737.8 s), then ` --replicas` (T196, frames 195\u2192196, 757.8 s), then `=1` (T197, frames 196\u2192197, 758.9 s).\n- It was **run** at T198 (frames 197\u2192198, 759.5 s): entered_text `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1`, submitted **yes**, and the console printed `deployment.apps/kodekloudapp created` (visible in frame 204, 777.9 s).\n- The service was likewise created imperatively: `kubectl expose deployment kodekloudapp --type=LoadBalancer --port=80 --target-port=80` (seen on the prompt line in frames 208\u2013212, 787.8\u2013834.9 s), followed by `kubectl get service` and the external IP 20.247.251.108.\n\nOne caution about wording: the OCR of the typed prompt line sometimes reads `kubect1` instead of `kubectl` (e.g. frames 208, 211, 212) \u2014 that is a font/OCR confusion of \"l\" and \"1\"; the executed line in T198 and the section summary [C4] both read `kubectl`.\n\nThe word \"YAML\" that appears from frame 204 onward (777.9\u2013838.8 s, lifetime L1658) is just the Azure portal's left-nav item on the AKS node's \"Current workloads\" blade \u2014 it is a portal menu entry, not a manifest being applied.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "No \u2014 the app was deployed imperatively, not from a YAML manifest.",
+       "X1": "There is no `kubectl apply -f` anywhere in the record"
+      },
+      "dollars": 0.178,
+      "seconds": 24.0,
+      "error": null
+     },
+     {
+      "qid": "Q25",
+      "key": "Q25@c78069",
+      "polarity": "negative",
+      "answer": "**No \u2014 the record never shows a \"Your deployment is complete\" page.**\n\nWhat it does show:\n\n- The Create button is clicked and the deployment is submitted (transition T139, frames 138\u2192139, t\u2248541.7\u2013544.7 s: toast \"Initializing deployment...\" / \"Initializing template deployment to resource group 'RG1-KodeKloud-AKS'.\", submitted: yes; then \"Submitting deployment...\" at frame 141, t\u2248550.7 s).\n- The portal then opens the deployment blade `microsoft.aks-20230404212734 | Overview` (transition T142, frames 141\u2192142, t\u2248553.7 s), and every captured frame of that blade reads **\"Deployment is in progress\"** \u2014 frames 142\u2013145, t 553.7\u2013562.8 s (lifetime L975, \"Deployment is in progress\", 4 sightings). The details table fills in: five sub-deployments with green OK and a row `AKS1-KodeKloudApp` (Microsoft.ContainerService/managedClusters) still at status **Created** at frame 145 (t\u2248562.8 s).\n- The very next transition (T146, frames 145\u2192146, t\u2248562.8\u2013564.3 s) is a video cut: the whole blade is replaced by the title slide \"Deploying our sample application to AKS Cluster\". The progress page is never seen finishing \u2014 the tutorial edits out the wait.\n\nThe closest thing to a completion indication comes afterwards, and it is a different page: at frame 147 (t\u2248565.8 s) the browser is on the cluster's own Overview blade (`.../managedClusters/AKS1-KodeKloudApp/overview`) where Essentials shows **Status : Succeeded (Running)** (147:b37/147:b36, lifetime L1066, visible 565.8\u2013706.7 s). Note the breadcrumb there reads \"Home > microsoft.aks-20230410195123 | Overview >\" \u2014 a different deployment name than the one created on screen (\u202620230404212734), i.e. the recording resumes from a later session.\n\nSearches for the portal's completion banner (\"Your deployment is complete\", \"Go to resource\") return nothing in the record. If you want to be certain nothing appeared in the un-captured gap, the range to re-decode is t 562.8\u2013565.8 s, but transition T146 describes that gap as the cut to the title slide.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "No \u2014 the record never shows a \"Your deployment is complete\" page.",
+       "X1": "The progress page is never seen finishing"
+      },
+      "dollars": 0.3131,
+      "seconds": 31.1,
+      "error": null
+     },
+     {
+      "qid": "Q26",
+      "key": "Q26@ea47b0",
+      "polarity": "negative",
+      "answer": "**Neither \u2014 the record shows no cleanup step at all.**\n\nThe tutorial ends immediately after the app is browsed successfully; nothing is deleted on screen.\n\nWhat the last minute actually shows:\n\n- **T213 (~13:07\u201313:57, step S13)**: `kubectl get service` prints the LoadBalancer external IP `20.247.251.108`, which the presenter selects in the console.\n- **T216 (frames 215\u2192216, 838.8\u2013839.8 s)**: switches to Chrome and opens a new tab.\n- **T217 (frame 217, 840.4 s)**: right-clicks the omnibox; the context menu includes \"Paste and go to 20.247.251.108\" (and a greyed-out *Delete* menu item \u2014 that is Chrome's edit menu, not a resource deletion).\n- **T218 (frames 217\u2192218, 840.9\u2013842.2 s, submitted: yes)**: navigates to http://20.247.251.108; the KodeKloudApp Welcome page loads with \"Message: Hello World from AppSettings.json\".\n- **T219 (frames 218\u2192219, 846.8\u2013849.8 s)**: with no user action, the video cuts to the white KodeKloud outro branding card, which animates through T220 to the end at 852.8 s (section C5, \"Outro\").\n\nCorroborating negative evidence:\n\n- A search for `\"az group delete\"` returns no hits, and no transition anywhere carries a delete/destroy command as entered text. Every \"Delete\" string in the record is an inactive Azure portal toolbar button \u2014 e.g. the greyed-out Delete on the deployment blade (frame 142, 553.7 s), the scale-set command bar (frame 147/f185, 565.8\u2013719.8 s), and the \"+ Add node pool | Delete\" control in the wizard (T82/T84, ~380\u2013386 s) \u2014 not a clicked action.\n- The video-level summary and section C5 both end at the branding card, with no cleanup section.\n\nSo if you are following along, you will need to remove the resources yourself (e.g. deleting the `RG1-KodeKloud-AKS` resource group, created at T54, 278.9 s); the presenter does not show it. If you want to be certain nothing was cut, the only unexamined window is 842\u2013853 s, which the transitions show as the outro animation only.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "Neither \u2014 the record shows no cleanup step at all.",
+       "X1": "nothing is deleted on screen"
+      },
+      "dollars": 0.2324,
+      "seconds": 27.3,
+      "error": null
+     },
+     {
+      "qid": "Q27",
+      "key": "Q27@622b26",
+      "polarity": "negative",
+      "answer": "**No.** The image came from the presenter's public Docker Hub repository, not from the `crkodekloud` registry that was created in the wizard.\n\n**The registry was created with the cluster**\n- On the Integrations tab the user clicked \"Create new\" under Container registry (transition T113, frames 112\u2192113, ~7:52) and typed the name `crkodekloud`, then pressed Ok; the page then showed **Container registry \"(New) crkodekloud\"** (T125, frames 124\u2192125, t\u2248499.5 s, submitted: yes; visible in frame 125 and frame 126).\n- The deployment blade later listed an `AcrDeployment-a0d89b37-513f-46e8-a768-76b5b95` row with status OK (frame 144, t\u2248559.8 s), so the ACR really was provisioned.\n\n**But the app image was pulled from Docker Hub**\n- Just before deploying, the user brought a Docker Hub window to the front showing the repository **`hpranav / kodekloudappcs`** with its Tags table (transition T188, frame 188, t\u2248731.7 s).\n- The deployment command run at the PowerShell prompt was `kubectl create deployment kodekloudapp --image=hpranav/kodekloudappcs:v1 --replicas=1` \u2014 an unqualified Docker Hub reference, with no `crkodekloud.azurecr.io/` prefix. It was submitted and the console printed \"deployment.apps/kodekloudapp created\" (transition T198, frames 197\u2192198, t\u2248759.5 s, submitted: yes; the command line is also its own lifetime L1610/L1634, read consistently by OCR).\n\nNothing in the record shows any image being pushed to, or pulled from, `crkodekloud.azurecr.io`; the registry was created during the wizard (t\u2248468\u2013500 s) and never referenced again. Note one small caveat: in the frames captured, the Docker Hub tag list showed a `v2` tag (frame 188), while the deployment asked for `:v1` \u2014 the `v1` tag itself is not visible in the record.",
+      "label": "correct",
+      "items": {
+       "M1": true,
+       "X1": false
+      },
+      "quotes": {
+       "M1": "**No.** The image came from the presenter's public Docker Hub repository",
+       "X1": "Nothing in the record shows any image being pushed to, or pulled from, `crkodekloud.azurecr.io`"
+      },
+      "dollars": 0.2472,
+      "seconds": 17.8,
+      "error": null
+     }
+    ],
+    "dollars_per_question": 0.2502,
+    "ask_dollars": 6.7549,
+    "judge_dollars": 0.272,
+    "seconds_per_question": 27.9,
+    "stale": 0
+   },
+   "counters": {
+    "annotate": {
+     "repairs": 10,
+     "repair_counts": {
+      "link_already_linked": 5,
+      "link_malformed": 2,
+      "link_unknown_box": 3
+     },
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {
+     "errors": 0,
+     "invalid_citations": 2,
+     "submitted": {
+      "no": 194,
+      "unclear": 2,
+      "yes": 24
+     }
+    }
+   },
+   "cost": {
+    "frames": 221,
+    "projection_frames": 221,
+    "dollars": 12.6158,
+    "per_frame": 0.0571,
+    "per_video": 12.62,
+    "seconds": 367.4,
+    "seconds_per_frame": 1.7,
+    "question_seconds": 67.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 7.205,
+      "per_frame": 0.0326,
+      "per_video": 7.21,
+      "seconds": 169.8,
+      "calls": 221,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 39455,
+       "cache_read_input_tokens": 631280,
+       "input_tokens": 594852,
+       "output_tokens": 146739
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "index": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 1.1,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "interpret": {
+      "dollars": 4.6016,
+      "per_frame": 0.0208,
+      "per_video": 4.6,
+      "seconds": 80.3,
+      "calls": 220,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 621500,
+       "input_tokens": 630314,
+       "output_tokens": 45571
+      }
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "summarize": {
+      "dollars": 0.8092,
+      "per_frame": 0.0037,
+      "per_video": 0.81,
+      "seconds": 50.4,
+      "calls": 23,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 32021,
+       "input_tokens": 90750,
+       "output_tokens": 13577
+      }
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 65.8,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "exact.ocr": {
+     "1": 1.0,
+     "2": 1.0,
+     "3": 1.0,
+     "6": 1.0,
+     "7": 1.0,
+     "8": 1.0,
+     "9": 1.0
+    },
+    "exact.any": {
+     "1": 1.0,
+     "2": 1.0,
+     "3": 1.0,
+     "6": 1.0,
+     "7": 1.0,
+     "8": 1.0,
+     "9": 1.0
+    },
+    "first_frame_error_abs.any": {
+     "1": 0.0,
+     "2": 0.0,
+     "3": 1.0,
+     "6": 0.0,
+     "7": 0.0,
+     "8": 0.0,
+     "9": 0.0
+    },
+    "found": {
+     "1": 1.0,
+     "2": 1.0,
+     "3": 1.0,
+     "6": 1.0,
+     "7": 1.0,
+     "8": 1.0,
+     "9": 1.0
+    },
+    "submitted": {
+     "1": 1.0,
+     "2": 1.0,
+     "3": 0.0,
+     "6": 1.0,
+     "7": 1.0,
+     "8": 1.0,
+     "9": 1.0
+    },
+    "submit_frame_error_abs": {
+     "1": 0.0,
+     "2": 0.0,
+     "6": 0.0,
+     "7": 0.0,
+     "8": 0.0,
+     "9": 0.0
+    },
+    "false_run": {
+     "N1": 0.0,
+     "N2": 0.0,
+     "N3": 0.0,
+     "N4": 0.0,
+     "N5": 0.0
+    },
+    "cost.per_question": {
+     "Q1@94d1fe": 0.1236,
+     "Q2@13f8d0": 0.1712,
+     "Q3@607454": 0.1279,
+     "Q4@22b88f": 0.1448,
+     "Q5@6eae39": 0.3115,
+     "Q6@2094d0": 0.4652,
+     "Q7@4d6680": 0.5,
+     "Q8@f91014": 0.209,
+     "Q9@1cbeae": 0.2552,
+     "Q10@870d58": 0.1999,
+     "Q11@ff4d49": 0.233,
+     "Q12@d8c285": 0.2996,
+     "Q13@7f431d": 0.147,
+     "Q14@2e3ce4": 0.1986,
+     "Q15@b2c284": 0.2147,
+     "Q16@425b1f": 0.1937,
+     "Q17@70de0c": 0.2535,
+     "Q18@36d562": 0.3836,
+     "Q19@79e9e3": 0.2082,
+     "Q20@508485": 0.2093,
+     "Q21@29885d": 0.3265,
+     "Q22@34ac2f": 0.3702,
+     "Q23@6df2a4": 0.238,
+     "Q24@95543e": 0.178,
+     "Q25@c78069": 0.3131,
+     "Q26@ea47b0": 0.2324,
+     "Q27@622b26": 0.2472
+    },
+    "questions.positive": {
+     "Q1@94d1fe": 1.0,
+     "Q2@13f8d0": 1.0,
+     "Q3@607454": 1.0,
+     "Q4@22b88f": 1.0,
+     "Q5@6eae39": 1.0,
+     "Q6@2094d0": 1.0,
+     "Q7@4d6680": 1.0,
+     "Q8@f91014": 1.0,
+     "Q9@1cbeae": 1.0,
+     "Q10@870d58": 1.0,
+     "Q11@ff4d49": 1.0,
+     "Q12@d8c285": 1.0,
+     "Q13@7f431d": 1.0,
+     "Q14@2e3ce4": 1.0,
+     "Q15@b2c284": 1.0,
+     "Q16@425b1f": 1.0,
+     "Q17@70de0c": 1.0,
+     "Q18@36d562": 1.0,
+     "Q19@79e9e3": 1.0,
+     "Q20@508485": 1.0,
+     "Q21@29885d": 1.0,
+     "Q22@34ac2f": 1.0
+    },
+    "questions.negative": {
+     "Q23@6df2a4": 1.0,
+     "Q24@95543e": 1.0,
+     "Q25@c78069": 1.0,
+     "Q26@ea47b0": 1.0,
+     "Q27@622b26": 1.0
+    },
+    "cost.per_frame": {
+     "run": 0.0571
+    },
+    "seconds.per_frame": {
+     "run": 1.7
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored"
+   ]
+  }
+ ]
+}
