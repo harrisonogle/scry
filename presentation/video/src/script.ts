@@ -14,7 +14,7 @@ export type Tile = {value: string; label: string; draft?: boolean; color?: 'blue
 export type Visual =
   | {kind: 'title'; headline: string; tiles?: Tile[]; footnote?: string}
   // A heading, one or two big tiles and a small note, all from script.json.
-  | {kind: 'card'; heading?: string; tiles: Tile[]; line?: string; note?: string}
+  | {kind: 'card'; heading?: string; tiles: Tile[]; line?: string; lines?: string[]; note?: string; listHeading?: string; list?: string[]}
   // A frame sequence public/img/<dir>/NN.png (zero-padded to `pad` digits) from `from` to `to`, played once
   // across the scene; `width`/`height` is the frames' aspect. layout 'side' shows the questions beside it.
   | {
