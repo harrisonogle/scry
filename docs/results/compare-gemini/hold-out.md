@@ -175,3 +175,56 @@ summarize keeps EU01 as one section C3 (1:04 to 2:05.6); and one section boundar
 (2:31.7 to 2:41.6, closing a tab and finding the hostname) is inside Gemini's c5. Both readings put the same seven
 pieces of work in the same order with matching titles; the chapter gists are a sentence each and name no on-screen
 string, as the stage's prompt asks ("Do not attempt to transcribe exact text").
+
+## 21 questions
+
+The 16 questions of `docs/ground-truth/holdout-discovery.md` (13 positive, 3 negative, 71 rubric lines; copied to
+`runs/compare-gemini-v2/questions-disc.md`), each asked on its own with the same instruction: G1 on the silent copy
+(16 Gemini calls, 4 at a time, 0 failures, $1.94) and the pipeline's built-in agent (`scry.ask.ask`, Opus 5, the
+owner's config) on the default index `runs/v2/grouponly-100` through a symlink view `runs/compare-gemini-v2/view-grouponly-100/`
+(every entry of the run linked; the agent's 24 redecoded frames landed in the view's `redecode/`, nothing in the run;
+16 calls, 8 at a time, 0 failures, $8.70). Judged with the same blind judge (32 verdicts, $0.49). Spend for this set
+$11.13 (Gemini $1.94, Anthropic $9.20), cap $12. Tables in `hold-out-tables-21.md`.
+
+Combined over the 21 questions (the 5 draft questions above plus these 16):
+
+| arm | correct / partial / wrong (of 21) | positive score | negative score | rubric lines passed (of 87) | $ per question | seconds per question |
+|---|---|---|---|---|---|---|
+| G1 Gemini direct, silent copy | 12 / 5 / 4 | 11/17 | 3.5/4 | 71 | $0.107 (5: 0.060; 16: 0.121) | 32 (5: 28; 16: 33) |
+| pipeline, group-only 1.0, `runs/v2/grouponly-100` | 18 / 2 / 1 | 15/17 | 4/4 | 81 | $0.503 (5: 0.372; 16: 0.544) | 60 (5: 36; 16: 67) |
+
+On the 16 alone: G1 9 / 5 / 2, 58 of 71 lines; pipeline 13 / 2 / 1, 65 of 71. The pipeline's one wrong answer is Q2
+(the open-ended sequence): the agent stopped after 12 turns and 28 tool calls (8 searches, 12 `get_node`, 7
+`get_transitions`, 1 `get_frame`) without a final answer, $1.62 spent; it is judged wrong by rule. Its two partials:
+Q8 (it reports the click on the account tile as recorded by transition T34 rather than as inferred; the rubric wants
+the hedge) and Q11 (it says Kusto.Explorer was used to compare queries, not that the filter line was copied from it).
+G1's answers to Q2 and Q11 pass where the pipeline's do not.
+
+The 13 G1 rubric lines failed on the 16, classified, one quote each (frames checked by eye in the earlier sections;
+every failed exact-string line agrees with the mechanical check):
+
+| class | Q, line | quote from the answer | what is on screen |
+|---|---|---|---|
+| misread string | Q4 M4 | `FRONTDOOR-A-hostname.z01.azurefd.net` | `FRONTDOOR-A-cqhefshkhrgmgqf9.b02.azurefd.net` (frame 0) |
+| misread string | Q7 M3 | `FRONTDOOR-A-d7c3eeafgnh2hrcs.z01.azurefd.net` | the same hostname |
+| misread string | Q15 M1 | `FRONTDOOR-A-d7hqa4g5edbwh4ea.z01.azurefd.net` | the same hostname: four calls, four different random labels, every one `z01` for `b02` |
+| misread string | Q9 M2 | `\| where requestUri_s contains "enrollment"` | `!contains "enrollment"` (frame 73 line 4) |
+| misread string | Q15 M4 | `\| where requestUri_s contains "enrollment"` | the same line |
+| misread string | Q9 M3, X1 | `summarize count() by strcat(httpStatusCode_d, originalURL_s), bin(TimeGenerated, 5m)` | `strcat(httpStatusCode_d, requestUri_s), bin(TimeGenerated, 1m)` (frame 73 line 7); `5m` is what X1 forbids |
+| invented | Q10 M2 | `\| where requestUri_s contains 'HostAuthenticationService/Certificate'` | `"ServiceA/Certificate"` (frame 73 line 5); the draft-set answer to the same edit had invented `testHostDeviceAllocationServiceClientCertificate` |
+| invented | Q10 M1 | `//\| where requestUri_s contains "/manage/"...` | the commented line reads `contains "i.manage" or ... "r.manage" or ... "a.manage"`; the `//` is right, the content is not |
+| missed | Q10 M3 | (nothing in the answer bears on it) | the footer "1000 records" then "277 records" (frames 70 and 79) |
+| missed | Q8 M3 | "The account chosen was the first option" | the click itself falls between frames 33 and 34; the rubric wants that said |
+| missed | Q16 M2, M3 | "The video does not show or mention anything about what a record cannot tell regarding this session." | the question asks what the record cannot tell (gaps between captures, intent); Gemini answered that the video has no such text |
+
+Of the 13: 7 misread strings (the hostname three times, the KQL lines four times), 2 invented (both the KQL edit), 4
+missed (a count, a hedge, and the two lines of the honesty question). The hostname, on screen for 9 s at the start and
+three times later, has now been read wrongly in all five G1 calls that quote it across the two sets, with five
+different labels; the pipeline quotes it exactly in every answer that names it (`0:b116`). Repeat noise is unknown:
+one call per question per arm.
+
+What the 21 add to the 5: the pipeline's advantage is on exact text (the three hostname lines and the four query lines
+that G1 fails are all passed by the pipeline) and on the questions that ask what the record cannot show (Q16); G1
+matches or beats it on the open-ended overview and sequence questions (Q1, Q2, Q5, Q11), where the pipeline's agent
+either ran out of turns or answered from the index's summaries. Per question the pipeline costs 4.7 times more on this
+set ($0.544 against $0.121) and takes twice as long (67 s against 33 s), the Q2 run-out alone being $1.62 and 4 minutes.
