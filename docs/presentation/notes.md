@@ -90,6 +90,10 @@ The caption, "Gemini invented terminal runs where the shell showed a grey sugges
 
 Voice-over: "Asked the same twenty-seven questions, Gemini gets every 'when' and every negative, misses half the exact strings by one character, and invents a terminal command exactly where the shell was showing a grey suggestion; the pipeline gets all of them, at three times the price per question." 
 
+## Hold-out frame 22
+
+`holdout-frame-22.png`: `runs/v2/grouponly-100/frames/00022.png` (2048x1080) at full size with seven boxes from `runs/v2/grouponly-100/boxes.jsonl` (frame 22) drawn and tagged with their ids, in the style of `demo-frame-198.png`: the toast `b55` (1629,215,1846,237) "Saved Traffic Manager profile changes", `b58` (1617,239,1882,257), `b60` (1614,255,1820,275) in blue; the saved row `b91` (433,477,510,497) "AFDEndpoint", `b89` (721,476,774,497) "Disabled", `b93` (1644,481,1653,491) "1" in aqua; and the row count `b112` (380,1018,518,1035) "Showing 1 - 2 of 2 results." (OCR reads `Showina`) in orange, the key citation. `holdout-frame-22-crop.png` is the frame's region x 340 to 820, y 440 to 1060 at 2x (960x1240), holding the saved row and the row count.
+
 ## Demo
 
 `demo.md`: one real question, the tool calls and the answer with its citations, the cited frame `runs/eval/p4/full-inc-transcribing-r1/frames/00198.png` and box `198:b89`, and the same frame with the boxes drawn in `demo-frame-198.png` and `demo-frame-198-crop.png`. Cost $0.2142, 54 s.
@@ -101,7 +105,7 @@ The hold-out video: `runs/videos/recording-2026-09-17.mp4`, 223.97 s, 2048x1080,
 | bar | $ | manifest | annotate / interpret / summarize |
 |---|---|---|---|
 | Transcribing, overlay, scale 1.0 | 11.42 | `runs/eval/v2/full-transcribing-100-r1/manifest.json` | 8.22 / 2.59 / 0.62 |
-| Group-only, overlay, scale 1.0 (the owner's default, ledger L73) | 9.32 | `runs/v2/grouponly-100/manifest.json` | 5.84 / 2.75 / 0.73 |
+| Group-only, overlay, scale 1.0 (the default, ledger L73) | 9.32 | `runs/v2/grouponly-100/manifest.json` | 5.84 / 2.75 / 0.73 |
 | Group-only, overlay, scale 0.67 | 7.68 | `runs/eval/v2/full-grouponly-067-r1/manifest.json` | 4.58 / 2.49 / 0.61 |
 | No annotation | 2.94 | `runs/eval/v2/full-none-r1/manifest.json` | none / 2.23 / 0.71 |
 
