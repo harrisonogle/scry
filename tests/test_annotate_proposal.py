@@ -1,7 +1,7 @@
 from annotate_fixtures import mk
 
 from scry.annotate.output import output_model
-from scry.annotate.proposal import snap_point, to_proposal
+from scry.annotate.proposal import snap_rect, to_proposal
 from scry.schemas import PairLink, RecordLink, RunLink, TextReading
 from scry.track.pixels import margin_px
 
@@ -33,23 +33,26 @@ def test_arm_a_copy():
     assert group.texts is None and group.missed == []
 
 
-# ---------- reference = "coords": every point snapped to a box id before repair sees the proposal ----------
+# ---------- reference = "coords": every rectangle matched to a box id before repair sees the proposal ----------
+def _r(i: int) -> list[int]:
+    """The rectangle of b<i>, as the user message lists it."""
+    return [10, 20 * i, 110, 20 * i + 16]
+
+
 def _coords_answer(transcribe: bool) -> dict:
-    """The answer of `_answer` with points for ids: (50, 28) is inside b1, (50, 48) inside b2, and so on down the column."""
-    def p(i: int) -> list[int]:
-        return [50, 20 * i + 8]
+    """The answer of `_answer` with each box named by its rectangle."""
     answer = {"containers": [{"id": "c1", "kind": "window", "app": "Mail", "name": "Inbox", "owner": None, "covers": []}],
-              "assign": [{"point": p(1), "container": "c1"}, {"point": p(2), "container": "c1"}], "unassigned": [p(3)],
-              "runs": [{"boxes": [p(1), p(2)], "joiner": " "}], "pairs": [{"key": [p(3)], "value": [p(4)]}],
-              "records": [{"members": [[p(5)], [p(6)], [p(7)]], "header": []}], "description": "d"}
+              "assign": [{"rect": _r(1), "container": "c1"}, {"rect": _r(2), "container": "c1"}], "unassigned": [_r(3)],
+              "runs": [{"boxes": [_r(1), _r(2)], "joiner": " "}], "pairs": [{"key": [_r(3)], "value": [_r(4)]}],
+              "records": [{"members": [[_r(5)], [_r(6)], [_r(7)]], "header": []}], "description": "d"}
     if transcribe:
-        answer |= {"texts": [{"point": p(1), "text": "a"}, {"point": p(2), "text": ""}],
+        answer |= {"texts": [{"rect": _r(1), "text": "a"}, {"rect": _r(2), "text": ""}],
                    "missed": [{"text": "Networking", "container": "c1"}]}
     return answer
 
 
-def test_coords_points_become_the_arm_a_proposal():
-    """`margin_px(BOXES, [], 0.5) == 8`; every point of `_coords_answer` is inside its box, so the proposal is `_answer`'s."""
+def test_coords_rectangles_become_the_arm_a_proposal():
+    """`margin_px(BOXES, [], 0.5) == 8`; every rectangle of `_coords_answer` is a listed one, so the proposal is `_answer`'s."""
     assert margin_px(BOXES, [], 0.5) == 8
     out = output_model("A", True, reference="coords").model_validate(_coords_answer(True))
     p, counts = to_proposal("A", out, BOXES, (400, 200), 8, reference="coords")
@@ -60,59 +63,61 @@ def test_coords_points_become_the_arm_a_proposal():
     assert [l.kind for l in group.links] == ["run", "pair", "record"]
 
 
-def test_snap_point():
-    # inside → that box; several → the smallest area; outside → the nearest within the margin (point-to-rectangle
-    # distance, x1 and y1 exclusive as the plan's formula has them); beyond the margin → nothing
+def test_snap_rect():
+    # (1) equal to a listed rectangle → that box; (2) else the box it overlaps most; (3) else the nearest box by centre
+    # distance within the margin; (4) else nothing. Ties go to reading order; a list that is not four numbers is nothing.
+    assert snap_rect(_r(1), BOXES, 8) == "b1" and snap_rect(_r(7), BOXES, 8) == "b7"
+    assert snap_rect([12, 22, 100, 34], BOXES, 8) == "b1"  # inside b1
+    assert snap_rect([0, 0, 400, 200], BOXES, 8) == "b1"  # covers every box equally: reading order
+    assert snap_rect([10, 30, 110, 50], BOXES, 8) == "b2"  # 600 px² with b1, 1000 with b2
+    assert snap_rect([60, 28, 60, 28], BOXES, 8) == "b1"  # no area: b1's centre
+    assert snap_rect([60, 36, 60, 36], BOXES, 8) == "b1"  # 8 below b1's centre, 12 above b2's: at the margin
+    assert snap_rect([60, 37, 60, 37], BOXES, 8) is None  # 9 and 11: beyond it
+    assert snap_rect([10, 37, 110, 39], BOXES, 8) is None  # between b1 and b2, overlapping neither, both centres 10 away
+    assert snap_rect([300, 20, 400, 36], BOXES, 8) is None
+    assert snap_rect(_r(1), [], 8) is None
+    assert snap_rect([60, 30, 60, 30], BOXES, 0) is None and snap_rect([12, 22, 100, 34], BOXES, 0) == "b1"  # margin 0: (3) needs equal centres
+    assert snap_rect([10, 20, 110], BOXES, 8) is None and snap_rect([10, 20, 110, 36, 0], BOXES, 8) is None
     big, small = mk("b1", 0, 0, 200, 100, "outer"), mk("b2", 50, 40, 90, 56, "inner")
-    assert snap_point([60, 48], [big, small], 8) == "b2"
-    assert snap_point([10, 10], [big, small], 8) == "b1"
-    assert snap_point([50, 28], BOXES, 8) == "b1"
-    assert snap_point([118, 28], BOXES, 8) == "b1"  # 8 px right of b1's x1: at the margin
-    assert snap_point([119, 28], BOXES, 8) is None  # 9 px: beyond it
-    assert snap_point([50, 18], BOXES, 8) == "b1"  # 2 px above b1 (y0 = 20)
-    assert snap_point([5, 14], BOXES, 8) == "b1"  # diagonal: hypot(5, 6) is 7.8 from b1's corner
-    assert snap_point([4, 13], BOXES, 8) is None  # hypot(6, 7) is 9.2
-    assert snap_point([50, 38], BOXES, 8) == "b1"  # 2 px below b1's y1 (36) and 2 px above b2's y0 (40): a tie goes to reading order
-    assert snap_point([300, 28], BOXES, 8) is None
-    assert snap_point([50, 28], [], 8) is None
-    assert snap_point([50, 28], BOXES, 0) == "b1" and snap_point([111, 28], BOXES, 0) is None  # margin 0: inside only
-    assert snap_point([50], BOXES, 8) is None and snap_point([50, 28, 1], BOXES, 8) is None  # not a point
+    assert snap_rect([50, 40, 90, 56], [big, small], 8) == "b2"  # equality before overlap: the outer box overlaps it whole too
+    assert snap_rect([0, 0, 100, 100], [big, small], 8) == "b1"  # 10000 px² with the outer box, 640 with the inner
+    assert snap_rect([52, 42, 88, 54], [big, small], 8) == "b1"  # inside both: the overlap ties, and reading order decides
 
 
-def test_coords_unplaced_points_are_dropped_and_counted():
-    far = [300, 28]  # 190 px from b1: beyond every margin
+def test_coords_unplaced_rectangles_are_dropped_and_counted():
+    far = [300, 20, 400, 36]  # overlaps no box; its centre is 290 px from b1's
     answer = _coords_answer(True)
-    answer["assign"].append({"point": far, "container": "c1"})
+    answer["assign"].append({"rect": far, "container": "c1"})
     answer["unassigned"].append(far)
     answer["runs"][0]["boxes"].append(far)
     answer["pairs"][0]["key"].insert(0, far)
     answer["records"][0]["members"][1].append(far)
     answer["records"][0]["header"] = [far]
-    answer["texts"].append({"point": far, "text": "ghost"})
-    answer["texts"].append({"point": [50], "text": "not a point"})
+    answer["texts"].append({"rect": far, "text": "ghost"})
+    answer["texts"].append({"rect": [50], "text": "not a rectangle"})
     out = output_model("A", True, reference="coords").model_validate(answer)
     p, counts = to_proposal("A", out, BOXES, (400, 200), 8, reference="coords")
     want, _ = to_proposal("A", output_model("A", True).model_validate(_answer(True)), BOXES, (400, 200), 8)
-    assert p == want  # every reference that snapped is kept, in its place
-    assert counts == {"point_unplaced": 8}
+    assert p == want  # every reference that matched is kept, in its place
+    assert counts == {"rect_unplaced": 8}
 
 
-def test_coords_two_points_on_one_box_collapse_inside_a_link():
+def test_coords_two_rectangles_on_one_box_collapse_inside_a_link():
     answer = _coords_answer(False)
-    answer["runs"][0]["boxes"] = [[50, 28], [60, 28], [50, 48], [118, 48]]  # b1, b1, b2, b2 (the last by margin)
-    answer["pairs"][0]["value"] = [[50, 68], [50, 88], [60, 68]]  # b3 (the key's box), b4, b3 again
-    answer["records"][0]["members"] = [[[50, 108], [50, 108]], [[50, 128]], [[50, 148]]]
-    answer["records"][0]["header"] = [[50, 108]]  # a header on a member's box: the first occurrence in the link is kept
+    answer["runs"][0]["boxes"] = [_r(1), [12, 22, 100, 34], _r(2), [10, 40, 110, 50]]  # b1, b1, b2, b2
+    answer["pairs"][0]["value"] = [_r(3), _r(4), [12, 62, 100, 74]]  # b3 (the key's box), b4, b3 again
+    answer["records"][0]["members"] = [[_r(5), _r(5)], [_r(6)], [_r(7)]]
+    answer["records"][0]["header"] = [_r(5)]  # a header on a member's box: the first occurrence in the link is kept
     out = output_model("A", False, reference="coords").model_validate(answer)
     p, counts = to_proposal("A", out, BOXES, (400, 200), 8, reference="coords")
     assert p.links == [RunLink(boxes=["b1", "b2"], joiner=" "), PairLink(key=["b3"], value=["b4"]),
                        RecordLink(members=[["b5"], ["b6"], ["b7"]], header=[])]
     assert counts == {}  # a collapse is not a dropped reference
     # a key and a value in one box: after the collapse the value is empty and repair drops the pair (link_malformed)
-    answer["pairs"][0]["value"] = [[60, 68]]
+    answer["pairs"][0]["value"] = [[12, 62, 100, 74]]
     p, _ = to_proposal("A", output_model("A", False, reference="coords").model_validate(answer), BOXES, (400, 200), 8, reference="coords")
     assert p.links[1] == PairLink(key=["b3"], value=[])
     # two assigns on one box are two assigns: repair counts the second (second_assignment), not the conversion
-    answer["assign"] = [{"point": [50, 28], "container": "c1"}, {"point": [60, 28], "container": "c1"}]
+    answer["assign"] = [{"rect": _r(1), "container": "c1"}, {"rect": [12, 22, 100, 34], "container": "c1"}]
     p, counts = to_proposal("A", output_model("A", False, reference="coords").model_validate(answer), BOXES, (400, 200), 8, reference="coords")
     assert [a.box for a in p.assign] == ["b1", "b1"] and counts == {}

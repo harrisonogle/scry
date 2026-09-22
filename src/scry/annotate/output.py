@@ -48,35 +48,36 @@ class OutMissed(BaseModel):
     container: str | None = Field(description="Id of its container, or null.")
 
 
-# reference = "coords": the same shape, with a point [x, y] wherever the ids schema holds a box id. The point is described
-# here once, in its $defs entry (a description beside a $ref is dropped by the SDK's strict transform); the prompt says it
-# once more. A wrong-length list is not a point: code drops the reference (point_unplaced), so no schema constraint.
-class OutPoint(RootModel[list[int]]):
-    """A point [x, y]: a pixel inside the box's text, near its middle, in the unscaled frame's coordinates."""
+# reference = "coords": the same shape, with a rectangle [x0, y0, x1, y1] wherever the ids schema holds a box id: the
+# box's own rectangle, as the user message listed it. It is described here once, in its $defs entry (a description
+# beside a $ref is dropped by the SDK's strict transform); the prompt says it once more. A wrong-length list is not a
+# rectangle: code drops the reference (rect_unplaced), so no schema constraint.
+class OutRect(RootModel[list[int]]):
+    """A box's rectangle [x0, y0, x1, y1], exactly as the user message lists it, in the unscaled frame's coordinates."""
 
 
-class OutAssignAt(BaseModel):
-    point: OutPoint
+class OutAssignRect(BaseModel):
+    rect: OutRect
     container: str = Field(description="Id of the container the box belongs to.")
 
 
-class OutRunAt(BaseModel):
-    boxes: list[OutPoint] = Field(description="One point per box, in reading order.")
+class OutRunRect(BaseModel):
+    boxes: list[OutRect] = Field(description="The boxes' rectangles, in reading order.")
     joiner: Literal["", " "] = Field(description="'' when a word was cut in two, ' ' otherwise.")
 
 
-class OutPairAt(BaseModel):
-    key: list[OutPoint] = Field(description="One point per box of the label.")
-    value: list[OutPoint] = Field(description="One point per box of its value.")
+class OutPairRect(BaseModel):
+    key: list[OutRect] = Field(description="Rectangles of the label's boxes.")
+    value: list[OutRect] = Field(description="Rectangles of its value's boxes.")
 
 
-class OutRecordAt(BaseModel):
-    members: list[list[OutPoint]] = Field(description="The row's cells, left to right, each a list of points, one per box.")
-    header: list[OutPoint] = Field(description="One point per column heading when they are visible, otherwise [].")
+class OutRecordRect(BaseModel):
+    members: list[list[OutRect]] = Field(description="The row's cells, left to right, each a list of rectangles.")
+    header: list[OutRect] = Field(description="Rectangles of the column headings when they are visible, otherwise [].")
 
 
-class OutTextAt(BaseModel):
-    point: OutPoint
+class OutTextRect(BaseModel):
+    rect: OutRect
     text: str = Field(description="Verbatim text inside the box; '' for an icon.")
 
 
@@ -97,15 +98,15 @@ def output_model(arm: str = "A", transcribe: bool = True, pane: bool = False, re
         coords = reference == "coords"
         fields: dict = {
             "containers": (list[OutContainer], ...),
-            "assign": (list[OutAssignAt if coords else OutAssign], ...),
-            "unassigned": (list[OutPoint], Field(description="One point per target that belongs to no container.")) if coords
+            "assign": (list[OutAssignRect if coords else OutAssign], ...),
+            "unassigned": (list[OutRect], Field(description="Rectangles of the targets that belong to no container.")) if coords
             else (list[str], Field(description="Target box ids that belong to no container.")),
-            "runs": (list[OutRunAt if coords else OutRun], ...),
-            "pairs": (list[OutPairAt if coords else OutPair], ...),
-            "records": (list[OutRecordAt if coords else OutRecord], ...),
+            "runs": (list[OutRunRect if coords else OutRun], ...),
+            "pairs": (list[OutPairRect if coords else OutPair], ...),
+            "records": (list[OutRecordRect if coords else OutRecord], ...),
         }
         if transcribe:
-            fields["texts"] = (list[OutTextAt if coords else OutText], ...)
+            fields["texts"] = (list[OutTextRect if coords else OutText], ...)
             fields["missed"] = (list[OutMissed], ...)
         fields["description"] = (str, Field(description="What the boxes cannot express about this screen, in plain prose."))
         _MODELS[key] = create_model("AnnotateOut" + arm + ("Coords" if coords else "") + ("T" if transcribe else "G"), **fields)

@@ -242,15 +242,14 @@ def test_mark_match():
     assert mark_match(nothing, frames) == (0, 0)
 
 
-# ---------- reference = "coords": one image, rectangles out, points in; downstream sees ids ----------
-def _centre(box) -> list[int]:
-    x0, y0, x1, y1 = box.bbox
-    return [(x0 + x1) // 2, (y0 + y1) // 2]
+# ---------- reference = "coords": one image, rectangles out and back; downstream sees ids ----------
+def _rect(box) -> list[int]:
+    return list(box.bbox)
 
 
 def coords_answer_from(record: Annotation, boxes, kw: dict):
-    """A stored record's content as a coords answer: every box id replaced by the centre of that box on its frame."""
-    at = {b.id: _centre(b) for b in boxes[record.frame].boxes}
+    """A stored record's content as a coords answer: every box id replaced by that box's rectangle on its frame."""
+    at = {b.id: _rect(b) for b in boxes[record.frame].boxes}
     links = {"run": [], "pair": [], "record": []}
     for l in record.links:
         if l.kind == "run":
@@ -260,11 +259,11 @@ def coords_answer_from(record: Annotation, boxes, kw: dict):
         else:
             links["record"].append({"members": [[at[b] for b in cell] for cell in l.members], "header": [at[b] for b in l.header]})
     data = {"containers": [c.model_dump(include={"id", "kind", "app", "name", "owner", "covers"}) for c in record.containers],
-            "assign": [{"point": at[a.box], "container": a.container} for a in record.assign],
+            "assign": [{"rect": at[a.box], "container": a.container} for a in record.assign],
             "unassigned": [at[b] for b in record.unassigned], "runs": links["run"], "pairs": links["pair"], "records": links["record"],
             "description": record.description}
     if "texts" in kw["output_model"].model_fields:
-        data |= {"texts": [{"point": at[t.box], "text": t.text} for t in record.texts],
+        data |= {"texts": [{"rect": at[t.box], "text": t.text} for t in record.texts],
                  "missed": [m.model_dump(include={"text", "container"}) for m in record.missed]}
     return kw["output_model"].model_validate(data)
 
@@ -290,7 +289,7 @@ def test_coords_incremental_group_only_end_to_end(tmp_path: Path):
     assert not run.overlays_dir.exists() or not any(run.overlays_dir.iterdir())  # no overlay drawn
     records = run.load_annotations()
     assert [r.frame for r in records] == [10, 11]
-    for got in records:  # the points came back as today's ids: the record is the stored one, but for what group-only lacks
+    for got in records:  # the rectangles came back as today's ids: the record is the stored one, but for what group-only lacks
         want = stored[got.frame]
         for field in ("targets", "containers", "assign", "unassigned", "links", "description"):
             assert getattr(got, field) == getattr(want, field), (got.frame, field)
@@ -308,12 +307,12 @@ def test_coords_every_frame_transcribing_at_half_scale(tmp_path: Path):
     by_frame = {fb.frame: fb for fb in boxes}
 
     def answer(kw: dict):
-        at = {b.id: _centre(b) for b in by_frame[call_frame(kw)].boxes}
+        at = {b.id: _rect(b) for b in by_frame[call_frame(kw)].boxes}
         return kw["output_model"].model_validate({
             "containers": [{"id": "c1", "kind": "window", "app": "x", "name": "w", "owner": None, "covers": []}],
-            "assign": [{"point": at["b1"], "container": "c1"}, {"point": [300, 300], "container": "c1"}], "unassigned": [],
-            "runs": [], "pairs": [{"key": [at["b1"]], "value": [at["b2"]]}], "records": [],
-            "texts": [{"point": at["b1"], "text": "a"}, {"point": at["b2"], "text": "B"}], "missed": [],
+            "assign": [{"rect": at["b1"], "container": "c1"}, {"rect": [70, 40, 110, 56], "container": "c1"}], "unassigned": [],
+            "runs": [], "pairs": [{"key": [at["b1"]], "value": [[72, 6, 108, 18]]}], "records": [],
+            "texts": [{"rect": at["b1"], "text": "a"}, {"rect": at["b2"], "text": "B"}], "missed": [],
             "description": f"d{call_frame(kw)}"})
 
     run, provider = write_run(tmp_path, frames, boxes), AnswerProvider(answer)
@@ -325,11 +324,11 @@ def test_coords_every_frame_transcribing_at_half_scale(tmp_path: Path):
            "every coordinate is in the unscaled 128x64 frame." in _texts(kw)
     r0 = run.load_annotations()[0]
     assert [(a.box, a.container) for a in r0.assign] == [("b1", "c1")] and r0.unassigned == ["b2"]
-    assert r0.repair_counts == {"point_unplaced": 1, "unplaced": 1} and r0.repairs == 2  # (300, 300) is far from every box
-    assert r0.links == [PairLink(key=["b1"], value=["b2"])]
+    assert r0.repair_counts == {"rect_unplaced": 1, "unplaced": 1} and r0.repairs == 2  # 70,40,110,56 is a box height below b2
+    assert r0.links == [PairLink(key=["b1"], value=["b2"])]  # 72,6,108,18 overlaps b2: matched
     assert r0.texts == [TextReading(box="b1", text="a"), TextReading(box="b2", text="B")]
     assert (r0.description, r0.prompt_version, r0.label_clashes) == ("d0", "annotate-v4+coords+s0.5", 0)
     m = _entry(run)
     assert m["reference"] == "coords" and m["mark_match"] == {"hits": 2, "total": 4}
-    assert m["repair_counts"] == {"point_unplaced": 2, "unplaced": 2}
+    assert m["repair_counts"] == {"rect_unplaced": 2, "unplaced": 2}
     assert not (run.overlays_dir.exists() and any(run.overlays_dir.iterdir()))
