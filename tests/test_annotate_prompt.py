@@ -41,6 +41,25 @@ def test_versions():
     assert prompt_version(reference="coords") == "annotate-v4+coords"
     assert prompt_version(transcribe=False, scale=0.5, reference="coords") == "annotate-v4+coords+grouponly+s0.5"
     assert prompt_version(reference="ids") == prompt_version()
+    assert prompt_version(transcribe=False, box_text=True) == "annotate-v4+grouponly+boxtext"
+    assert prompt_version(transcribe=False, box_text=True, reference="coords", scale=0.5) == "annotate-v4+coords+grouponly+boxtext+s0.5"
+    assert prompt_version(transcribe=False, box_text=False) == "annotate-v4+grouponly"
+
+
+BOX_TEXT_SENTENCE = ("The user message also gives the OCR engine's reading of each box; readings can be wrong, so use them as "
+                     "a hint and the image as the truth.")
+
+
+def test_box_text_adds_one_sentence_to_the_images_paragraph():
+    """With `box_text` the images paragraph ends with the hint sentence and nothing else moves; off, the prompt is
+    today's byte for byte (the pinned digests in test_annotate_blocks hold)."""
+    for reference in ("ids", "coords"):
+        off, on = system_prompt(transcribe=False, reference=reference), system_prompt(transcribe=False, reference=reference, box_text=True)
+        assert off == system_prompt(transcribe=False, reference=reference, box_text=False)
+        assert BOX_TEXT_SENTENCE not in off
+        po, pn = off.split("\n\n"), on.split("\n\n")
+        assert len(po) == len(pn) == 7 and [i for i in range(7) if po[i] != pn[i]] == [1]
+        assert pn[1] == po[1] + " " + BOX_TEXT_SENTENCE
 
 
 def test_coords_prompt_differs_only_where_a_box_is_named():

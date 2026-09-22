@@ -56,6 +56,17 @@ def test_annotate_reference_key():
             Config.model_validate({"annotate": {"reference": bad}})
 
 
+def test_annotate_box_text_key():
+    """`box_text` lists each box's OCR reading in the user turn; group-only only: with `transcribe = true` the second
+    reading must stay independent of OCR, so the pair is refused."""
+    assert Config().annotate.box_text is False
+    cfg = Config.model_validate({"annotate": {"transcribe": False, "box_text": True}})
+    assert (cfg.annotate.transcribe, cfg.annotate.box_text) == (False, True)
+    with pytest.raises(pydantic.ValidationError, match="box_text"):
+        Config.model_validate({"annotate": {"transcribe": True, "box_text": True}})
+    assert Config.model_validate({"annotate": {"transcribe": True, "box_text": False}}).annotate.box_text is False
+
+
 def test_ask_frames_is_in_no_pipeline_stage_hash():
     """Withholding the frames from the answering agent leaves every pipeline stage up to date: no stage hashes [ask]."""
     with_frames, without = Config(), Config.model_validate({"ask": {"frames": False}})

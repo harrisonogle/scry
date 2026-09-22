@@ -175,3 +175,27 @@ def test_coords_sends_no_overlay_and_no_ocr_text(tmp_path: Path):
     assert hashes[0] == "sha-0" and hashes[1] == "-"
     fewer = build_blocks(frames[0], boxes, CallPlan(0, ("b2",)), "A", 1.0, frame_png, None, reference="coords")
     assert input_hashes(frames[0], None, fewer)[2] != hashes[2]  # the targets line is in the hashed text
+
+
+# ---------- box_text: each box's OCR reading beside its id (or rectangle); group-only only ----------
+def test_box_text_lists_each_reading_json_escaped(tmp_path: Path):
+    frames, _ = fixture_e()
+    frame_png, overlay_png = _pngs(tmp_path)
+    boxes = fb(0, [mk("b1", 4, 4, 40, 20, "Name"), mk("b2", 70, 4, 110, 20, 'say "hi"\\x'), mk("b3", 4, 30, 40, 50, "")])
+    ids = build_blocks(frames[0], boxes, CallPlan(0, ("b2",)), "A", 1.0, frame_png, overlay_png, box_text=True)
+    assert [b["type"] for b in ids] == ["text", "image", "text", "image", "text", "text", "text"]
+    assert _texts(ids)[2:] == ['Boxes, as id and the OCR engine\'s reading: b1 "Name"; b2 "say \\"hi\\"\\\\x"; b3 "".',
+                               "Targets: b2.", "Return the JSON object."]
+    coords = build_blocks(frames[0], boxes, CallPlan(0, ("b2",)), "A", 1.0, frame_png, None, reference="coords", box_text=True)
+    assert _texts(coords)[2:] == ['Boxes, as x0,y0,x1,y1 and the OCR engine\'s reading, in reading order: '
+                                  '4,4,40,20 "Name"; 70,4,110,20 "say \\"hi\\"\\\\x"; 4,30,40,50 "".',
+                                  "Targets: 70,4,110,20.", "Return the JSON object."]
+    assert not any(BOX_ID.search(t) for t in _texts(coords))
+    # the unicode of a reading is sent as it is, not as \\uXXXX
+    arrow = build_blocks(frames[0], fb(0, [mk("b1", 4, 4, 40, 20, "→ Next")]), CallPlan(0, ("b1",)), "A", 1.0, frame_png, overlay_png, box_text=True)
+    assert _texts(arrow)[2] == 'Boxes, as id and the OCR engine\'s reading: b1 "→ Next".'
+    # no box: the same line as ever; off: the turn is today's byte for byte, and the readings are in the hashed text
+    assert _texts(build_blocks(frames[0], fb(0, []), CallPlan(0, ()), "A", 1.0, frame_png, overlay_png, box_text=True))[2:4] == ["Boxes: none.", NO_TARGETS]
+    off = build_blocks(frames[0], boxes, CallPlan(0, ("b2",)), "A", 1.0, frame_png, overlay_png, box_text=False)
+    assert _texts(off)[2] == "Boxes: b1, b2, b3." and not any("Name" in t for t in _texts(off))
+    assert input_hashes(frames[0], overlay_png, ids)[2] != input_hashes(frames[0], overlay_png, off)[2]

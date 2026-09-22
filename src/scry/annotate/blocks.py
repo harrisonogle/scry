@@ -1,9 +1,11 @@
 """The user turn of an `annotate` call. Everything in it comes from decode's, read's and track's records: nothing from
-an earlier answer, and never an OCR text (the second reading must stay independent of the first)."""
+an earlier answer, and no OCR text unless `box_text` says so, which the config allows only when there is no second
+reading (a second reading must stay independent of the first)."""
 from __future__ import annotations
 
 import base64
 import io
+import json
 from pathlib import Path
 
 from PIL import Image
@@ -32,15 +34,21 @@ def _rect(box: Box, scale: float) -> str:
     return ",".join(str(v) for v in scale_box(box.bbox, scale))
 
 
+def _reading(box: Box) -> str:
+    """The OCR text JSON-escaped in double quotes, its unicode as it is; an empty reading is ""."""
+    return json.dumps(box.text, ensure_ascii=False)
+
+
 def build_blocks(frame: Frame, fb: FrameBoxes, plan: CallPlan, arm: str, scale: float, frame_png: Path,
-                 overlay_png: Path | None, reference: str = "ids") -> list[dict]:
+                 overlay_png: Path | None, reference: str = "ids", box_text: bool = False) -> list[dict]:
     """The user turn. reference "ids": two images (the clean frame, the numbered overlay) and the boxes and targets by
     id. reference "coords": the clean frame alone, every box and every target as a rectangle x0,y0,x1,y1 in the pixels
     of the image sent (the frame's at scale 1, else the scaled frame's, rounded outward as the overlay rounds: the
     model is never asked to relate full-frame numbers to a shrunken image, ledger L71), and no id anywhere (the answer
     names boxes by points, which `to_proposal` maps back in the same scaled space). The targets line is the only thing
     an incremental call changes; a call with no target is still made, for the description: said outright, or the model
-    labels every box anyway."""
+    labels every box anyway. `box_text` (group-only only) puts each box's OCR reading beside its id or rectangle on the
+    Boxes line; off, the turn is what it always was, byte for byte."""
     if arm != "A":
         raise ValueError(f"no user turn for arm {arm!r}")
     if reference not in ("ids", "coords"):
@@ -55,6 +63,17 @@ def build_blocks(frame: Frame, fb: FrameBoxes, plan: CallPlan, arm: str, scale: 
         targets = "Targets: all boxes."
     else:
         targets = f"Targets: {name(plan.targets)}."
+    if not ids:
+        boxes_line = "Boxes: none."
+    elif coords and box_text:
+        boxes_line = ("Boxes, as x0,y0,x1,y1 and the OCR engine's reading, in reading order: "
+                      + "; ".join(f"{_rect(by_id[i], scale)} {_reading(by_id[i])}" for i in ids) + ".")
+    elif coords:
+        boxes_line = f"Boxes, as x0,y0,x1,y1 in reading order: {name(ids)}."
+    elif box_text:
+        boxes_line = "Boxes, as id and the OCR engine's reading: " + "; ".join(f"{i} {_reading(by_id[i])}" for i in ids) + "."
+    else:
+        boxes_line = f"Boxes: {name(ids)}."
     if coords:
         if scale == 1.0:
             where = f"Coordinates are pixels of the {frame.width}x{frame.height} frame: top-left origin, x1 and y1 exclusive."
@@ -64,14 +83,14 @@ def build_blocks(frame: Frame, fb: FrameBoxes, plan: CallPlan, arm: str, scale: 
         blocks = [
             text_block(f"Screenshot (frame {frame.frame}, t={frame.t_settled:.2f}s):"), frame_block(frame_png, scale),
             text_block(where),
-            text_block(f"Boxes, as x0,y0,x1,y1 in reading order: {name(ids)}." if ids else "Boxes: none."),
+            text_block(boxes_line),
             text_block(targets),
         ]
     else:
         blocks = [
             text_block(f"Image 1 (clean frame {frame.frame}, t={frame.t_settled:.2f}s):"), frame_block(frame_png, scale),
             text_block("Image 2 (same frame with numbered boxes):"), image_block(overlay_png),
-            text_block(f"Boxes: {name(ids)}." if ids else "Boxes: none."),
+            text_block(boxes_line),
             text_block(targets),
         ]
     animating = [b.id for b in fb.boxes if b.in_churn]

@@ -3,6 +3,7 @@ import io
 import re
 from pathlib import Path
 
+import pydantic
 import pytest
 from annotate_fixtures import fb, fixture_e, fixture_t, record_a10, record_a11, write_run
 from fakes import AnswerProvider, call_frame
@@ -336,3 +337,40 @@ def test_coords_every_frame_transcribing_at_half_scale(tmp_path: Path):
     assert m["reference"] == "coords" and m["mark_match"] == {"hits": 2, "total": 4}
     assert m["repair_counts"] == {"rect_unplaced": 2, "unplaced": 2}
     assert not (run.overlays_dir.exists() and any(run.overlays_dir.iterdir()))
+
+
+def test_box_text_incremental_group_only_end_to_end(tmp_path: Path):
+    """Under group-only with `box_text` every call's user turn lists each box's OCR reading beside its id, the system
+    prompt carries the hint sentence and the version says +boxtext; the answer and the records are today's."""
+    frames, boxes, changes, lifetimes = fixture_t()
+    stored = {10: record_a10(), 11: record_a11()}
+    provider = AnswerProvider(lambda kw: answer_from(stored[call_frame(kw)], kw))
+    run = write_run(tmp_path, frames, boxes, changes, lifetimes)
+    run_annotate(run, _cfg(mode="incremental", transcribe=False, box_text=True), provider)
+    calls = {call_frame(kw): kw for kw in provider.calls}
+    assert sorted(calls) == [10, 11]
+    for kw in calls.values():
+        assert kw["system"] == system_prompt(transcribe=False, box_text=True)
+        assert "use them as a hint and the image as the truth" in kw["system"]
+        assert kw["output_model"] is output_model("A", False)
+        assert kw["prompt_version"] == "annotate-v4+grouponly+boxtext"
+        assert _image_sizes(kw) == [(400, 200), (400, 200)]
+    assert ('Boxes, as id and the OCR engine\'s reading: b1 "Resource group"; b2 "RG1"; b3 "PowerShell 7"; b4 "PS C:\\\\> az".'
+            in _texts(calls[10]))
+    assert "Targets: all boxes." in _texts(calls[10])
+    assert ('Boxes, as id and the OCR engine\'s reading: b1 "Banner"; b2 "Resource group"; b3 "RG1"; b4 "PowerShell 7"; '
+            'b5 "PS C:\\\\> az login".' in _texts(calls[11]))
+    assert "Targets: b1, b5." in _texts(calls[11])
+    records = run.load_annotations()
+    assert [r.frame for r in records] == [10, 11]
+    for got in records:
+        want = stored[got.frame]
+        for field in ("targets", "containers", "assign", "unassigned", "links", "description"):
+            assert getattr(got, field) == getattr(want, field), (got.frame, field)
+        assert got.texts is None and got.missed == []
+    m = _entry(run)
+    assert (m["mode"], m["reference"], m["transcribe"], m["box_text"], m["prompt_version"]) == \
+        ("incremental", "ids", False, True, "annotate-v4+grouponly+boxtext")
+    assert m["mark_match"] is None
+    with pytest.raises(pydantic.ValidationError):  # the second reading must stay independent of OCR
+        _cfg(mode="incremental", transcribe=True, box_text=True)
