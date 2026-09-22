@@ -4,7 +4,9 @@ gates a measured record, and every request is built from measured records only, 
 
 An incremental call is the every-frame call with a shorter target list: the same system prompt, schema, images and
 prompt version; in the user turn only the `Targets:` line differs, naming fewer boxes (the sentence that keeps the
-description about the screen is in the shared system prompt, ledger L59). Which frames get a call and which boxes are
+description about the screen is in the shared system prompt, ledger L59). Under `reference = "coords"` the call sends
+the clean frame alone and names boxes by rectangle in both directions; `to_proposal` matches the answer back to ids,
+so nothing after it knows the reference. Which frames get a call and which boxes are
 targets is `plan_calls`' answer, read from track's records alone; what the labels mean at a later frame is the join's
 (`scry.annotate.join`)."""
 from __future__ import annotations
@@ -31,8 +33,10 @@ from scry.textdiff import similarity
 from scry.track.pixels import margin_px
 
 log = logging.getLogger(__name__)
-# The only referencing arm is A, the tagged overlay: arm D was evaluated and removed behind the tag `arm-d-evaluated`
-# (ledger L63); arms B and C were never built. The pane label is an evaluation switch that has not landed.
+# The only referencing arm is A: arm D was evaluated and removed behind the tag `arm-d-evaluated` (ledger L63); arms B
+# and C were never built. How arm A refers to a box is `[annotate] reference`: "ids" (the tagged overlay, answers by box
+# id) or "coords" (no overlay, boxes as rectangles, answers by rectangle). The pane label is an evaluation switch that
+# has not landed.
 ARM, PANE = "A", False
 
 
