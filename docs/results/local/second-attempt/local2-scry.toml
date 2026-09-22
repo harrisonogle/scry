@@ -1,0 +1,89 @@
+[decode.detect]
+theta_pix = 12
+theta_min = 8
+theta_comp = 24
+theta_count = 100
+bar_max_width = 3
+bar_min_height = 8
+bar_max_height = 30
+downsample = 1
+
+[decode.settle]
+still_s = 0.4
+max_hold_s = 3.0
+
+[decode.churn]
+window_s = 5.0
+rho_on = 0.5
+rho_off = 0.2
+min_area = 400
+
+[decode.blink]
+max_w = 12
+max_h = 32
+min_period_s = 0.15
+max_period_s = 0.7
+confirm_recurrences = 2
+confirm_window_s = 3.0
+expiry_s = 2.0
+iou = 0.5
+
+[read]
+engine = "rapid"
+gap_ratio = 0.25
+
+[track]
+margin = 0.5
+
+[annotate]
+# the owner's default (docs/decision-ledger.md, L73): incremental, group-only (no second reading), numbered overlay
+mode = "incremental"
+transcribe = false
+scale = 1.0
+reference = "ids"  # "ids": numbered overlay, answers by box id; "coords": boxes as rectangles, answers by the box's rectangle
+
+[interpret]
+images = "scaled"
+scale = 0.5
+context_transitions = 3
+
+[summarize]
+window = 2000
+overlap = 200
+fallback_step_transitions = 20
+fallback_section_steps = 8
+
+[overlay]
+font_size = 12
+font_path = "/System/Library/Fonts/Menlo.ttc"
+
+[model]
+provider = "openai_compat"
+base_url = "http://127.0.0.1:8091/v1"
+model = "mlx-community/Qwen3.8-27B-4bit"
+max_tokens = 16000
+retry_max_tokens = 32000
+concurrency = 1
+mode = "sync"
+effort_annotate = "low"
+effort_interpret = "low"
+effort_summarize = "medium"
+effort_ask = "high"
+
+[index]
+embedder = "none"
+k = 20
+k_filtered = 50
+rrf = 60
+collapse = true
+
+[ask]
+max_turns = 12
+max_tool_result_chars = 60000
+redecode_max_frames = 6
+frames = true  # false: the agent sees no pixels: get_frame returns a frame's record without the image, redecode is not offered
+model = ""  # the model the answering agent runs on; empty means the pipeline's model, [model] model
+
+[outline]
+enabled = false
+model = "gemini-3.8-flash"

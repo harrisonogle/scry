@@ -1,0 +1,157 @@
+runs 6 box hashes Counter({'b3f41eea16': 4, '6372cb6cee': 2}) targets identical: True
+
+run | cont/rec | popups | unassigned | repairs (kinds) | contdiff% vs r1,r2 | links run/pair/record | relinked | pairs-repro% vs r1,r2 | runs-repro% vs r1,r2 | off-row pairs (dy>12) [frames] | run jumps | pairs in neither ids100 ref | of which gap>150px | max pair gap
+smoke-ids100-r1 | 1.45 | 2 | 0 | 0 {} | -,0.0 | 8/40/6 | 0 | -,97.4 | -,88.9 | 0 {} | 0 | 0 | 0 | 144
+smoke-ids100-r2 | 1.45 | 2 | 0 | 0 {} | 0.0,- | 9/39/6 | 0 | 95.0,- | 100.0,- | 0 {} | 0 | 0 | 0 | 183
+local-probe/smoke-q27b-r1 | 1.36 | 1 | 113 | 429 {'bad_owner': 6, 'link_malformed': 11, 'text_missing': 253, 'unknown_box': 43, 'unplaced': 113, 'link_already_linked': 3} | 45.1,45.1 | 2/16/3 | 0 | 27.5,28.2 | 25.0,22.2 | 1 {152: 1} | 0 | 5 | 1 | 1073
+      OFFROW (152, (980, 93), 'DefaultWorkspace-00000000', '=>', 'Local accounts')
+      FARNEWPAIR (152, (980, 93), 'DefaultWorkspace-00000000', '=>', 'Local accounts')
+local2/smoke-L1-r1 | 1.36 | 1 | 0 | 7 {'link_already_linked': 4, 'link_malformed': 3} | 1.2,1.2 | 10/40/4 | 4 | 75.0,76.9 | 100.0,88.9 | 0 {} | 0 | 10 | 3 | 1378
+      FARNEWPAIR (145, (267, 0), 'Subscription: sub-global', '=>', 'Correlation ID: 00000000-0000')
+      FARNEWPAIR (148, (855, 0), 'Authentication and Author', '=>', 'Not enabled')
+      FARNEWPAIR (152, (1378, 0), 'DefaultWorkspace-00000000', '=>', '品')
+local2/smoke-L2-r1 | 1.27 | 0 | 0 | 14 {'link_already_linked': 6, 'link_malformed': 8} | 1.6,1.6 | 12/39/4 | 9 | 30.0,30.8 | 50.0,44.4 | 4 {148: 3, 154: 1} | 0 | 27 | 5 | 753
+      OFFROW (148, (132, 321), '-OD-', '=>', 'Encryption at-rest with a')
+      OFFROW (148, (41, 195), 'Network type (plugin) : A', '=>', 'aks1-kodekloudapp-dns-wq0')
+      OFFROW (148, (152, 36), 'Pod CIDR', '=>', '10.0.0.10')
+      OFFROW (154, (0, 111), 'Standard_DS2_V', '=>', 'Authentication and Author')
+      FARNEWPAIR (148, (132, 321), '-OD-', '=>', 'Encryption at-rest with a')
+      FARNEWPAIR (148, (41, 195), 'Network type (plugin) : A', '=>', 'aks1-kodekloudapp-dns-wq0')
+      FARNEWPAIR (148, (152, 36), 'Pod CIDR', '=>', '10.0.0.10')
+      FARNEWPAIR (148, (748, 0), '172.17.0.1/16', '=>', 'Standard_DS2_v2')
+      FARNEWPAIR (154, (753, 0), 'Administrator: PowerShell', '=>', 'l.io')
+local2/smoke-L3-r1 | 1.45 | 5 | 0 | 140 {'link_already_linked': 117, 'link_malformed': 23} | 10.6,10.6 | 46/14/3 | 0 | 27.5,28.2 | 12.5,11.1 | 1 {154: 1} | 19 | 3 | 0 | 133
+      OFFROW (154, (0, 61), 'Subscription ID :00000000', '=>', 'Capabilit')
+      RUNJUMP (145, [(403, 0)], 'Microsoft Azure | Search resources, service')
+      RUNJUMP (145, [(1641, 9)], 'EXAMPLE (EXAMPLE. | Home>')
+      RUNJUMP (145, [(1312, 0)], 'microsoft.aks-20230404212 | ×')
+      RUNJUMP (145, [(236, 13)], 'Deployment | Cancel ① Redeploy Downloa')
+      RUNJUMP (145, [(1005, 0)], '99 | Deployment name: microsof')
+      RUNJUMP (145, [(649, 0)], 'Start time: 4/4/2023, 9:3 | 三 Outputs')
+      RUNJUMP (145, [(1180, 0)], 'Container Insights |  Deployment details')
+      RUNJUMP (145, [(868, 0)], 'Operation details | Resource')
+      RUNJUMP (145, [(606, 14)], 'Go to Azure Monitor insig | Created')
+      RUNJUMP (145, [(803, 0)], 'Operation details | AKS1-KodeKloudApp')
+      RUNJUMP (145, [(705, 0)], 'Microsoft.ContainerServic | Free Microsoft tutorials')
+      RUNJUMP (145, [(1051, 0)], 'SolutionDeployment-202304 | Introduction to Docker co')
+      RUNJUMP (145, [(770, 0)], 'AcrDeployment-a0d89b37-51 | Introduction to Azure Kub')
+      RUNJUMP (145, [(690, 0)], 'WorkspaceDeployment-20230 | Operation details')
+      RUNJUMP (145, [(631, 0)], 'Work with an expert | OK')
+      RUNJUMP (145, [(422, 0)], 'InsightsActionGroupDepl-a | Operation details')
+      RUNJUMP (145, [(1256, 0)], 'and be your first line of | Give feedback')
+      RUNJUMP (145, [(1056, 0)], 'Find an Azure expert > | Tell us about your experi')
+      RUNJUMP (147, [(19, 0), (233, 0), (1790, 17), (1795, 0), (47, 0), (23, 0), (119, 0), (1730, 0), (1838, 0), (304, 19), (60, 0), (1472, 0), (423, 0), (238, 21), (0, 12), (0, 0), (137, 4), (653, 15), (111, 0), (22, 0), (640, 0), (232, 0), (32, 0), (0, 0), (21, 0), (178, 0), (536, 0), (31, 17), (193, 0), (1192, 10), (1180, 0), (183, 0), (624, 0), (1130, 0), (365, 7), (54, 0), (1330, 0), (57, 0), (26, 0), (1472, 0), (491, 0), (623, 0), (258, 2), (41, 0), (151, 0), (578, 0), (221, 0), (14, 0), (170, 0), (74, 0), (76, 4), (73, 0), (33, 0), (244, 8), (152, 0), (19, 0), (16, 0), (19, 0), (473, 0), (0, 13), (229, 0), (1201, 8), (1232, 0), (116, 0), (378, 0), (161, 0), (99, 0), (463, 0), (4, 0), (3, 15), (1, 0), (303, 0), (0, 6), (139, 0), (485, 0), (485, 0), (91, 0), (223, 0), (439, 0), (143, 0), (168, 4), (168, 4), (223, 0), (439, 0), (96, 0), (142, 0), (358, 0), (93, 0), (238, 0), (1313, 0), (88, 0), (411, 0), (194, 0), (1266, 0), (40, 0), (585, 0), (121, 0), (762, 0), (1036, 0), (0, 8), (250, 0), (626, 0), (711, 0), (179, 0), (1252, 0), (101, 0), (1075, 0), (1075, 0), (74, 0), (1220, 0), (0, 0), (0, 8)], 'AKS1-KodeKloudApp - Micro | + | A | ☆ | ← | C | portal.azure.com/#@clouda | 曰 | → | □ | G | 林 | Microsoft Azure | Search resources, service | Home> microsoft.aks-20230 | AKS1-KodeKloudApp | ☆ | Kubernetes service | Open in mobile Give feedb | Delete | Refresh | Search | Create  | Connect | D Start | Stop | 日 | 《 |  Essentials | Overview | :1.24.10 | Activity log | Resource group : RG1-Kode | Kubernetes version | 日 | : Succeeded (Running) | Status | j.io | □ | × | Access control (IAM) | Administrator: PowerShell | 88 | Location | : Southeast Asia | PS C:\\Users\\msadmin> | Tags | Subscription | : sub-global | Diagnose and solve proble | Subscription ID :00000000 | Microsoft Defender for Cl | Tags (edit) | : Click here to add tags | Kubernetes resources | Get started | Properties | Monitoring | Capabilit | Namespaces | Workloads | Kubernetes services | itheastasia.azmk8s.io | Encryption type | Encryption at-re | Services and ingresses | Virtual node pools | Not enabled | Storage | F | Configuration | 国 | Node pools | Node pools | 1 node pool | Settings | 1.24.10 | Kubernetes versions | []Node pools | Standard_DS2_V | Node sizes | Cluster configuration | Configuration | Networking | 1.24.10 | Kubernetes version | Extensions + applications | Patch | Auto Upgrade Type | (preview) | Not enabied | Authorized IP ranges | Authentication and Author | Backup (preview) | Not enabled | Application Gateway ingre | Enabled | Local accounts | controller | Open Service Mesh | 8% GitOps | Extensions + applications | Integrations | No extensions installed | Deployment center | Enabled | Container insights | (deprecated) | Workspace resource ID | DefaultWorkspace-00000000 | Automated deployments | (preview) | Policies')
+
+terminal targets (both ids100 refs agree): 9 ; refs disagree on 0
+run | term boxes in a terminal window | term frames with a terminal listed | false-terminal | records with 0 windows | tooltip149 | tooltip151 | app vocab (kind,app) top
+smoke-ids100-r1 | 9/9 | 3/3 | 0 | 0 | OWN-POPUP ['tooltip: Cloud Shell'] | OWN-POPUP ['tooltip: Administrator: PowerShell 7-preview (x64)'] | [(('window', 'Microsoft Edge'), 6), (('window', 'PowerShell'), 3), (('window', 'Web browser'), 3), (('window', 'Web browser — Microsoft Azure portal'), 1)]
+smoke-ids100-r2 | 9/9 | 3/3 | 0 | 0 | OWN-POPUP ['tooltip: Cloud Shell'] | OWN-POPUP ['tooltip: Administrator: PowerShell 7-preview (x64)'] | [(('window', 'Microsoft Edge'), 6), (('window', 'PowerShell'), 3), (('window', 'Web browser'), 3), (('window', 'Microsoft Azure portal'), 1)]
+local-probe/smoke-q27b-r1 | 5/9 | 3/3 | 1 | 0 | OWN-POPUP ['Cloud Shell'] | in:browser [] | [(('window', 'microsoft-edge'), 7), (('window', 'powershell'), 2), (('window', 'cloud'), 1), (('window', 'unknown'), 1)]
+      missed term boxes: [(147, 'b39', 'none', '□'), (147, 'b40', 'none', '×'), (147, 'b42', 'none', 'Administrator: PowerShell 7-pr'), (147, 'b46', 'none', 'PS C:\\Users\\msadmin>')]
+      false term boxes: [(154, 'b36', 'l.io')]
+local2/smoke-L1-r1 | 9/9 | 3/3 | 2 | 0 | OWN-POPUP ['Cloud Shell tooltip'] | in:browser [] | [(('window', 'Web browser'), 10), (('window', 'PowerShell'), 3), (('window', 'Video player'), 1), (('popup', 'Web browser'), 1)]
+      false term boxes: [(147, 'b38', 'j.io'), (154, 'b36', 'l.io')]
+local2/smoke-L2-r1 | 9/9 | 3/3 | 2 | 0 | in:browser [] | in:browser [] | [(('window', 'Web browser'), 10), (('window', 'PowerShell'), 2), (('window', 'Slide player'), 1), (('window', 'Terminal'), 1)]
+      false term boxes: [(147, 'b38', 'j.io'), (154, 'b36', 'l.io')]
+local2/smoke-L3-r1 | 0/9 | 0/3 | 0 | 0 | OWN-POPUP ['tooltip: Cloud Shell'] | in:browser [] | [(('window', 'Microsoft Azure'), 8), (('popup', 'PowerShell'), 3), (('window', 'Browser'), 2), (('popup', 'Microsoft Azure'), 1)]
+      missed term boxes: [(147, 'b39', 'P', '□'), (147, 'b40', 'P', '×'), (147, 'b42', 'P', 'Administrator: PowerShell 7-pr'), (147, 'b46', 'P', 'PS C:\\Users\\msadmin>'), (154, 'b37', 'P', '□'), (154, 'b38', 'P', '×'), (154, 'b40', 'P', 'Administrator: PowerShell 7-pr'), (154, 'b44', 'P', 'PS C:\\Users\\msadmin>'), (155, 'b44', 'P', 'PS C:\\Users\\msadmin> az login')]
+
+FRAME 150 pairs of 28
+smoke-ids100-r1: pairs in force 29 correct 28 partial 0 wrong 1 missing 0
+    WRONG  AKS1-KodeKloudApp  =>  Kubernetes service
+smoke-ids100-r2: pairs in force 29 correct 28 partial 0 wrong 1 missing 0
+    WRONG  Activity log  =>  Resource group : RG1-KodeKloud-AKS
+local-probe/smoke-q27b-r1: pairs in force 11 correct 8 partial 0 wrong 3 missing 20
+    WRONG  Networking  =>  aks1-kodekloudapp-dns-wq0okvps.hcp.south
+    WRONG  :aks1-kodekloudapp-dns-wq0okvps.hcp.sout  =>  API server address
+    WRONG  Network type (plugin) : Azure CNI  =>  Node pools + : 1 node pool
+    MISSING  Status  =>  : Succeeded (Running)
+    MISSING  Location  =>  : Southeast Asia
+    MISSING  Node sizes  =>  Standard_DS2_v2
+    MISSING  Application Gateway ingress + controller  =>  Not enabled
+    MISSING  Workspace resource ID  =>  DefaultWorkspace-00000000-0000-0000-0000
+    MISSING  Subscription  =>  : sub-global
+    MISSING  Tags (edit)  =>  : Click here to add tags
+    MISSING  Kubernetes versions  =>  1.24.10
+    MISSING  Node pools  =>  : 1 node pool
+    MISSING  Auto Upgrade Type  =>  Patch
+    MISSING  Kubernetes version  =>  1.24.10
+    MISSING  Node pools  =>  1 node pool
+    MISSING  Kubernetes version  =>  :1.24.10
+    MISSING  Virtual node pools  =>  Not enabled
+    MISSING  API server address  =>  :aks1-kodekloudapp-dns-wq0okvps.hcp.sout
+    MISSING  API server address  =>  aks1-kodekloudapp-dns-wq0okvps.hcp.south
+    MISSING  Local accounts  =>  Enabled
+    MISSING  Authorized IP ranges  =>  Not enabled
+    MISSING  Encryption type  =>  Encryption at-rest with a platform-manag
+    MISSING  Container insights  =>  Enabled
+local2/smoke-L1-r1: pairs in force 24 correct 23 partial 0 wrong 1 missing 5
+    WRONG  Network type (plugin) : Azure CNI  =>  Node pools + : 1 node pool
+    MISSING  Node sizes  =>  Standard_DS2_v2
+    MISSING  Application Gateway ingress + controller  =>  Not enabled
+    MISSING  Node pools  =>  : 1 node pool
+    MISSING  Authorized IP ranges  =>  Not enabled
+    MISSING  Encryption type  =>  Encryption at-rest with a platform-manag
+local2/smoke-L2-r1: pairs in force 16 correct 10 partial 0 wrong 6 missing 18
+    WRONG  -OD-  =>  Encryption at-rest with a platform-manag
+    WRONG  :aks1-kodekloudapp-dns-wq0okvps.hcp.sout  =>  API server address
+    WRONG  Network type (plugin) : Azure CNI  =>  aks1-kodekloudapp-dns-wq0okvps.hcp.south
+    WRONG  Pod CIDR  =>  10.0.0.10
+    WRONG  DNS service IP  =>  Docker bridge CIDR
+    WRONG  172.17.0.1/16  =>  Standard_DS2_v2
+    MISSING  Status  =>  : Succeeded (Running)
+    MISSING  Location  =>  : Southeast Asia
+    MISSING  Node sizes  =>  Standard_DS2_v2
+    MISSING  Docker bridge CIDR  =>  172.17.0.1/16
+    MISSING  DNS service IP  =>  10.0.0.10
+    MISSING  Tags (edit)  =>  : Click here to add tags
+    MISSING  Kubernetes versions  =>  1.24.10
+    MISSING  Auto Upgrade Type  =>  Patch
+    MISSING  Kubernetes version  =>  1.24.10
+    MISSING  Node pools  =>  1 node pool
+    MISSING  Kubernetes version  =>  :1.24.10
+    MISSING  Virtual node pools  =>  Not enabled
+    MISSING  API server address  =>  :aks1-kodekloudapp-dns-wq0okvps.hcp.sout
+    MISSING  API server address  =>  aks1-kodekloudapp-dns-wq0okvps.hcp.south
+    MISSING  Local accounts  =>  Enabled
+    MISSING  Authorized IP ranges  =>  Not enabled
+    MISSING  Encryption type  =>  Encryption at-rest with a platform-manag
+    MISSING  Container insights  =>  Enabled
+local2/smoke-L3-r1: pairs in force 9 correct 8 partial 0 wrong 1 missing 20
+    WRONG  10.0.0.10  =>  DNS service IP
+    MISSING  Status  =>  : Succeeded (Running)
+    MISSING  Location  =>  : Southeast Asia
+    MISSING  Node sizes  =>  Standard_DS2_v2
+    MISSING  Application Gateway ingress + controller  =>  Not enabled
+    MISSING  Workspace resource ID  =>  DefaultWorkspace-00000000-0000-0000-0000
+    MISSING  Subscription  =>  : sub-global
+    MISSING  DNS service IP  =>  10.0.0.10
+    MISSING  Tags (edit)  =>  : Click here to add tags
+    MISSING  Kubernetes versions  =>  1.24.10
+    MISSING  Auto Upgrade Type  =>  Patch
+    MISSING  Kubernetes version  =>  1.24.10
+    MISSING  Node pools  =>  1 node pool
+    MISSING  Kubernetes version  =>  :1.24.10
+    MISSING  Virtual node pools  =>  Not enabled
+    MISSING  API server address  =>  :aks1-kodekloudapp-dns-wq0okvps.hcp.sout
+    MISSING  API server address  =>  aks1-kodekloudapp-dns-wq0okvps.hcp.south
+    MISSING  Local accounts  =>  Enabled
+    MISSING  Authorized IP ranges  =>  Not enabled
+    MISSING  Encryption type  =>  Encryption at-rest with a platform-manag
+    MISSING  Container insights  =>  Enabled
+
+DESCRIPTIONS mentioning the mechanism
+smoke-ids100-r1 0 [] no-description []
+smoke-ids100-r2 0 [] no-description []
+local-probe/smoke-q27b-r1 0 [] no-description []
+local2/smoke-L1-r1 0 [] no-description []
+local2/smoke-L2-r1 0 [] no-description []
+local2/smoke-L3-r1 1 [(153, ' the right side, networking details are listed, including API server address, network ')] no-description []
+
+CALLS (from the run cache): run | calls | valid JSON | prompt tokens/call (mean, min-max) | completion tokens/call (mean, min-max) | frame 147: assign entries, empty box ids, unplaced, unknown_box
+smoke-ids100-r1 | 11 | 11 | 5802 (5459-5967) | 1059 (254-2895) | 113 assign, 0 empty ids, unplaced 0, unknown_box 0, containers [('window', 'AKS1-KodeKloudApp - Microsoft '), ('window', 'Administrator: PowerShell 7-pr')]
+smoke-ids100-r2 | 11 | 11 | 5802 (5459-5967) | 1062 (241-2921) | 113 assign, 0 empty ids, unplaced 0, unknown_box 0, containers [('window', 'AKS1-KodeKloudApp - Microsoft '), ('window', 'Administrator: PowerShell 7-pr')]
+local-probe/smoke-q27b-r1 | 11 | 11 | 5463 (4988-5704) | 835 (195-2126) | 43 assign, 42 empty ids, unplaced 113, unknown_box 43, containers [('window', 'AKS1-KodeKloudApp - Microsoft '), ('window', 'Administrator: PowerShell 7-pr')]
+local2/smoke-L1-r1 | 11 | 11 | 6976 (6501-7217) | 672 (182-2290) | 113 assign, 0 empty ids, unplaced 0, unknown_box 0, containers [('window', 'AKS1-KodeKloudApp - Microsoft '), ('window', 'Administrator: PowerShell 7-pr')]
+local2/smoke-L2-r1 | 11 | 11 | 6976 (6501-7217) | 660 (144-1980) | 113 assign, 0 empty ids, unplaced 0, unknown_box 0, containers [('window', 'AKS1-KodeKloudApp - Microsoft'), ('window', 'Administrator: PowerShell 7-pr')]
+local2/smoke-L3-r1 | 11 | 11 | 6976 (6501-7217) | 1054 (196-3439) | 113 assign, 0 empty ids, unplaced 0, unknown_box 0, containers [('window', 'AKS1-KodeKloudApp - Overview'), ('popup', 'Administrator: PowerShell 7-pr')]
