@@ -1,6 +1,6 @@
 # Presentation notes: every number on every chart, with its source and a voice-over line
 
-Written 2026-09-21 on branch `presentation` from `rebase-boxes` at `f071ab7`. Nothing was re-run; every number below is copied from a committed report, analysis or the ledger, and the source file is named beside it. The one paid call of this branch is the demo question in `demo.md` ($0.2142). Charts are 3840 x 2160 PNGs (1920 x 1080 at 2x), light background, drawn by a scratch matplotlib script that is not part of the repo.
+Written 2026-09-21 on branch `presentation` from `rebase-boxes` at `f071ab7`; the cost chart was redrawn and the Gemini chart added from `rebase-boxes` at `fcc1860`, which holds the P10full, P11 and compare-gemini results. Nothing was re-run; every number below is copied from a committed report, analysis or the ledger, and the source file is named beside it. The one paid call of this branch is the demo question in `demo.md` ($0.2142). Charts are 3840 x 2160 PNGs (1920 x 1080 at 2x), light background, drawn by a scratch matplotlib script that is not part of the repo.
 
 ## 1. `cost-per-video.png`: dollars per 221-frame video by configuration
 
@@ -8,14 +8,18 @@ Written 2026-09-21 on branch `presentation` from `rebase-boxes` at `f071ab7`. No
 |---|---|---|
 | Every-frame transcribing, projected from P1's span2 (33 frames): $0.2475 per frame x 221 | 54.70 | `docs/results/savings.md` (P1 row; "per-video figures are linear projections" in How to read it) |
 | Incremental transcribing, sync, Opus 5 (the working default), mean of two cold runs | 17.85 | `docs/results/p4/analysis.md` (Cost and wall time), `docs/results/savings.md` (baseline) |
+| Group-only, tagged overlay, scale 1.0 (P11 `full-ids100-grouponly`, one run, 27 of 27) | 16.30 | `docs/results/p11/report.md` (cost table, questions.positive 22 of 22 and negative 5 of 5), `docs/decision-ledger.md` L69 |
+| Group-only, coordinates, scale 0.67 (P10full `full-coords067-sync-r1`, one run, 27 of 27) | 13.83 | `docs/results/p10/analysis.md` (whole-video table), `docs/decision-ledger.md` L69 |
+| Group-only, coordinates, scale 0.5 (P10full `full-coords050-sync-r1`, one run, 27 of 27) | 13.41 | `docs/results/p10/analysis.md` (whole-video table), `docs/decision-ledger.md` L69 |
+| Group-only, tagged overlay, scale 0.67 (P11 `full-ids067-grouponly`, one run, 27 of 27) | 12.62 | `docs/results/p11/report.md`, `docs/decision-ledger.md` L69 |
 | Incremental transcribing, batch mode (price paid) | 12.11 | `docs/results/p4/analysis.md`, `docs/decision-ledger.md` L62 |
 | Every stage on Sonnet 5, incremental transcribing | 7.38 | `docs/results/savings.md` (P8 row), `docs/decision-ledger.md` L66 |
 | No annotation, Opus 5 | 4.62 | `docs/results/p4/analysis.md`, `docs/decision-ledger.md` L62 |
 | Every stage on Sonnet 5, no annotation | 1.93 | `docs/results/savings.md` (P8 row), `docs/decision-ledger.md` L66 |
 
-The Sonnet bars carry the caption "breaks the typed-against-suggested rule": on Sonnet 5 `interpret` records suggested text as entered on 15 to 18 of 21 typing transitions against 1 to 3 on Opus (`docs/decision-ledger.md` L66; `docs/results/p8/analysis.md`). The subtitle's "three quarters" is annotate $12.22 of $17.85 (`docs/results/p4/analysis.md`). The coordinate-only group-only runs (P10full) are not on the chart: `docs/results/p10full/report.md` did not exist when it was drawn.
+The Sonnet bars carry the caption "breaks the typed-against-suggested rule": on Sonnet 5 `interpret` records suggested text as entered on 15 to 18 of 21 typing transitions against 1 to 3 on Opus (`docs/decision-ledger.md` L66; `docs/results/p8/analysis.md`). The subtitle's "three quarters" is annotate $12.22 of $17.85 (`docs/results/p4/analysis.md`). "27 of 27" beside a bar is the draft question score of that run (the Sonnet incremental-transcribing bar had one partial in one of two runs, so it carries the rule caption instead). Colour is the family: blue transcribing (second reading on), aqua group-only (no second reading), orange Sonnet 5 on every stage, light blue the projection. Ledger L69 on the group-only bars: all four are 27 of 27 and 7 of 7 found and exact; all four have `submitted` 6 of 7 because `interpret` lower-cases `get-Credentials` without the second reading; coordinates save nothing over the overlay at the same scale, so the tagged overlay stays the default. The saving of group-only against transcribing is $1.55 at 1.0 and $5.23 at 0.67 (L69).
 
-Voice-over: "Indexing one twelve-minute video costs about eighteen dollars with annotation and under five without; labelling only what changed is what keeps it off the fifty-five-dollar bar."
+Voice-over: "Indexing one fourteen-minute video costs about eighteen dollars with the full annotation, twelve to sixteen without the second reading, and under five with no annotation at all; labelling only what changed is what keeps it off the fifty-five-dollar bar."
 
 ## 2. `scale-cliff.png`: second-reading agreement and cost per frame against image scale
 
@@ -70,9 +74,21 @@ Stage names and order from `docs/2026-09-21-return-briefing.md` ("Stages: `decod
 
 Voice-over: "Three stages measure the screen without a model, three let a model label only what was measured, and the agent answers from the index with a frame and a box behind every claim."
 
-## 6. `us-vs-gemini.png`: not drawn
+## 6. `us-vs-gemini.png`: the pipeline against Gemini asked directly
 
-`docs/results/compare-gemini/report.md` did not exist when the other charts were finished; `docs/pipeline-versus-video-model.md` says every claim about Gemini's answers is a hypothesis until that comparison has run. Nothing was invented for it.
+All from `docs/results/compare-gemini/report.md` (Scores; Exactness, checked mechanically; Cost and time per question) and `docs/decision-ledger.md` L70. Same video, the same 27 draft questions (22 positive, 5 negative), the same blind judge (`judge-v1`, Opus 5).
+
+| measure | pipeline (P4, Opus agent, four runs) | G1 Gemini direct (`gemini-3.8-flash`, the video and one question per call) | G2 Gemini transcript, then Opus answers |
+|---|---|---|---|
+| positive questions correct of 22 | 22 in each run | 17 | 16.5 |
+| negatives of 5 | 5 | 5 | 5 |
+| exact strings exact of 14 | 14 in each run | 7 | 8 |
+| $ per question | 0.263 | 0.079 (the report's mean $0.0785; median $0.039) | 0.038 (Opus answers $0.023 plus the $0.41 transcript amortised over 27) |
+| seconds per question | 22 | 32 | 8 (plus the 237 s transcript once) |
+
+The caption, "Gemini invented terminal runs where the shell showed a grey suggestion: a third `kubectl get pods` "at 12:57", with plausible output", is L70's wording and the report's Q18 line (invented: a third run "at 12:57" with output `kodekloudapp-679b75cb5-mm42w 1/1 Running 0 19s`, where frame 213's scrollback holds two runs). Every Gemini miss on an exact string is a one-character misread (`20.247.253.108` for `20.247.251.108`, `R01` for `RG1`, the registry name returned five ways). Break-even (report): the Opus agent never; the Sonnet agent on an unannotated index against G1 after about 181 questions. Not on the chart: seconds per question, the 70 of 83 rubric lines for each Gemini arm, and G1c (one long Gemini call listing the commands, 11 of 13 exact, 0 false runs of 5), which shows the misreads are not only a resolution ceiling.
+
+Voice-over: "Asked the same twenty-seven questions, Gemini gets every 'when' and every negative, misses half the exact strings by one character, and invents a terminal command exactly where the shell was showing a grey suggestion; the pipeline gets all of them, at three times the price per question." 
 
 ## Demo
 
