@@ -1,0 +1,47 @@
+# P10full: FINDABILITY AT THE SCALE OF THE WHOLE 221-FRAME SAMPLE with `[annotate] reference = "coords"`, incremental and
+# group-only (the OCR reading of each box is used; no second reading is asked for), at two image scales, sync and batch:
+# the whole pipeline and the whole-video question set of P4 (docs/ground-truth/full-questions.md, a draft for the owner to
+# correct) with the command ground truth of frames 155 to 187, once each: 4 runs. What it compares: the answers' scores
+# and the dollars per video against P4's working default, incremental transcribing by id at scale 1.0 ($17.85 a video
+# sync, $12.11 batch, P4b) and against no annotation ($4.62 a video), both in docs/results/p4; and sync against batch at
+# each scale, as P4/P4b did. The labels themselves are read as P3/P2 read arm A's, and P10 compares them to ids at the
+# same scales on the short spans.
+phase = "p10full"
+source = "runs/p0"
+stages = ["read", "track", "annotate", "interpret", "summarize", "index", "ask"]
+repeats = 1
+
+[spans.full]
+frames = "0-220"
+ground_truth = "docs/ground-truth/span2-commands.md"
+questions = "docs/ground-truth/full-questions.md"
+
+[axis.base.coords050-sync]
+"model.concurrency" = 16  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 0.5
+
+[axis.base.coords050-batch]
+"model.concurrency" = 16  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 0.5
+"model.mode" = "batch"
+
+[axis.base.coords067-sync]
+"model.concurrency" = 16  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 0.67
+
+[axis.base.coords067-batch]
+"model.concurrency" = 16  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 0.67
+"model.mode" = "batch"

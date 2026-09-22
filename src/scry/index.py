@@ -11,7 +11,6 @@ from pydantic import BaseModel
 
 from scry.config import Config, IndexConfig, config_hash
 from scry.run import Run
-from scry.schemas import Region
 
 log = logging.getLogger(__name__)
 
@@ -24,8 +23,7 @@ class Node(BaseModel):
     frames: tuple[int, int]
     t: tuple[float, float]
     apps: list[str] = []
-    region_names: list[str] = []
-    layout_conf: float = 1.0
+    containers: list[str] = []  # names
     step_id: str | None = None
     section_id: str | None = None
     chapter_id: str | None = None
@@ -71,8 +69,8 @@ def open_db(path: Path) -> sqlite3.Connection:
         """
         CREATE TABLE IF NOT EXISTS nodes (
             node_id TEXT PRIMARY KEY, video_id TEXT, level TEXT, item_id TEXT, frame_start INTEGER, frame_end INTEGER,
-            t_start REAL, t_end REAL, apps TEXT, region_names TEXT, layout_conf REAL, step_id TEXT, section_id TEXT,
-            chapter_id TEXT, text TEXT, payload TEXT);
+            t_start REAL, t_end REAL, apps TEXT, containers TEXT, step_id TEXT, section_id TEXT, chapter_id TEXT, text TEXT,
+            payload TEXT);
         CREATE VIRTUAL TABLE IF NOT EXISTS nodes_fts USING fts5(text, node_id UNINDEXED, tokenize="unicode61 tokenchars '-_./:\\'");
         CREATE VIRTUAL TABLE IF NOT EXISTS nodes_tri USING fts5(text, node_id UNINDEXED, tokenize='trigram');
         """
@@ -89,9 +87,9 @@ def index_nodes(db: sqlite3.Connection, nodes: list[Node], embedder: Embedder | 
     db.execute("DELETE FROM nodes_fts")
     db.execute("DELETE FROM nodes_tri")
     for n in nodes:
-        db.execute("INSERT INTO nodes VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        db.execute("INSERT INTO nodes VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                    (n.node_id, n.video_id, n.level, n.item_id, n.frames[0], n.frames[1], n.t[0], n.t[1], json.dumps(n.apps),
-                    json.dumps(n.region_names), n.layout_conf, n.step_id, n.section_id, n.chapter_id, n.text, json.dumps(n.payload)))
+                    json.dumps(n.containers), n.step_id, n.section_id, n.chapter_id, n.text, json.dumps(n.payload)))
         db.execute("INSERT INTO nodes_fts(text, node_id) VALUES (?, ?)", (n.text, n.node_id))
         db.execute("INSERT INTO nodes_tri(text, node_id) VALUES (?, ?)", (n.text, n.node_id))
     if embedder is not None and nodes:
@@ -150,22 +148,88 @@ def _filter_sql(video_id, level, t_from, t_to, app) -> tuple[str, list]:
     return (" AND " + " AND ".join(clauses)) if clauses else "", params
 
 
+# The families of entries: each is ranked on its own and the rankings are fused, because BM25's length normalisation
+# ranks a one-line lifetime entry above a whole-screen entry of a hundred lines for the same term. The order breaks ties.
+FAMILIES = (("lifetime", ("lifetime",)), ("transition", ("transition",)), ("frame", ("frame",)),
+            ("summary", ("step", "section", "video", "chapter")))
+_FAMILY_OF = {level: k for k, (_, levels) in enumerate(FAMILIES) for level in levels}
+
+
+def matched_lines(text: str, terms: list[str]) -> tuple[str, ...]:
+    """The lines of `text` that hold a query term as a case-folded substring; the whole text when none does. It is not
+    faithful to either tokenizer and can see fewer lines than they matched."""
+    folded = [t.casefold() for t in terms]
+    lines = tuple(line for line in text.split("\n") if any(t in line.casefold() for t in folded))
+    return lines or (text,)
+
+
+def collapse_key(text: str, box_texts: list[str], terms: list[str]) -> tuple[str, ...]:
+    """What consecutive frame hits must share to be one hit: the OCR texts of the frame's boxes that hold a query term,
+    whitespace-collapsed and case-folded. Measured text only: a second reading, a link line or a description sentence
+    differs from frame to frame over a screen that did not change. When no box text holds a term (the hit matched only
+    label-derived text), the matched lines of the entry."""
+    folded = [" ".join(t.split()).casefold() for t in terms]
+    measured = tuple(b for b in (" ".join(x.split()).casefold() for x in box_texts) if any(t in b for t in folded))
+    return ("boxes", *measured) if measured else ("lines", *matched_lines(text, terms))
+
+
+def collapse_runs(hits: list[tuple[str, int, tuple[str, ...]]]) -> list[list[str]]:
+    """(node id, ordinal, collapse key) in; runs of node ids out, each in frame order: a run is a maximal sequence of
+    consecutive emitted frames whose keys are identical."""
+    runs: list[list[str]] = []
+    prev: tuple[int, tuple[str, ...]] | None = None
+    for node_id, ordinal, matched in sorted(hits, key=lambda h: h[1]):
+        if prev is not None and ordinal == prev[0] + 1 and matched == prev[1]:
+            runs[-1].append(node_id)
+        else:
+            runs.append([node_id])
+        prev = (ordinal, matched)
+    return runs
+
+
+_FRAME_COLUMNS = ("n.node_id, n.text, json_extract(n.payload, '$.ordinal'), n.frame_start, n.t_start, n.t_end, "
+                  "json_extract(n.payload, '$.boxes')")
+
+
+def _box_texts(boxes_json: str | None) -> list[str]:
+    """The OCR texts of a frame entry's boxes, from its payload; [] for an entry that is not a frame's."""
+    return [b["text"] for b in json.loads(boxes_json)] if boxes_json else []
+
+
 def search(db: sqlite3.Connection, query: str, cfg: IndexConfig, embedder: Embedder | None = None, video_id: str | None = None,
-           level: str | None = None, t_from: float | None = None, t_to: float | None = None, app: str | None = None) -> list[dict]:
+           level: str | None = None, t_from: float | None = None, t_to: float | None = None, app: str | None = None,
+           collapse: bool | None = None) -> list[dict]:
+    """Ranked hits. Consecutive frame hits whose matched measured text is identical (`collapse_key`) are collapsed into
+    one hit with a frame range and a time range, in this result list only: every entry stays in the index and keeps its
+    whole text. It never raises for a query."""
+    if level is not None and level not in _FAMILY_OF:  # no family holds it (the old `region`, say)
+        return []
     filtered = any(v is not None for v in (video_id, level, t_from, t_to, app))
     k = cfg.k_filtered if filtered else cfg.k
+    collapse = cfg.collapse if collapse is None else collapse
     where, params = _filter_sql(video_id, level, t_from, t_to, app)
+    terms = _terms(query)
     rankings: list[list[str]] = []
-    q = fts_query(query)
-    if q:
-        rows = db.execute(f"SELECT f.node_id FROM nodes_fts f JOIN nodes n ON n.node_id = f.node_id WHERE nodes_fts MATCH ?{where} ORDER BY bm25(nodes_fts) LIMIT ?",
-                          [q, *params, k]).fetchall()
-        rankings.append([r[0] for r in rows])
-    tq = trigram_query(query)
-    if tq:
-        rows = db.execute(f"SELECT f.node_id FROM nodes_tri f JOIN nodes n ON n.node_id = f.node_id WHERE nodes_tri MATCH ?{where} ORDER BY bm25(nodes_tri) LIMIT ?",
-                          [tq, *params, k]).fetchall()
-        rankings.append([r[0] for r in rows])
+    frame_rankings: list[list[str]] = []
+    frame_info: dict[str, tuple] = {}  # node id -> (text, ordinal, frame, t_start, t_end, the boxes of the payload as JSON)
+    for family, levels in FAMILIES:
+        if level is not None and level not in levels:
+            continue
+        unlimited = family == "frame" and collapse  # a run is recognised only with all its members present
+        for table, q in (("nodes_fts", fts_query(query)), ("nodes_tri", trigram_query(query))):
+            if not q:
+                continue
+            sql = (f"SELECT {_FRAME_COLUMNS} FROM {table} f JOIN nodes n ON n.node_id = f.node_id WHERE {table} MATCH ?{where} "
+                   f"AND n.level IN ({','.join('?' * len(levels))}) ORDER BY bm25({table}), n.t_start, n.node_id"
+                   + ("" if unlimited else " LIMIT ?"))
+            try:
+                rows = db.execute(sql, [q, *params, *levels, *([] if unlimited else [k])]).fetchall()
+            except sqlite3.OperationalError:  # a query string SQLite rejects is an empty ranking
+                rows = []
+            rankings.append([r[0] for r in rows])
+            if family == "frame":
+                frame_rankings.append(rankings[-1])
+                frame_info.update({r[0]: r[1:] for r in rows})
     if embedder is not None:
         import sqlite_vec
 
@@ -179,120 +243,57 @@ def search(db: sqlite3.Connection, query: str, cfg: IndexConfig, embedder: Embed
             keep = {r[0] for r in db.execute(f"SELECT n.node_id FROM nodes n WHERE 1=1{where}", params).fetchall()}
             ids = [i for i in ids if i in keep]
         rankings.append(ids)
-    fused = rrf(rankings, cfg.rrf)[:k]
-    out = []
-    for node_id, score in fused:
-        row = db.execute("SELECT node_id, video_id, level, item_id, frame_start, frame_end, t_start, t_end, apps, layout_conf, text, payload FROM nodes WHERE node_id = ?", (node_id,)).fetchone()
+        for node_id in ids:  # a frame entry the lexical rankings did not return
+            if node_id not in frame_info:
+                row = db.execute(f"SELECT {_FRAME_COLUMNS} FROM nodes n WHERE n.node_id = ? AND n.level = 'frame'", (node_id,)).fetchone()
+                if row:
+                    frame_info[node_id] = row[1:]
+    members = {node_id: [node_id] for node_id in frame_info}
+    if collapse:
+        runs = collapse_runs([(node_id, info[1], collapse_key(info[0], _box_texts(info[5]), terms))
+                              for node_id, info in frame_info.items()])
+        first = {node_id: run[0] for run in runs for node_id in run}  # the representative is the earliest member
+        members = {run[0]: run for run in runs}
+        for ranking in rankings:  # the run takes its best member's rank
+            ranking[:] = list(dict.fromkeys(first.get(node_id, node_id) for node_id in ranking))
+        for ranking in frame_rankings:
+            del ranking[k:]
+    rows = {}
+    for node_id, score in rrf(rankings, cfg.rrf):
+        row = db.execute("SELECT node_id, video_id, level, item_id, frame_start, frame_end, t_start, t_end, apps, containers, text, payload "
+                         "FROM nodes WHERE node_id = ?", (node_id,)).fetchone()
         if row:
-            out.append({"node_id": row[0], "video_id": row[1], "level": row[2], "item_id": row[3], "frames": [row[4], row[5]],
-                        "t": [row[6], row[7]], "apps": json.loads(row[8]), "layout_conf": row[9], "text": row[10],
-                        "payload": json.loads(row[11]), "score": round(score, 5)})
+            rows[node_id] = (round(score, 5), row)
+    # the rounded score is the value the hit carries, so a difference in the last bit of a sum cannot reorder a tie
+    order = sorted(rows, key=lambda i: (-rows[i][0], _FAMILY_OF.get(rows[i][1][2], len(FAMILIES)), rows[i][1][6], i))[:k]
+    out = []
+    for node_id in order:
+        score, row = rows[node_id]
+        hit = {"node_id": row[0], "video_id": row[1], "level": row[2], "item_id": row[3], "frames": [row[4], row[5]],
+               "t": [row[6], row[7]], "apps": json.loads(row[8]), "containers": json.loads(row[9]), "text": row[10],
+               "payload": json.loads(row[11]), "score": score}
+        if row[2] == "frame":
+            run = [frame_info[m] for m in members[node_id]]
+            hit |= {"collapsed": len(run), "members": [info[2] for info in run], "matched": list(matched_lines(row[10], terms)),
+                    "frames": [run[0][2], run[-1][2]], "t": [run[0][3], run[-1][4]]}
+        out.append(hit)
     return out
 
 
-# ---------- node extraction (§14.1) ----------
-def region_text(r: Region) -> tuple[str, list[dict]]:
-    """A region node's text: its fused lines, the VLM reading of every disagreeing line (both readings are indexed,
-    §14.1), then the joined text of each association (boxes variant, §8.3) on its own line, so a label and its value are
-    one searchable string. Returns the text and the associations as [{"marks": [...], "text": joined}] for the payload."""
-    text = "\n".join(l.fused for l in r.lines if l.fused)
-    text += "".join(f"\n{l.vlm}" for l in r.lines if l.agree is False and l.vlm)
-    by_mark = {m: l for l in r.lines for m in l.marks}
-    assoc = []
-    for group in r.associations:
-        ids, parts = [], []
-        for m in group:
-            l = by_mark.get(m)
-            if l is not None and l.id not in ids:  # a multi-mark line counts once
-                ids.append(l.id)
-                parts.append(l.fused)
-        joined = " ".join(p for p in parts if p)
-        if joined:
-            assoc.append({"marks": list(group), "text": joined})
-    text += "".join(f"\n{a['text']}" for a in assoc)
-    return text, assoc
-
-
-def extract_nodes(run: Run) -> list[Node]:
-    vid = run.video_id
-    frames = run.load_frames()
-    ts = run.load_transitions()
-    interps = run.load_interpretations()
-    from scry.jsonl import read_jsonl
-    from scry.schemas import HierNode
-
-    steps = read_jsonl(run.steps, HierNode)
-    sections = read_jsonl(run.sections, HierNode)
-
-    def _rng_lookup(nodes: list[HierNode], child_ids: list[str]) -> dict[str, str]:
-        out: dict[str, str] = {}
-        for n in nodes:
-            a, b = n.children
-            inside = False
-            for cid in child_ids:
-                if cid == a:
-                    inside = True
-                if inside:
-                    out[cid] = n.id
-                if cid == b:
-                    inside = False
-        return out
-
-    t_ids = [t.id for t in ts]
-    step_of = _rng_lookup(steps, t_ids)
-    section_of_step = _rng_lookup(sections, [s.id for s in steps])
-    nodes: list[Node] = []
-    for f in frames:
-        chapter = run.chapter_of(f.t_settled)
-        for r in f.regions:
-            text, assoc = region_text(r)
-            if not text.strip():
-                continue
-            nodes.append(Node(node_id=f"{vid}:f{f.frame}:{r.id}", video_id=vid, level="region", item_id=f"{f.frame}:{r.id}",
-                              frames=(f.frame, f.frame), t=(f.t_settled, f.t_end), apps=[r.app], region_names=[r.name],
-                              layout_conf=r.layout_conf, chapter_id=chapter.id if chapter else None, text=f"{r.app} {r.name}\n{text}",
-                              payload={"frame": f.frame, "region": r.id, "lines": [l.model_dump() for l in r.lines], "associations": assoc}))
-        if f.description:
-            nodes.append(Node(node_id=f"{vid}:f{f.frame}:desc", video_id=vid, level="frame", item_id=str(f.frame), frames=(f.frame, f.frame),
-                              t=(f.t_settled, f.t_end), apps=sorted({r.app for r in f.regions}), text=f.description,
-                              chapter_id=chapter.id if chapter else None, payload={"frame": f.frame}))
-    for t in ts:
-        ip = interps.get(t.id)
-        b = next((f for f in frames if f.frame == t.to_frame), None)
-        ev = "; ".join(f'{e.type} {e.text or ""}'.strip() for e in t.events)
-        text = " \n".join(x for x in [ev, ip.action if ip else "", ip.result if ip else ""] if x)
-        if not text:
-            text = " ".join((o.new or o.old or "") for rd in t.computed_diff.values() for o in rd.ops)
-        chapter = run.chapter_of(b.t_settled) if b else None
-        nodes.append(Node(node_id=f"{vid}:{t.id}", video_id=vid, level="transition", item_id=t.id, frames=(t.from_frame, t.to_frame), t=t.t,
-                          apps=sorted({r.app for r in (b.regions if b else [])}), step_id=step_of.get(t.id),
-                          section_id=section_of_step.get(step_of.get(t.id, ""), None), chapter_id=chapter.id if chapter else None,
-                          text=text, payload={"transition": t.model_dump(), "interpretation": ip.model_dump() if ip else None}))
-    for s in steps:
-        nodes.append(Node(node_id=f"{vid}:{s.id}", video_id=vid, level="step", item_id=s.id, frames=s.frames, t=s.t, step_id=s.id,
-                          section_id=section_of_step.get(s.id), text=f"{s.label}\n{s.description}", payload=s.model_dump()))
-    for c in sections:
-        nodes.append(Node(node_id=f"{vid}:{c.id}", video_id=vid, level="section", item_id=c.id, frames=c.frames, t=c.t, section_id=c.id,
-                          text=f"{c.label}\n{c.description}", payload=c.model_dump()))
-    if run.video.exists():
-        v = HierNode.model_validate_json(run.video.read_text())
-        nodes.append(Node(node_id=f"{vid}:V", video_id=vid, level="video", item_id="V", frames=v.frames, t=v.t, text=f"{v.label}\n{v.description}", payload=v.model_dump()))
-    for c in run.load_outline():
-        nodes.append(Node(node_id=f"{vid}:{c.id}", video_id=vid, level="chapter", item_id=c.id, frames=(0, 0), t=(c.start_s, c.end_s),
-                          chapter_id=c.id, text=f"{c.title}\n{c.gist}", payload=c.model_dump()))
-    return nodes
-
-
+# ---------- the stage ----------
 def build_index(run: Run, cfg: Config) -> None:
-    inputs = [run.frames, run.transitions, run.interpretations, run.steps, run.sections]
+    """index.sqlite, rebuilt from scratch from whatever records the run has."""
+    inputs = [run.frames, run.boxes, run.changes, run.lifetimes, run.annotations, run.interpretations, run.steps, run.sections,
+              run.video, run.outline]
     ch = config_hash(cfg, "index")
     if run.stage_up_to_date("index", inputs, ch):
         log.info("index up to date")
         return
-    nodes = extract_nodes(run)
-    if run.index_db.exists():
-        run.index_db.unlink()
+    from scry.nodes import extract_nodes  # nodes imports Node from here
+
+    nodes, stats = extract_nodes(run)
+    run.index_db.unlink(missing_ok=True)
     db = open_db(run.index_db)
     index_nodes(db, nodes, get_embedder(cfg.index))
     db.close()
-    run.stage_done("index", inputs, ch, nodes=len(nodes), embedder=cfg.index.embedder)
+    run.stage_done("index", inputs, ch, **stats, embedder=cfg.index.embedder)

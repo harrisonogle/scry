@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-import re
 from typing import Sequence
 
 from rapidfuzz.distance import Levenshtein
 
-from scry.schemas import DiffOp
-
 _QUOTES = str.maketrans({"“": '"', "”": '"', "‘": "'", "’": "'"})
-_CLOCK = re.compile(r"\d{1,2}:\d{2}(?::\d{2})?(?: ?[AP]M)?")
 
 
 def norm(s: str) -> str:
@@ -82,16 +78,6 @@ def _backtrack(trace, a, b) -> list[tuple[str, int, int]]:
     return ops
 
 
-def line_ops(prev: list[str], cur: list[str]) -> list[dict]:
-    out: list[dict] = []
-    for op, i, j in myers(prev, cur):
-        if op == "delete":
-            out.append({"op": "delete", "old": prev[i], "old_index": i})
-        elif op == "insert":
-            out.append({"op": "insert", "new": cur[j], "new_index": j})
-    return out
-
-
 def char_diff(a: str, b: str) -> list[list[str]]:
     runs: list[list[str]] = []
     for op, i, j in myers(list(a), list(b)):
@@ -102,38 +88,3 @@ def char_diff(a: str, b: str) -> list[list[str]]:
         else:
             runs.append([sym, ch])
     return runs
-
-
-def pair_modifies(ops: list[dict], prev_y: list[int], cur_y: list[int], line_h: float, sim_threshold: float) -> list[DiffOp]:
-    """Pair adjacent (delete a, insert b) into modify(a→b) when they overlap vertically or are similar."""
-    out: list[DiffOp] = []
-    i = 0
-    while i < len(ops):
-        o = ops[i]
-        nxt = ops[i + 1] if i + 1 < len(ops) else None
-        if o["op"] == "delete" and nxt is not None and nxt["op"] == "insert":
-            ya, yb = prev_y[o["old_index"]], cur_y[nxt["new_index"]]
-            if abs(ya - yb) < 0.5 * line_h or similarity(o["old"], nxt["new"]) >= sim_threshold:
-                out.append(DiffOp(op="modify", old=o["old"], new=nxt["new"], old_index=o["old_index"],
-                                  new_index=nxt["new_index"], char_diff=char_diff(o["old"], nxt["new"]), y=yb,
-                                  clock=is_clock_change(o["old"], nxt["new"])))
-                i += 2
-                continue
-        if o["op"] == "delete":
-            out.append(DiffOp(op="delete", old=o["old"], old_index=o["old_index"], y=prev_y[o["old_index"]]))
-        else:
-            out.append(DiffOp(op="insert", new=o["new"], new_index=o["new_index"], y=cur_y[o["new_index"]]))
-        i += 1
-    return out
-
-
-def is_clock_change(a: str, b: str) -> bool:
-    """True when a and b differ only inside a clock-like token at the same position."""
-    if a == b:
-        return False
-    ma, mb = list(_CLOCK.finditer(a)), list(_CLOCK.finditer(b))
-    if not ma or len(ma) != len(mb):
-        return False
-    stripped_a = _CLOCK.sub("\x00", a)
-    stripped_b = _CLOCK.sub("\x00", b)
-    return stripped_a == stripped_b

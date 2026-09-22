@@ -1,0 +1,23 @@
+# LOCAL3: the second attempt's fair settings (L1: temperature 0 through proxy.py, the schema's field descriptions
+# appended to the system prompt by the proxy, concurrency 1, transcribe=false, group-only) on the HOLD-OUT video,
+# frames 12-33 (22 of 80) of runs/v2/grouponly-100 (owner's default, Opus 5). Frames and OCR imported by the harness.
+phase = "local3"
+source = "runs/v2/grouponly-100"
+base_config = "/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/local3/local3-scry.toml"
+stages = ["read", "track", "annotate"]
+repeats = 1
+
+[spans.holdout]
+frames = "12-33"
+
+[axis.variant.L1]
+"model.model" = "mlx-community/Qwen3.8-27B-4bit"
+"model.base_url" = "http://127.0.0.1:8091/v1"
+
+# added 21:13 (coordinator): after the 22-frame span, the rest of the hold-out video as further runs of the same
+# matrix, in this order; the harness skips the finished run and builds these cold.
+[spans.holdout2]
+frames = "34-79"
+
+[spans.holdout3]
+frames = "0-11"

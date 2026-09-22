@@ -13,17 +13,18 @@ dependencies = [
   "pydantic>=2.8",
   "sqlite-vec>=0.1.6",
   "typer>=0.12",
-  "pyobjc-framework-Vision>=10; sys_platform == 'darwin'",
-  "pyobjc-framework-Quartz>=10; sys_platform == 'darwin'",
+  "rapidocr>=3.9",
+  "onnxruntime>=1.20",
+  "mcp>=2.2.0",
 ]
 
 [project.optional-dependencies]
-rapid = ["rapidocr>=3.9", "onnxruntime>=1.20"]
 embed = ["fastembed>=0.3"]
-outline = ["google-genai>=1.0"]
+outline = ["google-genai>=2.23"]  # 2.23.0 is the version the agentic interactions call was verified with
 
 [project.scripts]
 scry = "scry.cli:app"
+scry-mcp = "scry.mcp.server:main"
 
 [dependency-groups]
 dev = ["pytest>=8"]
@@ -37,4 +38,5 @@ packages = ["src/scry"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["tests"]
 addopts = "-q"

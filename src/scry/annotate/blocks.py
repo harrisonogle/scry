@@ -1,0 +1,109 @@
+"""The user turn of an `annotate` call. Everything in it comes from decode's, read's and track's records: nothing from
+an earlier answer, and no OCR text unless `box_text` says so, which the config allows only when there is no second
+reading (a second reading must stay independent of the first)."""
+from __future__ import annotations
+
+import base64
+import io
+import json
+from pathlib import Path
+
+from PIL import Image
+
+from scry.annotate.targets import CallPlan
+from scry.jsonl import sha256_file, sha256_obj
+from scry.overlay import scale_box, scale_image
+from scry.providers import image_block, text_block
+from scry.schemas import Box, Frame, FrameBoxes
+
+
+def frame_block(frame_png: Path, scale: float) -> dict:
+    """The clean frame as an image block: the file as it is at scale 1, otherwise downscaled in memory, never written."""
+    if scale == 1.0:
+        return image_block(frame_png)
+    buf = io.BytesIO()
+    scale_image(Image.open(frame_png).convert("RGB"), scale).save(buf, format="PNG", compress_level=1)
+    data = base64.standard_b64encode(buf.getvalue()).decode()
+    return {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": data}}
+
+
+NO_TARGETS = "Targets: none. Label no box: return every list empty and give only the description."
+
+
+def _rect(box: Box, scale: float) -> str:
+    return ",".join(str(v) for v in scale_box(box.bbox, scale))
+
+
+def _reading(box: Box) -> str:
+    """The OCR text JSON-escaped in double quotes, its unicode as it is; an empty reading is ""."""
+    return json.dumps(box.text, ensure_ascii=False)
+
+
+def build_blocks(frame: Frame, fb: FrameBoxes, plan: CallPlan, arm: str, scale: float, frame_png: Path,
+                 overlay_png: Path | None, reference: str = "ids", box_text: bool = False) -> list[dict]:
+    """The user turn. reference "ids": two images (the clean frame, the numbered overlay) and the boxes and targets by
+    id. reference "coords": the clean frame alone, every box and every target as a rectangle x0,y0,x1,y1 in the pixels
+    of the image sent (the frame's at scale 1, else the scaled frame's, rounded outward as the overlay rounds: the
+    model is never asked to relate full-frame numbers to a shrunken image, ledger L71), and no id anywhere (the answer
+    names boxes by points, which `to_proposal` maps back in the same scaled space). The targets line is the only thing
+    an incremental call changes; a call with no target is still made, for the description: said outright, or the model
+    labels every box anyway. `box_text` (group-only only) puts each box's OCR reading beside its id or rectangle on the
+    Boxes line; off, the turn is what it always was, byte for byte."""
+    if arm != "A":
+        raise ValueError(f"no user turn for arm {arm!r}")
+    if reference not in ("ids", "coords"):
+        raise ValueError(f"no user turn for reference {reference!r}")
+    coords = reference == "coords"
+    by_id = {b.id: b for b in fb.boxes}
+    name = (lambda ids: "; ".join(_rect(by_id[i], scale) for i in ids)) if coords else (lambda ids: ", ".join(ids))
+    ids = [b.id for b in fb.boxes]
+    if not plan.targets:
+        targets = NO_TARGETS
+    elif list(plan.targets) == ids:
+        targets = "Targets: all boxes."
+    else:
+        targets = f"Targets: {name(plan.targets)}."
+    if not ids:
+        boxes_line = "Boxes: none."
+    elif coords and box_text:
+        boxes_line = ("Boxes, as x0,y0,x1,y1 and the OCR engine's reading, in reading order: "
+                      + "; ".join(f"{_rect(by_id[i], scale)} {_reading(by_id[i])}" for i in ids) + ".")
+    elif coords:
+        boxes_line = f"Boxes, as x0,y0,x1,y1 in reading order: {name(ids)}."
+    elif box_text:
+        boxes_line = "Boxes, as id and the OCR engine's reading: " + "; ".join(f"{i} {_reading(by_id[i])}" for i in ids) + "."
+    else:
+        boxes_line = f"Boxes: {name(ids)}."
+    if coords:
+        if scale == 1.0:
+            where = f"Coordinates are pixels of the {frame.width}x{frame.height} frame: top-left origin, x1 and y1 exclusive."
+        else:  # the sent image's size, rounded as scale_image rounds it
+            w, h = round(frame.width * scale), round(frame.height * scale)
+            where = f"Coordinates are pixels of the {w}x{h} image you are shown: top-left origin, x1 and y1 exclusive."
+        blocks = [
+            text_block(f"Screenshot (frame {frame.frame}, t={frame.t_settled:.2f}s):"), frame_block(frame_png, scale),
+            text_block(where),
+            text_block(boxes_line),
+            text_block(targets),
+        ]
+    else:
+        blocks = [
+            text_block(f"Image 1 (clean frame {frame.frame}, t={frame.t_settled:.2f}s):"), frame_block(frame_png, scale),
+            text_block("Image 2 (same frame with numbered boxes):"), image_block(overlay_png),
+            text_block(boxes_line),
+            text_block(targets),
+        ]
+    animating = [b.id for b in fb.boxes if b.in_churn]
+    if animating:
+        blocks.append(text_block(f"Boxes inside animating areas (low confidence): {name(animating)}."))
+    if not frame.settled:
+        blocks.append(text_block("This frame was captured while the screen was still changing (not settled)."))
+    blocks.append(text_block("Return the JSON object."))
+    return blocks
+
+
+def input_hashes(frame: Frame, overlay_png: Path | None, blocks: list[dict]) -> list[str]:
+    """Every byte of the user turn is covered: the frame's hash, the overlay's hash, the text (the scale is in the
+    prompt version)."""
+    return [frame.sha256, sha256_file(overlay_png) if overlay_png else "-",
+            sha256_obj([b["text"] for b in blocks if b["type"] == "text"])]

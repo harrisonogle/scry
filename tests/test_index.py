@@ -1,10 +1,14 @@
-from scry.config import IndexConfig
-from scry.index import Node, fts_query, index_nodes, open_db, rrf, search, trigram_query
+from pathlib import Path
+
+from minirun import mini_interpretations, mini_run
+
+from scry.config import Config, IndexConfig
+from scry.index import Node, build_index, collapse_key, fts_query, index_nodes, open_db, rrf, search, trigram_query
 
 
 def node(i, text, level="transition", t=(0.0, 1.0), apps=("Windows Terminal",)):
     return Node(node_id=f"n{i}", video_id="v1", level=level, item_id=f"T{i}", frames=(i, i + 1), t=t, apps=list(apps),
-                region_names=[], layout_conf=0.9, text=text, payload={"id": f"T{i}"})
+                text=text, payload={"id": f"T{i}"})
 
 
 def test_fts_query_quotes_every_term_and_trigram_needs_three_chars():
@@ -28,6 +32,7 @@ def test_index_and_search_exact_identifiers_and_substrings(tmp_path):
     cfg = IndexConfig()
     hits = search(db, "--resource-group", cfg)
     assert hits and hits[0]["node_id"] == "n1"
+    assert "layout_conf" not in hits[0]
     hits = search(db, "KodeKloud", cfg)          # substring via trigram
     assert hits and hits[0]["node_id"] == "n1"
     hits = search(db, "storage", cfg, level="step")
@@ -36,29 +41,82 @@ def test_index_and_search_exact_identifiers_and_substrings(tmp_path):
     assert hits == []
 
 
-def test_region_nodes_carry_association_text_as_one_searchable_line(tmp_path):
-    from scry.index import extract_nodes, region_text
-    from scry.jsonl import write_jsonl
-    from scry.run import Run
-    from scry.schemas import FrameRecord, Line, Region
+def test_build_index_stats_and_rerun(tmp_path: Path):
+    run = mini_run(tmp_path, labels=True)
+    mini_interpretations(run)
+    build_index(run, Config())
+    stats = run.manifest_read()["stages"]["index"]
+    assert stats["by_level"] == {"frame": 4, "lifetime": 7, "transition": 3}
+    assert (stats["nodes"], stats["labels"], stats["embedder"]) == (14, True, "none")
+    built = run.index_db.stat()
+    build_index(run, Config())  # up to date: nothing is rebuilt
+    assert run.index_db.stat().st_mtime_ns == built.st_mtime_ns
+    run.interpretations.unlink()
+    build_index(run, Config())  # an input changed
+    assert run.index_db.stat().st_mtime_ns != built.st_mtime_ns
 
-    def line(i, text, vlm=None, agree=True):
-        return Line(id=f"l{i}", marks=[f"l{i}"], bbox=(0, 20 * i, 100, 20 * i + 18), ocr=text, ocr_conf=1.0, vlm=vlm or text, agree=agree, in_churn=False)
 
-    reg = Region(id="r7", kind="pane", name="Essentials", app="Azure Portal", parent="r1", bbox=(0, 0, 100, 100), conf=0.9, layout_conf=0.9,
-                 lines=[line(1, "Resource group"), line(2, ":"), line(3, "RG1-KodeKloud-AKS"), line(4, "Status"), line(5, "Succeded", "Succeeded", False)],
-                 associations=[["l1", "l2", "l3"], ["l4", "l5"]])
-    text, assoc = region_text(reg)
-    assert text == "Resource group\n:\nRG1-KodeKloud-AKS\nStatus\nSucceded\nSucceeded\nResource group : RG1-KodeKloud-AKS\nStatus Succeded"
-    assert assoc == [{"marks": ["l1", "l2", "l3"], "text": "Resource group : RG1-KodeKloud-AKS"}, {"marks": ["l4", "l5"], "text": "Status Succeded"}]
-    assert region_text(Region(**reg.model_dump(exclude={"associations"}))) == (text.rsplit("\nResource group :", 1)[0], [])
+def _mini_db(tmp_path: Path, labels: bool = True):
+    run = mini_run(tmp_path, labels=labels)
+    mini_interpretations(run)
+    build_index(run, Config())
+    return open_db(run.index_db)
 
-    run = Run(tmp_path)
-    write_jsonl(run.frames, [FrameRecord(video_id="v", frame=150, t_change=1, t_settled=1.2, t_end=5, settled=True, png="frames/00150.png", overlay=None,
-                                         sha256="x", width=100, height=100, regions=[reg])])
-    [node] = [n for n in extract_nodes(run) if n.level == "region"]
-    assert node.text == f"Azure Portal Essentials\n{text}" and node.payload["associations"] == assoc and node.payload["region"] == "r7"
-    db = open_db(tmp_path / "i.sqlite")
-    index_nodes(db, [node], None)
-    hits = search(db, '"Resource group : RG1-KodeKloud-AKS"', IndexConfig())
-    assert hits and hits[0]["node_id"] == node.node_id and "Resource group : RG1-KodeKloud-AKS" in hits[0]["text"]
+
+def _frame_members(hits: list[dict]) -> list[list[int]]:
+    return sorted(h["members"] for h in hits if h["level"] == "frame")
+
+
+def test_search_collapses_identical_consecutive_frame_hits(tmp_path: Path):
+    db = _mini_db(tmp_path)
+    hits = search(db, "Creating", IndexConfig())
+    assert [h["node_id"] for h in hits] == ["v:L2", "v:T3", "v:f10"]
+    assert [h["score"] for h in hits] == [0.03279] * 3  # rank 1 in its FTS5 and its trigram ranking: 2/61
+    frame = hits[2]
+    assert (frame["frames"], frame["t"], frame["collapsed"], frame["members"]) == ([10, 12], [20.4, 30.0], 3, [10, 11, 12])
+    assert frame["matched"] == ["Creating", "Status Creating"]
+    plain = search(db, "Creating", IndexConfig(), collapse=False)
+    assert {h["node_id"] for h in plain} == {"v:L2", "v:T3", "v:f10", "v:f11", "v:f12"}
+    assert all(h.get("collapsed", 1) == 1 for h in plain)
+
+
+def test_differing_measured_text_is_not_collapsed_and_label_text_does_not_split(tmp_path: Path):
+    # frame 10 reads `C:\src> git`, the others `C:\src> git status`; frame 11's entry also holds the model's reading
+    # `C:\src> git st`, which is not measured text and no longer splits 11 from 12 and 13 (L54)
+    labelled = _mini_db(tmp_path / "labelled")
+    assert _frame_members(search(labelled, "git", IndexConfig())) == [[10], [11, 12, 13]]
+    assert _frame_members(search(_mini_db(tmp_path / "plain", labels=False), "git", IndexConfig())) == [[10], [11, 12, 13]]
+    # frame 13's pair line `Status Succeeded` and its description sentence hold the term too: one hit all the same
+    assert _frame_members(search(labelled, "Status", IndexConfig())) == [[10], [11, 12, 13]]
+    assert [h["node_id"] for h in search(labelled, '"git st"', IndexConfig(), level="frame")] == ["v:f11"]  # still findable
+
+
+def test_a_hit_on_label_text_alone_collapses_on_its_matched_lines(tmp_path: Path):
+    db = _mini_db(tmp_path)
+    # no box reads `highlighted`: only the descriptions of frames 10 and 11 do, and they are the same sentence
+    assert _frame_members(search(db, "highlighted", IndexConfig())) == [[10, 11]]
+    # every entry holds the container line `Azure Portal Resource overview`; the two descriptions add a second line
+    assert _frame_members(search(db, "Overview", IndexConfig())) == [[10, 11], [12, 13]]
+    assert collapse_key("a\nThe Overview item", ["a"], ["overview"]) == ("lines", "The Overview item")
+    assert collapse_key("x", ["Resource  GROUP", "other"], ["resource group"]) == ("boxes", "resource group")
+
+
+def test_ocr_variant_prevents_a_collapse(tmp_path: Path):
+    assert _frame_members(search(_mini_db(tmp_path), "branch", IndexConfig())) == [[12], [13]]  # frame 13 reads `On branch maln`
+
+
+def test_level_and_time_filters(tmp_path: Path):
+    db, cfg = _mini_db(tmp_path), IndexConfig()
+    assert [h["node_id"] for h in search(db, "Creating", cfg, level="frame")] == ["v:f10"]
+    assert search(db, "Creating", cfg, level="region") == []
+    later = [h for h in search(db, "Creating", cfg, t_from=25.0) if h["level"] == "frame"]
+    assert [(h["members"], h["frames"]) for h in later] == [([11, 12], [11, 12])]  # frame 10 ends at 24.0
+    terminal = search(db, "Status", cfg, app="Terminal")
+    assert terminal and all("Windows Terminal" in h["apps"] for h in terminal)
+
+
+def test_search_survives_fts_syntax(tmp_path: Path):
+    db, cfg = _mini_db(tmp_path), IndexConfig()
+    for q in ("--name", "C:\\src>", '"git status', "*", "a", "git AND NOT status", "("):
+        search(db, q, cfg)
+    assert search(db, "C:\\src>", cfg)

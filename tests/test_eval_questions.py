@@ -1,0 +1,207 @@
+import itertools
+import re
+import threading
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+from eval_fixtures import QUESTIONS
+from fakes import fake_sync_client, response, text
+from minirun import mini_interpretations, mini_run
+
+from scry.ask import ToolCall
+from scry.config import AskConfig, Config, ModelConfig
+from scry.evaluation import adapters
+from scry.evaluation.adapters import AskOutcome
+from scry.evaluation.questions import load_answers, parse_questions, run_questions
+from scry.index import build_index
+from scry.run import Run
+
+
+def test_parse_questions():
+    q1, q2 = parse_questions(QUESTIONS)
+    assert (q1.id, q1.polarity, q1.style) == ("Q1", "positive", "exact-string lookup")
+    assert q1.question == "Where does `git status` get run?"
+    assert q1.reference == "At frame 2 (0:02.5), submitted by frame 3."
+    assert [(i.id, i.kind) for i in q1.rubric] == [("M1", "must"), ("M2", "must"), ("X1", "must_not")]
+    assert q1.rubric[1].text == "gives frame 2 or 3." and q1.rubric[2].text == "says it was not run."  # Evidence is not read
+    assert re.fullmatch(r"Q1@[0-9a-f]{6}", q1.key)
+    assert (q2.id, q2.polarity, q2.question) == ("Q2", "negative", "Did they push?")
+    r1, r2 = parse_questions(QUESTIONS.replace("get run?", "run?"))  # an edited question is a different unit
+    assert r1.key != q1.key and r2.key == q2.key
+    with pytest.raises(ValueError, match="Q2"):
+        parse_questions(QUESTIONS.replace("  - X1: says `git push` was executed.\n", ""))  # a negative question without an X line
+    with pytest.raises(ValueError, match="Q1"):
+        parse_questions(QUESTIONS + "### Q1 (positive, again)\n- **Question:** Again?\n- **Reference answer:** Yes.\n- **Rubric:**\n  - M1: says yes.\n")
+
+
+def test_repo_question_file_parses():
+    """Reads the committed draft on purpose. Nothing more is asserted: the owner may prune or rewrite it."""
+    assert parse_questions((Path(__file__).parents[1] / "docs/ground-truth/span2-questions.md").read_text())
+
+
+def _clock():
+    ticks = itertools.count()
+    return lambda: next(ticks) * 2.0  # every call measures 2.0 s
+
+
+def _outcome(stop: str = "end_turn", dollars: float = 0.1, text: str = "It ran at frame 2.") -> AskOutcome:
+    return AskOutcome(text, {"input_tokens": 10_000, "output_tokens": 2_000}, dollars, "claude-opus-5", 3,
+                      ["search", "get_frame"], stop, calls=[{"name": "search", "input": {"query": "git push"}, "results": 0}], prompt="ask-v1")
+
+
+def _numbered(n: int) -> str:
+    """A question file of n positive questions, "Question 1?" to "Question n?"."""
+    return "".join(f"### Q{i} (positive, lookup)\n- **Question:** Question {i}?\n- **Reference answer:** {i}.\n- **Rubric:**\n  - M1: says {i}.\n"
+                   for i in range(1, n + 1))
+
+
+def test_run_questions_records_cost_resumes_and_keeps_errors(tmp_path: Path):
+    """One question at a time (`[model] concurrency` 1): asked in file order, the clock read around each in turn."""
+    path = tmp_path / "q.md"
+    path.write_text(QUESTIONS)
+    cfg = Config(model=ModelConfig(concurrency=1))
+    asked: list[str] = []
+
+    def answer(run, cfg, question):
+        asked.append(question)
+        return _outcome()
+
+    run = Run(tmp_path / "run")
+    a1, a2 = run_questions(run, cfg, path, answer=answer, clock=_clock())
+    assert (a1.qid, a1.polarity, a1.answer, a1.dollars, a1.seconds, a1.turns) == ("Q1", "positive", "It ran at frame 2.", 0.1, 2.0, 3)
+    assert (a2.qid, a2.dollars, a2.seconds, a2.tools, a2.model, a2.error) == ("Q2", 0.1, 2.0, ["search", "get_frame"], "claude-opus-5", None)
+    assert a2.calls == [{"name": "search", "input": {"query": "git push"}, "results": 0}]  # the input and a count, kept (L57)
+    assert a1.prompt == a2.prompt == "ask-v1"  # which ask prompt answered: "ask-v1+noframes" when the agent had no frames
+    assert len((run.root / "answers.jsonl").read_text().splitlines()) == 2
+    assert asked == ["Where does `git status` get run?", "Did they push?"]
+
+    path.write_text(QUESTIONS.replace("Did they push?", "Did they push anything?"))  # a reworded question is asked again
+    asked.clear()
+    b1, b2 = run_questions(run, cfg, path, answer=answer, clock=_clock())
+    assert asked == ["Did they push anything?"]
+    assert b1 == a1 and b2.key != a2.key and load_answers(run) == [b1, b2]
+
+    def failing(run, cfg, question):
+        if "git status" in question:
+            raise RuntimeError("rate limit")
+        return _outcome()
+
+    run = Run(tmp_path / "run2")
+    path.write_text(QUESTIONS)
+    with pytest.raises(RuntimeError, match="1 questions failed"):
+        run_questions(run, cfg, path, answer=failing, clock=_clock())
+    f1, f2 = load_answers(run)  # both lines were written before it raised
+    assert (f1.error, f1.answer, f1.dollars) == ("RuntimeError: rate limit", "", 0.0)
+    assert (f2.error, f2.answer) == (None, "It ran at frame 2.")
+
+    run = Run(tmp_path / "run3")
+    with pytest.raises(RuntimeError, match="1 questions failed"):  # `ask` returns a failed API call instead of raising
+        run_questions(run, cfg, path, answer=lambda run, cfg, q: _outcome("api_error" if "git status" in q else "end_turn", 0.02),
+                      clock=_clock())
+    g1, g2 = load_answers(run)
+    assert (g1.error, g1.answer, g1.dollars, g1.stop) == ("It ran at frame 2.", "", 0.02, "api_error")
+    assert g2.error is None
+    asked.clear()
+    h1, h2 = run_questions(run, cfg, path, answer=answer, clock=_clock())  # only the failed question is asked again
+    assert asked == ["Where does `git status` get run?"]
+    assert h1.error is None and h2 == g2
+
+
+def test_run_questions_asks_concurrency_questions_at_once_and_writes_them_in_file_order(tmp_path: Path):
+    """`[model] concurrency` questions are in flight together; whatever order they finish in, the answers are in file
+    order and the same as asking one at a time would have written."""
+    path = tmp_path / "q.md"
+    path.write_text(_numbered(3))
+    together = threading.Barrier(3, timeout=5)  # passed only when all three questions are in flight at once
+    done = {n: threading.Event() for n in (1, 2, 3)}
+    finished: list[int] = []
+
+    def answer(run, cfg, question):
+        n = int(question.removeprefix("Question ").rstrip("?"))
+        together.wait()  # BrokenBarrierError, recorded as this question's error, if fewer than three are in flight
+        if n < 3:
+            assert done[n + 1].wait(5)  # finish in the order 3, 2, 1: the reverse of the file
+        finished.append(n)
+        done[n].set()
+        return _outcome(text=f"answer {n}")
+
+    run = Run(tmp_path / "run")
+    answers = run_questions(run, Config(model=ModelConfig(concurrency=3)), path, answer=answer, clock=lambda: 0.0)
+    assert finished == [3, 2, 1]
+    assert [(a.qid, a.answer, a.error) for a in answers] == [("Q1", "answer 1", None), ("Q2", "answer 2", None), ("Q3", "answer 3", None)]
+    assert load_answers(run) == answers  # the file too is in file order
+    sequential = run_questions(Run(tmp_path / "run1"), Config(model=ModelConfig(concurrency=1)), path,
+                               answer=lambda run, cfg, q: _outcome(text=f"answer {q.removeprefix('Question ').rstrip('?')}"), clock=lambda: 0.0)
+    assert answers == sequential
+
+
+def test_run_questions_a_failed_question_beside_others_in_flight_loses_none_of_them(tmp_path: Path):
+    path = tmp_path / "q.md"
+    path.write_text(_numbered(3))
+    together = threading.Barrier(3, timeout=5)
+
+    def answer(run, cfg, question):
+        together.wait()
+        if question == "Question 2?":
+            raise RuntimeError("rate limit")
+        return _outcome(text=question)
+
+    run = Run(tmp_path / "run")
+    cfg = Config(model=ModelConfig(concurrency=3))
+    with pytest.raises(RuntimeError, match="1 questions failed"):
+        run_questions(run, cfg, path, answer=answer, clock=lambda: 0.0)
+    a1, a2, a3 = load_answers(run)  # all three lines were written before it raised
+    assert (a1.answer, a1.error) == ("Question 1?", None) and (a3.answer, a3.error) == ("Question 3?", None)
+    assert (a2.answer, a2.error) == ("", "RuntimeError: rate limit")
+    asked: list[str] = []
+
+    def again(run, cfg, question):
+        asked.append(question)
+        return _outcome(text=question)
+
+    b1, b2, b3 = run_questions(run, cfg, path, answer=again, clock=lambda: 0.0)  # only the failed question is asked again
+    assert asked == ["Question 2?"] and (b1, b3) == (a1, a3) and (b2.answer, b2.error) == ("Question 2?", None)
+
+
+def test_answer_fn_maps_ask_result(tmp_path: Path, monkeypatch):
+    seen = []
+
+    def fake_ask(run, cfg, question, client=None):
+        seen.append(question)
+        return SimpleNamespace(text="x", turns=2, tool_calls=["search"], tool_log=[ToolCall(name="search", input={"query": "push"}, results=0)],
+                               usage={"input_tokens": 1}, cost_usd=0.0225, model="claude-sonnet-5", stop="end_turn", prompt="ask-v1+noframes")
+
+    monkeypatch.setattr("scry.ask.ask", fake_ask)
+    cfg = Config()
+    out = adapters.answer_fn(Run(tmp_path), cfg, "Did they push?")
+    assert seen == ["Did they push?"]
+    # the model is the one `ask` says it called, which under `[ask] model` is not the pipeline's
+    assert out == AskOutcome(text="x", usage={"input_tokens": 1}, dollars=0.0225, model="claude-sonnet-5", turns=2, tools=["search"],
+                             stop="end_turn", calls=[{"name": "search", "input": {"query": "push"}, "results": 0}], prompt="ask-v1+noframes")
+    assert cfg.model.model == "claude-opus-5"
+
+
+def test_an_answer_says_which_model_answered_and_is_priced_with_it(tmp_path: Path, monkeypatch):
+    """`[ask] model` through the harness: the real `ask` over a fake client; the pipeline's model stays claude-opus-5."""
+    run = mini_run(tmp_path / "run")
+    mini_interpretations(run)
+    build_index(run, Config())
+    path = tmp_path / "q.md"
+    path.write_text(QUESTIONS)
+    clients = []
+
+    def client():  # `ask` makes one client per question
+        clients.append(fake_sync_client([response([text("It ran at frame 12.")], "end_turn")]))
+        return clients[-1]
+
+    monkeypatch.setattr("anthropic.Anthropic", client)
+    for model, asked, dollars in (("", "claude-opus-5", 0.0075), ("claude-sonnet-5", "claude-sonnet-5", 0.003)):
+        clients.clear()
+        (run.root / "answers.jsonl").unlink(missing_ok=True)
+        cfg = Config(ask=AskConfig(model=model))
+        answers = run_questions(run, cfg, path, clock=_clock())
+        assert [c.messages.calls[0]["model"] for c in clients] == [asked] * 2 and cfg.model.model == "claude-opus-5"
+        assert [a.model for a in answers] == [asked] * 2 and load_answers(run) == answers  # the record says which model answered
+        # 1000 tokens in and 100 out a question: $5 and $25 per million on claude-opus-5, $2 and $10 on claude-sonnet-5
+        assert [a.dollars for a in answers] == [dollars] * 2

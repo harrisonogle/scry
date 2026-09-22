@@ -6,10 +6,11 @@ import tomllib
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class DetectParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     theta_pix: int = 12
     theta_min: int = 8
     theta_comp: int = 24
@@ -21,11 +22,13 @@ class DetectParams(BaseModel):
 
 
 class SettleParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     still_s: float = 0.4
     max_hold_s: float = 3.0
 
 
 class ChurnParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     window_s: float = 5.0
     rho_on: float = 0.5
     rho_off: float = 0.2
@@ -33,6 +36,7 @@ class ChurnParams(BaseModel):
 
 
 class BlinkParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     max_w: int = 12
     max_h: int = 32
     min_period_s: float = 0.15
@@ -43,116 +47,129 @@ class BlinkParams(BaseModel):
     iou: float = 0.5
 
 
-class Stage1Config(BaseModel):
+class DecodeConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     detect: DetectParams = DetectParams()
     settle: SettleParams = SettleParams()
     churn: ChurnParams = ChurnParams()
     blink: BlinkParams = BlinkParams()
 
 
-class OcrConfig(BaseModel):
-    engine: Literal["vision", "rapid"] = "rapid"  # rapidocr 3.9 by default (ledger L36); vision is optional on macOS
-    languages: list[str] = ["en-US"]
-    language_correction: bool = False
-    minimum_text_height: float = 0.0
+class ReadConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    engine: Literal["rapid"] = "rapid"  # RapidOCR 3.9 is the only reader (ledger L36, L43)
+    gap_ratio: float = 0.25  # spacing guard: a gap of at least this × the box height between two words is a space
+
+
+class TrackConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    margin: float = 0.5  # × the median box height of the two frames; 0 = exact touch
+
+
+class AnnotateConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    # which frames get a call and which boxes are targets (spec §2). "every_frame": every frame, every box;
+    # "incremental": the first frame and every frame whose incoming transition changed pixels, the targets being the
+    # boxes whose lifetime starts there or continues there by a move; "off": the "no annotation" base. [model] mode =
+    # "batch" works with each.
+    # There is no `arm` key: the only referencing arm is A; `reference` below says how it names a box. Arm D was evaluated
+    # and removed behind the tag `arm-d-evaluated` (ledger L63); arms B and C, which incremental annotation does not
+    # serve, were never built.
+    # The default is the working default of ledger L59 (incremental, transcribing), for the owner to confirm.
+    mode: Literal["every_frame", "incremental", "off"] = "incremental"
+    transcribe: bool = False  # true: the call also returns a second reading (texts, missed); false: group-only (the default, L73)
+    scale: float = Field(1.0, gt=0, le=1)  # factor applied to every image sent; tags keep their pixel size
+    # how the call refers to a box. "ids": the clean frame plus a second image with every box tagged with a number, and
+    # the answer names boxes by id. "coords": the clean frame alone, every box listed as a rectangle in the unscaled
+    # frame, and the answer names a box by its rectangle, which code matches back to the box (no id in either direction).
+    reference: Literal["ids", "coords"] = "ids"
+    box_text: bool = False  # lists each box's OCR reading in the user turn; group-only only
+
+    @model_validator(mode="after")
+    def _box_text_is_group_only(self) -> "AnnotateConfig":
+        if self.box_text and self.transcribe:  # the second reading must stay independent of OCR
+            raise ValueError("box_text = true needs transcribe = false: the second reading must stay independent of OCR")
+        return self
 
 
 class OverlayConfig(BaseModel):
-    font_size: int = 12
+    model_config = ConfigDict(extra="forbid")
+    font_size: int = 12  # px, not scaled with the image
     font_path: str = "/System/Library/Fonts/Menlo.ttc"
-    scale: float = Field(1.0, gt=0, le=1)  # < 1 sends both Stage 2c images downscaled by this factor; tags keep font_size
-    # Stage 2c masking experiment (group-only mode): cover every OCR box in both images. opaque = light grey fill, tag
-    # outside as usual; opaque_label = grey fill with the tag inside the box; rendered = white fill with the OCR text
-    # re-set in font_path at the box height. none = the frame as is.
-    mask: Literal["none", "opaque", "opaque_label", "rendered"] = "none"
 
 
 Effort = Literal["low", "medium", "high", "xhigh", "max"]
 
 
 class ModelConfig(BaseModel):
-    provider: Literal["anthropic"] = "anthropic"
+    model_config = ConfigDict(extra="forbid")
+    # "anthropic": the Claude API. "openai_compat": any server speaking OpenAI's /v1/chat/completions with json_schema
+    # output, at base_url (a model served on this machine: mlx_vlm.server, llama.cpp); effort_* are ignored there, and
+    # mode must be "sync". Its key comes from the OPENAI_COMPAT_API_KEY environment variable, "none" when unset.
+    provider: Literal["anthropic", "openai_compat"] = "anthropic"
     model: str = "claude-opus-5"
-    effort_stage2c: Effort = "low"
-    effort_stage5: Effort = "low"
-    effort_stage6: Effort = "medium"
-    effort_agent: Effort = "high"
-    stage2c_mark_coords: bool = False  # list each mark's box in the Stage 2c prompt (ledger L30 experiment)
-    stage2c_transcribe: bool = True  # False: Stage 2c groups marks into regions and rows but transcribes nothing (§18.3 item 3 ablation)
-    stage2c_panes: bool = True  # False: Stage 2c asks for windows and popups only, rows directly under them ("+nopanes" experiment)
-    stage2c_rows: Literal["lines", "boxes"] = "lines"  # boxes: every mark is its own row and each region lists its associations ("+boxes" experiment)
+    base_url: str = ""  # openai_compat only, e.g. "http://127.0.0.1:8080/v1"
     max_tokens: int = 16000
     retry_max_tokens: int = 32000
     concurrency: int = 4
     mode: Literal["sync", "batch"] = "sync"
-
-    @model_validator(mode="after")
-    def _structural_variants_transcribe(self):
-        if not self.stage2c_transcribe and (not self.stage2c_panes or self.stage2c_rows != "lines"):
-            raise ValueError("stage2c_panes = false and stage2c_rows = 'boxes' need stage2c_transcribe = true")
-        return self
+    effort_annotate: Effort = "low"
+    effort_interpret: Effort = "low"
+    effort_summarize: Effort = "medium"
+    effort_ask: Effort = "high"
 
 
-class Stage5Config(BaseModel):
-    """Which images each Stage 5 call carries (§12 sends both frames at native resolution; the other modes are the image-cost experiment)."""
-    images: Literal["full", "scaled", "crops", "text"] = "scaled"  # owner's decision 2026-09-21, ledger L39
-    scale: float = Field(0.5, gt=0, le=1)  # scaled: both frames by this factor; crops: the after-frame context image
-    crop_pad: int = 40  # crops: each changed-pixel component grows by this many pixels before overlapping ones merge
-    crop_max: int = 4  # crops: at most this many crop rectangles per frame; the nearest pair merges until it holds
-    crop_max_fraction: float = 0.25  # crops: a transition without pixel data, or with more of the screen changed, is sent scaled instead
+class InterpretConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    images: Literal["scaled", "full"] = "scaled"  # how the two frames are sent (ledger L39)
+    scale: float = Field(0.5, gt=0, le=1)  # factor; scaled: both frames downscaled by it
+    context_transitions: int = 3  # transitions; the preceding ones rendered one line each
 
 
-class MergeConfig(BaseModel):
-    row_y_tol: float = 0.5
-    row_gap_lines: float = 0.0  # §9.0 horizontal-gap test: reject a row whose neighbouring marks are further apart than this × the median line height; 0 = off (ledger L37)
-    align_sim: float = 0.8
-    align_short_len: int = 8
-    align_short_lev: int = 1
-    glyph_max_len: int = 2
-
-
-class DiffConfig(BaseModel):
-    modify_sim: float = 0.6
-    typed_tolerance: int = 3
-    transient_max_s: float = 2.0
-    corr_w_text: float = 0.5
-    corr_w_iou: float = 0.3
-    corr_w_app: float = 0.1
-    corr_w_name: float = 0.1
-    corr_accept: float = 0.3
-    pixel_gate_max_fraction: float = 0.05  # §11.2 pixel gate: veto ops on unchanged lines when this fraction of the screen or less changed; 0 = off
-    pixel_gate_margin_lines: float = 0.5  # §11.2: each changed-pixel component grows by this × the unit's median line height (8 px with no boxed lines) before the intersection test; 0 = exact (ledger L38)
-
-
-class HierarchyConfig(BaseModel):
-    window: int = 2000
-    overlap: int = 200
-    fallback_step_transitions: int = 20
-    fallback_section_steps: int = 8
+class SummarizeConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    window: int = 2000  # items per boundary call
+    overlap: int = 200  # items shared by two consecutive windows
+    fallback_step_transitions: int = 20  # transitions per step when the boundary call fails
+    fallback_section_steps: int = 8  # steps per section when the boundary call fails and there is no outline
 
 
 class IndexConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     embedder: Literal["none", "fastembed"] = "none"
     k: int = 20
     k_filtered: int = 50
     rrf: int = 60
+    collapse: bool = True  # collapse identical consecutive frame hits in the result list
+
+
+class AskConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    max_turns: int = 12  # model turns before the loop gives up
+    max_tool_result_chars: int = 60000  # characters; a JSON tool result longer than this is cut
+    redecode_max_frames: int = 6  # frames one redecode call may return
+    frames: bool = True  # false: no pixel reaches the agent: get_frame returns a frame's record without its image, no redecode
+    model: str = ""  # the model the answering agent runs on; empty: the pipeline's, [model] model
 
 
 class OutlineConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     enabled: bool = False
     model: str = "gemini-3.8-flash"
 
 
 class Config(BaseModel):
-    stage1: Stage1Config = Stage1Config()
-    ocr: OcrConfig = OcrConfig()
+    model_config = ConfigDict(extra="forbid")
+    decode: DecodeConfig = DecodeConfig()
+    read: ReadConfig = ReadConfig()
+    track: TrackConfig = TrackConfig()
+    annotate: AnnotateConfig = AnnotateConfig()
+    interpret: InterpretConfig = InterpretConfig()
+    summarize: SummarizeConfig = SummarizeConfig()
     overlay: OverlayConfig = OverlayConfig()
     model: ModelConfig = ModelConfig()
-    stage5: Stage5Config = Stage5Config()
-    merge: MergeConfig = MergeConfig()
-    diff: DiffConfig = DiffConfig()
-    hierarchy: HierarchyConfig = HierarchyConfig()
     index: IndexConfig = IndexConfig()
+    ask: AskConfig = AskConfig()
     outline: OutlineConfig = OutlineConfig()
 
 

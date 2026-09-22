@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 
@@ -26,160 +25,192 @@ def _setup_logging(verbose: bool) -> None:
 
 @app.command()
 def decode(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None = None, verbose: bool = False):
-    """Stage 1: decode, detect changes, settle, write frames/ and stage1.jsonl."""
+    """decode: detect changes, settle, write frames/ and frames.jsonl."""
     _setup_logging(verbose)
-    from scry.stage1 import run_stage1
-    run_stage1(Run(out), load_config(config), video)
-
-
-if __name__ == "__main__":
-    app()
+    from scry.decode import run_decode
+    run_decode(Run(out), load_config(config), video)
 
 
 @app.command()
-def ocr(run_dir: Path, config: Path | None = None, verbose: bool = False):
-    """Stage 2a: OCR every emitted frame → ocr.jsonl."""
+def read(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """read: OCR every emitted frame → boxes.jsonl."""
     _setup_logging(verbose)
-    from scry.stage2a import run_ocr
-    run_ocr(Run(run_dir), load_config(config))
+    from scry.read import run_read
+    run_read(Run(run_dir), load_config(config))
 
 
 @app.command()
-def overlay(run_dir: Path, config: Path | None = None, verbose: bool = False):
-    """Stage 2b: draw numbered boxes → overlays/."""
+def track(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """track: per-box changes and box lifetimes from boxes and pixels → changes.jsonl, lifetimes.jsonl."""
     _setup_logging(verbose)
-    from scry.overlay import run_overlay
-    run_overlay(Run(run_dir), load_config(config))
+    from scry.track.stage import run_track
+    run_track(Run(run_dir), load_config(config))
 
 
 @app.command()
-def perceive(run_dir: Path, config: Path | None = None, verbose: bool = False):
-    """Stage 2c: VLM grouping and transcription → perception.jsonl."""
+def annotate(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """annotate: one model call per frame proposing labels for the boxes (containers, links, optionally a second
+    reading, a description) → annotations.jsonl. Costs money unless every call is already in the run's cache."""
     _setup_logging(verbose)
-    from scry.perceive import run_perceive
-    run_perceive(Run(run_dir), load_config(config))
-
-
-@app.command()
-def merge(run_dir: Path, config: Path | None = None, verbose: bool = False):
-    """Stage 3: merge OCR and VLM output → frames.jsonl."""
-    _setup_logging(verbose)
-    from scry.merge import run_merge
-    run_merge(Run(run_dir), load_config(config))
-
-
-@app.command()
-def diff(run_dir: Path, config: Path | None = None, verbose: bool = False):
-    """Stage 4/4b: diffs, transients, coalescing → transitions.jsonl, focus.jsonl."""
-    _setup_logging(verbose)
-    from scry.coalesce import run_diff
-    run_diff(Run(run_dir), load_config(config))
+    from scry.annotate import run_annotate
+    run_annotate(Run(run_dir), load_config(config))
 
 
 @app.command()
 def interpret(run_dir: Path, config: Path | None = None, verbose: bool = False):
-    """Stage 5: VLM interpretation of each transition → interpretations.jsonl."""
+    """interpret: one model call per transition saying what the user did, with entered_text and submitted →
+    interpretations.jsonl. Costs money unless every call is already in the run's cache."""
     _setup_logging(verbose)
     from scry.interpret import run_interpret
     run_interpret(Run(run_dir), load_config(config))
 
 
 @app.command()
-def hierarchy(run_dir: Path, config: Path | None = None, verbose: bool = False):
-    """Stage 6: steps, sections, video summary."""
+def summarize(run_dir: Path, config: Path | None = None, verbose: bool = False):
+    """summarize: steps, sections and a summary of the video, from the transitions and their interpretations →
+    steps.jsonl, sections.jsonl, video.json. Costs money unless every call is already in the run's cache."""
     _setup_logging(verbose)
-    from scry.hierarchy import run_hierarchy
-    run_hierarchy(Run(run_dir), load_config(config))
+    from scry.summarize import run_summarize
+    run_summarize(Run(run_dir), load_config(config))
 
 
 @app.command()
 def index(run_dir: Path, config: Path | None = None, verbose: bool = False):
-    """Stage 7: build index.sqlite."""
+    """index: build index.sqlite: a whole-screen entry per frame, an entry per lifetime and per transition, the summaries."""
     _setup_logging(verbose)
     from scry.index import build_index
     build_index(Run(run_dir), load_config(config))
 
 
 @app.command()
-def search(run_dir: Path, query: str, level: str | None = None, config: Path | None = None):
-    """Search the index (lexical + trigram, vector if configured)."""
+def search(run_dir: Path, query: str, level: str | None = typer.Option(None, "--level"),
+           t_from: float | None = typer.Option(None, "--t-from", help="seconds"), t_to: float | None = typer.Option(None, "--t-to", help="seconds"),
+           app_name: str | None = typer.Option(None, "--app", help="the window's application"),
+           no_collapse: bool = typer.Option(False, "--no-collapse", help="list identical consecutive frame hits one by one"),
+           config: Path | None = None):
+    """Search a run's index: lexical and substring, vector if configured."""
     from scry.index import get_embedder, open_db, search as _search
     cfg = load_config(config)
-    db = open_db(Run(run_dir).index_db)
-    for h in _search(db, query, cfg.index, get_embedder(cfg.index), level=level):
-        typer.echo(f"{h['score']:.4f} {h['level']:<10} {h['item_id']:<8} t={h['t'][0]:.1f}-{h['t'][1]:.1f}  {h['text'][:100]}")
+    index_db = Run(run_dir).index_db
+    if not index_db.exists():
+        typer.echo(f"{index_db} does not exist: run `scry index {run_dir}` first")
+        raise typer.Exit(code=1)
+    hits = _search(open_db(index_db), query, cfg.index, get_embedder(cfg.index), level=level, t_from=t_from, t_to=t_to, app=app_name,
+                   collapse=False if no_collapse else None)
+    for h in hits:
+        first = h["matched"][0] if h["level"] == "frame" else h["text"].split("\n")[0]
+        times = f" x{h['collapsed']}" if h.get("collapsed", 1) > 1 else ""
+        typer.echo(f"{h['score']:.4f} {h['level']:<10} {h['item_id']:<8} f{h['frames'][0]}-{h['frames'][1]} "
+                   f"t={h['t'][0]:.1f}-{h['t'][1]:.1f}{times}  {first[:100]}")
+    if not hits:
+        typer.echo("no hits")
 
 
 @app.command()
-def ask(run_dir: Path, question: str, config: Path | None = None, verbose: bool = False):
-    """Answer a question over a run's index with citations."""
+def ask(run_dir: Path, question: str, as_json: bool = typer.Option(False, "--json", help="print the whole result (text, citations, usage, cost) as JSON"),
+        config: Path | None = None, verbose: bool = False):
+    """Answer a question over a run's index and records. Costs money: every question is a fresh conversation."""
     _setup_logging(verbose)
-    from scry.agent import ask as _ask
-    typer.echo(_ask(Run(run_dir), load_config(config), question))
+    from scry.ask import ask as _ask
+    try:
+        result = _ask(Run(run_dir), load_config(config), question)
+    except FileNotFoundError as e:  # no index.sqlite
+        typer.echo(str(e), err=True)
+        raise typer.Exit(code=1)
+    if as_json:
+        typer.echo(result.model_dump_json(indent=2))
+    else:
+        typer.echo(result.text)
+        typer.echo(f"turns={result.turns} tools={','.join(result.tool_calls)} cost=${result.cost_usd:.4f}", err=True)
+
+
+@app.command()
+def report(run_dir: Path, frames: str | None = typer.Option(None, "--frames", help="inclusive frame range, e.g. 155-187"),
+           ground_truth: Path | None = typer.Option(None, "--ground-truth", help="a command list in the format of docs/ground-truth/span2-commands.md"),
+           out: str = typer.Option("report.md", "--out", help="file name inside the run directory"),
+           sheets: bool = typer.Option(True, "--sheets/--no-sheets", help="write evidence sheets to <out stem>-sheets/"),
+           per_kind: int = typer.Option(30, "--per-kind"), seed: int = typer.Option(0, "--seed"), config: Path | None = None):
+    """What track measured, as Markdown, with evidence sheets to read against the frames. Not a stage; always regenerated."""
+    from scry.report import write_report
+    from scry.subset import parse_frames
+    path, written = write_report(Run(run_dir), load_config(config), out, parse_frames(frames) if frames else None, ground_truth, sheets,
+                                 per_kind, seed)
+    typer.echo(f"{path}" + (f"; {len(written)} sheets in {path.parent / (path.stem + '-sheets')}" if sheets else ""))
 
 
 @app.command()
 def subset(src: Path, out: Path = typer.Option(..., "--out"),
-           frames: str = typer.Option(..., "--frames", help="inclusive Stage 1 frame range, e.g. 145-155"),
+           frames: str = typer.Option(..., "--frames", help="inclusive frame range, e.g. 145-155"),
            share_cache: bool = typer.Option(True, "--share-cache/--no-share-cache", help="symlink the source run's call cache"),
            verbose: bool = False):
-    """Derive a small run directory from an existing run's Stage 1 frames, for cheap live checks of the model stages."""
+    """Derive a small run directory from an existing run's decoded frames, for cheap live checks of the later stages."""
     _setup_logging(verbose)
-    from scry.subset import make_subset, parse_frames
-    dst = make_subset(Run(src), out, parse_frames(frames), share_cache)
-    typer.echo(f"{out}: {len(dst.load_stage1())} frames; Stage 1 is marked done, so `scry run <video> --out {out}` runs the rest")
+    from scry.subset import is_legacy, make_subset, parse_frames
+    dst = make_subset(src, out, parse_frames(frames), share_cache)
+    if is_legacy(src):  # the copied decode entry keeps the old config hash, so `scry run` might decode again
+        rest = f"imported from a pre-re-base directory: run the stage commands (`scry read {out}`, then `scry track {out}`), not `scry run`"
+    else:
+        rest = f"decode is marked done, so `scry run <video> --out {out}` runs the rest"
+    typer.echo(f"{out}: {len(dst.load_frames())} frames; {rest}")
 
 
-STAGES = ["outline", "decode", "ocr", "overlay", "perceive", "merge", "diff", "interpret", "hierarchy", "index"]
+STAGES = ["decode", "outline", "read", "track", "annotate", "interpret", "summarize", "index"]
 
 
 @app.command()
 def run(video: Path, out: Path = typer.Option(..., "--out"), config: Path | None = None, stages: str | None = None, verbose: bool = False):
-    """Run every stage in order (idempotent; each stage skips itself when inputs and config are unchanged)."""
+    """Run every stage in order (idempotent; each stage skips itself when inputs and config are unchanged). `outline`
+    does nothing unless enabled; every stage after `annotate` runs with or without annotations."""
     _setup_logging(verbose)
     cfg = load_config(config)
-    r = Run(out)
     wanted = stages.split(",") if stages else STAGES
+    unknown = [name for name in wanted if name not in STAGES]
+    if unknown:
+        raise typer.BadParameter(f"unknown stage {', '.join(unknown)}; the stages are {', '.join(STAGES)}", param_hint="--stages")
+    r = Run(out)
+    import json
     import time
-    from scry import coalesce, hierarchy as hier, index as idx, interpret as interp, merge as mrg, overlay as ov, perceive as perc, stage1, stage2a
-    from scry.diagnostics import diagnostics
+    from scry.annotate import run_annotate
+    from scry.costs import run_costs
+    from scry.decode import run_decode
+    from scry.index import build_index
+    from scry.interpret import run_interpret
+    from scry.outline import run_outline
+    from scry.read import run_read
+    from scry.summarize import run_summarize
+    from scry.track.stage import run_track
 
-    def _outline():
-        from scry.outline import run_outline  # created in Task 20; imported lazily so `scry run` works before that task lands
-        run_outline(r, cfg, video)
-
-    steps = {"outline": _outline, "decode": lambda: stage1.run_stage1(r, cfg, video),
-             "ocr": lambda: stage2a.run_ocr(r, cfg), "overlay": lambda: ov.run_overlay(r, cfg), "perceive": lambda: perc.run_perceive(r, cfg),
-             "merge": lambda: mrg.run_merge(r, cfg), "diff": lambda: coalesce.run_diff(r, cfg), "interpret": lambda: interp.run_interpret(r, cfg),
-             "hierarchy": lambda: hier.run_hierarchy(r, cfg), "index": lambda: idx.build_index(r, cfg)}
-    keys = {"decode": "stage1", "ocr": "ocr", "overlay": "overlay", "perceive": "perceive", "merge": "merge", "diff": "diff",
-            "interpret": "interpret", "hierarchy": "hierarchy", "index": "index"}
+    steps = {"decode": lambda: run_decode(r, cfg, video), "outline": lambda: run_outline(r, cfg, video), "read": lambda: run_read(r, cfg),
+             "track": lambda: run_track(r, cfg), "annotate": lambda: run_annotate(r, cfg), "interpret": lambda: run_interpret(r, cfg),
+             "summarize": lambda: run_summarize(r, cfg), "index": lambda: build_index(r, cfg)}
     for name in STAGES:
         if name in wanted:
             typer.echo(f"== {name}")
             t0 = time.perf_counter()
             steps[name]()
             st = r.manifest_read().get("stages", {})
-            if keys.get(name) in st:  # per-stage wall time (§18.4)
-                st[keys[name]]["seconds"] = round(time.perf_counter() - t0, 1)
+            if name in st:  # per-stage wall time; the step name is the manifest key
+                st[name]["seconds"] = round(time.perf_counter() - t0, 1)
                 r.manifest_update(stages=st)
-    r.manifest_update(diagnostics=diagnostics(r, cfg))
-    typer.echo(json.dumps(r.manifest_read().get("diagnostics", {}), indent=2))
+    costs = run_costs(r.manifest_read())
+    r.manifest_update(costs=costs)
+    typer.echo("costs (what a cold run would pay: answers served from the call cache are priced as if paid):")
+    typer.echo(json.dumps(costs, indent=2))
 
 
 @app.command()
 def setup(config: Path | None = None):
-    """Check the environment: Vision OCR, FTS5, sqlite-vec, credentials, optional embedder."""
+    """Check the environment: the OCR engine, FTS5, sqlite-vec, credentials, optional embedder."""
     import sqlite3
     cfg = load_config(config)
     ok = True
     try:
         from scry.ocr import get_engine
-        get_engine(cfg.ocr)
-        typer.echo(f"ocr engine {cfg.ocr.engine}: ok")
+        get_engine(cfg.read)
+        typer.echo(f"ocr engine {cfg.read.engine}: ok")
     except Exception as e:
         ok = False
-        typer.echo(f"ocr engine {cfg.ocr.engine}: FAILED ({e})")
+        typer.echo(f"ocr engine {cfg.read.engine}: FAILED ({e})")
     try:
         sqlite3.connect(":memory:").execute("create virtual table t using fts5(x)")
         typer.echo("sqlite fts5: ok")
@@ -209,11 +240,27 @@ def setup(config: Path | None = None):
 
 
 @app.command()
-def outline(video: Path, out: Path = typer.Option(..., "--out"), import_path: Path | None = typer.Option(None, "--import"), config: Path | None = None):
-    """Stage 0 (optional): Gemini agentic chapter outline, or import one from a JSON file."""
-    from scry.outline import run_outline
+def outline(video: Path, out: Path = typer.Option(..., "--out"), import_path: Path | None = typer.Option(None, "--import"), config: Path | None = None,
+            verbose: bool = False):
+    """outline (optional): Gemini agentic chapter outline of the whole video → outline.json, or import one from a JSON
+    file. The Gemini call costs money and needs `uv sync --extra outline` and GEMINI_API_KEY."""
+    _setup_logging(verbose)
+    from scry.outline import OutlineError, run_outline
     cfg = load_config(config)
     if import_path is None and not cfg.outline.enabled:
         typer.echo("outline disabled in config (set [outline] enabled = true) and no --import given")
         raise typer.Exit(code=1)
-    run_outline(Run(out), cfg, video, import_path)
+    try:
+        run_outline(Run(out), cfg, video, import_path)
+    except OutlineError as e:
+        typer.echo(f"outline: {e}")
+        raise typer.Exit(code=1)
+
+
+from scry.evaluation.cli import eval_app  # noqa: E402
+
+app.add_typer(eval_app, name="eval")
+
+
+if __name__ == "__main__":
+    app()

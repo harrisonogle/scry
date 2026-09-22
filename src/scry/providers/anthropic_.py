@@ -6,6 +6,7 @@ import logging
 from pydantic import BaseModel, ValidationError
 
 from scry.config import ModelConfig
+from scry.costs import add_usage
 from scry.jsonl import sha256_obj
 from scry.providers.base import VlmResult, text_block
 from scry.providers.cache import CallCache
@@ -24,10 +25,11 @@ class AnthropicProvider:
         self.model = cfg.model
         self.cache = cache
         self.sem = asyncio.Semaphore(cfg.concurrency)
-        self.stats = {"hits": 0, "misses": 0}
+        self.stats = {"hits": 0, "misses": 0, "usage_lost": 0}  # usage_lost: attempts billed whose usage never arrived
         self.usage_by_stage: dict[str, dict] = {}
         self.collecting = False   # batch mode: record cache misses instead of calling (Task 19)
         self.pending: list = []
+        self.batched: set[str] = set()  # the keys this provider's own batches answered
 
     def _account(self, stage: str, usage: dict) -> None:
         acc = self.usage_by_stage.setdefault(stage, {})
@@ -40,7 +42,9 @@ class AnthropicProvider:
         key = CallCache.key(stage, self.model, effort, self.cfg.max_tokens, prompt_version, schema_hash, input_hashes)
         hit = self.cache.get(key)
         if hit is not None:
-            self.stats["hits"] += 1
+            if not self.collecting:  # the collecting pass counts nothing: the second pass meets every key again
+                # an answer of this run's own batch is read out of the call cache by design: it was paid for here, no hit
+                self.stats["misses" if key in self.batched else "hits"] += 1
             resp = hit["response"]
             parsed = output_model.model_validate(resp["parsed"]) if resp.get("parsed") is not None else None
             return VlmResult(parsed, resp.get("error"), resp.get("usage", {}), resp.get("text"), True, resp.get("stop_reason"))
@@ -55,11 +59,15 @@ class AnthropicProvider:
             return VlmResult(None, "pending")
         async with self.sem:
             r = await self._call(system, blocks, output_model, effort, self.cfg.max_tokens)
+            usage = add_usage({}, r.usage)  # every attempt was billed: the record carries their sum
             if r.stop_reason == "max_tokens":
                 r = await self._call(system, blocks, output_model, effort, self.cfg.retry_max_tokens)
+                add_usage(usage, r.usage)
             if r.error and r.error.startswith("schema"):
                 retry_blocks = blocks + [text_block(f"Your previous output was invalid: {r.error}. Return JSON that matches the schema exactly.")]
                 r = await self._call(system, retry_blocks, output_model, effort, self.cfg.retry_max_tokens)
+                add_usage(usage, r.usage)
+            r.usage = usage
         self.stats["misses"] += 1
         self._account(stage, r.usage)
         if r.error is None or r.error == "refusal" or r.error.startswith("schema"):  # terminal outcomes only; API blips retry next run
@@ -73,6 +81,7 @@ class AnthropicProvider:
         from scry.providers.batch import BatchRunner
 
         await BatchRunner(self.client, self.cache, run).run_pending(self.pending)
+        self.batched |= {p.key for p in self.pending}
         self.pending = []
 
     async def _call(self, system: str, blocks: list[dict], output_model: type[BaseModel], effort: str, max_tokens: int) -> VlmResult:
@@ -83,7 +92,8 @@ class AnthropicProvider:
                 messages=[{"role": "user", "content": blocks}],
                 output_format=output_model, output_config={"effort": effort},
             )
-        except (ValidationError, ValueError) as e:
+        except (ValidationError, ValueError) as e:  # raised inside the SDK's parse helper: the attempt was billed, its usage is lost
+            self.stats["usage_lost"] += 1
             return VlmResult(None, f"schema: {str(e)[:500]}")
         except Exception as e:  # anthropic.APIError family: retried by the SDK; record and continue
             log.warning("model call failed: %s", e)

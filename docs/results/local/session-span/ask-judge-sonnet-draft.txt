@@ -1,0 +1,107 @@
+ask model: claude-sonnet-5 provider anthropic concurrency 4
+--- Q1 $0.0607 turns=2 tools=['search', 'search'] stop=end_turn model=claude-sonnet-5
+At the very start of the video (frame 0, t=0), the FRONTDOOR-A Front Door manager page shows two endpoint cards, and the highlighted (orange, find-on-page selected) one is the lower endpoint card. Its full hostname reads:
+
+**FRONTDOOR-A-cqhefshkhrgmgqf9.b02.azurefd.net**
+
+This is confirmed in frame 0 (t=0.0), where the OCR text shows "FRONTDOOR-A-cqhefshkhrgmgqf9.b02.azurefd.net" highlighted in orange as the browser's find-on-page match (1/1), and the same hostname is read consistently across frame 1 (t≈3.07s) and frame 2 (t≈6.1s).
+
+--- Q2 $0.3924 turns=5 tools=['search', 'search', 'get_transitions', 'search', 'get_frame', 'get_frame', 'get_frame', 'get_frame', 'get_frame', 'get_frame'] stop=end_turn model=claude-sonnet-5
+## The two versions of the query
+
+**At ~3:18 (frame 70, t=197.8s)** — the 7‑line query that had been run and was still producing the first rendered time chart:
+
+```
+AzureDiagnostics
+| where TimeGenerated > ago(2h)
+| where Category == "FrontDoorAccessLog"
+| where requestUri_s !contains "enrollment"
+| where requestUri_s contains "i.manage" or requestUri_s contains "r.manage" or requestUri_s contains "a.manage"
+| summarize count() by strcat(httpStatusCode_d, requestUri_s), bin(TimeGenerated, 1m)
+| render timechart
+```
+(This is the same text submitted a bit earlier by the Run click at T64, t≈178.1s, whose result – the first timechart, legend paged 1/6, "3s 28ms", "1000 records" – is what's on screen through frame 70; see also frame 63/T64 and the S10 step description.)
+
+**At the end of the video (frame 79, t≈224s, last captured frame)** — an 8‑line query:
+
+```
+AzureDiagnostics
+| where TimeGenerated > ago(2h)
+| where Category == "FrontDoorAccessLog"
+| where requestUri_s !contains "enrollment"
+| where requestUri_s contains "ServiceA/Certificate"
+//| where requestUri_s contains "i.manage" or requestUri_s contains "r.manage" or requestUri_s contains "a.manage"
+| summarize count() by strcat(httpStatusCode_d, requestUri_s), bin(TimeGenerated, 1m)
+| render timechart
+```
+
+## What changed
+
+1. **A new filter line was inserted** (new line 5): `where requestUri_s contains "ServiceA/Certificate"`. This text matches what was seen highlighted in the Kusto.Explorer window the user briefly switched to (frame 72, t=203.8s), suggesting it was copied from there.
+2. **The old filter was not deleted, only commented out**: the original `where requestUri_s contains "i.manage" or ... "r.manage" or ... "a.manage"` line is still present but now prefixed with `//` (green/disabled), pushed down to line 6 (visible from frame 71, t=200.8s onward, and still there at frame 79).
+3. The query therefore **grew from 7 to 8 lines**, with the active URI filter swapped from the i.manage/r.manage/a.manage handlers to the ServiceA/Certificate path.
+4. This edited query was re-run (Cancel/"Running your query..." shown at frame 73, t=206.8s) and finished with different results: **277 records** in "3s 153ms" (frame 78/79) versus the earlier run's **1000 records** in "3s 28ms" (frame 70/71). Consequently the chart's legend also changed, from many i.manage/r.manage/a.manage device-gateway-proxy handler URLs (paged 1/6) to just five series, all variants of `.../ServiceA/ServiceA/Certificate/ServiceAddresses` differentiated by status code (200, 307, 400, 499, 500) — visible in frame 78/79.
+
+So the end-of-video query differs from the ~3:18 version by adding a new `ServiceA/Certificate` filter line while keeping the old i.manage/r.manage/a.manage filter as a commented-out (disabled) line rather than removing it, which changed the query from 7 to 8 lines and changed the chart's data/legend accordingly.
+
+--- Q3 $0.1304 turns=3 tools=['search', 'search', 'search'] stop=end_turn model=claude-sonnet-5
+Based on the record, the "Saved Traffic Manager profile changes" toast notification appears three times in the video:
+
+1. **First appearance** — at **63.97–67.27 s** (frames 22–23), for the **tm-profile-ap** Traffic Manager profile. The toast reads "Saved Traffic Manager profile changes / Successfully saved configuration changes to Traffic Manager profile 'tm-profile-ap'" (frame 22/23, node L821/f22/f23). This followed the addition of an external endpoint on that profile's Endpoints blade (section C2/S4).
+
+2. **Second appearance** — at **132.17 s** (frame 45), for the **tm-profile-EU** profile: "Successfully saved configuration changes to Traffic Manager profile 'tm-profile-EU'" (frame 45, node L1559/f45). This toast was seen when the user switched back to the EU01 tab (transition T45, t=129.17–132.17 s), after the AFDEndpoint had been added there earlier.
+
+3. **Third appearance** — at **151.67 s** (frame 52), for the **tm-profile-NA** profile: "Successfully saved configuration changes to Traffic Manager profile 'tm-profile-NA'" (frame 52, node L1664/f52). This appeared right after clicking "Add" to save the AFDEndpoint on the NA01 profile (transition T52, t=148.67–151.67 s), completing the save that had shown "Saving Traffic Manager profile" moments before (T51, t≈147.5–148.03 s).
+
+No further occurrences of this notification text were found later in the record (searched through the rest of the video, e.g., t > 150 s, with no additional matches beyond frame 52).
+
+--- Q4 $0.0398 turns=2 tools=['search'] stop=end_turn model=claude-sonnet-5
+Based on frame 33 (t ≈ 97.2 s, the frame where the dialog is captured) and transition T33 (94.2–97.2 s, when the tab switch revealed it):
+
+- **Dialog**: Microsoft "Pick an account" sign-in card, shown at **t ≈ 97.2 s** (frame 33), on the login.microsoftonline.com tab.
+- **Number of accounts listed**: **2**, both for the same person "the account holder" — one shown as `the account holder (user)` / user@example.com, and the other as user@example.com, each marked "Connected to Windows." Below them is a "Use another account" option (not a listed account).
+- **Highlighted account**: The **first tile** (the account holder, user) — per the frame 33 description, it "is highlighted/hovered with a light grey background and dotted border," while the second tile has no such highlighting.
+
+This matches the subsequent action: the user clicks that first (highlighted) account tile in transition T34 (97.2–100.3 s), completing sign-in.
+
+--- Q5 $0.1089 turns=3 tools=['search', 'search', 'search', 'search'] stop=end_turn model=claude-sonnet-5
+Based on the record, the presenter never deletes an endpoint from any Traffic Manager profile. Throughout the video, the "Delete" command on the Endpoints toolbar consistently appears greyed out because no row/checkbox is ever selected (e.g., frame 7 at 21.3s, frame 14 at 41.4s, frame 36 at 106.3s, frame 45 at 132.2s, frame 47 at 138.4s). The presenter's actions in each profile (AP01, EU01, NA01, AU01) are all additions of a new "AFDEndpoint" external endpoint via the "+ Add" button, confirmed by successful "Saved Traffic Manager profile changes" toasts (e.g., transition T22 at ~63.9s, T52 at ~151.7s). No transition shows a delete/trash icon being clicked or a confirmation dialog for removing an endpoint, and no endpoint count ever decreases in the tables shown — it only grows from 1 to 2 endpoints in the profiles being configured.
+
+ask total $ 0.7322
+JUDGE Q1: correct score=1.0 $0.0106 items={'M1': True, 'X1': False}
+    M1: FRONTDOOR-A-cqhefshkhrgmgqf9.b02.azurefd.net
+    X1: 
+JUDGE Q2: correct score=1.0 $0.0169 items={'M1': True, 'M2': True, 'X1': False, 'X2': False}
+    M1: A new filter line was inserted
+    M2: only commented out
+    X1: 
+    X2: The query therefore grew from 7 to 8 lines
+JUDGE Q3: correct score=1.0 $0.0151 items={'M1': True, 'M2': True, 'M3': True, 'X1': False}
+    M1: 63.97–67.27 s (frames 22–23)
+    M2: tm-profile-ap
+    M3: 132.17 s (frame 45), for the EU01... 151.67 s (frame 52), for the NA01
+    X1: First appearance — ... tm-profile-ap
+JUDGE Q4: correct score=1.0 $0.0130 items={'M1': True, 'M2': True, 'M3': True, 'X1': False}
+    M1: **Number of accounts listed**: **2**
+    M2: The **first tile** (the account holder, user)
+    M3: frame 33 (t ≈ 97.2 s
+    X1: while the second tile has no such highlighting
+JUDGE Q5: correct score=1.0 $0.0053 items={'M1': True, 'X1': False}
+    M1: the presenter never deletes an endpoint from any Traffic Manager profile
+    X1: No transition shows a delete/trash icon being clicked
+judge total $ 0.0609
+exit=0
+
+TABLE: the five DRAFT questions of docs/ground-truth/holdout-questions.md on the full default index runs/v2/grouponly-100
+(Opus 5 pipeline), answering agent on claude-sonnet-5 (local3/ask-sonnet.toml), judged blind by the harness judge on
+claude-opus-5 (low effort). Asked through a symlink view (runs/v2/ask/grouponly-100-view) so the run's own files were
+not touched. Q5's heading was given a style ("negative, none") in the scratch copy so the parser reads it; the question
+text is unchanged.
+Q | verdict | $ | s | turns
+Q1 hostname | correct (M1 yes, X1 no) | 0.0607 | 9.1 | 2
+Q2 KQL query change | correct (M1, M2 yes; X1, X2 no) | 0.3924 | 88.5 | 5
+Q3 toast times | correct (M1-M3 yes, X1 no) | 0.1304 | 15.3 | 3
+Q4 sign-in dialog | correct (M1-M3 yes, X1 no) | 0.0398 | 10.8 | 2
+Q5 no endpoint deleted | correct (M1 yes, X1 no) | 0.1089 | 9.6 | 3
+five | 5 of 5 correct | ask total 0.7322, mean 0.1464 a question | mean 26.7 s | judge 0.0609
+answers: runs/v2/ask/answers-sonnet5-draft.jsonl; judgments: runs/v2/ask/judgments-sonnet5-draft.jsonl

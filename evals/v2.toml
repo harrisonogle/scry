@@ -1,0 +1,30 @@
+# Hold-out video (the owner's second recording, 224 s, 2048x1080, 80 decoded frames; ledger L76): the configurations the
+# presentation needs measured on THIS video, not projected from the sample. Source `runs/v2/grouponly-100` is the
+# owner's-default run (group-only, overlay, 1.0), made with `scry run`; the harness imports its frames and OCR output
+# and builds each configuration cold. No question set yet: questions are asked afterwards on each index with the
+# drafted hold-out set once the owner has seen it. Stages through `index`.
+phase = "v2"
+source = "runs/v2/grouponly-100"
+stages = ["read", "track", "annotate", "interpret", "summarize", "index"]
+repeats = 1
+
+[spans.full]
+frames = "0-79"
+
+[axis.base.grouponly-067]
+"model.concurrency" = 16
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "ids"
+"annotate.scale" = 0.67
+
+[axis.base.transcribing-100]
+"model.concurrency" = 16
+"annotate.mode" = "incremental"
+"annotate.transcribe" = true
+"annotate.reference" = "ids"
+"annotate.scale" = 1.0
+
+[axis.base.none]
+"model.concurrency" = 16
+"annotate.mode" = "off"

@@ -1,0 +1,62 @@
+# P10: REFERENCE BY RECTANGLE AGAINST REFERENCE BY ID, through `annotate` only (as P3, ledger L59), incremental and
+# group-only. Today's call (`[annotate] reference = "ids"`) sends the clean frame and a second image with every box
+# numbered, and the model answers by box id; `reference = "coords"` sends the clean frame alone, lists every box and every
+# target as a rectangle x0,y0,x1,y1 in the unscaled frame, and the model answers by rectangle, which code matches back to
+# the box (equal, else greatest overlap, else nearest centre within the track margin, else dropped as `rect_unplaced`).
+# One image instead of two, no overlay to read, no tag to misread. What it compares, at each of three image scales: the
+# labels (containers, popups, links, unassigned, repairs and `rect_unplaced`) and what a call costs, coords against ids at
+# the same scale, on both spans of P3, two cold repeats: 24 runs. No question is asked; the labels are read directly, as
+# P3 and P2 read arm A's (docs/results/p3, docs/results/p2). What a whole video costs is P4's: incremental transcribing
+# at $17.85 sync / $12.11 batch per video, no annotation at $4.62 (docs/results/p4); P10full puts coords on that scale.
+phase = "p10"
+source = "runs/p0"
+stages = ["read", "track", "annotate"]
+repeats = 2
+
+[spans.smoke]
+frames = "145-155"
+
+[spans.span2]
+frames = "155-187"
+
+[axis.ref.coords100]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 1.0
+
+[axis.ref.coords067]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 0.67
+
+[axis.ref.coords050]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 0.5
+
+[axis.ref.ids100]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "ids"
+"annotate.scale" = 1.0
+
+[axis.ref.ids067]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "ids"
+"annotate.scale" = 0.67
+
+[axis.ref.ids050]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "ids"
+"annotate.scale" = 0.5

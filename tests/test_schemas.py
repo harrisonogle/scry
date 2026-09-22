@@ -1,107 +1,101 @@
 from pathlib import Path
 
-from scry.config import Config, config_hash, load_config
+import pydantic
+import pytest
+
 from scry.jsonl import read_jsonl, write_jsonl
-from scry.schemas import FrameRecord, Line, Region, Transition
+from scry.run import Run
+from scry.schemas import (Annotation, Box, BoxChange, BoxText, Change, Container, FrameBoxes, FrameTime, Interpretation,
+                          Lifetime, Missed, PairLink, RawWord, RecordLink, Revert, RunLink, TextReading, box_ref,
+                          link_members, link_refs, parse_box_ref)
 
 
-def test_config_defaults_and_hash_are_stable(tmp_path: Path):
-    cfg = load_config(tmp_path / "missing.toml")
-    assert cfg.stage1.detect.theta_comp == 24
-    assert config_hash(cfg, "stage1") == config_hash(Config(), "stage1")
-    assert config_hash(cfg, "stage1") != config_hash(cfg, "merge")
-    assert cfg.model.stage2c_transcribe is True  # group-only Stage 2c is opt-in (§8.3)
+def test_records_round_trip_unicode(tmp_path: Path):
+    fb = FrameBoxes(frame=155, png="frames/00155.png", engine={"engine": "rapidocr", "version": "3.9.2"}, boxes=[
+        Box(id="b1", bbox=(24, 164, 48, 179), text="区", conf=0.41),
+        Box(id="b2", bbox=(659, 352, 904, 371), text="PS C:\\Users\\msadmin> az login", conf=0.98,
+            words=[RawWord(text="PS", bbox=(659, 352, 679, 371))])])
+    change = Change(id="T9", from_frame=154, to_frame=155, t=(598.7, 620.7), kind="single", pixels=None,
+                    records=[BoxChange(kind="appended", rect=(659, 350, 904, 373),
+                                       before=BoxText(box="154:b31", text="PS C:\\Users\\msadmin>"),
+                                       after=BoxText(box="155:b33", text="PS C:\\Users\\msadmin> az login"),
+                                       char_diff=[["=", "PS C:\\Users\\msadmin>"], ["+", " az login"]], continues="T8/0"),
+                             BoxChange(kind="appeared", rect=(24, 164, 48, 179), before=None, after=BoxText(box="155:b1", text="区"))],
+                    moved=[("0:b4", "1:b3")], reverts=Revert(of="T8", share=0.8125, hold_s=2.8))
+    life = Lifetime(id="L1", text="A b", readings={"A b": [0, 2], "Ab": [1]}, unstable=True, sightings=3,
+                    first=FrameTime(frame=0, t=0.0), last=FrameTime(frame=2, t=9.0), boxes=["0:b1", "1:b1", "2:b1"])
+    for name, rec, model in (("boxes.jsonl", fb, FrameBoxes), ("changes.jsonl", change, Change), ("lifetimes.jsonl", life, Lifetime)):
+        write_jsonl(tmp_path / name, [rec])
+        assert read_jsonl(tmp_path / name, model) == [rec]
+    assert "区" in (tmp_path / "boxes.jsonl").read_text(encoding="utf-8")
+    old = fb.model_dump_json().replace('"frame":155,', '"frame":155,"seconds":1.25,')  # a file written before ledger L56
+    assert '"seconds"' in old and FrameBoxes.model_validate_json(old) == fb
 
 
-def test_frame_record_roundtrip(tmp_path: Path):
-    line = Line(id="l3", marks=["l3"], bbox=(12, 40, 300, 58), ocr="git status", ocr_conf=1.0,
-                vlm="git status", agree=True, in_churn=False)
-    region = Region(id="r1", kind="window", name="Terminal", app="Windows Terminal", parent=None,
-                    bbox=(12, 40, 640, 300), conf=0.95, layout_conf=0.9, lines=[line])
-    rec = FrameRecord(video_id="v", frame=12, t_change=47.3, t_settled=47.72, t_end=52.1, settled=True,
-                      png="frames/00012.png", overlay=None, sha256="x", width=1920, height=1080, regions=[region])
-    write_jsonl(tmp_path / "frames.jsonl", [rec])
-    back = read_jsonl(tmp_path / "frames.jsonl", FrameRecord)
-    assert back == [rec]
-    assert back[0].regions[0].lines[0].fused == "git status"
-    assert back[0].line_ids() == {"l3"}
+def test_box_ref_round_trip():
+    assert box_ref(154, "b31") == "154:b31"
+    assert parse_box_ref("154:b31") == (154, "b31")
+    with pytest.raises(ValueError):
+        parse_box_ref("b31")
 
 
-def test_line_fused_prefers_stripped_reading():
-    line = Line(id="l1", marks=["l1"], bbox=(0, 0, 1, 1), ocr="P Search", ocr_conf=1.0, vlm="Search",
-                agree=True, in_churn=False, ocr_glyph_stripped="P")
-    assert line.fused == "Search"
-    unc = Line(id="l2", marks=["l2"], bbox=(0, 0, 1, 1), ocr="maln", ocr_conf=1.0, vlm="main", agree=False, in_churn=False)
-    assert unc.fused == "maln" and unc.uncertain
+def test_loaders_return_empty_lists_on_a_fresh_run(tmp_path: Path):
+    run = Run(tmp_path / "r")
+    assert run.load_frames() == [] and run.load_boxes() == [] and run.load_changes() == [] and run.load_lifetimes() == []
+    assert run.load_annotations() == []
 
 
-def test_group_only_perception_converts_to_the_usual_shape():
-    from scry.schemas import VlmPerception, VlmPerceptionGroupOnly, VlmRegion, VlmRegionGroupOnly, perception_from_group_only
-    r = VlmRegionGroupOnly(id="r1", kind="window", name="Terminal", app="T", parent=None, conf=0.9, occludes=["r2"], rows=[["l1", "l2"], ["l3"], []])
-    out = VlmPerceptionGroupOnly(regions=[r], focused_region="r1", focused_conf=0.8, focused_cues=["caret"], description="d", unassigned_line_ids=["l4"])
-    conv = perception_from_group_only(out)
-    assert isinstance(conv, VlmPerception) and conv.regions[0].vlm_lines == ["", "", ""]  # one empty entry per row, [] included
-    assert conv.regions[0].model_dump(exclude={"vlm_lines"}) == r.model_dump()
-    assert conv.model_dump(exclude={"regions"}) == out.model_dump(exclude={"regions"})
-    assert "vlm_lines" not in VlmRegionGroupOnly.model_json_schema()["properties"]
-    assert list(VlmRegion.model_json_schema()["properties"])[-1] == "vlm_lines"
+# spec §5's example record, verbatim
+SPEC_EXAMPLE = r"""
+{"frame": 155, "targets": ["b33"],
+ "containers": [{"id": "c2", "kind": "window", "app": "PowerShell", "name": "Administrator: PowerShell 7-preview (x64)",
+                 "owner": null, "covers": ["c1"], "rect": null}],
+ "assign": [{"box": "b33", "container": "c2", "pane": null}],
+ "links": [{"kind": "pair", "key": ["b28"], "value": ["b29"]},
+           {"kind": "run", "boxes": ["b61", "b62"], "joiner": ""},
+           {"kind": "record", "members": [["b70"], ["b71"], ["b72"]], "header": ["b64", "b65", "b66"]}],
+ "texts": [{"box": "b33", "text": "PS C:\\Users\\msadmin> a login"}],
+ "missed": [{"id": "m1", "text": "Networking", "container": "c1"}], "unassigned": [],
+ "description": "The Overview item is highlighted in the left navigation; the Properties tab is selected; …",
+ "repairs": 0, "model": "claude-opus-5", "prompt_version": "annotate-v1", "usage": {}, "error": null}
+"""
 
 
-def test_transition_without_pixels_still_loads():
-    old = ('{"id": "T1", "from_frame": 1, "to_frame": 2, "t": [1.0, 2.0], "kind": "single", '
-           '"computed_diff": {"r1": {"from_region": "r1", "ops": [{"op": "insert", "new": "x", "new_index": 0}]}}}')
-    t = Transition.model_validate_json(old)
-    assert t.pixels is None and t.computed_diff["r1"].ops[0].under_change is None
+def test_spec_example_parses():
+    rec = Annotation.model_validate_json(" ".join(line.strip() for line in SPEC_EXAMPLE.strip().splitlines()))
+    assert rec.targets == ["b33"]
+    assert rec.containers[0].covers == ["c1"] and rec.containers[0].rect is None
+    assert [l.kind for l in rec.links] == ["pair", "run", "record"]
+    assert rec.links[1].joiner == ""
+    assert rec.links[2].header == ["b64", "b65", "b66"]
+    assert rec.missed[0].id == "m1"
+    assert rec.repair_counts == {}
 
 
-def test_stage2c_structural_variants_validate_and_convert(tmp_path: Path):
-    import pytest
-    from pydantic import ValidationError
-
-    from scry.schemas import (PerceptionRecord, VlmPerception, VlmPerceptionBoxes, VlmPerceptionGroupOnly, VlmPerceptionNoPanes,
-                              VlmPerceptionNoPanesBoxes, VlmRegion, VlmRegionBoxes, VlmRegionNoPanes, VlmRegionNoPanesBoxes,
-                              perception_from_variant, perception_model)
-    base = dict(id="r1", name="w", app="x", parent=None, conf=0.9)
-    with pytest.raises(ValidationError):
-        VlmRegionNoPanes(**base, kind="pane")
-    with pytest.raises(ValidationError):
-        VlmRegionNoPanesBoxes(**base, kind="pane")
-    popup = VlmRegionNoPanes(**base, kind="popup", rows=[["l1"]], vlm_lines=["a"])
-    boxes = VlmRegionBoxes(**base, kind="pane", rows=[["l1"], ["l2"]], vlm_lines=["a", "b"], associations=[["l1", "l2"]])
-    assert VlmRegionNoPanesBoxes(**base, kind="window", rows=[["l1"]], vlm_lines=["a"]).associations == []
-    # only the variants carry the narrowed kind or associations; VlmRegion's schema (and so its cache keys) is unchanged
-    props = lambda m: list(m.model_json_schema()["properties"])  # noqa: E731
-    assert "associations" not in props(VlmRegion) and "associations" not in props(VlmRegionNoPanes)
-    assert props(VlmRegionBoxes) == props(VlmRegionNoPanesBoxes) == props(VlmRegion) + ["associations"]
-    assert VlmRegionNoPanes.model_json_schema()["properties"]["kind"]["enum"] == ["window", "popup"]
-    assert VlmRegionNoPanesBoxes.model_json_schema()["properties"]["kind"]["enum"] == ["window", "popup"]
-    assert "one row per mark" in VlmRegionBoxes.model_json_schema()["properties"]["rows"]["description"].lower()
-    assert perception_model() is VlmPerception and perception_model(transcribe=False) is VlmPerceptionGroupOnly
-    assert perception_model(panes=False) is VlmPerceptionNoPanes and perception_model(rows="boxes") is VlmPerceptionBoxes
-    assert perception_model(panes=False, rows="boxes") is VlmPerceptionNoPanesBoxes
-    # conversion to the stored shape, with the associations keyed by region
-    out = VlmPerceptionBoxes(regions=[boxes], focused_region="r1", focused_conf=0.8, description="d")
-    conv, assoc = perception_from_variant(out)
-    assert type(conv) is VlmPerception and type(conv.regions[0]) is VlmRegion and assoc == {"r1": [["l1", "l2"]]}
-    assert conv.regions[0].rows == [["l1"], ["l2"]] and conv.regions[0].vlm_lines == ["a", "b"] and conv.description == "d"
-    conv, assoc = perception_from_variant(VlmPerceptionNoPanes(regions=[popup], focused_region=None, focused_conf=0.0, description=""))
-    assert type(conv) is VlmPerception and conv.regions[0].kind == "popup" and assoc == {}
-    conv, assoc = perception_from_variant(VlmPerceptionGroupOnly(regions=[], focused_region=None, focused_conf=0.0, description=""))
-    assert type(conv) is VlmPerception and assoc == {}
-    # the record round-trips the associations beside the usual output
-    rec = PerceptionRecord(frame=1, model="m", prompt_version="s2c-v1+boxes", output=conv, associations={"r1": [["l1", "l2"]]})
-    write_jsonl(tmp_path / "p.jsonl", [rec])
-    assert read_jsonl(tmp_path / "p.jsonl", PerceptionRecord) == [rec] and PerceptionRecord(frame=1, model="m", prompt_version="v", output=None).associations == {}
-    region = Region(id="r1", kind="window", name="w", app="x", parent=None, bbox=None, conf=0.9, layout_conf=0.9, associations=[["l1", "l2"]])
-    assert Region.model_validate_json(region.model_dump_json()).associations == [["l1", "l2"]] and Region.model_validate_json('{"id":"r","kind":"window","name":"n","app":"a","parent":null,"bbox":null,"conf":1,"layout_conf":1}').associations == []
+def test_annotation_round_trip_unicode(tmp_path: Path):
+    a = Annotation(frame=1, targets=["b1", "b2"],
+                   containers=[Container(id="c1", kind="window", app="x", name='He said "hi" — 区')],
+                   links=[RunLink(boxes=["b1", "b2"], joiner="")],
+                   texts=[TextReading(box="b1", text="PS C:\\Users\\msadmin> az login")],
+                   missed=[Missed(id="m1", text="two\nlines")], description="d", model="m", prompt_version="annotate-v1")
+    b = Annotation(frame=2, targets=[], texts=None, model="m", prompt_version="annotate-v1")
+    write_jsonl(tmp_path / "annotations.jsonl", [a, b])
+    assert read_jsonl(tmp_path / "annotations.jsonl", Annotation) == [a, b]
+    first = (tmp_path / "annotations.jsonl").read_text(encoding="utf-8").splitlines()[0]
+    assert '"kind":"run"' in first and '"key"' not in first
 
 
-def test_structural_variants_need_a_transcribing_stage2c():
-    import pytest
+def test_link_members_and_refs():
+    rec = RecordLink(members=[["b70"], ["b71", "b73"], ["b72"]], header=["b64"])
+    assert link_members(rec) == ["b70", "b71", "b73", "b72"]
+    assert link_refs(rec) == ["b70", "b71", "b73", "b72", "b64"]
+    assert link_members(PairLink(key=["b1"], value=["b2", "b3"])) == ["b1", "b2", "b3"]
 
-    from scry.config import ModelConfig
-    assert ModelConfig().stage2c_panes is True and ModelConfig().stage2c_rows == "lines"
-    ModelConfig(stage2c_panes=False, stage2c_rows="boxes")
-    for flags in ({"stage2c_panes": False}, {"stage2c_rows": "boxes"}):
-        with pytest.raises(ValueError):
-            ModelConfig(stage2c_transcribe=False, **flags)
+
+def test_interpretation_round_trip(tmp_path: Path):
+    rec = Interpretation(id="T2", action="a", result="r", description="", confidence=0.9, entered_text="git status",
+                         submitted="yes", citations=["12:b4"], invalid_citations=2, usage={"input_tokens": 1})
+    write_jsonl(tmp_path / "interpretations.jsonl", [rec])
+    assert read_jsonl(tmp_path / "interpretations.jsonl", Interpretation) == [rec]
+    with pytest.raises(pydantic.ValidationError):
+        Interpretation(id="T9", submitted="maybe")

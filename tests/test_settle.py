@@ -1,6 +1,6 @@
 import numpy as np
 
-from scry.config import Stage1Config
+from scry.config import DecodeConfig
 from scry.settle import SettleMachine
 
 FPS = 30
@@ -8,7 +8,7 @@ H, W = 60, 200
 
 
 def run(frames, cfg=None, duration=None):
-    cfg = cfg or Stage1Config()
+    cfg = cfg or DecodeConfig()
     m = SettleMachine(cfg, FPS, (H, W))
     out = []
     for i, g in enumerate(frames):
@@ -132,7 +132,7 @@ def test_end_of_stream_flushes_pending_change():
 
 
 def test_scrolling_region_yields_ticks_and_a_final_settled_state():
-    cfg = Stage1Config()
+    cfg = DecodeConfig()
     cfg.churn.window_s = 1.0
     cfg.churn.min_area = 100
     rng = np.random.default_rng(1)
@@ -150,7 +150,7 @@ def test_scrolling_region_yields_ticks_and_a_final_settled_state():
 
 
 def test_churn_and_max_hold_do_not_double_emit():
-    cfg = Stage1Config()
+    cfg = DecodeConfig()
     cfg.churn.window_s = 1.0
     cfg.churn.min_area = 100
     rng = np.random.default_rng(2)

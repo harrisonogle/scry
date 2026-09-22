@@ -9,3 +9,9 @@ cache/
 .env
 .env.*
 !.env.example
+.claude/
+
+# screen recordings are never committed (the sample and the hold-out live under runs/videos/)
+*.mp4
+*.mov
+*.mkv

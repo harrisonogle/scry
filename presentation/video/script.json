@@ -1,0 +1,404 @@
+{
+  "version": 4,
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "padSeconds": 0.5,
+  "maxSeconds": 118.0,
+  "_notes": [
+    "Every word and number on screen or in the voice-over lives in this file.",
+    "maxSeconds is the platform's ceiling for the rendered MP4 including every pad; the composition refuses to build and stills.mjs fails loudly when the scenes exceed it.",
+    "Scenes marked optional:true are dropped automatically while their image is missing from public/img (run assets.sh after docs/presentation/ changes).",
+    "voiceName: the Gemini text-to-speech voice voice.sh asks for.",
+    "voiceTempo: the generated voice files are time-stretched by this factor (ffmpeg atempo, pitch kept) by voice.sh, so the same words fit the ceiling; 1.0 leaves them as spoken.",
+    "Scene duration = the voice file's length + padSeconds; voice.sh regenerates public/voice/<id>.wav from the voice lines below.",
+    "timelapse: public/img/<dir>/NN.png from `from` to `to`, played once across the scene, so the frame rate follows the voice line; assets.sh copies docs/presentation/session and docs/presentation/stages, placeholders.sh builds stand-ins from a run directory.",
+    "Terminal blocks: cmd (the host's question, typed), note (assistant prose), call (a scry tool call with trimmed result lines), answer (markdown-ish: **bold**, `code`, ## heading; a leading 4-space indent keeps the line in place), meta (a dim footer line). keyCitations are drawn orange, every other id blue.",
+    "Frame cut-in: src is the image in docs/presentation/, width/height its pixel size, zoom the point (image pixels) the slow zoom moves towards and the final scale (the view never leaves the image), labels are pinned to image pixels and drawn in screen space.",
+    "card: tiles, an optional heading, `lines` (bold statements that appear in turn), `note` (small), and `list` with `listHeading` (a two-column list revealed item by item)."
+  ],
+  "scenes": [
+    {
+      "id": "title",
+      "visual": {
+        "kind": "title",
+        "headline": "Screen recordings you can search."
+      },
+      "caption": "Screen recordings you can search",
+      "voice": "Scry turns a screen recording into a hierarchical index of what happened on screen, and any AI agent can ask it questions over MCP."
+    },
+    {
+      "id": "session",
+      "visual": {
+        "kind": "timelapse",
+        "dir": "session",
+        "from": 0,
+        "to": 79,
+        "pad": 2,
+        "width": 1280,
+        "height": 675,
+        "layout": "side",
+        "questions": [
+          "What was entered in the form?",
+          "Which profiles got the endpoint, in what order?",
+          "Did each save succeed?",
+          "What was the query, line by line?",
+          "Did anything get deleted?"
+        ],
+        "ext": "jpg"
+      },
+      "caption": "a four-minute Azure portal session",
+      "voice": "Here is a four-minute session on a secure workstation: a cloud portal and a query tool. Someone who never watched it wants to know what happened: what was typed into the form, which profiles were changed, whether each save went through, what the query said, whether anything was deleted."
+    },
+    {
+      "id": "demo",
+      "visual": {
+        "kind": "terminal",
+        "title": "claude — scry-mcp over stdio · v2/grouponly-100, a four-minute session",
+        "status": "one conversation · 16 questions · 0 wrong",
+        "source": "docs/presentation/mcp-discovery.md, questions 4 to 6 of the sixteen; tool results trimmed to a line, answer sentences and table columns trimmed, none edited",
+        "hold": 0.3,
+        "keyCitations": [
+          "22:b112",
+          "21:b80",
+          "21:b99"
+        ],
+        "blocks": [
+          {
+            "kind": "cmd",
+            "text": "You said an endpoint was added. What exactly was entered in that form: every field and its value?"
+          },
+          {
+            "kind": "call",
+            "name": "get_transitions",
+            "args": "video=\"v2/grouponly-100\", t_a=41, t_b=64",
+            "results": [
+              "T14   f13→f14, 38.4–41.4 s   \"No user action is evident; the Endpoints blade finished loading.\"   a table with one row: ap.endpoint, Enabled, Degraded, External endpoint, weight 100   …"
+            ]
+          },
+          {
+            "kind": "call",
+            "name": "get_frame",
+            "args": "video=\"v2/grouponly-100\", frame=21, image=true",
+            "results": [
+              "Frame 21, t=60.40–60.97s. Description in force: … An 'Add endpoint' side panel is open on the right, with Type set to External endpoint, a name filled in, an unchecked Enable Endpoint box, an FQDN value, a weight of 1 …   [frame image]"
+            ]
+          },
+          {
+            "kind": "call",
+            "name": "get_frame",
+            "args": "video=\"v2/grouponly-100\", frame=50, image=true",
+            "results": [
+              "Frame 50, t=147.50–147.50s. Description in force: … the Traffic Manager profile tm-profile-NA on its Endpoints page … a blade titled 'Add endpoint' is open …   [frame image]"
+            ]
+          },
+          {
+            "kind": "answer",
+            "lines": [
+              "The form I called \"added\" was the Add endpoint panel on the tm-profile-ap Traffic Manager profile, submitted at 61 to 64 s (T22, submitted: yes, confidence 0.93). I read frame 21 (60.4 s), the last capture before Add was clicked. The values were:",
+              "    Field · Value · Evidence",
+              "    Type · External endpoint · 21:b73",
+              "    Name · AFDEndpoint, with a green validation check · 21:b80",
+              "    Enable Endpoint · checkbox unchecked · image of frame 21",
+              "    Fully-qualified domain name (FQDN) or IP address · FRONTDOOR-A-cqhefshkhrgmgqf9… (truncated on screen), green check · 21:b99",
+              "    Weight · 1 · 21:b107"
+            ]
+          },
+          {
+            "kind": "meta",
+            "text": "4 turns, 3 tool calls, 34 s, $0.67."
+          },
+          {
+            "kind": "cmd",
+            "text": "Which profiles got the new endpoint, in what order, and at what times?"
+          },
+          {
+            "kind": "call",
+            "name": "get_transitions",
+            "args": "video=\"v2/grouponly-100\", t_a=122, t_b=152",
+            "results": [
+              "T42   f41→f42, 121.1–123.5 s   \"The user switched browser tabs — clicking back to the 'Add endpoint' tab showing the EU01 Traffic Manager profile.\"   …"
+            ]
+          },
+          {
+            "kind": "answer",
+            "lines": [
+              "Three profiles received the new AFDEndpoint during the video, in this order:",
+              "    # · Profile · Add clicked · Evidence",
+              "    1 · tm-profile-ap · 61.0 to 64.0 s · T22, submitted: yes, confidence 0.93",
+              "    2 · tm-profile-EU · not captured; between 125.6 s and 132.2 s · T43 (form complete, unsubmitted at 125.6 s), T45 (saved state visible)",
+              "    3 · tm-profile-NA · 147.5 to 148.0 s · T51 and T52, both submitted: yes"
+            ]
+          },
+          {
+            "kind": "meta",
+            "text": "2 turns, 1 tool calls, 36 s, $0.68."
+          },
+          {
+            "kind": "cmd",
+            "text": "Did each of those additions succeed? How do you know?"
+          },
+          {
+            "kind": "call",
+            "name": "get_frame",
+            "args": "video=\"v2/grouponly-100\", frame=22, image=true",
+            "results": [
+              "Frame 22, t=63.97–63.97s. Description in force: … A green-check toast in the top right reports that configuration changes were saved successfully, with a close X …   [frame image]"
+            ]
+          },
+          {
+            "kind": "call",
+            "name": "get_frame",
+            "args": "video=\"v2/grouponly-100\", frame=45, image=true",
+            "results": [
+              "Frame 45, t=132.17–132.17s. Description in force: … The endpoint list shows two rows: eu.endpoint, Enabled, Degraded, external endpoint, weight 100, and AFDEndpoint, Disabl…   [frame image]"
+            ]
+          },
+          {
+            "kind": "call",
+            "name": "get_frame",
+            "args": "video=\"v2/grouponly-100\", frame=52, image=true",
+            "results": [
+              "Frame 52, t=151.67–151.67s. Description in force: … the Azure portal page for the Traffic Manager profile tm-profile-NA, on its Endpoints blade …   [frame image]"
+            ]
+          },
+          {
+            "kind": "answer",
+            "lines": [
+              "Yes, all three saved. In each case the portal showed the profile-specific success toast and the endpoint table went from one row to two, with the new AFDEndpoint row present. I looked at the three post-save frames myself.",
+              "",
+              "**tm-profile-ap** · frame 22, 64.0 s · toast \"Saved Traffic Manager profile changes\" / \"Successfully saved configuration changes to Traffic Manager profile 'tm-profile-ap'\" (22:b55, b58, b60) · new row AFDEndpoint, Disabled, Disabled, External endpoint, weight 1 (22:b91, b89, b93) · \"Showing 1 - 2 of 2 results.\" (22:b112), up from 1 of 1 at frame 21 (21:b127)",
+              "**tm-profile-EU** · frame 45, 132.2 s · same toast naming 'tm-profile-EU' (45:b61, b64, b66) · AFDEndpoint, Disabled, Disabled, External endpoint, weight 1 (45:b98, b97, b99) · 2 of 2 (45:b119), up from the single eu.endpoint row at T36",
+              "**tm-profile-NA** · frame 52, 151.7 s · same toast naming 'tm-profile-NA' (52:b62, b65, b67) · AFDEndpoint, Disabled, Disabled, External endpoint, weight 1 (52:b96, b97) · 2 of 2 (52:b118), up from 1 of 1 at frame 50 (50:b130)",
+              "",
+              "**Saved, but disabled.** Every new row reads Disabled with weight 1, matching the unchecked Enable Endpoint box. The additions took effect, but the endpoint receives no traffic in this state, and nothing in the video enables it."
+            ]
+          },
+          {
+            "kind": "meta",
+            "text": "4 turns, 3 tool calls, 33 s, $0.58."
+          }
+        ]
+      },
+      "caption": "An assistant that never watched the session asks over Scry's MCP server: questions 4 to 6 of 16",
+      "voice": "They ask, over Scry's MCP server: one conversation, sixteen questions in a row. Not one wrong answer. Not one invented fact."
+    },
+    {
+      "id": "accuracy",
+      "visual": {
+        "kind": "card",
+        "tiles": [
+          {
+            "value": "18 of 21",
+            "label": "Scry",
+            "color": "blue"
+          },
+          {
+            "value": "12 of 21",
+            "label": "Gemini video-to-text",
+            "color": "orange"
+          }
+        ],
+        "note": "a separate test: the same 21 questions, asked one at a time of Scry and of Gemini, one blind judge",
+        "listHeading": "the 21 questions",
+        "list": [
+          "What is the full hostname of the highlighted (selected) Front Door endpoint…",
+          "How does the KQL query in the FRONTDOOR-A Logs blade at the end of the video differ…",
+          "When does the \"Saved Traffic Manager profile changes\" notification appear…",
+          "When the Microsoft \"Pick an account\" sign-in dialog is shown, how many accounts…",
+          "Does the presenter delete an endpoint from any Traffic Manager profile…",
+          "What is this video about, overall? Give me the one-paragraph version.",
+          "Walk me through what the person did, step by step, with the time each step started.",
+          "What was the very first thing on screen, and what was the person doing there?",
+          "You said an endpoint was added. What exactly was entered in that form…",
+          "Which profiles got the new endpoint, in what order, and at what times?",
+          "Did each of those additions succeed? How do you know?",
+          "Where did the hostname that was pasted into the form come from?…",
+          "Was there any sign-in or account prompt during the session? What was chosen?",
+          "Near the end the person ran a query. What was the exact query text, line by line…",
+          "Did the query change while they worked on it? What changed?",
+          "Did the person use any application other than the browser? When, and for what?",
+          "Did anything go wrong, fail, or get deleted during the session?",
+          "Did the person create any new profile, or only change existing ones?",
+          "How long did the whole task take, and where did the person spend the most time?",
+          "If I wanted to reproduce what the person did, list every exact value I would need…",
+          "Is there anything about this session that the record cannot tell me?"
+        ],
+        "_source": "the 5 draft questions of docs/ground-truth/holdout-questions.md and the 16 of docs/presentation/mcp-discovery.md, each shown verbatim up to the ellipsis"
+      },
+      "caption": "A separate test: Scry 18 of 21 · Gemini video-to-text 12 of 21, one question at a time, one blind judge",
+      "voice": "In a separate test, Gemini's new video-to-text, asked twenty-one questions about this session one at a time, got twelve right. It rewrote a hostname and invented a query filter. Scry got eighteen, every string exact."
+    },
+    {
+      "id": "cost",
+      "visual": {
+        "kind": "card",
+        "tiles": [
+          {
+            "value": "about 75¢",
+            "label": "to index this session",
+            "color": "orange"
+          }
+        ],
+        "note": "open 27B model",
+        "lines": [
+          "The index is plain, hierarchical text.",
+          "The video is never needed again."
+        ]
+      },
+      "caption": "Index once, ask forever",
+      "voice": "Indexing this session cost about seventy-five cents on an open model. The index is plain, hierarchical text; the video is never needed again. Index once, ask forever."
+    },
+    {
+      "id": "stages-read",
+      "visual": {
+        "kind": "timelapse",
+        "dir": "stages/read",
+        "from": 12,
+        "to": 31,
+        "pad": 2,
+        "width": 1280,
+        "height": 675,
+        "layout": "full"
+      },
+      "caption": "1. Read: OCR boxes on every piece of text, full resolution",
+      "voice": "First it reads every piece of text on every frame at full resolution."
+    },
+    {
+      "id": "stages-track",
+      "visual": {
+        "kind": "timelapse",
+        "dir": "stages/track",
+        "from": 12,
+        "to": 31,
+        "pad": 2,
+        "width": 1280,
+        "height": 675,
+        "layout": "full"
+      },
+      "caption": "2. Track: what appeared, changed or vanished between frames; every text gets a lifetime",
+      "voice": "Then it tracks what appeared, changed or vanished, so every text has a lifetime."
+    },
+    {
+      "id": "stages-annotate",
+      "visual": {
+        "kind": "timelapse",
+        "dir": "stages/annotate",
+        "from": 12,
+        "to": 31,
+        "pad": 2,
+        "width": 1280,
+        "height": 675,
+        "layout": "full"
+      },
+      "caption": "3. Label: windows, popups, and which label goes with which value",
+      "voice": "Then a model labels windows, popups, and which label goes with which value."
+    },
+    {
+      "id": "stages-interpret",
+      "visual": {
+        "kind": "timelapse",
+        "dir": "stages/interpret",
+        "from": 12,
+        "to": 31,
+        "pad": 2,
+        "width": 1280,
+        "height": 675,
+        "layout": "full"
+      },
+      "caption": "4. Interpret: what each change did, and whether it was submitted",
+      "voice": "Then it records what each change did, and whether it was submitted."
+    },
+    {
+      "id": "hierarchy",
+      "visual": {
+        "kind": "image",
+        "src": "index-hierarchy.png",
+        "highlights": [
+          {
+            "rect": [
+              0.155,
+              0.622,
+              0.82,
+              0.169
+            ],
+            "from": 0.2,
+            "until": 0.32,
+            "color": "blue"
+          },
+          {
+            "rect": [
+              0.155,
+              0.556,
+              0.82,
+              0.04
+            ],
+            "from": 0.33,
+            "until": 0.42,
+            "color": "orange"
+          },
+          {
+            "rect": [
+              0.155,
+              0.484,
+              0.82,
+              0.058
+            ],
+            "from": 0.43,
+            "until": 0.57,
+            "color": "orange"
+          },
+          {
+            "rect": [
+              0.155,
+              0.351,
+              0.82,
+              0.071
+            ],
+            "from": 0.58,
+            "until": 0.65,
+            "color": "blue"
+          },
+          {
+            "rect": [
+              0.155,
+              0.271,
+              0.82,
+              0.065
+            ],
+            "from": 0.66,
+            "until": 0.73,
+            "color": "blue"
+          },
+          {
+            "rect": [
+              0.155,
+              0.16,
+              0.82,
+              0.076
+            ],
+            "from": 0.74,
+            "until": 0.86,
+            "color": "orange"
+          }
+        ]
+      },
+      "caption": "One text-based index, six levels",
+      "voice": "All of it becomes one text-based index at six levels: every text, every frame, every change and what it meant, steps, sections, the whole session. Search at any level; every entry cites its frames."
+    },
+    {
+      "id": "close",
+      "visual": {
+        "kind": "close",
+        "lines": [
+          "Plugs into GitHub Copilot and Claude Code over MCP.",
+          "Screen recordings you can search."
+        ]
+      },
+      "caption": "github.com/harrisonogle/scry",
+      "voice": "It plugs into GitHub Copilot and Claude Code over MCP. Scry. Screen recordings you can search."
+    }
+  ],
+  "voiceTempo": 1.0,
+  "voiceName": "Umbriel"
+}

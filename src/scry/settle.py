@@ -6,7 +6,7 @@ from typing import Callable
 
 import numpy as np
 
-from scry.config import Stage1Config
+from scry.config import DecodeConfig
 from scry.detect import (BlinkTracker, ChurnTracker, Component, change_map, components, iou, is_bar, reduce_2x2,
                        scale_params, trigger)
 from scry.schemas import BBox
@@ -28,7 +28,7 @@ class Emission:
 class SettleMachine:
     """§7.3 settle state machine over full-resolution grayscale frames; detection at full or half resolution (§7.2)."""
 
-    def __init__(self, cfg: Stage1Config, fps: float, shape: tuple[int, int], downsample: int = 1,
+    def __init__(self, cfg: DecodeConfig, fps: float, shape: tuple[int, int], downsample: int = 1,
                  on_emit: Callable[[Emission], None] | None = None):
         self.d, cp, bp = scale_params(cfg.detect, cfg.churn, cfg.blink, downsample)
         self.S = cfg.settle.still_s

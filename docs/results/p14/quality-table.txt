@@ -1,0 +1,48 @@
+runs 6 box hashes Counter({'b3f41eea16': 4, '6372cb6cee': 2}) targets identical: True
+
+run | cont/rec | popups | unassigned | repairs (kinds) | contdiff% vs r1,r2 | links run/pair/record | relinked | pairs-repro% vs r1,r2 | runs-repro% vs r1,r2 | off-row pairs (dy>12) [frames] | run jumps | pairs in neither ids100 ref | of which gap>150px | max pair gap
+smoke-ids100-r1 | 1.45 | 2 | 0 | 0 {} | -,0.0 | 8/40/6 | 0 | -,97.4 | -,88.9 | 0 {} | 0 | 0 | 0 | 144
+smoke-ids100-r2 | 1.45 | 2 | 0 | 0 {} | 0.0,- | 9/39/6 | 0 | 95.0,- | 100.0,- | 0 {} | 0 | 0 | 0 | 183
+smoke-plain-r1 | 1.45 | 2 | 0 | 1 {'link_malformed': 1} | 0.0,0.0 | 9/39/6 | 0 | 95.0,97.4 | 100.0,100.0 | 0 {} | 0 | 1 | 0 | 144
+smoke-plain-r2 | 1.45 | 2 | 0 | 0 {} | 0.4,0.4 | 8/40/6 | 0 | 92.5,94.9 | 87.5,88.9 | 1 {154: 1} | 0 | 3 | 1 | 550
+      OFFROW (154, (218, 332), 'Namespaces', '=>', 'Authentication and Author')
+      FARNEWPAIR (154, (218, 332), 'Namespaces', '=>', 'Authentication and Author')
+smoke-boxtext-r1 | 1.45 | 2 | 0 | 2 {'link_already_linked': 2} | 0.0,0.0 | 9/36/6 | 0 | 90.0,92.3 | 100.0,88.9 | 0 {} | 0 | 0 | 0 | 144
+smoke-boxtext-r2 | 1.45 | 2 | 0 | 1 {'link_already_linked': 1} | 0.0,0.0 | 8/39/6 | 0 | 97.5,97.4 | 100.0,88.9 | 0 {} | 0 | 0 | 0 | 144
+
+terminal targets (both ids100 refs agree): 9 ; refs disagree on 0
+run | term boxes in a terminal window | term frames with a terminal listed | false-terminal | records with 0 windows | tooltip149 | tooltip151 | app vocab (kind,app) top
+smoke-ids100-r1 | 9/9 | 3/3 | 0 | 0 | OWN-POPUP ['tooltip: Cloud Shell'] | OWN-POPUP ['tooltip: Administrator: PowerShell 7-preview (x64)'] | [(('window', 'Microsoft Edge'), 6), (('window', 'PowerShell'), 3), (('window', 'Web browser'), 3), (('window', 'Web browser — Microsoft Azure portal'), 1)]
+smoke-ids100-r2 | 9/9 | 3/3 | 0 | 0 | OWN-POPUP ['tooltip: Cloud Shell'] | OWN-POPUP ['tooltip: Administrator: PowerShell 7-preview (x64)'] | [(('window', 'Microsoft Edge'), 6), (('window', 'PowerShell'), 3), (('window', 'Web browser'), 3), (('window', 'Microsoft Azure portal'), 1)]
+smoke-plain-r1 | 9/9 | 3/3 | 0 | 0 | OWN-POPUP ['tooltip: Cloud Shell'] | OWN-POPUP ['tooltip: Administrator: PowerShell 7-preview (x64)'] | [(('window', 'Microsoft Edge'), 7), (('window', 'PowerShell'), 3), (('window', 'Microsoft Azure portal'), 1), (('window', 'Presentation'), 1)]
+smoke-plain-r2 | 9/9 | 3/3 | 1 | 0 | OWN-POPUP ['tooltip: Cloud Shell'] | OWN-POPUP ['tooltip: Administrator: PowerShell 7-preview (x64)'] | [(('window', 'Microsoft Edge'), 8), (('window', 'PowerShell'), 3), (('window', 'Web browser - Microsoft Azure portal'), 1), (('window', 'Presentation'), 1)]
+      false term boxes: [(147, 'b38', 'j.io')]
+smoke-boxtext-r1 | 9/9 | 3/3 | 0 | 0 | OWN-POPUP ['tooltip: Cloud Shell'] | OWN-POPUP ['tooltip: Administrator: PowerShell 7-preview (x64)'] | [(('window', 'Microsoft Edge'), 7), (('window', 'PowerShell'), 3), (('window', 'Microsoft Azure portal'), 1), (('window', 'Presentation'), 1)]
+smoke-boxtext-r2 | 9/9 | 3/3 | 0 | 0 | OWN-POPUP ['tooltip: Cloud Shell'] | OWN-POPUP ['tooltip: Administrator: PowerShell 7-preview (x64)'] | [(('window', 'Microsoft Edge'), 6), (('window', 'PowerShell'), 3), (('window', 'Web browser'), 3), (('window', 'Microsoft Azure portal'), 1)]
+
+FRAME 150 pairs of 28
+smoke-ids100-r1: pairs in force 29 correct 28 partial 0 wrong 1 missing 0
+    WRONG  AKS1-KodeKloudApp  =>  Kubernetes service
+smoke-ids100-r2: pairs in force 29 correct 28 partial 0 wrong 1 missing 0
+    WRONG  Activity log  =>  Resource group : RG1-KodeKloud-AKS
+smoke-plain-r1: pairs in force 28 correct 28 partial 0 wrong 0 missing 0
+smoke-plain-r2: pairs in force 28 correct 28 partial 0 wrong 0 missing 0
+smoke-boxtext-r1: pairs in force 27 correct 27 partial 0 wrong 0 missing 1
+    MISSING  Application Gateway ingress + controller  =>  Not enabled
+smoke-boxtext-r2: pairs in force 28 correct 28 partial 0 wrong 0 missing 0
+
+DESCRIPTIONS mentioning the mechanism
+smoke-ids100-r1 0 [] no-description []
+smoke-ids100-r2 0 [] no-description []
+smoke-plain-r1 0 [] no-description []
+smoke-plain-r2 0 [] no-description []
+smoke-boxtext-r1 0 [] no-description []
+smoke-boxtext-r2 0 [] no-description []
+
+COST  run | version | calls | $/frame | input tok/call (incl. cache) | output tok/call
+smoke-ids100-r1 | annotate-v4+grouponly | 11 | 0.0570 | 8837 | 1059
+smoke-ids100-r2 | annotate-v4+grouponly | 11 | 0.0571 | 8837 | 1062
+smoke-plain-r1 | annotate-v4+grouponly | 11 | 0.0699 | 8837 | 1068
+smoke-plain-r2 | annotate-v4+grouponly | 11 | 0.0692 | 8837 | 1041
+smoke-boxtext-r1 | annotate-v4+grouponly+boxtext | 11 | 0.0732 | 10072 | 955
+smoke-boxtext-r2 | annotate-v4+grouponly+boxtext | 11 | 0.0719 | 10072 | 899

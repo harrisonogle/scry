@@ -1,7 +1,7 @@
 import numpy as np
 
 from scry.config import BlinkParams, ChurnParams, DetectParams
-from scry.detect import BlinkTracker, ChurnTracker, Component, change_map, components, is_bar, trigger
+from scry.detect import BlinkTracker, ChurnTracker, Component, change_map, components, is_bar, label_components, trigger
 
 
 def glyph(img, x, y, w=6, h=10, v=255):
@@ -113,3 +113,22 @@ def test_reduce_2x2_keeps_single_pixel_strokes():
     m[1, 3] = True
     r = reduce_2x2(m)
     assert r.shape == (3, 4) and r[0, 1] and r.sum() == 1
+
+
+def test_label_components_agrees_with_components():
+    prev = np.zeros((60, 160), np.uint8)
+    cur = prev.copy()
+    cur[20:30, 40:41] = 255
+    cur[20:30, 100:106] = 255
+    for x in (5, 30, 55):
+        cur[10, x] = 40
+    changed = change_map(prev, cur, 12)
+    labels, comps = label_components(changed, 8)
+    assert comps == components(changed, 8) == [Component(10, (40, 20, 41, 30)), Component(60, (100, 20, 106, 30))]
+    assert (labels == 1).sum() == 10 and (labels == 2).sum() == 60
+    assert labels[10, 5] == 0 and labels[19, 39] == 0 and labels.max() == 2 and labels.dtype == np.int32
+    noise = prev.copy()
+    for x in (5, 30, 55):
+        noise[10, x] = 40
+    labels, comps = label_components(change_map(prev, noise, 12), 8)
+    assert comps == [] and labels.shape == (60, 160) and not labels.any()

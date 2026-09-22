@@ -3,10 +3,13 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from scry.jsonl import read_jsonl, sha256_file
-from scry.schemas import (FocusRecord, FrameRecord, Interpretation, OcrFrame, OutlineChapter, PerceptionRecord,
-                        Stage1Record, Transition)
+from scry.schemas import Annotation, Change, Frame, FrameBoxes, HierNode, Interpretation, Lifetime, OutlineChapter
+
+if TYPE_CHECKING:
+    from scry.annotate.join import Labels
 
 
 class Run:
@@ -15,18 +18,17 @@ class Run:
         self.frames_dir = self.root / "frames"
         self.overlays_dir = self.root / "overlays"
         self.cache_dir = self.root / "cache"
-        self.stage1 = self.root / "stage1.jsonl"
-        self.ocr = self.root / "ocr.jsonl"
-        self.perception = self.root / "perception.jsonl"
         self.frames = self.root / "frames.jsonl"
-        self.transitions = self.root / "transitions.jsonl"
-        self.focus = self.root / "focus.jsonl"
+        self.boxes = self.root / "boxes.jsonl"
+        self.changes = self.root / "changes.jsonl"
+        self.lifetimes = self.root / "lifetimes.jsonl"
+        self.annotations = self.root / "annotations.jsonl"
         self.interpretations = self.root / "interpretations.jsonl"
         self.steps = self.root / "steps.jsonl"
         self.sections = self.root / "sections.jsonl"
         self.video = self.root / "video.json"
-        self.outline = self.root / "outline.json"
         self.index_db = self.root / "index.sqlite"
+        self.outline = self.root / "outline.json"
         self.manifest = self.root / "manifest.json"
         self.batches = self.root / "batches.json"
         for d in (self.root, self.frames_dir, self.overlays_dir, self.cache_dir):
@@ -45,7 +47,10 @@ class Run:
         m.update(kv)
         self.manifest.write_text(json.dumps(m, indent=2, sort_keys=True, default=str))
 
-    def inputs_hash(self, inputs: list[Path]) -> str:
+    @staticmethod
+    def inputs_hash(inputs: list[Path]) -> str:
+        """What a stage's `inputs` entry holds for these files; of the paths alone, so a directory that must not be
+        opened as a Run (a subset's source) can be checked against its manifest."""
         parts = [f"{p.name}:{sha256_file(p) if p.exists() else 'missing'}" for p in inputs]
         return "|".join(parts)
 
@@ -60,29 +65,41 @@ class Run:
         self.manifest.write_text(json.dumps(m, indent=2, sort_keys=True, default=str))
 
     # ---- loaders (§10.7) ----
-    def load_stage1(self) -> list[Stage1Record]:
-        return read_jsonl(self.stage1, Stage1Record)
+    def load_frames(self) -> list[Frame]:
+        return read_jsonl(self.frames, Frame)
 
-    def load_ocr(self) -> list[OcrFrame]:
-        return read_jsonl(self.ocr, OcrFrame)
+    def load_boxes(self) -> list[FrameBoxes]:
+        return read_jsonl(self.boxes, FrameBoxes)
 
-    def load_perception(self) -> list[PerceptionRecord]:
-        return read_jsonl(self.perception, PerceptionRecord)
+    def load_changes(self) -> list[Change]:
+        return read_jsonl(self.changes, Change)
 
-    def load_frames(self) -> list[FrameRecord]:
-        frames = read_jsonl(self.frames, FrameRecord)
-        focus = {f.frame: f for f in read_jsonl(self.focus, FocusRecord)}
-        for fr in frames:
-            f = focus.get(fr.frame)
-            if f is not None:
-                fr.focused_region, fr.focused_conf, fr.focused_signals = f.focused_region, f.focused_conf, f.focused_signals
-        return frames
+    def load_lifetimes(self) -> list[Lifetime]:
+        return read_jsonl(self.lifetimes, Lifetime)
 
-    def load_transitions(self) -> list[Transition]:
-        return read_jsonl(self.transitions, Transition)
+    def load_annotations(self) -> list[Annotation]:
+        return read_jsonl(self.annotations, Annotation)
+
+    def load_labels(self) -> Labels | None:
+        """The joined view of annotations.jsonl (scry.annotate.join.Labels): labels per box, frame and lifetime, joined
+        onto the measured records on read. None when annotations.jsonl is absent or holds no record."""
+        annotations = self.load_annotations()
+        if not annotations:
+            return None
+        from scry.annotate.join import build_labels
+        return build_labels(annotations, self.load_boxes(), self.load_lifetimes())
 
     def load_interpretations(self) -> dict[str, Interpretation]:
-        return {i.id: i for i in read_jsonl(self.interpretations, Interpretation)}
+        return {r.id: r for r in read_jsonl(self.interpretations, Interpretation)}
+
+    def load_steps(self) -> list[HierNode]:
+        return read_jsonl(self.steps, HierNode)
+
+    def load_sections(self) -> list[HierNode]:
+        return read_jsonl(self.sections, HierNode)
+
+    def load_video(self) -> HierNode | None:
+        return HierNode.model_validate_json(self.video.read_text()) if self.video.exists() else None
 
     def load_outline(self) -> list[OutlineChapter]:
         if not self.outline.exists():

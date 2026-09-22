@@ -1,0 +1,290 @@
+frames 12-33: 22 asked; local completed 22 [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]; failed 0 []
+box ids identical on completed frames: True
+targets (api, local, common) per frame: {12: (70, 149, 70), 13: (8, 8, 8), 14: (23, 23, 23), 15: (8, 8, 8), 16: (25, 25, 25), 17: (22, 22, 22), 18: (38, 38, 38), 19: (15, 15, 15), 20: (2, 2, 2), 21: (2, 2, 2), 22: (18, 18, 18), 23: (47, 47, 47), 24: (28, 28, 28), 25: (15, 15, 15), 26: (71, 71, 71), 27: (111, 111, 111), 28: (8, 8, 8), 29: (6, 6, 6), 30: (3, 3, 3), 31: (18, 18, 18), 32: (20, 20, 20), 33: (21, 21, 21)}
+
+== container placement (API targets that are also local targets; both runs, completed frames only)
+container differs: 20 of 579 targets = 3.5%  per frame {12: 0, 13: 0, 14: 2, 15: 0, 16: 0, 17: 2, 18: 6, 19: 0, 20: 1, 21: 0, 22: 0, 23: 3, 24: 0, 25: 2, 26: 0, 27: 1, 28: 0, 29: 1, 30: 0, 31: 0, 32: 0, 33: 2}
+containers per record: api 1.91 local 1.41
+popups: api 12 local 9
+unassigned: api 6 local 0
+  f12: api [('window', 'Microsoft Edge', 'Azure portal – tm-profile-ap Traffic Ma')]
+       27b [('window', 'Web browser', 'Microsoft Azure')]
+  f13: api [('window', 'Microsoft Edge', 'Azure portal - tm-profile-ap | Endpoint')]
+       27b [('window', 'Web browser', 'Microsoft Azure portal')]
+  f14: api [('window', 'Microsoft Edge', 'tm-profile-ap | Endpoints - Microsoft A'), ('window', 'Windows Shell', 'Taskbar')]
+       27b [('window', 'Web browser', 'Microsoft Azure')]
+  f15: api [('window', 'Microsoft Edge', 'Azure portal - tm-profile-ap | Endpoint'), ('window', 'Windows', 'Desktop'), ('popup', 'Microsoft Edge', 'Add endpoint panel')]
+       27b [('window', 'Web browser', 'Microsoft Azure portal'), ('popup', 'Web browser', 'Add endpoint')]
+  f16: api [('window', 'Microsoft Edge', 'Azure portal — tm-profile-ap | Endpoint'), ('popup', 'Microsoft Edge', 'Add endpoint blade')]
+       27b [('window', 'Web browser', 'Microsoft Azure portal'), ('popup', 'Web browser', 'Add endpoint')]
+  f17: api [('window', 'Microsoft Edge', 'tm-profile-AU | Endpoints - Azure p'), ('window', 'Windows shell', 'Desktop and taskbar')]
+       27b [('window', 'Web browser', 'Microsoft Azure')]
+  f18: api [('window', 'Microsoft Edge', 'Azure portal - tm-profile-ap | Endpoint'), ('popup', 'Microsoft Edge', 'Add endpoint blade'), ('popup', 'Microsoft Edge', 'Target resource type dropdown')]
+       27b [('window', 'Web browser', 'Microsoft Azure'), ('popup', 'Web browser', 'Add endpoint')]
+  f19: api [('window', 'Microsoft Edge', 'Azure portal - tm-profile-ap | Endpoint'), ('popup', 'Microsoft Edge', 'Add endpoint panel')]
+       27b [('window', 'Web browser', 'Microsoft Azure portal'), ('popup', 'Web browser', 'Add endpoint')]
+  f20: api [('window', 'Microsoft Edge', 'Azure portal - tm-profile-ap | Endpoint'), ('popup', 'Azure portal', 'Add endpoint')]
+       27b [('window', 'Web browser', 'Microsoft Azure portal')]
+  f21: api [('window', 'Microsoft Edge', 'Azure portal - tm-profile-ap | Endpoint'), ('popup', 'Microsoft Edge', 'Add endpoint')]
+       27b [('window', 'Web browser', 'Microsoft Azure'), ('popup', 'Web browser', 'Add endpoint')]
+  f22: api [('window', 'Microsoft Edge', 'tm-profile-ap | Endpoints - Azure porta'), ('popup', 'Microsoft Edge', 'Notification: Saved Traffic Manager profile c')]
+       27b [('window', 'Web browser', 'Microsoft Azure'), ('popup', 'Web browser', 'Saved Traffic Manager profile changes')]
+  f23: api [('window', 'Microsoft Edge', 'tm-profile-ap | Endpoints - Azure porta'), ('popup', 'Microsoft Edge', 'Azure search dropdown'), ('popup', 'Microsoft Edge', 'Saved Traffic Manager profile changes notific'), ('window', 'Windows', 'Taskbar')]
+       27b [('window', 'Web browser', 'Microsoft Azure'), ('popup', 'Web browser', 'Search panel'), ('popup', 'Web browser', 'Saved Traffic Manager profile changes')]
+  f24: api [('window', 'Microsoft Edge', 'Azure portal — tm-profile-ap | Endpoint'), ('popup', 'Microsoft Edge', 'Azure global search results')]
+       27b [('window', 'Web browser', 'Microsoft Azure portal'), ('popup', 'Web browser', 'Global search results')]
+  f25: api [('window', 'Microsoft Edge', 'tm-profile-ap | Endpoints - Azure porta'), ('window', 'Windows', 'Desktop')]
+       27b [('window', 'Web browser', 'Microsoft Azure')]
+  f26: api [('window', 'Microsoft Edge', 'Home - Microsoft Azure portal')]
+       27b [('window', 'Web browser', 'Microsoft Azure')]
+  f27: api [('window', 'Microsoft Edge', 'Network foundation | Traffic managers - Azure')]
+       27b [('window', 'Web browser', 'Microsoft Azure portal')]
+  f28: api [('window', 'Microsoft Edge', 'Network foundation | Traffic managers - Azure')]
+       27b [('window', 'Web browser', 'Microsoft Azure')]
+  f29: api [('window', 'Microsoft Edge', 'Network foundation | Traffic managers - Azure'), ('window', 'Windows', 'Desktop'), ('popup', 'Microsoft Edge', 'tooltip: tm-profile-ap')]
+       27b [('window', 'Web browser', 'Microsoft Azure')]
+  f30: api [('window', 'Microsoft Edge', 'Network foundation | Traffic managers - Azure'), ('window', 'Windows', 'Desktop')]
+       27b [('window', 'Web browser', 'Microsoft Azure')]
+  f31: api [('window', 'Microsoft Edge', 'Network foundation | Traffic managers - Micro'), ('window', 'Windows', 'Desktop')]
+       27b [('window', 'Web browser', 'Microsoft Azure')]
+  f32: api [('window', 'Microsoft Edge', 'Network foundation | Traffic managers - Micro')]
+       27b [('window', 'Web browser', 'Microsoft Azure')]
+  f33: api [('window', 'Microsoft Edge', 'Sign in to your account - Microsoft Edge')]
+       27b [('window', 'Web browser', 'Microsoft Edge')]
+
+== links (records of the completed frames)
+pair: api 41 local 39 reproduced 33 = 80.5% of the API's; local extra (not in API record) 6
+run: api 26 local 96 reproduced 21 = 80.8% of the API's; local extra (not in API record) 75
+record: api 36 local 49 reproduced 17 = 47.2% of the API's; local extra (not in API record) 32
+pairs in force per frame (labels resolved through lifetimes, both runs):
+  api 53 local 44 common 38 = 71.7% of the API's in-force pairs
+API pairs (record-level) the local did not make:
+   f12  tm-profile-ap  =>  Traffic Manager profile
+   f16  Health Checks * ①  =>  Enable
+   f18  Health Checks * ①  =>  Enable
+   f18  Add endpoint  =>  tm-profile-ap
+   f20  Fully-qualified domain name (F + address *  =>  FRONTDOOR-A-cqhefshkhrgmgqf9..
+   f27  Showing 1 - 12 of 12. Display   =>  au...
+   f33  the account holder (user)  =>  user@example.com
+   f33  the account holder  =>  user@example.com
+local pairs (record-level) not in the API record:
+   f13  ☆  =>  ☆
+   f13  Home tm-profile-ap  =>  ap01-pemtIs-tm-profile | Endpoint
+   f17  Status ↑↓  =>  Online
+   f17  Weight ↑↓  =>  100
+   f18  Custom Header settings ①  =>  Configure in this format: + host:contoso.com,customheader:
+   f25  Monitor Status ↑↓  =>  Degraded
+
+== repairs, validity, tokens
+api: repairs 0 {}; label clashes 40; relinked (whole run) 6
+27b: repairs 70 {'link_malformed': 2, 'link_already_linked': 68}; label clashes 40; relinked (whole run) 35
+local cache: 22 annotate calls, 22 parsed (valid JSON against the schema), errors: []
+
+== cost for the completed frames (annotate stage only, both runs)
+api  usage {'input_tokens': 139757, 'output_tokens': 28318, 'cache_read_input_tokens': 54630, 'cache_creation_input_tokens': 12140}  $1.5099 = $0.0686/frame (Opus 5 list: $5.0/M in, $25.0/M out, $0.5/M cache read, cache write x1.25)
+27b  usage {'input_tokens': 164310, 'output_tokens': 21412, 'cache_read_input_tokens': 0, 'cache_creation_input_tokens': 0}  $0.1332 = $0.0061/frame at OpenRouter Qwen3.8-27B $0.42/M prompt, $3.0/M completion
+ratio api/27b = 11.3x
+27b per call: prompt mean 7469 (7157-8064), completion mean 973 (225-3958)
+api per call: prompt (incl. cached) mean 9388 (9186-9756), completion mean 1287 (515-3492)
+
+== popups: the toast (f22, f23), the Add endpoint panel (f15-21), the search dropdown (f23, f24), the tooltip (f29)
+  f15: API popup boxes 4 of 8 targets -> local put 4 in a popup; local popups ['Add endpoint']; API popups ['Add endpoint panel']
+     API popup boxes: Add endpoint + × + tm-profile-ap + Loading-
+     local popup boxes: Add endpoint + × + tm-profile-ap + Loading-
+  f16: API popup boxes 23 of 25 targets -> local put 23 in a popup; local popups ['Add endpoint']; API popups ['Add endpoint blade']
+     API popup boxes: Target resource * + Type * ① + Azure endpoint + Name* + AFDEn + Enable Endpoint * + Target resource type * + Cloud service
+     local popup boxes: Target resource * + Type * ① + Azure endpoint + Name* + AFDEn + Enable Endpoint * + Target resource type * + Cloud service
+  f18: API popup boxes 26 of 38 targets -> local put 26 in a popup; local popups ['Add endpoint']; API popups ['Add endpoint blade', 'Target resource type dropdown']
+     API popup boxes: Add endpoint + × + tm-profile-ap + Type * ① + Azure endpoint + Name* + AFDEndpoint + Enable Endpoint *
+     local popup boxes: Add endpoint + × + tm-profile-ap + Type * ① + Azure endpoint + Name* + AFDEndpoint + Enable Endpoint *
+  f19: API popup boxes 12 of 15 targets -> local put 12 in a popup; local popups ['Add endpoint']; API popups ['Add endpoint panel']
+     API popup boxes: W + Weight * + 1 + Custom Header settings ① + Configure in this format: + External endpoint + Fully-qualified domain name (F + address *
+     local popup boxes: W + Weight * + 1 + Custom Header settings ① + Configure in this format: + External endpoint + Fully-qualified domain name (F + address *
+  f20: API popup boxes 1 of 2 targets -> local put 0 in a popup; local popups []; API popups ['Add endpoint']
+     API popup boxes: FRONTDOOR-A-cqhefshkhrgmgqf9..
+  f21: API popup boxes 1 of 2 targets -> local put 1 in a popup; local popups ['Add endpoint']; API popups ['Add endpoint']
+     API popup boxes: 1
+     local popup boxes: 1
+  f22: API popup boxes 4 of 18 targets -> local put 4 in a popup; local popups ['Saved Traffic Manager profile changes']; API popups ['Notification: Saved Traffic Manager profile c']
+     API popup boxes: X + Saved Traffic Manager profile  + Successfully saved configurati + Manager profile 'tm-profile-ap
+     local popup boxes: X + Saved Traffic Manager profile  + Successfully saved configurati + Manager profile 'tm-profile-ap
+  f23: API popup boxes 35 of 47 targets -> local put 35 in a popup; local popups ['Search panel', 'Saved Traffic Manager profile changes']; API popups ['Azure search dropdown', 'Saved Traffic Manager profile changes notific']
+     API popup boxes: Search history + Clear all + ap01-pe + au01 + au01-pe + FRONTDOOR-A + au- + Recent services
+     local popup boxes: × + Search history + Clear all + ap01-pe + au01 + au01-pe + FRONTDOOR-A + au-
+  f24: API popup boxes 26 of 28 targets -> local put 26 in a popup; local popups ['Global search results']; API popups ['Azure global search results']
+     API popup boxes: Q eu01- + Microsoft Entra ID (90) + All (93) + Resources (2) + Filters +4 + Resources (2) + EU01-tm-profile + Traffic Manager profile
+     local popup boxes: Q eu01- + Microsoft Entra ID (90) + All (93) + Resources (2) + Filters +4 + Resources (2) + EU01-tm-profile + Traffic Manager profile
+  f29: API popup boxes 1 of 6 targets -> local put 0 in a popup; local popups []; API popups ['tooltip: tm-profile-ap']
+     API popup boxes: tm-profile-ap
+
+== sign-in dialog, frame 33
+  api: containers [('window', 'Microsoft Edge', 'Sign in to your account - Microsoft Edge', None)]; targets 21; assigned per container Counter({'c1': 19}); unassigned ['b1', 'b75']
+     description: A maximized Edge browser window with a long row of pinned/open tabs and a bookmarks bar sits over a Windows desktop whose left edge shows icons such as Recycle Bin, PowerShell, Teams and various Azure shortcuts. The page loaded from login.microsoftonline.com shows a white centered Microsoft sign-in card with the Microsoft logo, a 'Pick an account' heading and the subtitle about continuing to Micro
+  27b: containers [('window', 'Web browser', 'Microsoft Edge', None)]; targets 21; assigned per container Counter({'c1': 21}); unassigned []
+     description: A Microsoft Edge browser window is open, displaying a Microsoft sign-in page. The page shows a 'Pick an account' dialog with two account options for 'the account holder' and a 'Use another account' button. The first account option is highlighted with a dashed border, indicating it is selected or focused. The browser has multiple tabs open, a bookmarks bar, and a taskbar is visible at the bottom of the scr
+
+== pairs in force on the dense frames (for the by-eye check): a table frame and a form frame
+  f22 api: 0 distinct pairs in force
+  f22 27b: 0 distinct pairs in force
+  f23 api: 5 distinct pairs in force
+      b130 tm-profile-ap  =>  b131 Traffic Manager profile
+      b136 AU01-tm-profile  =>  b137 Traffic Manager profile
+      b139 tm-profile-AU  =>  b140 Traffic Manager profile
+      b143 CTIPXSUCP  =>  b142 Front Door
+      b145 AU-tm-profile  =>  b146 Traffic Manager profile
+  f23 27b: 5 distinct pairs in force
+      b130 tm-profile-ap  =>  b131 Traffic Manager profile
+      b136 AU01-tm-profile  =>  b137 Traffic Manager profile
+      b139 tm-profile-AU  =>  b140 Traffic Manager profile
+      b143 CTIPXSUCP  =>  b142 Front Door
+      b145 AU-tm-profile  =>  b146 Traffic Manager profile
+  f27 api: 1 distinct pairs in force
+      b170 Showing 1 - 12 of 12. Display count:  =>  b171 au...
+  f27 27b: 0 distinct pairs in force
+  f20 api: 3 distinct pairs in force
+      b60 Add endpoint  =>  b63 tm-profile-ap
+      b67 Type * ①  =>  b74 External endpoint
+      b78 Name*  =>  b81 AFDEndpoint
+  f20 27b: 2 distinct pairs in force
+      b67 Type * ①  =>  b74 External endpoint
+      b78 Name*  =>  b81 AFDEndpoint
+  f21 api: 4 distinct pairs in force
+      b105 Weight*  =>  b107 1
+      b60 Add endpoint  =>  b63 tm-profile-ap
+      b67 Type * ①  =>  b73 External endpoint
+      b77 Name*  =>  b80 AFDEndpoint
+  f21 27b: 3 distinct pairs in force
+      b105 Weight*  =>  b107 1
+      b67 Type * ①  =>  b73 External endpoint
+      b77 Name*  =>  b80 AFDEndpoint
+  f19 api: 4 distinct pairs in force
+      b105 Weight *  =>  b107 1
+      b60 Add endpoint  =>  b63 tm-profile-ap
+      b67 Type * ①  =>  b73 External endpoint
+      b77 Name*  =>  b80 AFDEndpoint
+  f19 27b: 3 distinct pairs in force
+      b105 Weight *  =>  b107 1
+      b67 Type * ①  =>  b73 External endpoint
+      b77 Name*  =>  b80 AFDEndpoint
+  f16 api: 7 distinct pairs in force
+      b103 Target resource *  =>  b105 Choose a cloud service
+      b108 Weight*  =>  b110 1
+      b116 Custom Header settings ①  =>  b117+b119 Configure in this format: + host:contoso.com,customheader:contoso
+      b124 Health Checks * ①  =>  b125 Enable
+      b67 Type * ①  =>  b73 Azure endpoint
+      b77 Name*  =>  b80 AFDEn
+      b96 Target resource type *  =>  b98 Cloud service
+  f16 27b: 6 distinct pairs in force
+      b103 Target resource *  =>  b105 Choose a cloud service
+      b108 Weight*  =>  b110 1
+      b116 Custom Header settings ①  =>  b117+b119 Configure in this format: + host:contoso.com,customheader:contoso
+      b67 Type * ①  =>  b73 Azure endpoint
+      b77 Name*  =>  b80 AFDEn
+      b96 Target resource type *  =>  b98 Cloud service
+
+== descriptions mentioning the mechanism
+api 4 [(18, 'Enable Endpoint checkbox is ticked, and the Target resource type dropdown is open showing '), (23, 'search box at the top is focused and an overlay dropdown is open, covering the page: it'), (29, 've, partly covering the rows above, and the target resource URL appears in the status bar '), (33, 'Two account tiles with person icons are listed: the first, a work account marked as co')] no-description []
+27b 1 [(18, 'e Enable Endpoint checkbox checked, and the Target resource type dropdown expanded to show')] no-description []
+
+== record (row) and run links on the table frames 13, 14, 22, 23, 27 (record-level), both runs
+  f13 api: 0 records, 0 runs, 0 pairs in the record
+  f13 27b: 0 records, 0 runs, 2 pairs in the record
+  f14 api: 1 records, 0 runs, 0 pairs in the record
+      ROW ap.endpoint | Enabled | Degraded | External endpoint | 100   header ['Name ↑↓', 'Status ↑↓', 'Monitor Status ', 'Weight ↑↓', 'Type ↑↓']
+  f14 27b: 0 records, 10 runs, 0 pairs in the record
+      RUN tm-profile-ap | End | ×
+      RUN + Add Refresh | Delete
+      RUN 口 | Overview
+      RUN Name ↑↓ | Status ↑↓
+      RUN Monitor Status ↑↓ | Weight ↑↓
+      RUN Type ↑↓ | Diagnose and solve proble
+      RUN 0 | Enabled
+      RUN External endpoint | 100
+      RUN ap.endpoint | Degraded
+      RUN Add or remove favorites b | Showina 1 - 1 of 1 result
+  f22 api: 2 records, 1 runs, 0 pairs in the record
+      ROW ap.endpoint | Enabled | Degraded | External endpoint | 100   header ['Name ↑↓', 'Status ↑↓', 'Monitor Status ', 'Type ↑↓', 'Weight ↑↓']
+      ROW AFDEndpoint | Disabled | Disabled | External endpoint | 1   header ['Name ↑↓', 'Status ↑↓', 'Monitor Status ', 'Type ↑↓', 'Weight ↑↓']
+      RUN Successfully saved config | Manager profile 'ap01-pem
+  f22 27b: 3 records, 1 runs, 0 pairs in the record
+      ROW Name ↑↓ | Status ↑↓ | Monitor Status ↑↓ | Type ↑↓ | Weight ↑↓+0
+      ROW ap.endpoint | Enabled | Degraded | External endpoint | 100
+      ROW AFDEndpoint | Disabled | Disabled | External endpoint | 1
+      RUN Successfully saved config | Manager profile 'ap01-pem
+  f23 api: 0 records, 5 runs, 5 pairs in the record
+      RUN Kubernetes | services
+      RUN Traffic Manager | profiles
+      RUN Managed | Identities
+      RUN Resource | groups
+      RUN Virtual machine | scale sets
+  f23 27b: 0 records, 5 runs, 5 pairs in the record
+      RUN Kubernetes | Traffic Manager
+      RUN services | profiles
+      RUN Managed | Identities
+      RUN Resource | groups
+      RUN Virtual machine | scale sets
+  f27 api: 12 records, 0 runs, 1 pairs in the record
+      ROW ap-tm-profile | .. | Enabled | Weighted | tm-rg-AP.Reso | MicrosoftIntune-Prod-C   header ['Name ↑', 'Status', 'Routing Method', 'Resource Group', 'Subscription']
+      ROW ap01-tm-profile | … | Enabled | Weighted | tm-rg-AP.Reso | MicrosoftIntune-Prod-C   header ['Name ↑', 'Status', 'Routing Method', 'Resource Group', 'Subscription']
+      ROW tm-profile-ap | Enabled | Weighted | tm-rg-AP.Reso | MicrosoftIntune-Prod-C   header ['Name ↑', 'Status', 'Routing Method', 'Resource Group', 'Subscription']
+      ROW AU-tm-profile | … | Enabled | Weighted | tm-rg-AU.Reso | MicrosoftIntune-Prod-C   header ['Name ↑', 'Status', 'Routing Method', 'Resource Group', 'Subscription']
+      ROW AU01-tm-profile | Enabled | Weighted | tm-rg-AU.Reso | MicrosoftIntune-Prod-C   header ['Name ↑', 'Status', 'Routing Method', 'Resource Group', 'Subscription']
+      ROW tm-profile-AU | Enabled | Weighted | tm-rg-AU.Reso | MicrosoftIntune-Prod-C   header ['Name ↑', 'Status', 'Routing Method', 'Resource Group', 'Subscription']
+      ROW EU-tm-profile | Enabled | Weighted | tm-rg-EU.Reso | MicrosoftIntune-Prod-C   header ['Name ↑', 'Status', 'Routing Method', 'Resource Group', 'Subscription']
+      ROW EU01-tm-profile | Enabled | Weighted | tm-rg-EU.Reso | MicrosoftIntune-Prod-C   header ['Name ↑', 'Status', 'Routing Method', 'Resource Group', 'Subscription']
+      ROW tm-profile-EU | Enabled | Weighted | tm-rg-EU.Reso | MicrosoftIntune-Prod-C   header ['Name ↑', 'Status', 'Routing Method', 'Resource Group', 'Subscription']
+      ROW NA-tm-profile | … | Enabled | Weighted | tm-rg-NA.Reso | MicrosoftIntune-Prod-C   header ['Name ↑', 'Status', 'Routing Method', 'Resource Group', 'Subscription']
+      ROW NA01-tm-profile | Enabled | Weighted | tm-rg-NA.Reso | MicrosoftIntune-Prod-C   header ['Name ↑', 'Status', 'Routing Method', 'Resource Group', 'Subscription']
+      ROW tm-profile-NA | Enabled | Weighted | tm-rg-NA.Reso | MicrosoftIntune-Prod-C   header ['Name ↑', 'Status', 'Routing Method', 'Resource Group', 'Subscription']
+  f27 27b: 0 records, 51 runs, 0 pairs in the record
+      RUN HomeNetwork foundation | Network foundation | Traf
+      RUN Preview | Search
+      RUN 《 | + Create Manage view
+      RUN º Open query | Refresh ↓ Export to CSV
+      RUN Assign tags +Add to servi | ≡ Group by none 
+      RUN Overview | Filter for any field...
+      RUN Subscription equals all | + Add filter
+      RUN Resource Group equals all | Location equals all
+      RUN × | Y
+      RUN × | Virtual network
+      RUN > Private Link | Name ↑
+      RUN Status | Resource Group
+      RUN Subscription | Routing Method
+      RUN  DNS | Weighted
+      RUN Enabled | tm-rg-AP.Resourc
+      RUN MicrosoftIntune-Prod-Comm | ap-tm-profile
+      RUN .. | DNS overview
+      RUN Weighted | Enabled
+      RUN ap01-tm-profile | tm-rg-AP.Resourc
+      RUN MicrosoftIntune-Prod-Comm | …
+      RUN DNS private resolvers | Weighted
+      RUN Enabled | tm-rg-AP.Resourc
+      RUN MicrosoftIntune-Prod-Comm | Public DNS zones
+      RUN Weighted | Enabled
+      RUN AU-tm-profile | tm-rg-AU.Resourc
+      RUN MicrosoftIntune-Prod-Comm | …
+      RUN Private DNS zones | Weighted
+      RUN AU01-tm-profile | Enabled
+      RUN tm-rg-AU.Resourc | MicrosoftIntune-Prod-Comm
+      RUN Traffic managers | Weighted
+      RUN tm-profile-AU | Enabled
+      RUN tm-rg-AU.Resourc | MicrosoftIntune-Prod-Comm
+      RUN Co | DNS security policies
+      RUN Weighted | Enabled
+      RUN MicrosoftIntune-Prod-Comm | EU-tm-profile
+      RUN tm-rg-EU.Resourc | > Related services
+      RUN Weighted | EU01-tm-profile
+      RUN Enabled | tm-rg-EU.Resourc
+      RUN MicrosoftIntune-Prod-Comm | > Monitoring and manageme
+      RUN tm-profile-EU | Weighted
+      RUN Enabled | MicrosoftIntune-Prod-Comm
+      RUN tm-rg-EU.Resourc | Weighted
+      RUN NA-tm-profile | Enabled
+      RUN tm-rg-NA.Resourc | MicrosoftIntune-Prod-Comm
+      RUN … | NA01-tm-profile
+      RUN Weighted | Enabled
+      RUN tm-rg-NA.Resourc | MicrosoftIntune-Prod-Comm
+      RUN Weighted | Enabled
+      RUN MicrosoftIntune-Prod-Comm | tm-rg-NA.Resourc
+      RUN tm-profile-NA | Give feedback
+      RUN Showing 1 - 12 of 12. Dis | au...

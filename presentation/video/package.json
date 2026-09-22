@@ -1,0 +1,28 @@
+{
+  "name": "scry-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Two-minute video presentation of scry, built with Remotion; scenes and voice-over are driven by script.json",
+  "scripts": {
+    "assets": "sh ./assets.sh",
+    "voice": "sh ./voice.sh",
+    "studio": "remotion studio",
+    "render": "sh ./assets.sh && remotion render scry out/scry.mp4",
+    "stills": "node stills.mjs",
+    "table": "node stills.mjs --table"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.526",
+    "@remotion/media-utils": "4.0.526",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.526",
+    "@remotion/bundler": "4.0.526",
+    "@remotion/renderer": "4.0.526"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.0",
+    "@types/react-dom": "19.2.0",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,24 @@
+# LOCAL2: a fair second attempt for a model served on this machine, on the smoke span, group-only (the owner's
+# default scry.toml, copied to local2-scry.toml with [model] pointed at a request-rewriting proxy, proxy.py).
+# L1: transcribe=false, temperature 0, the schema's field descriptions appended to the system prompt, concurrency 1.
+# L2: L1 with the model's default temperature (1.0).  L3: L1's settings on Qwen3.5-35B-A3B-4bit.
+phase = "local2"
+source = "runs/p0"
+base_config = "/private/tmp/claude-501/-Users-harrisonogle-src-harrisonogle-agentic-escort/00000000-0000-0000-0000-000000000000/scratchpad/local2/local2-scry.toml"
+stages = ["read", "track", "annotate"]
+repeats = 1
+
+[spans.smoke]
+frames = "145-155"
+
+[axis.variant.L1]
+"model.model" = "mlx-community/Qwen3.8-27B-4bit"
+"model.base_url" = "http://127.0.0.1:8091/v1"
+
+[axis.variant.L2]
+"model.model" = "mlx-community/Qwen3.8-27B-4bit"
+"model.base_url" = "http://127.0.0.1:8092/v1"
+
+[axis.variant.L3]
+"model.model" = "mlx-community/Qwen3.5-35B-A3B-4bit"
+"model.base_url" = "http://127.0.0.1:8093/v1"
