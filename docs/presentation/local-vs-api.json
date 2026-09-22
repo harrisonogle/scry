@@ -1,22 +1,22 @@
 {
   "_comment": "Numbers for local-vs-api.png. Edit these and re-run `uv run --with matplotlib python docs/presentation/local-vs-api.py`. Every value must be copied from a committed file named in `source`; the chart prints `dataset` as its subtitle so the reader knows which video the numbers come from.",
-  "dataset": "sample video, 11 frames (the smoke span)",
-  "source": "docs/decision-ledger.md L76; docs/results/local/report.md (hosted rate); docs/results/local/second-attempt/quality-table.txt (pairs)",
+  "dataset": "a four-minute session, 22 of its 80 frames, one run each",
+  "source": "docs/results/local/session-span/stage-costs.txt (cost), holdout-22frames.txt (pairs); ledger L78",
   "api_label": "API: Opus 5",
   "local_label": "local: Qwen 3.8 27B (4-bit)\nat a hosted open-weight rate",
   "cost_per_frame": {
-    "title": "annotate, dollars per frame",
-    "api": 0.078,
-    "local": 0.005,
-    "note": "API at list price; local at OpenRouter's listed rate for the same model on 2026-09-21"
+    "title": "dollars per frame to build the index",
+    "api": 0.109,
+    "local": 0.0094,
+    "note": "API at list price from the run's records; local at OpenRouter's listed rate for the same model on 2026-09-21; whole session $9.32 measured against about $0.75 extrapolated from these 22 frames"
   },
   "pairs_reproduced_pct": {
-    "title": "reference pairs reproduced, %",
+    "title": "the API's label pairs reproduced, %",
     "api_low": 95,
     "api_high": 97,
-    "local_low": 75,
-    "local_high": 77,
-    "note": "against the API's own reference runs; the API band is its repeat-to-repeat floor (r1 against r2), the local band is one run against each reference"
+    "local_low": 80,
+    "local_high": 81,
+    "note": "local: 33 of 41 record-level pairs on these 22 frames, one run; the API band is its own repeat floor measured on the sample video, since this session has one API run"
   },
-  "caption": "Three quarters of the API's pairs for a small fraction of the price; temperature 0 and the schema's descriptions in the prompt are what got it there (ledger L76). A candidate, not a replacement."
+  "caption": "An index built end to end by the open model, for about a twelfth of the price; asked five questions about the span, it answered five of five. Four fifths of the API's label pairs; a dense twelve-row table was the one frame it lost."
 }

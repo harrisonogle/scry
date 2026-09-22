@@ -1,0 +1,9 @@
+stage | local calls | local prompt tok | local completion tok | local $ (hosted rate) | API calls | API $ (Opus 5 list) | note
+annotate | 22 | 164310 | 21412 | $0.1332 | 22 | $1.5099 | exact: the API records of frames 12-33
+interpret | 21 | 103526 | 6145 | $0.0619 | 21 | $0.6888 | exact: the API records of transitions T13-T33
+summarize | 9 | 19210 | 1180 | $0.0116 | 6.1 | $0.1996 | API apportioned by frames: 22 of 80 = x0.275 of 22 calls, $0.7259
+TOTAL | | | | $0.2068 = $0.0094/frame | | $2.3983 = $0.1090/frame | ratio API/local 11.6x over 22 frames
+index: {'by_level': {'frame': 22, 'lifetime': 626, 'section': 3, 'step': 3, 'transition': 21, 'video': 1}, 'embedder': 'none', 'nodes': 676}
+annotate manifest: {'calls': 22, 'transitions': None, 'interpreted': None, 'errors': 0, 'seconds': None, 'cost_usd': 0.0, 'usage': {'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0, 'input_tokens': 164310, 'output_tokens': 21412}, 'steps': None, 'sections': None, 'model': 'mlx-community/Qwen3.8-27B-4bit'}
+interpret manifest: {'calls': None, 'transitions': 21, 'interpreted': 21, 'errors': 0, 'seconds': None, 'cost_usd': 0.0, 'usage': {'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0, 'input_tokens': 103526, 'output_tokens': 6145}, 'steps': None, 'sections': None, 'model': 'mlx-community/Qwen3.8-27B-4bit'}
+summarize manifest: {'calls': 9, 'transitions': None, 'interpreted': None, 'errors': None, 'seconds': None, 'cost_usd': 0.0, 'usage': {'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0, 'input_tokens': 19210, 'output_tokens': 1180}, 'steps': 3, 'sections': 3, 'model': 'mlx-community/Qwen3.8-27B-4bit'}

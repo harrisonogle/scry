@@ -76,8 +76,8 @@ def main() -> None:
         ax.spines["left"].set_visible(False)
         ax.tick_params(axis="both", length=0)
 
-    fig.text(0.05, 0.955, "A local open-weight model on annotate, against the API", fontsize=36, fontweight="bold", color=INK, ha="left", va="top")
-    fig.text(0.05, 0.895, f"{d['dataset']}; group-only annotation, one run each", fontsize=24, color=INK2, ha="left", va="top")
+    fig.text(0.05, 0.955, "An open-weight model builds the index, against the API", fontsize=36, fontweight="bold", color=INK, ha="left", va="top")
+    fig.text(0.05, 0.895, f"{d['dataset']}; group-only annotation", fontsize=24, color=INK2, ha="left", va="top")
     fig.text(0.05, 0.085, "\n".join(textwrap.wrap(d["caption"], 120)), fontsize=21, color=INK, ha="left", va="bottom", linespacing=1.4)
     fig.text(0.05, 0.03, "\n".join(textwrap.wrap(f"Source: {d['source']}. {q['note']}.", 175)), fontsize=15, color=MUTED, ha="left", va="bottom", linespacing=1.4)
     fig.savefig(OUT, dpi=200)
