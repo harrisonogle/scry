@@ -25,8 +25,12 @@ stage needs `GEMINI_API_KEY` and the `outline` extra (`uv sync --extra outline`)
 
 ## Run
 
-    uv run scry run assets/create-aks-cluster-tutorial.mp4 --out runs/aks
+    uv run scry run <a screen recording>.mp4 --out runs/aks
     uv run scry ask runs/aks "what command created the cluster?"
+
+No video ships with the repository. The evaluation used a public KodeKloud tutorial on creating an AKS cluster
+(about fourteen minutes, 1080p, no audio) and a four-minute portal session recorded by the author; any screen
+recording of a terminal, editor or browser works, and `runs/` is git-ignored.
 
 The stages, in order: `decode, outline, read, track, annotate, interpret, summarize, index`; then `ask` answers a
 question over the index. `decode` and `outline` take the video and `--out`; every other stage takes the run directory
