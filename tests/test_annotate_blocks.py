@@ -138,16 +138,31 @@ def test_coords_blocks(tmp_path: Path):
 
 
 def test_coords_at_half_scale(tmp_path: Path):
+    """Below scale 1 every rectangle is in the pixels of the image sent, rounded outward as the overlay rounds, and the
+    coordinates sentence names that image and no unscaled frame (ledger L71)."""
     frames, boxes = fixture_e()
     frame_png, _ = _pngs(tmp_path)
     before = sorted(p.name for p in tmp_path.iterdir())
     half = build_blocks(frames[0], boxes[0], CallPlan(0, ("b2",)), "A", 0.5, frame_png, None, reference="coords")
     assert Image.open(io.BytesIO(base64.standard_b64decode(half[1]["source"]["data"]))).size == (64, 32)
     assert _texts(half) == ["Screenshot (frame 0, t=0.00s):",
-                            COORDS + " The image is scaled by 0.5; every coordinate is in the unscaled 128x64 frame.",
-                            "Boxes, as x0,y0,x1,y1 in reading order: 4,4,40,20; 70,4,110,20.", "Targets: 70,4,110,20.",
-                            "Return the JSON object."]  # the rectangles stay in the unscaled frame
+                            "Coordinates are pixels of the 64x32 image you are shown: top-left origin, x1 and y1 exclusive.",
+                            "Boxes, as x0,y0,x1,y1 in reading order: 2,2,20,10; 35,2,55,10.", "Targets: 35,2,55,10.",
+                            "Return the JSON object."]
+    assert not any("unscaled" in t or "128x64" in t for t in _texts(half))
     assert sorted(p.name for p in tmp_path.iterdir()) == before  # nothing written: no overlay, no scaled frame
+    # odd pixels round outward, and the animating line is in the same pixels
+    churn = fb(0, [mk("b1", 5, 5, 41, 21, "a", in_churn=True), mk("b2", 70, 4, 110, 20, "b")])
+    two_thirds = build_blocks(frames[0], churn, CallPlan(0, ("b2",)), "A", 0.67, frame_png, None, reference="coords")
+    assert Image.open(io.BytesIO(base64.standard_b64decode(two_thirds[1]["source"]["data"]))).size == (86, 43)
+    assert _texts(two_thirds)[1:5] == ["Coordinates are pixels of the 86x43 image you are shown: top-left origin, x1 and y1 exclusive.",
+                                       "Boxes, as x0,y0,x1,y1 in reading order: 3,3,28,15; 46,2,74,14.", "Targets: 46,2,74,14.",
+                                       "Boxes inside animating areas (low confidence): 3,3,28,15."]
+    # at scale 1 the turn is what it always was, byte for byte
+    full = build_blocks(frames[0], boxes[0], CallPlan(0, ("b2",)), "A", 1.0, frame_png, None, reference="coords")
+    assert _texts(full) == ["Screenshot (frame 0, t=0.00s):", COORDS,
+                            "Boxes, as x0,y0,x1,y1 in reading order: 4,4,40,20; 70,4,110,20.", "Targets: 70,4,110,20.",
+                            "Return the JSON object."]
 
 
 def test_coords_sends_no_overlay_and_no_ocr_text(tmp_path: Path):

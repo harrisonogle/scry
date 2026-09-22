@@ -81,7 +81,7 @@ async def _annotate_all(run: Run, cfg: Config, provider: VlmProvider, frames: di
         if res.parsed is None:
             return Annotation(**base, label_clashes=clashes, usage=res.usage, error=res.error)
         proposal, converted = to_proposal(ARM, res.parsed, fb.boxes, (frame.width, frame.height),
-                                          margin_px(fb.boxes, [], cfg.track.margin), a.reference)
+                                          margin_px(fb.boxes, [], cfg.track.margin), a.reference, a.scale)
         fixed = repair(proposal, plan.targets, [b.id for b in fb.boxes])
         counts = Counter(converted) + Counter(fixed.counts)
         return Annotation(**base, containers=fixed.containers, assign=fixed.assign, links=fixed.links, texts=fixed.texts,

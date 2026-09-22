@@ -303,15 +303,18 @@ def test_coords_incremental_group_only_end_to_end(tmp_path: Path):
 
 
 def test_coords_every_frame_transcribing_at_half_scale(tmp_path: Path):
+    """The user turn lists the boxes in the 64x32 image's pixels, the model answers in them, and annotations.jsonl holds
+    the same unscaled ids and records it holds at scale 1 (ledger L71)."""
     frames, boxes = fixture_e()
     by_frame = {fb.frame: fb for fb in boxes}
 
     def answer(kw: dict):
-        at = {b.id: _rect(b) for b in by_frame[call_frame(kw)].boxes}
+        at = {b.id: [v // 2 for v in _rect(b)] for b in by_frame[call_frame(kw)].boxes}  # b1 2,2,20,10; b2 35,2,55,10
+        assert f"Boxes, as x0,y0,x1,y1 in reading order: {','.join(map(str, at['b1']))}; {','.join(map(str, at['b2']))}." in _texts(kw)
         return kw["output_model"].model_validate({
             "containers": [{"id": "c1", "kind": "window", "app": "x", "name": "w", "owner": None, "covers": []}],
-            "assign": [{"rect": at["b1"], "container": "c1"}, {"rect": [70, 40, 110, 56], "container": "c1"}], "unassigned": [],
-            "runs": [], "pairs": [{"key": [at["b1"]], "value": [[72, 6, 108, 18]]}], "records": [],
+            "assign": [{"rect": at["b1"], "container": "c1"}, {"rect": [35, 20, 55, 28], "container": "c1"}], "unassigned": [],
+            "runs": [], "pairs": [{"key": [at["b1"]], "value": [[36, 3, 54, 9]]}], "records": [],
             "texts": [{"rect": at["b1"], "text": "a"}, {"rect": at["b2"], "text": "B"}], "missed": [],
             "description": f"d{call_frame(kw)}"})
 
@@ -320,12 +323,12 @@ def test_coords_every_frame_transcribing_at_half_scale(tmp_path: Path):
     kw = provider.calls[0]
     assert kw["prompt_version"] == "annotate-v4+coords+s0.5" and _image_sizes(kw) == [(64, 32)]
     assert kw["output_model"] is output_model("A", True, reference="coords") and kw["system"] == system_prompt(reference="coords")
-    assert "Coordinates are pixels of the 128x64 frame: top-left origin, x1 and y1 exclusive. The image is scaled by 0.5; " \
-           "every coordinate is in the unscaled 128x64 frame." in _texts(kw)
+    assert "Coordinates are pixels of the 64x32 image you are shown: top-left origin, x1 and y1 exclusive." in _texts(kw)
+    assert not any("unscaled" in t or "scaled by" in t for t in _texts(kw))
     r0 = run.load_annotations()[0]
     assert [(a.box, a.container) for a in r0.assign] == [("b1", "c1")] and r0.unassigned == ["b2"]
-    assert r0.repair_counts == {"rect_unplaced": 1, "unplaced": 1} and r0.repairs == 2  # 70,40,110,56 is a box height below b2
-    assert r0.links == [PairLink(key=["b1"], value=["b2"])]  # 72,6,108,18 overlaps b2: matched
+    assert r0.repair_counts == {"rect_unplaced": 1, "unplaced": 1} and r0.repairs == 2  # 35,20,55,28 is a box height below b2, scaled
+    assert r0.links == [PairLink(key=["b1"], value=["b2"])]  # 36,3,54,9 overlaps b2 in the scaled space: matched
     assert r0.texts == [TextReading(box="b1", text="a"), TextReading(box="b2", text="B")]
     assert (r0.description, r0.prompt_version, r0.label_clashes) == ("d0", "annotate-v4+coords+s0.5", 0)
     m = _entry(run)

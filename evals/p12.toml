@@ -1,0 +1,29 @@
+# P12: THE COORDS USER TURN IN THE PIXELS OF THE IMAGE SENT, at reduced scale (ledger L71: the owner's design ruling that
+# under `[annotate] reference = "coords"` the model is given the coordinates of the image it actually sees, never asked
+# to relate full-frame numbers to a shrunken image). P10's coords runs at 0.67 and 0.5 listed unscaled rectangles with
+# the sentence "the image is scaled by s; every coordinate is in the unscaled WxH frame"; two of those four smoke runs
+# assigned a set of browser boxes to the PowerShell window on frame 147 and both 0.5 runs lost the tooltip on frame 149
+# (docs/results/p10). Now the rectangles are listed scaled and rounded as the overlay rounds them, and `to_proposal`
+# matches the echoed rectangles back in that same space. Same span, axis, repeats and concurrency as P10's smoke coords
+# runs at these two scales, so the four new runs are read against those four and against P10's `ids100` yardstick.
+phase = "p12"
+source = "runs/p0"
+stages = ["read", "track", "annotate"]
+repeats = 2
+
+[spans.smoke]
+frames = "145-155"
+
+[axis.ref.coords067]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 0.67
+
+[axis.ref.coords050]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "coords"
+"annotate.scale" = 0.5

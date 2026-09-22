@@ -1,6 +1,7 @@
 """From the model's answer, whatever the referencing arm, to one arm-independent proposal (plan 2, D1). Under
-reference = "coords" the answer names boxes by their rectangles; each is matched back to a box id here, and repair,
-records, join and everything downstream see today's proposal by id."""
+reference = "coords" the answer names boxes by their rectangles, in the pixels of the image it was shown; each is
+matched back to a box id here, in that same space (the listed boxes scaled once as the user turn scaled them), and
+repair, records, join and everything downstream see today's proposal by id, in unscaled frame pixels as always."""
 from __future__ import annotations
 
 import math
@@ -9,6 +10,7 @@ from typing import Sequence
 
 from pydantic import BaseModel
 
+from scry.overlay import scale_box
 from scry.schemas import Assign, Box, Container, Link, PairLink, RecordLink, RunLink, TextReading
 
 
@@ -31,29 +33,32 @@ def _centre_distance(a: Sequence[int], b: Sequence[int]) -> float:
     return math.hypot((a[0] + a[2]) - (b[0] + b[2]), (a[1] + a[3]) - (b[1] + b[3])) / 2
 
 
-def snap_rect(rect: Sequence[int], boxes: list[Box], margin_px: int) -> str | None:
+def snap_rect(rect: Sequence[int], boxes: list[Box], margin_px: int, scale: float = 1.0) -> str | None:
     """The box a returned rectangle names: the box whose rectangle it equals; otherwise the box it overlaps most, if it
     overlaps any; otherwise the nearest box by centre distance, if that is at most the track margin in pixels; otherwise
-    None (the reference is dropped and counted). Ties go to reading order; a list that is not four numbers names nothing."""
+    None (the reference is dropped and counted). Ties go to reading order; a list that is not four numbers names nothing.
+    With `scale` below 1 the rectangle is in the pixels of the scaled image the model saw, so every box is scaled the
+    same way the user turn scaled it (`scale_box`) and the margin with it, and the match is made there."""
     if len(rect) != 4 or not boxes:
         return None
     rect = tuple(rect)
-    for b in boxes:
-        if b.bbox == rect:
+    rects = [scale_box(b.bbox, scale) for b in boxes]
+    for b, r in zip(boxes, rects):
+        if r == rect:
             return b.id
-    area, best = max((_overlap(rect, b.bbox), -i) for i, b in enumerate(boxes))
+    area, best = max((_overlap(rect, r), -i) for i, r in enumerate(rects))
     if area > 0:
         return boxes[-best].id
-    distance, best = min((_centre_distance(rect, b.bbox), i) for i, b in enumerate(boxes))
-    return boxes[best].id if distance <= margin_px else None
+    distance, best = min((_centre_distance(rect, r), i) for i, r in enumerate(rects))
+    return boxes[best].id if distance <= margin_px * scale else None
 
 
-def _by_rect(out: BaseModel, boxes: list[Box], margin_px: int) -> tuple[Proposal, dict[str, int]]:
+def _by_rect(out: BaseModel, boxes: list[Box], margin_px: int, scale: float) -> tuple[Proposal, dict[str, int]]:
     unplaced = 0
 
     def one(r) -> str | None:
         nonlocal unplaced
-        box = snap_rect(r.root, boxes, margin_px)
+        box = snap_rect(r.root, boxes, margin_px, scale)
         unplaced += box is None
         return box
 
@@ -102,13 +107,14 @@ def _by_rect(out: BaseModel, boxes: list[Box], margin_px: int) -> tuple[Proposal
 
 
 def to_proposal(arm: str, out: BaseModel, boxes: list[Box], frame_size: tuple[int, int], margin_px: int,
-                reference: str = "ids") -> tuple[Proposal, dict[str, int]]:
+                reference: str = "ids", scale: float = 1.0) -> tuple[Proposal, dict[str, int]]:
     """The proposal and the counts raised during conversion: none under ids (a field-for-field copy); under coords
-    `rect_unplaced`, the references that matched no box."""
+    `rect_unplaced`, the references that matched no box. `scale` is the annotate scale the user turn listed the
+    rectangles at; the proposal is by id, so nothing downstream sees it."""
     if arm != "A":
         raise ValueError(f"no conversion for arm {arm!r}")
     if reference == "coords":
-        return _by_rect(out, boxes, margin_px)
+        return _by_rect(out, boxes, margin_px, scale)
     if reference != "ids":
         raise ValueError(f"no conversion for reference {reference!r}")
     links: list[Link] = ([RunLink(boxes=r.boxes, joiner=r.joiner) for r in out.runs]
