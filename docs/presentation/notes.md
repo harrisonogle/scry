@@ -1,6 +1,6 @@
 # Presentation notes: every number on every chart, with its source and a voice-over line
 
-Written 2026-09-21 on branch `presentation` from `rebase-boxes` at `f071ab7`; the cost chart was redrawn and the Gemini chart added from `rebase-boxes` at `fcc1860`, which holds the P10full, P11 and compare-gemini results. Nothing was re-run; every number below is copied from a committed report, analysis or the ledger, and the source file is named beside it. The one paid call of this branch is the demo question in `demo.md` ($0.2142). Charts are 3840 x 2160 PNGs (1920 x 1080 at 2x), light background, drawn by a scratch matplotlib script that is not part of the repo.
+Written 2026-09-21 on branch `presentation` from `rebase-boxes` at `f071ab7`; the cost chart was redrawn and the Gemini chart added from `rebase-boxes` at `fcc1860` (P10full, P11, compare-gemini); the hold-out charts and the local-model chart were added from `5c62ee6` (the hold-out comparison, ledger L76). Nothing was re-run; every number below is copied from a committed report, analysis or the ledger, and the source file is named beside it. The one paid call of this branch is the demo question in `demo.md` ($0.2142). Charts are 3840 x 2160 PNGs (1920 x 1080 at 2x), light background, drawn by a scratch matplotlib script that is not part of the repo.
 
 ## 1. `cost-per-video.png`: dollars per 221-frame video by configuration
 
@@ -93,3 +93,46 @@ Voice-over: "Asked the same twenty-seven questions, Gemini gets every 'when' and
 ## Demo
 
 `demo.md`: one real question, the tool calls and the answer with its citations, the cited frame `runs/eval/p4/full-inc-transcribing-r1/frames/00198.png` and box `198:b89`, and the same frame with the boxes drawn in `demo-frame-198.png` and `demo-frame-198-crop.png`. Cost $0.2142, 54 s.
+
+## 7. `holdout-cost-per-config.png`: what the hold-out video costs to index
+
+The hold-out video: `runs/videos/recording-2026-09-17.mp4`, 223.97 s, 2048x1080, 80 decoded frames (`docs/results/compare-gemini/hold-out.md`, What was run; the manifests' `duration`, `width`, `height`; `frames.jsonl` has 80 rows). One run per configuration. Each bar is the sum of the `annotate`, `interpret` and `summarize` `cost_usd` in the run's `manifest.json` (decode and OCR are free; the outline call in `runs/v2/grouponly-100`, $0.02, is not in its bar, as in the hold-out report's cost table).
+
+| bar | $ | manifest | annotate / interpret / summarize |
+|---|---|---|---|
+| Transcribing, overlay, scale 1.0 | 11.42 | `runs/eval/v2/full-transcribing-100-r1/manifest.json` | 8.22 / 2.59 / 0.62 |
+| Group-only, overlay, scale 1.0 (the owner's default, ledger L73) | 9.32 | `runs/v2/grouponly-100/manifest.json` | 5.84 / 2.75 / 0.73 |
+| Group-only, overlay, scale 0.67 | 7.68 | `runs/eval/v2/full-grouponly-067-r1/manifest.json` | 4.58 / 2.49 / 0.61 |
+| No annotation | 2.94 | `runs/eval/v2/full-none-r1/manifest.json` | none / 2.23 / 0.71 |
+
+The same four figures are the "build per video" column of `docs/results/compare-gemini/hold-out.md` (Cost and time). "5 of 5" is that report's Scores table: every pipeline index answers all five draft questions and passes all 16 rubric lines. The four numbers were read from the manifests here and agree with the report to the cent.
+
+Voice-over: "On the hold-out video the owner's default index costs about nine dollars to build, the full second reading eleven and a half, and no annotation three; all four answer every question."
+
+## 8. `us-vs-gemini-holdout.png`: the hold-out video, the pipeline against Gemini asked directly
+
+All from `docs/results/compare-gemini/hold-out.md` (Scores; The failed lines, classified; Cost and time).
+
+| measure | pipeline (four configurations, Opus 5 agent) | Gemini direct (`gemini-3.8-flash`, silent copy) |
+|---|---|---|
+| questions correct of 5 | 5 in each of the four | 3 |
+| rubric lines passed of 16 | 16 in each | 13 |
+| $ per question | 0.349 (none), 0.372 (group-only 1.0), 0.381 (group-only 0.67), 0.392 (transcribing): shown as $0.35 to $0.39 | 0.060 |
+| seconds per question (not on the chart) | 34 to 43 | 28 |
+
+The caption is the report's two failed Q1 and Q2 lines: Gemini wrote `FRONTDOOR-A-cnhedcc5b0d0h4e0.z01.azurefd.net` for `FRONTDOOR-A-cqhefshkhrgmgqf9.b02.azurefd.net`, the 44-character hostname in the find-on-page highlight on frame 0, on screen for 9 s (every pipeline index quotes it exactly, box `0:b116`); and it gave the added KQL line as `where requestUri_s contains "testHostDeviceAllocationServiceClientCertificate"` where frame 73 reads `"ServiceA/Certificate"`. One run per arm, so repeat noise is unknown; the four pipeline indexes, built and asked separately, agree on all 80 verdicts.
+
+Voice-over: "On a video it had never seen, every pipeline index answered all five questions and quoted every string exactly; Gemini got three, rewrote a hostname that sat highlighted on screen for nine seconds, and invented the query filter that was added."
+
+## 9. `local-vs-api.png`: a local open-weight model on annotate, against the API
+
+Drawn by `local-vs-api.py` from `local-vs-api.json`, so the numbers can be replaced (for the hold-out video) and the chart re-run with `uv run --with matplotlib python docs/presentation/local-vs-api.py`; the JSON's `dataset` string is printed as the subtitle so the chart always says which video it describes. Current numbers, from `docs/decision-ledger.md` L76 (smoke span of the sample video, 11 frames, group-only, one run each):
+
+| measure | API, Opus 5 | local, Qwen 3.8 27B (4-bit) at a hosted open-weight rate | source |
+|---|---|---|---|
+| annotate, $ per frame | 0.078 | 0.005 | L76 ("$0.005 a frame against $0.078"); `docs/results/local/report.md` (hosted rate: OpenRouter's list for `qwen/qwen3.8-27b` on 2026-09-21; the API figure is P3's $0.0782 at scale 1.0) |
+| reference pairs reproduced, % | 95 to 97 (the API's own repeat floor: `smoke-ids100` r1 against r2, 97.4 and 95.0) | 75 to 77 (`local2/smoke-L1-r1` against r1 and r2: 75.0 and 76.9) | L76; `docs/results/local/second-attempt/quality-table.txt` |
+
+The "15.6x cheaper" label is computed from the two cost figures in the JSON (L75 says 14 to 16 times). The caption is L76's finding: temperature 0 and the schema's field descriptions in the prompt took the 27B from 28 % of the API's pairs (L75) to 75 to 77 %; L76 (a) keeps it a candidate, not a replacement.
+
+Voice-over: "A local twenty-seven-billion-parameter model reproduces three quarters of the API's labels at a fifteenth of the price once it is run at temperature zero with the schema's descriptions in the prompt: a candidate, not yet a replacement."
