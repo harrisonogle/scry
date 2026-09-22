@@ -61,6 +61,10 @@ font_path = "/System/Library/Fonts/Menlo.ttc"
 [model]
 provider = "anthropic"
 model = "claude-opus-5"
+# the two keys the local measurements needed (ledger L76, L78), openai_compat only; the API ignores both. Set together
+# in configs/local-qwen.toml, the configuration that produced the local cost figures.
+# temperature = 0  # the request's sampling temperature; unset: none is sent, the server uses the model's own default
+schema_in_prompt = false  # true: the answer's JSON schema, field descriptions included, is appended to the system prompt as text
 max_tokens = 16000
 retry_max_tokens = 32000
 concurrency = 4

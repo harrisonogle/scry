@@ -8,10 +8,11 @@ from pydantic import BaseModel
 
 from scry.config import Config, ModelConfig
 from scry.costs import estimate_cost
+from scry.jsonl import sha256_obj
 from scry.providers import get_provider
 from scry.providers.base import text_block
 from scry.providers.cache import CallCache
-from scry.providers.openai_compat import OpenAICompatProvider, convert_blocks, parse_answer
+from scry.providers.openai_compat import SCHEMA_INTRO, OpenAICompatProvider, convert_blocks, parse_answer
 
 
 class Out(BaseModel):
@@ -77,6 +78,53 @@ def test_request_shape_and_schema_round_trip(tmp_path: Path, monkeypatch):
     assert again.cached and again.parsed == Out(answer="a", n=1) and len(http.calls) == 1
     assert p.stats == {"hits": 1, "misses": 1, "usage_lost": 0} and p.usage_by_stage["s"]["input_tokens"] == 10
     assert p.calls == [{"stage": "s", "wall_s": p.calls[0]["wall_s"], "prompt_tokens": 10, "completion_tokens": 5, "finish_reason": "stop", "valid": True}]
+
+
+def test_temperature_is_sent_only_when_set(tmp_path: Path):
+    """The provider sends no temperature unless [model] temperature is set; set, it goes in the request as given (the
+    local default of 1.0 scrambled the pairs, ledger L76; 0 is what the landed configuration uses)."""
+    http = FakeHttp([json.dumps({"answer": "a", "n": 1}), json.dumps({"answer": "a", "n": 1})])
+    run(OpenAICompatProvider(cfg(), CallCache(tmp_path / "a"), client=http).complete(**KW))
+    assert "temperature" not in http.calls[0]["body"]
+    run(OpenAICompatProvider(cfg(temperature=0), CallCache(tmp_path / "b"), client=http).complete(**KW))
+    assert http.calls[1]["body"]["temperature"] == 0.0 and isinstance(http.calls[1]["body"]["temperature"], float)
+
+
+def test_schema_in_prompt_appends_the_schema_to_the_system_message(tmp_path: Path):
+    """With [model] schema_in_prompt the system message ends with the answer's JSON schema as text, field descriptions
+    included, in the exact form the second attempt's proxy appended (docs/results/local/second-attempt/proxy.py): a
+    grammar runtime uses response_format only to constrain the output and the model never sees the descriptions. The
+    schema still goes in response_format; the user turn is untouched."""
+    assert SCHEMA_INTRO == ("\n\nThe answer is one JSON object matching this JSON schema. Each field's description says "
+                            "what the field means and holds; read them before answering:\n")
+    http = FakeHttp([json.dumps({"answer": "a", "n": 1}), json.dumps({"answer": "a", "n": 1})])
+    run(OpenAICompatProvider(cfg(), CallCache(tmp_path / "a"), client=http).complete(**KW))
+    assert http.calls[0]["body"]["messages"][0] == {"role": "system", "content": "sys"}
+    run(OpenAICompatProvider(cfg(schema_in_prompt=True), CallCache(tmp_path / "b"), client=http).complete(**KW))
+    body = http.calls[1]["body"]
+    assert body["messages"][0] == {"role": "system", "content": "sys" + SCHEMA_INTRO + json.dumps(Out.model_json_schema(), indent=1)}
+    assert body["messages"][1] == {"role": "user", "content": [{"type": "text", "text": "q"}]}
+    assert body["response_format"]["json_schema"]["schema"] == Out.model_json_schema()
+
+
+def test_temperature_and_schema_in_prompt_are_in_the_cache_key(tmp_path: Path):
+    """An answer made at one temperature, or with the schema in the prompt, never serves a call without it: the two
+    settings change the request, so they are in the key. Unset and off, the key is the shared formula unchanged, so
+    the caches of runs made before the two keys existed still hit."""
+    cache = CallCache(tmp_path)
+    schema_hash = sha256_obj(Out.model_json_schema())
+    plain_key = CallCache.key("s", "mlx-community/fake-4bit", "low", 16000, "v1", schema_hash, ["h"])
+    http = FakeHttp([json.dumps({"answer": f"a{i}", "n": i}) for i in range(4)])
+    variants = [cfg(), cfg(temperature=0), cfg(schema_in_prompt=True), cfg(temperature=0, schema_in_prompt=True)]
+    answers = [run(OpenAICompatProvider(c, cache, client=http).complete(**KW)) for c in variants]
+    assert [r.cached for r in answers] == [False] * 4 and len(http.calls) == 4  # no variant served another
+    assert cache.path(plain_key).exists()  # the default's key: today's formula, byte for byte
+    assert len({p.name for p in tmp_path.iterdir()}) == 4
+    again = [run(OpenAICompatProvider(c, cache, client=http).complete(**KW)) for c in variants]
+    assert [r.cached for r in again] == [True] * 4 and [r.parsed.n for r in again] == [0, 1, 2, 3]
+    assert cfg(temperature=0.5).temperature != cfg(temperature=0).temperature  # two temperatures, two keys
+    http = FakeHttp([json.dumps({"answer": "b", "n": 9})])
+    assert not run(OpenAICompatProvider(cfg(temperature=0.5), cache, client=http).complete(**KW)).cached
 
 
 def test_parse_answer_tolerates_a_fence():

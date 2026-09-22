@@ -1,7 +1,9 @@
 """A second provider: any server that speaks OpenAI's `/v1/chat/completions` with `response_format` json_schema, meant
 for a model served on this machine (mlx_vlm.server, llama.cpp, vLLM). Same call cache and cache-key rule as the
 Anthropic provider: the key holds the model name, so a local answer never collides with an API one. `effort` is
-ignored (the local runtime has no such knob) and stays in the key. Every call is synchronous; there is no batch mode."""
+ignored (the local runtime has no such knob) and stays in the key. Two settings of its own, `temperature` and
+`schema_in_prompt`, change the request and so are folded into the key's prompt version (unset and off: the key is the
+shared formula, unchanged). Every call is synchronous; there is no batch mode."""
 from __future__ import annotations
 
 import asyncio
@@ -26,6 +28,10 @@ log = logging.getLogger(__name__)
 
 API_KEY_VAR = "OPENAI_COMPAT_API_KEY"  # a local server wants none; the header carries "none" then
 TIMEOUT_S = 3600.0  # a local model answers a large frame in minutes, not seconds
+# what `schema_in_prompt` puts between the system prompt and the schema: the text of the second attempt's proxy
+# (docs/results/local/second-attempt/proxy.py), byte for byte, so the landed configuration reproduces its runs
+SCHEMA_INTRO = ("\n\nThe answer is one JSON object matching this JSON schema. Each field's description says what the "
+                "field means and holds; read them before answering:\n")
 
 
 class HttpClient(Protocol):
@@ -106,6 +112,9 @@ class OpenAICompatProvider:
         self.stats = {"hits": 0, "misses": 0, "usage_lost": 0}
         self.usage_by_stage: dict[str, dict] = {}
         self.calls: list[dict] = []  # one record per HTTP call: stage, wall seconds, tokens, whether the JSON validated
+        # the request-changing settings, appended to every call's prompt version so they are in the key; "" by default
+        self.version_suffix = (f"+temperature={cfg.temperature}" if cfg.temperature is not None else "") + \
+                              ("+schema_in_prompt" if cfg.schema_in_prompt else "")
 
     def _account(self, stage: str, usage: dict) -> None:
         acc = self.usage_by_stage.setdefault(stage, {})
@@ -115,6 +124,7 @@ class OpenAICompatProvider:
     async def complete(self, *, stage: str, system: str, blocks: list[dict], output_model: type[BaseModel], effort: str,
                        prompt_version: str, input_hashes: list[str]) -> VlmResult:
         schema_hash = sha256_obj(output_model.model_json_schema())
+        prompt_version += self.version_suffix
         key = CallCache.key(stage, self.model, effort, self.cfg.max_tokens, prompt_version, schema_hash, input_hashes)
         hit = self.cache.get(key)
         if hit is not None:
@@ -143,10 +153,15 @@ class OpenAICompatProvider:
         return r
 
     def request(self, system: str, blocks: list[dict], output_model: type[BaseModel], max_tokens: int) -> dict:
-        return {"model": self.model, "max_tokens": max_tokens,
+        schema = output_model.model_json_schema()
+        if self.cfg.schema_in_prompt:
+            system = system + SCHEMA_INTRO + json.dumps(schema, indent=1)
+        body = {"model": self.model, "max_tokens": max_tokens,
                 "messages": [{"role": "system", "content": system}, {"role": "user", "content": convert_blocks(blocks)}],
-                "response_format": {"type": "json_schema",
-                                    "json_schema": {"name": output_model.__name__, "schema": output_model.model_json_schema(), "strict": True}}}
+                "response_format": {"type": "json_schema", "json_schema": {"name": output_model.__name__, "schema": schema, "strict": True}}}
+        if self.cfg.temperature is not None:
+            body["temperature"] = self.cfg.temperature
+        return body
 
     async def _call(self, stage: str, system: str, blocks: list[dict], output_model: type[BaseModel], max_tokens: int) -> VlmResult:
         t0 = time.monotonic()

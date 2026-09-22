@@ -109,6 +109,14 @@ class ModelConfig(BaseModel):
     provider: Literal["anthropic", "openai_compat"] = "anthropic"
     model: str = "claude-opus-5"
     base_url: str = ""  # openai_compat only, e.g. "http://127.0.0.1:8080/v1"
+    # openai_compat only, the two settings the local measurements needed (ledger L76, L78; configs/local-qwen.toml):
+    # `temperature` is sent as the request's sampling temperature when set (unset: the server's own default, 1.0 for
+    # the local 27B, which scrambled the pairs); `schema_in_prompt` appends the answer's JSON schema, field
+    # descriptions included, to the system message as text, because a grammar runtime uses response_format only to
+    # constrain the output and the model never sees the descriptions. The Claude API ignores both (its knob is
+    # effort, and it shows the descriptions itself). Each changes the request, so each is in the call cache key.
+    temperature: float | None = None
+    schema_in_prompt: bool = False
     max_tokens: int = 16000
     retry_max_tokens: int = 32000
     concurrency: int = 4
