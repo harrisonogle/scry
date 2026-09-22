@@ -25,15 +25,15 @@
             "label": "Scry vs Gemini, same session, same questions"
           },
           {
-            "value": "$9.32 on Claude vs about 75¢ on an open model",
-            "label": "to index a four-minute session"
+            "value": "index once for about 75¢, then cents a question",
+            "label": "open model, one four-minute session"
           },
           {
             "value": "every claim cited",
             "label": "frame, box, second"
           }
         ],
-        "footnote": "open-model figure extrapolated from 22 of 80 frames at a hosted rate"
+        "footnote": "open model, one four-minute session; open-model figure extrapolated from 22 of 80 frames"
       },
       "caption": "Screen recordings you can search",
       "voice": "Scry turns any screen recording into a searchable, hierarchical index of what happened on screen, at every level of detail. Every answer cites the frame, the box and the second. It beats Gemini's new video-to-text on exactness, and building the index costs under a dollar per session with an open model."
