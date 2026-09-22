@@ -30,6 +30,20 @@ def test_repo_toml_loads():
     assert cfg.model.effort_annotate == "low"
     assert cfg.interpret.images == "scaled"
     assert cfg.ask.max_turns == 12 and cfg.ask.frames is True and cfg.ask.model == ""
+    assert cfg.model.temperature is None and cfg.model.schema_in_prompt is False  # the API's defaults: no temperature sent, the API shows the descriptions
+
+
+def test_local_qwen_config_is_the_landed_local_configuration():
+    """configs/local-qwen.toml reproduces the runs behind the cost headline (ledger L76, L78) from config alone: the
+    local 27B through openai_compat at temperature 0 with the schema in the prompt, one call at a time, the owner's
+    default annotate settings, and the answering agent left on the API."""
+    cfg = load_config(REPO / "configs" / "local-qwen.toml")
+    assert cfg.model.provider == "openai_compat" and cfg.model.base_url == "http://127.0.0.1:8080/v1"
+    assert cfg.model.model == "mlx-community/Qwen3.8-27B-4bit"
+    assert cfg.model.temperature == 0.0 and cfg.model.schema_in_prompt is True and cfg.model.concurrency == 1
+    assert cfg.model.mode == "sync"
+    assert (cfg.annotate.mode, cfg.annotate.transcribe, cfg.annotate.reference, cfg.annotate.scale) == ("incremental", False, "ids", 1.0)
+    assert cfg.ask.model == "claude-opus-5"  # ask calls the Claude API whatever the provider; empty would send the Qwen name there
 
 
 def test_stage_sections_defaults():

@@ -1,5 +1,7 @@
 # Local VLM probe, final report
 
+*Since this report: the two settings the second attempt and the session span applied through a request-rewriting proxy (temperature 0; the schema's field descriptions appended to the system prompt) are provider settings, `[model] temperature` and `schema_in_prompt`, and `configs/local-qwen.toml` reproduces those runs from config alone, without the proxy.*
+
 Two mlx-community 4-bit models served on this Mac through a new `openai_compat` provider: `Qwen3-VL-8B-Instruct-4bit` (8B) and `Qwen3.8-27B-4bit` (27B). All runs are cold, one repeat, through the pipeline's own stages on the P3 subsets of `runs/p0`. Code on branch `local-vlm` (commits 1069ae7, 5001be7), suite 360 green. No API cost.
 
 ## Efficacy

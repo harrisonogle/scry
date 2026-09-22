@@ -32,6 +32,22 @@ def test_cache_hit_avoids_second_call(tmp_path: Path):
     assert client.messages.calls[0]["system"][0]["cache_control"] == {"type": "ephemeral"}
 
 
+def test_temperature_and_schema_in_prompt_leave_the_api_call_and_key_alone(tmp_path: Path):
+    """The two openai_compat settings do nothing on the Claude API: no temperature is sent (the API's knob is effort,
+    and it shows the schema's descriptions itself), the system text is untouched, and the key is the same, so an API
+    answer serves a config that sets them."""
+    client = fake_client([{"parsed": Out(answer="a")}])
+    kw = dict(stage="s", system="sys", blocks=[text_block("q")], output_model=Out, effort="low", prompt_version="v1", input_hashes=["h"])
+    r1 = run(AnthropicProvider(ModelConfig(), CallCache(tmp_path), client=client).complete(**kw))
+    local = ModelConfig(temperature=0, schema_in_prompt=True)
+    r2 = run(AnthropicProvider(local, CallCache(tmp_path), client=client).complete(**kw))
+    assert not r1.cached and r2.cached and len(client.messages.calls) == 1
+    client = fake_client([{"parsed": Out(answer="b")}])
+    run(AnthropicProvider(local, CallCache(tmp_path / "b"), client=client).complete(**kw))
+    call = client.messages.calls[0]
+    assert "temperature" not in call and call["system"][0]["text"] == "sys"
+
+
 def test_max_tokens_retries_once_with_larger_budget(tmp_path: Path):
     client = fake_client([{"parsed": None, "stop": "max_tokens"}, {"parsed": Out(answer="b")}])
     p = AnthropicProvider(ModelConfig(max_tokens=100, retry_max_tokens=200), CallCache(tmp_path), client=client)

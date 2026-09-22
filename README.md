@@ -71,7 +71,11 @@ text), `reference = "ids"` (a numbered overlay; `"coords"` lists each box as a r
 answering agent; `[ask] model` puts it on a model of its own. `[model] mode = "batch"` sends `annotate` and `interpret`
 through the Message Batches API. `[model] provider = "openai_compat"` with `base_url` points any stage at a local or
 hosted open-weight model served over the OpenAI-compatible protocol; `docs/results/local/` records what a local 27B
-model did with it.
+model did with it. Two keys serve that provider only: `temperature` (sent with the request when set; unset, the server
+uses the model's own default) and `schema_in_prompt` (appends the answer's JSON schema, field descriptions included, to
+the system prompt, because a grammar runtime never shows the model the descriptions). `configs/local-qwen.toml` is the
+local configuration that produced the cost figures: the 27B at temperature 0 with the schema in the prompt, one call
+at a time, the answering agent left on the API.
 
 ## Tests
 

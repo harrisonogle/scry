@@ -246,12 +246,13 @@ def ask(video: str, question: str) -> dict:
 
 
 def _toml(d: dict, prefix: str = "") -> str:
-    """A TOML text of a nested dict of tables and scalars (what Config.model_dump() is)."""
+    """A TOML text of a nested dict of tables and scalars (what Config.model_dump() is). TOML has no null: a key whose
+    value is None ([model] temperature unset) is left out, and loading the text gives the default, None, back."""
     lines, tables = [], []
     for k, v in d.items():
         if isinstance(v, dict):
             tables.append((f"{prefix}{k}", v))
-        else:
+        elif v is not None:
             lines.append(f"{k} = {json.dumps(v)}")
     out = (f"[{prefix.rstrip('.')}]\n" if prefix and lines else "") + "\n".join(lines) + ("\n" if lines else "")
     return out + "".join("\n" + _toml(v, f"{name}.") for name, v in tables)

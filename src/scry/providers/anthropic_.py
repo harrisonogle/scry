@@ -21,6 +21,8 @@ class AnthropicProvider:
 
             client = anthropic.AsyncAnthropic()
         self.client = client
+        # cfg.temperature and cfg.schema_in_prompt are openai_compat's and are not read here: the API's knob is effort,
+        # and it shows the model the schema's field descriptions itself, so neither changes a call or its key
         self.cfg = cfg
         self.model = cfg.model
         self.cache = cache

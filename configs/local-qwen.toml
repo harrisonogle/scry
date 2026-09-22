@@ -1,0 +1,35 @@
+# The local configuration the project landed on: a Qwen 3.8 27B served on this machine through the openai_compat
+# provider, at the settings the local measurements needed (ledger L76: temperature 0 holds the pairs; the schema's
+# field descriptions in the prompt fix the containers and the collapse). Everything not set here is the default of
+# src/scry/config.py, the owner's default pipeline.
+#
+# Serve the model first, in a Python 3.12 venv with mlx-vlm (docs/results/local/report.md, "Run and code facts"):
+#     python -m mlx_vlm.server --model mlx-community/Qwen3.8-27B-4bit --port 8080 --max-num-seqs 1
+# then run the pipeline with `--config configs/local-qwen.toml`.
+#
+# What it reproduces (ledger L78; docs/results/local/session-span/): the session span of 22 frames annotated,
+# interpreted and summarised by the local model for a twelfth of the API's price per frame at a hosted open-weight
+# rate ($0.0094 against $0.109 for the three stages), with 80.5 % of the API's reference pairs and 22 of 22 answers
+# valid JSON. Those runs applied temperature 0 and the schema text through a request-rewriting proxy
+# (docs/results/local/second-attempt/proxy.py); the two keys below are that proxy as provider settings.
+
+[model]
+provider = "openai_compat"
+base_url = "http://127.0.0.1:8080/v1"
+model = "mlx-community/Qwen3.8-27B-4bit"
+temperature = 0  # the model's own default (1.0) gives 30 % of the API's pairs; 0 gives 75 to 80 %
+schema_in_prompt = true  # the grammar runtime never shows the model the schema's descriptions; this puts them in the prompt
+concurrency = 1  # the server is started with --max-num-seqs 1
+
+[annotate]
+# the owner's default (ledger L73), stated here because these are the settings the local figures were measured at
+mode = "incremental"
+transcribe = false
+reference = "ids"
+scale = 1.0
+
+[ask]
+# the answering agent stays on the API: in the measurements it ran on Opus 5 over the index the local model built
+# (5 of 5 questions on the span). `ask` always calls the Claude API, so `[ask] model` is the switch; empty would send
+# the pipeline's model name, the Qwen repo id, to the API.
+model = "claude-opus-5"

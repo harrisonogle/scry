@@ -155,3 +155,6 @@ def test_toml_round_trips_the_config(tmp_path: Path):
     cfg.annotate.mode = "off"
     text = S._toml(cfg.model_dump())
     assert Config.model_validate(tomllib.loads(text)) == cfg
+    assert "temperature" not in text  # unset (None) has no TOML value: the key is left out and loads as None again
+    cfg.model.temperature = 0.0
+    assert Config.model_validate(tomllib.loads(S._toml(cfg.model_dump()))) == cfg
