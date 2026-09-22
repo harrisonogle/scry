@@ -25,7 +25,7 @@
             "label": "Scry vs Gemini, same session, same questions"
           },
           {
-            "value": "index once for about 75¢, then 6¢ a question",
+            "value": "index once for about 75¢, then about 15¢ a question",
             "label": "open model, one four-minute session"
           },
           {
@@ -65,8 +65,8 @@
         "kind": "image",
         "src": "local-vs-api.png"
       },
-      "caption": "$0.0094 a frame against $0.109; about 75¢ a session (22 of 80 frames); then 6¢ a question with a Sonnet agent, 5 of 5",
-      "voice": "An open 27-billion-parameter model indexed a span of it end to end for a twelfth of the price, about 75 cents for the whole session. Then every question costs six cents, and it answered five of five."
+      "caption": "$0.0094 a frame against $0.109; about 75¢ a session (22 of 80 frames); 5 of 5 questions on the span; then about 15¢ a question with a Sonnet agent",
+      "voice": "An open 27-billion-parameter model indexed a span of it end to end for a twelfth of the price, about 75 cents for the whole session, and its index answered five of five questions about that span. After that, every question costs about fifteen cents."
     },
     {
       "id": "demo",
