@@ -6,7 +6,7 @@
   "padSeconds": 0.6,
   "maxSeconds": 118.0,
   "_notes": [
-    "Every word and number on screen or in the voice-over lives in this file; a scene marked draft:true carries numbers or wording not yet frozen (the bracketed [N cents] and [ratio] are the pending local-model figures).",
+    "Every word and number on screen or in the voice-over lives in this file; a scene marked draft:true carries numbers or wording not yet frozen.",
     "maxSeconds is the platform's ceiling for the rendered MP4 including every pad; the composition refuses to build and stills.mjs fails loudly when the scenes exceed it.",
     "Scenes marked optional:true are dropped automatically while their image is missing from public/img (run assets.sh after docs/presentation/ changes).",
     "Scene duration = the voice file's length + padSeconds; voice.sh regenerates public/voice/<id>.wav from the voice lines below.",
@@ -16,7 +16,6 @@
   "scenes": [
     {
       "id": "title",
-      "draft": true,
       "visual": {
         "kind": "title",
         "headline": "Screen recordings you can search.",
@@ -26,15 +25,15 @@
             "label": "Scry vs Gemini, same session, same questions"
           },
           {
-            "value": "$9.32 on Claude vs [N cents] on an open model",
-            "label": "to index a four-minute session",
-            "draft": true
+            "value": "index once for about 75¢, then 6¢ a question",
+            "label": "open model, one four-minute session"
           },
           {
             "value": "every claim cited",
             "label": "frame, box, second"
           }
-        ]
+        ],
+        "footnote": "open model, one four-minute session; open-model figure extrapolated from 22 of 80 frames"
       },
       "caption": "Screen recordings you can search",
       "voice": "Scry turns any screen recording into a searchable, hierarchical index of what happened on screen, at every level of detail. Every answer cites the frame, the box and the second. It beats Gemini's new video-to-text on exactness, and building the index costs under a dollar per session with an open model."
@@ -46,8 +45,8 @@
         "kind": "image",
         "src": "us-vs-gemini-holdout.png"
       },
-      "caption": "The same five questions about the same session: Scry 5 of 5 in every configuration, Gemini direct 3 of 5",
-      "voice": "Asked the same five questions about the same session, Gemini answered three. Scry answered all five, every string exact, in every configuration. Across both videos, Gemini read the exact strings wrong half the time and invented commands that never ran. And Gemini re-watches the whole video for every question. Scry reads it once."
+      "caption": "The same five questions about the same session: Scry 5 of 5 in every configuration, Gemini direct 3 of 5 at 6¢ a question",
+      "voice": "Asked the same five questions about the same session, Gemini answered three, at six cents a question. Scry answered all five, every string exact, in every configuration."
     },
     {
       "id": "holdout-cost-per-config",
@@ -57,18 +56,17 @@
         "src": "holdout-cost-per-config.png"
       },
       "caption": "Indexing this four-minute session: $9.32 with the default settings, $2.94 to $11.42 across the four configurations",
-      "voice": "Indexing this four-minute session cost nine dollars on Claude,"
+      "voice": "Indexing this four-minute session cost nine dollars on Claude."
     },
     {
       "id": "local-vs-api",
       "optional": true,
-      "draft": true,
       "visual": {
         "kind": "image",
         "src": "local-vs-api.png"
       },
-      "caption": "DRAFT · An open 27B model indexes the session for [N cents], [ratio] times cheaper; after that every question costs cents and seconds",
-      "voice": "and [N cents] on an open 27-billion-parameter model, [ratio] times cheaper. After that, every question costs cents and seconds."
+      "caption": "$0.0094 a frame against $0.109; about 75¢ a session (22 of 80 frames); then 6¢ a question with a Sonnet agent, 5 of 5",
+      "voice": "An open 27-billion-parameter model indexed a span of it end to end for a twelfth of the price, about 75 cents for the whole session. Then every question costs six cents, and it answered five of five."
     },
     {
       "id": "demo",
@@ -244,40 +242,62 @@
       "id": "pipeline",
       "visual": {
         "kind": "image",
-        "src": "pipeline.png",
+        "src": "index-hierarchy.png",
         "highlights": [
           {
             "rect": [
-              0.039,
-              0.229,
-              0.622,
-              0.268
+              0.155,
+              0.6,
+              0.82,
+              0.195
             ],
-            "from": 0.03,
-            "until": 0.36,
+            "from": 0.04,
+            "until": 0.3,
             "color": "blue"
           },
           {
             "rect": [
-              0.039,
-              0.578,
-              0.622,
-              0.265
+              0.155,
+              0.48,
+              0.82,
+              0.052
             ],
-            "from": 0.38,
-            "until": 0.62,
+            "from": 0.31,
+            "until": 0.54,
             "color": "orange"
           },
           {
             "rect": [
-              0.685,
-              0.46,
-              0.278,
-              0.18
+              0.155,
+              0.338,
+              0.82,
+              0.075
             ],
-            "from": 0.64,
-            "until": 0.97,
+            "from": 0.56,
+            "until": 0.68,
             "color": "blue"
+          },
+          {
+            "rect": [
+              0.155,
+              0.256,
+              0.82,
+              0.072
+            ],
+            "from": 0.69,
+            "until": 0.8,
+            "color": "blue"
+          },
+          {
+            "rect": [
+              0.155,
+              0.156,
+              0.82,
+              0.088
+            ],
+            "from": 0.81,
+            "until": 0.96,
+            "color": "orange"
           }
         ]
       },

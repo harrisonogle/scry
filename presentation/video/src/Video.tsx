@@ -14,7 +14,7 @@ const SceneBody: React.FC<{scene: ResolvedScene}> = ({scene}) => {
   const v = scene.visual;
   switch (v.kind) {
     case 'title':
-      return <TitleCard headline={v.headline} tiles={v.tiles} />;
+      return <TitleCard headline={v.headline} tiles={v.tiles} footnote={v.footnote} />;
     case 'close':
       return <CloseCard caption={scene.caption} lines={v.lines} />;
     case 'image':
