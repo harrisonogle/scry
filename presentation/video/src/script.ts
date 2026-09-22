@@ -9,10 +9,25 @@ export type Block =
 
 export type FrameLabel = {x: number; y: number; color: 'blue' | 'orange' | 'aqua'; text: string};
 
-export type Tile = {value: string; label: string; draft?: boolean};
+export type Tile = {value: string; label: string; draft?: boolean; color?: 'blue' | 'orange' | 'ink'};
 
 export type Visual =
-  | {kind: 'title'; headline: string; tiles: Tile[]; footnote?: string}
+  | {kind: 'title'; headline: string; tiles?: Tile[]; footnote?: string}
+  // A heading, one or two big tiles and a small note, all from script.json.
+  | {kind: 'card'; heading?: string; tiles: Tile[]; note?: string}
+  // A frame sequence public/img/<dir>/NN.png (zero-padded to `pad` digits) from `from` to `to`, played once
+  // across the scene; `width`/`height` is the frames' aspect. layout 'side' shows the questions beside it.
+  | {
+      kind: 'timelapse';
+      dir: string;
+      from: number;
+      to: number;
+      pad?: number;
+      width?: number;
+      height?: number;
+      layout?: 'full' | 'side';
+      questions?: string[];
+    }
   | {kind: 'close'; lines: string[]}
   | {
       kind: 'terminal';

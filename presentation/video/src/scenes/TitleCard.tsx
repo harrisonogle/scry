@@ -20,6 +20,7 @@ export const TitleCard: React.FC<{headline: string; tiles: Tile[]; footnote?: st
   const tileStart = fps * 2.2;
   const tileGap = Math.max(fps * 1.2, (durationInFrames - fps * 4.5 - tileStart) / Math.max(1, tiles.length));
   const accent = [theme.blue, theme.orange, theme.ink];
+  const accentOf = (t: Tile, i: number) => (t.color === 'blue' ? theme.blue : t.color === 'orange' ? theme.orange : t.color === 'ink' ? theme.ink : accent[i % accent.length]);
   return (
     <AbsoluteFill style={{padding: '0 120px', justifyContent: 'center'}}>
       <div style={{display: 'flex', alignItems: 'baseline', gap: 40, opacity: word, transform: `translateY(${(1 - word) * 24}px)`}}>
@@ -32,7 +33,7 @@ export const TitleCard: React.FC<{headline: string; tiles: Tile[]; footnote?: st
       <div style={{marginTop: 26, fontSize: 56, color: theme.muted, opacity: head, transform: `translateY(${(1 - head) * 20}px)`}}>
         {headline}
       </div>
-      <div style={{display: 'flex', gap: 28, marginTop: 70}}>
+      <div style={{display: tiles.length ? 'flex' : 'none', gap: 28, marginTop: 70}}>
         {tiles.map((t, i) => {
           const o = ease(frame, tileStart + i * tileGap, tileStart + i * tileGap + fps * 0.6);
           return (
@@ -43,7 +44,7 @@ export const TitleCard: React.FC<{headline: string; tiles: Tile[]; footnote?: st
                 minWidth: 0,
                 background: '#ffffff',
                 border: '2px solid #e6e5e1',
-                borderTop: `10px solid ${accent[i % accent.length]}`,
+                borderTop: `10px solid ${accentOf(t, i)}`,
                 borderRadius: 18,
                 padding: '30px 34px 32px',
                 boxShadow: '0 10px 30px rgba(0,0,0,0.06)',

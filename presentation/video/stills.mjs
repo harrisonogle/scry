@@ -83,13 +83,16 @@ const wanted = args.length
     })
   : [
       {id: 'title', at: 0.9, name: 'title'},
-      {id: 'us-vs-gemini-holdout', at: 0.5, name: 'us-vs-gemini-holdout'},
-      {id: 'holdout-cost-per-config', at: 0.5, name: 'holdout-cost-per-config'},
-      {id: 'local-vs-api', at: 0.5, name: 'local-vs-api'},
+      {id: 'session', at: 0.85, name: 'session'},
       {id: 'demo', at: 0.93, name: 'demo'},
       {id: 'frame', at: 0.95, name: 'frame'},
-      {id: 'pipeline', at: 0.3, name: 'pipeline'},
-      {id: 'scale-cliff', at: 0.5, name: 'scale-cliff'},
+      {id: 'accuracy', at: 0.8, name: 'accuracy'},
+      {id: 'cost', at: 0.8, name: 'cost'},
+      {id: 'stages-read', at: 0.5, name: 'stages-read'},
+      {id: 'stages-track', at: 0.5, name: 'stages-track'},
+      {id: 'stages-annotate', at: 0.5, name: 'stages-annotate'},
+      {id: 'stages-interpret', at: 0.5, name: 'stages-interpret'},
+      {id: 'hierarchy', at: 0.2, name: 'hierarchy'},
       {id: 'close', at: 0.9, name: 'close'},
     ].filter((w) => {
       const present = scenes.some((s) => s.id === w.id);
