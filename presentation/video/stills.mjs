@@ -1,6 +1,6 @@
 // Prints the scene table (start frame and duration of every scene, from the same script.json and voice
 // files the composition uses) and renders still PNGs so the look can be checked without playing the video.
-//   node stills.mjs                 -> stills/<id>.png for title, demo, and every image scene that is present
+//   node stills.mjs                 -> stills/<id>.png for every scene of the cut that is present
 //   node stills.mjs --table         -> the scene table only (every scene of script.json, pending ones included)
 // The table and the total always count every scene in script.json, including optional scenes whose image has not
 // landed yet (their durations come from the voice WAV headers), and the script exits 1 when the total exceeds
@@ -17,10 +17,16 @@ const serveUrl = await bundle({
   publicDir: path.join(here, 'public'),
   onProgress: () => {},
 });
-const composition = await selectComposition({serveUrl, id: 'scry', logLevel: 'error'});
-const scenes = composition.props.scenes;
-const fps = composition.fps;
 const script = JSON.parse(fs.readFileSync(path.join(here, 'script.json'), 'utf8'));
+// If the composition refuses to build (over the ceiling), the table is still printed from the WAV headers.
+let composition = null;
+try {
+  composition = await selectComposition({serveUrl, id: 'scry', logLevel: 'error'});
+} catch (err) {
+  console.error(`composition refused: ${err.message.split('\n')[0]}`);
+}
+const scenes = composition ? composition.props.scenes : [];
+const fps = composition ? composition.fps : script.fps;
 
 // Seconds of a PCM WAV from its header, for scenes the composition dropped (image not landed yet).
 const wavSeconds = (file) => {
@@ -55,7 +61,9 @@ for (const s of table) {
     `${s.id.padEnd(24)} ${String(s.from).padStart(5)} ${String(s.durationInFrames).padStart(8)} ${(s.durationInFrames / fps).toFixed(2).padStart(9)}   ${s.voiceSeconds.toFixed(2)} s${s.pending ? '   (pending: image missing, not in the composition)' : ''}${s.draft ? '   DRAFT' : ''}`,
   );
 }
-console.log(`total ${total} frames = ${(total / fps).toFixed(2)} s at ${fps} fps, every scene included (composition now: ${(composition.durationInFrames / fps).toFixed(2)} s)`);
+console.log(
+  `total ${total} frames = ${(total / fps).toFixed(2)} s at ${fps} fps, every scene included (composition now: ${composition ? (composition.durationInFrames / fps).toFixed(2) + ' s' : 'refused'})`,
+);
 fs.mkdirSync(path.join(here, 'out'), {recursive: true});
 fs.writeFileSync(path.join(here, 'out/scenes.json'), JSON.stringify({fps, durationInFrames: total, scenes: table}, null, 2));
 if (script.maxSeconds !== undefined && total > script.maxSeconds * fps) {
@@ -66,6 +74,7 @@ console.log(`ok: ${(script.maxSeconds - total / fps).toFixed(2)} s under the ${s
 
 const args = process.argv.slice(2);
 if (args.includes('--table')) process.exit(0);
+if (!composition) process.exit(1);
 
 const wanted = args.length
   ? args.map((a) => {
@@ -73,13 +82,15 @@ const wanted = args.length
       return {id, at: Number(frac ?? 0.5), name: `${id}-${frac ?? '0.5'}`};
     })
   : [
-      {id: 'title', at: 0.6, name: 'title'},
-      {id: 'demo', at: 0.93, name: 'demo'},
-      {id: 'frame', at: 0.95, name: 'frame'},
+      {id: 'title', at: 0.9, name: 'title'},
+      {id: 'us-vs-gemini-holdout', at: 0.5, name: 'us-vs-gemini-holdout'},
       {id: 'holdout-cost-per-config', at: 0.5, name: 'holdout-cost-per-config'},
       {id: 'local-vs-api', at: 0.5, name: 'local-vs-api'},
-      {id: 'us-vs-gemini-holdout', at: 0.5, name: 'us-vs-gemini-holdout'},
-      {id: 'per-question', at: 0.5, name: 'per-question'},
+      {id: 'demo', at: 0.93, name: 'demo'},
+      {id: 'frame', at: 0.95, name: 'frame'},
+      {id: 'pipeline', at: 0.3, name: 'pipeline'},
+      {id: 'scale-cliff', at: 0.5, name: 'scale-cliff'},
+      {id: 'close', at: 0.9, name: 'close'},
     ].filter((w) => {
       const present = scenes.some((s) => s.id === w.id);
       if (!present) console.log(`still ${w.name} skipped: scene ${w.id} is not in the composition (image missing?)`);

@@ -2,7 +2,7 @@ import React from 'react';
 import {theme} from '../theme';
 
 // The short on-screen line for a scene, set in a band at the bottom (or as a pill over a full-bleed image).
-export const Caption: React.FC<{text: string; pill?: boolean; top?: number}> = ({text, pill, top}) => {
+export const Caption: React.FC<{text: string; pill?: boolean; top?: number; position?: 'top' | 'bottom'}> = ({text, pill, top, position}) => {
   if (pill) {
     return (
       <div
@@ -10,7 +10,7 @@ export const Caption: React.FC<{text: string; pill?: boolean; top?: number}> = (
           position: 'absolute',
           left: 0,
           right: 0,
-          bottom: 40,
+          ...(position === 'top' ? {top: 40} : {bottom: 40}),
           display: 'flex',
           justifyContent: 'center',
         }}

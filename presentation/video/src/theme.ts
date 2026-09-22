@@ -9,6 +9,7 @@ export const theme = {
   blueSoft: '#eaf2fc',
   orange: '#eb6834',
   orangeSoft: '#fdeee7',
+  aqua: '#12a594',
   termBg: '#1b1d22',
   termChrome: '#2a2d34',
   termText: '#e8e8e4',

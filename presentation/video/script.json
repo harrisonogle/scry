@@ -1,64 +1,80 @@
 {
-  "version": 2,
+  "version": 3,
   "fps": 30,
   "width": 1920,
   "height": 1080,
-  "padSeconds": 0.7,
+  "padSeconds": 0.6,
+  "maxSeconds": 118.0,
   "_notes": [
-    "Every word and number on screen or in the voice-over lives in this file; a scene marked draft:true carries numbers or wording that the coordinator has not frozen.",
+    "Every word and number on screen or in the voice-over lives in this file; a scene marked draft:true carries numbers or wording not yet frozen (the bracketed [N cents] and [ratio] are the pending local-model figures).",
     "maxSeconds is the platform's ceiling for the rendered MP4 including every pad; the composition refuses to build and stills.mjs fails loudly when the scenes exceed it.",
     "Scenes marked optional:true are dropped automatically while their image is missing from public/img (run assets.sh after docs/presentation/ changes).",
     "Scene duration = the voice file's length + padSeconds; voice.sh regenerates public/voice/<id>.wav from the voice lines below.",
     "Terminal blocks: cmd (the host's question, typed), note (assistant prose), call (a scry tool call with trimmed result lines), answer (markdown-ish: **bold**, `code`, ## heading; a leading 4-space indent keeps the line in place), meta (a dim footer line). keyCitations are drawn orange, every other id blue.",
-    "Frame cut-in: src is the image in docs/presentation/, width/height its pixel size, zoom the point (image pixels) the slow zoom ends on and the final scale, labels are placed in image pixels."
+    "Frame cut-in: src is the image in docs/presentation/, width/height its pixel size, zoom the point (image pixels) the slow zoom moves towards and the final scale (the view never leaves the image), labels are pinned to image pixels and drawn in screen space."
   ],
   "scenes": [
     {
       "id": "title",
+      "draft": true,
       "visual": {
-        "kind": "title"
-      },
-      "caption": "A screen recording, turned into a searchable record with a citation for every claim",
-      "voice": "Scry turns a screen recording into a searchable record, with a citation for every claim."
-    },
-    {
-      "id": "pipeline",
-      "visual": {
-        "kind": "image",
-        "src": "pipeline.png",
-        "highlights": [
+        "kind": "title",
+        "headline": "Screen recordings you can search.",
+        "tiles": [
           {
-            "rect": [
-              0.039,
-              0.229,
-              0.622,
-              0.268
-            ],
-            "from": 0.03,
-            "until": 0.5,
-            "color": "blue"
+            "value": "5 of 5 vs 3 of 5",
+            "label": "Scry vs Gemini, same session, same questions"
           },
           {
-            "rect": [
-              0.039,
-              0.578,
-              0.622,
-              0.265
-            ],
-            "from": 0.52,
-            "until": 0.97,
-            "color": "orange"
+            "value": "$9.32 on Claude vs [N cents] on an open model",
+            "label": "to index a four-minute session",
+            "draft": true
+          },
+          {
+            "value": "every claim cited",
+            "label": "frame, box, second"
           }
         ]
       },
-      "caption": "OCR at full resolution, changed pixels and text lifetimes are measured; models label only what was measured",
-      "voice": "It measures the screen first, OCR boxes, changed pixels and text lifetimes, and models only label what was measured."
+      "caption": "Screen recordings you can search",
+      "voice": "Scry turns any screen recording into a searchable, hierarchical index of what happened on screen, at every level of detail. Every answer cites the frame, the box and the second. It beats Gemini's new video-to-text on exactness, and building the index costs under a dollar per session with an open model."
+    },
+    {
+      "id": "us-vs-gemini-holdout",
+      "optional": true,
+      "visual": {
+        "kind": "image",
+        "src": "us-vs-gemini-holdout.png"
+      },
+      "caption": "The same five questions about the same session: Scry 5 of 5 in every configuration, Gemini direct 3 of 5",
+      "voice": "Asked the same five questions about the same session, Gemini answered three. Scry answered all five, every string exact, in every configuration. Across both videos, Gemini read the exact strings wrong half the time and invented commands that never ran. And Gemini re-watches the whole video for every question. Scry reads it once."
+    },
+    {
+      "id": "holdout-cost-per-config",
+      "optional": true,
+      "visual": {
+        "kind": "image",
+        "src": "holdout-cost-per-config.png"
+      },
+      "caption": "Indexing this four-minute session: $9.32 with the default settings, $2.94 to $11.42 across the four configurations",
+      "voice": "Indexing this four-minute session cost nine dollars on Claude,"
+    },
+    {
+      "id": "local-vs-api",
+      "optional": true,
+      "draft": true,
+      "visual": {
+        "kind": "image",
+        "src": "local-vs-api.png"
+      },
+      "caption": "DRAFT · An open 27B model indexes the session for [N cents], [ratio] times cheaper; after that every question costs cents and seconds",
+      "voice": "and [N cents] on an open 27-billion-parameter model, [ratio] times cheaper. After that, every question costs cents and seconds."
     },
     {
       "id": "demo",
       "visual": {
         "kind": "terminal",
-        "title": "claude — scry-mcp over stdio · v2/grouponly-100, the hold-out video",
+        "title": "claude — scry-mcp over stdio · v2/grouponly-100, a four-minute session",
         "status": "16 questions in one conversation · 14 correct, 2 partial, 0 wrong",
         "source": "docs/presentation/mcp-discovery.md, questions 4 to 6 of the sixteen; tool results trimmed to a line, answer sentences and table columns trimmed, none edited",
         "hold": 0.28,
@@ -184,77 +200,89 @@
           }
         ]
       },
-      "caption": "The hold-out video, asked about through the MCP server by someone who never saw it: questions 4 to 6 of 16",
-      "voice": "It is also an MCP server: someone who never saw the hold-out video asks Claude Code. What was in the form: each field from frame 21, with its box. Which profiles got the endpoint, in what order. Did each succeed: the toast and row count, box by box."
+      "caption": "An assistant that never saw the session asks over Scry's MCP server: questions 4 to 6 of 16",
+      "voice": "An AI assistant that has never seen the session is asked what happened, over Scry's MCP server. What was entered in the form: every field, read from frame 21, each value with its box. Which profiles got the endpoint, in what order. Did each save succeed: the toast and the row count, cited box by box. Sixteen questions in a row. Not one wrong answer. Not one invented fact."
     },
     {
       "id": "frame",
       "optional": true,
-      "draft": true,
       "visual": {
         "kind": "frame",
         "src": "holdout-frame-22.png",
         "width": 2048,
         "height": 1080,
         "zoom": {
-          "cx": 1024,
-          "cy": 540,
-          "scale": 2.0
+          "cx": 449,
+          "cy": 1026,
+          "scale": 1.6
         },
         "labels": [
           {
-            "x": 0,
-            "y": 0,
+            "x": 522,
+            "y": 1016,
             "color": "orange",
-            "text": "22:b112 · DRAFT"
+            "text": "22:b112 · \"Showing 1 - 2 of 2 results.\""
+          },
+          {
+            "x": 433,
+            "y": 502,
+            "color": "aqua",
+            "text": "22:b91 · b89 · b93 · the saved row"
+          },
+          {
+            "x": 1614,
+            "y": 280,
+            "color": "blue",
+            "text": "22:b55 · b58 · b60 · the toast"
           }
-        ],
-        "_draft": "DRAFT: the hold-out cut-in image is not committed yet. Set src to the file named in mcp-discovery.md or docs/ground-truth/holdout-discovery.md (frame 22 suggested: the toast, the AFDEndpoint row and \"Showing 1 - 2 of 2 results.\" that Q6 cites), width/height to its pixel size, zoom to the cited boxes and labels to the box ids."
+        ]
       },
-      "caption": "DRAFT · Frame 22 of the hold-out: the saved row and the row count the answer cited",
-      "voice": "The citation opens to the frame: the toast, the saved row and the row count that the answer quoted, box by box."
+      "caption": "Frame 22: the toast, the saved row and the row count the answer cited",
+      "voice": "The citation opens to the frame: the toast, the saved row and the row count the answer quoted, box by box."
     },
     {
-      "id": "holdout-cost-per-config",
-      "optional": true,
-      "draft": true,
+      "id": "pipeline",
       "visual": {
         "kind": "image",
-        "src": "holdout-cost-per-config.png"
+        "src": "pipeline.png",
+        "highlights": [
+          {
+            "rect": [
+              0.039,
+              0.229,
+              0.622,
+              0.268
+            ],
+            "from": 0.03,
+            "until": 0.36,
+            "color": "blue"
+          },
+          {
+            "rect": [
+              0.039,
+              0.578,
+              0.622,
+              0.265
+            ],
+            "from": 0.38,
+            "until": 0.62,
+            "color": "orange"
+          },
+          {
+            "rect": [
+              0.685,
+              0.46,
+              0.278,
+              0.18
+            ],
+            "from": 0.64,
+            "until": 0.97,
+            "color": "blue"
+          }
+        ]
       },
-      "caption": "DRAFT · What the hold-out video costs to index, per configuration",
-      "voice": "On the hold-out video, four configurations were indexed from the same frames: group-only annotation at full scale, the default, group-only at two-thirds scale, transcribing, and no annotation. Their prices are on the chart."
-    },
-    {
-      "id": "local-vs-api",
-      "optional": true,
-      "draft": true,
-      "visual": {
-        "kind": "image",
-        "src": "local-vs-api.png"
-      },
-      "caption": "DRAFT · A local 27B model against the API on group-only annotation",
-      "voice": "A local 27-billion-parameter model on this Mac, at temperature zero, reproduces 75 to 77 percent of the API's label pairs, up from 28 percent in the first attempt, for no API cost."
-    },
-    {
-      "id": "us-vs-gemini-holdout",
-      "optional": true,
-      "draft": true,
-      "visual": {
-        "kind": "image",
-        "src": "us-vs-gemini-holdout.png"
-      },
-      "caption": "DRAFT · Hold-out: Gemini direct 3 of 5 questions, 13 of 16 rubric lines; every pipeline index 5 of 5, 16 of 16",
-      "voice": "Asked directly about the hold-out, Gemini answered 3 of 5 questions and passed 13 of 16 rubric lines; every pipeline index answered 5 of 5 and passed all 16."
-    },
-    {
-      "id": "what-annotation-bought",
-      "visual": {
-        "kind": "image",
-        "src": "what-annotation-bought.png"
-      },
-      "caption": "The sample: 27 of 27 with the frames open; one rubric line separates the indexes without them",
-      "voice": "On the sample video, every configuration answered all 27 questions with the frames in hand; with the frames withheld, one rubric line separated the annotated index from the bare one."
+      "caption": "text · frames · changes · steps · sections · session",
+      "voice": "Under the hood it reads every pixel of text at full resolution, tracks what changed between frames, and records what each change did. That becomes a hierarchical index of what happened: every piece of text and how long it stayed, every change and what it meant, steps, sections, and a summary of the whole session, searchable at every level."
     },
     {
       "id": "scale-cliff",
@@ -262,22 +290,20 @@
         "kind": "image",
         "src": "scale-cliff.png"
       },
-      "caption": "Second readings collapse between half and forty percent scale; the cost barely moves",
-      "voice": "Second readings hold to two-thirds scale and collapse below half, while the cost barely moves; the image scale stays at one."
+      "caption": "Every setting measured: image scale, annotation mode, model tier, batch mode, open models",
+      "voice": "Every setting was measured: image scale, annotation mode, model tier, batch mode, open models."
     },
     {
       "id": "close",
-      "draft": true,
       "visual": {
         "kind": "close",
         "lines": [
-          "measured on one video, 27 questions, and a hold-out",
-          "and a decision ledger of 76 entries"
+          "Plugs into GitHub Copilot and Claude Code today",
+          "Screen recordings you can search."
         ]
       },
       "caption": "github.com/harrisonogle/scry",
-      "voice": "Measured on one video, 27 questions, and a hold-out, with a decision ledger of 76 entries."
+      "voice": "It plugs into GitHub Copilot and Claude Code today. Scry. Screen recordings you can search."
     }
-  ],
-  "maxSeconds": 118.0
+  ]
 }

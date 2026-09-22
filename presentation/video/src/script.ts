@@ -7,10 +7,12 @@ export type Block =
   | {kind: 'answer'; lines: string[]}
   | {kind: 'meta'; text: string};
 
-export type FrameLabel = {x: number; y: number; color: 'blue' | 'orange'; text: string};
+export type FrameLabel = {x: number; y: number; color: 'blue' | 'orange' | 'aqua'; text: string};
+
+export type Tile = {value: string; label: string; draft?: boolean};
 
 export type Visual =
-  | {kind: 'title'}
+  | {kind: 'title'; headline: string; tiles: Tile[]}
   | {kind: 'close'; lines: string[]}
   | {
       kind: 'terminal';
