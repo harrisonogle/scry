@@ -1,0 +1,46 @@
+
+### smoke-coords050-r1  prompt=annotate-v4+coords+grouponly+s0.5 cost=$0.5518 repair_counts={'link_malformed': 2} calls=11
+   147 c1 window Microsoft Edge | AKS1-KodeKloudApp - Microsoft Azure portal | covers []
+   147 c2 window PowerShell | Administrator: PowerShell 7-preview (x64) | covers ['c1']
+   f147 c2: 4 boxes:  b39[1597, 324, 1619, 345]'□', b40[1645, 324, 1668, 345]'×', b42[664, 325, 923, 344]'Administrator: P', b46[657, 349, 830, 370]'PS C:\\Users\\msad'
+   f147 unassigned=[] repair_counts={} out_tokens=5720
+   149 c1 window Microsoft Edge | AKS1-KodeKloudApp - Microsoft Azure | covers []
+   149 c2 popup Microsoft Edge | tooltip: Cloud Shell | covers ['c1']
+   f149 c2: 1 boxes:  b13[1578, 113, 1636, 134]'oud Shell'
+   f149 unassigned=[] repair_counts={} out_tokens=392
+
+### smoke-coords050-r2  prompt=annotate-v4+coords+grouponly+s0.5 cost=$0.5304 repair_counts={'link_malformed': 3} calls=11
+   147 c1 window Microsoft Edge | AKS1-KodeKloudApp - Microsoft Azure | covers []
+   147 c2 window PowerShell 7-preview | Administrator: PowerShell 7-preview (x64) | covers ['c1']
+   f147 c2: 3 boxes:  b39[1597, 324, 1619, 345]'□', b40[1645, 324, 1668, 345]'×', b42[664, 325, 923, 344]'Administrator: P'
+   f147 unassigned=[] repair_counts={} out_tokens=5594
+   149 c1 window Microsoft Edge | AKS1-KodeKloudApp - Microsoft Azure | covers []
+   149 c2 popup Microsoft Edge | tooltip: Cloud Shell | covers ['c1']
+   f149 c2: 1 boxes:  b13[1578, 113, 1636, 134]'oud Shell'
+   f149 unassigned=[] repair_counts={} out_tokens=434
+
+### smoke-coords067-r1  prompt=annotate-v4+coords+grouponly+s0.67 cost=$0.7352 repair_counts={} calls=11
+   147 c1 window Microsoft Edge | AKS1-KodeKloudApp - Microsoft Azure | covers []
+   147 c2 window PowerShell | Administrator: PowerShell 7-preview (x64) | covers ['c1']
+   f147 c2: 5 boxes:  b38[1676, 319, 1701, 339]'j.io', b39[1597, 324, 1619, 345]'□', b40[1645, 324, 1668, 345]'×', b42[664, 325, 923, 344]'Administrator: P', b46[657, 349, 830, 370]'PS C:\\Users\\msad'
+   f147 unassigned=[] repair_counts={} out_tokens=4995
+   149 c1 window Microsoft Edge | AKS1-KodeKloudApp - Microsoft Azure | covers []
+   149 c2 popup Microsoft Edge | tooltip: Cloud Shell | covers ['c1']
+   f149 c2: 1 boxes:  b13[1578, 113, 1636, 134]'oud Shell'
+   f149 unassigned=[] repair_counts={} out_tokens=418
+
+### smoke-coords067-r2  prompt=annotate-v4+coords+grouponly+s0.67 cost=$0.5987 repair_counts={} calls=11
+   147 c1 window Microsoft Edge | AKS1-KodeKloudApp - Microsoft Azure | covers []
+   147 c2 window PowerShell | Administrator: PowerShell 7-preview (x64) | covers ['c1']
+   f147 c2: 5 boxes:  b38[1676, 319, 1701, 339]'j.io', b39[1597, 324, 1619, 345]'□', b40[1645, 324, 1668, 345]'×', b42[664, 325, 923, 344]'Administrator: P', b46[657, 349, 830, 370]'PS C:\\Users\\msad'
+   f147 unassigned=[] repair_counts={} out_tokens=5979
+   149 c1 window Microsoft Edge | AKS1-KodeKloudApp - Microsoft Azure | covers []
+   149 c2 popup Microsoft Edge | tooltip: Cloud Shell | covers ['c1']
+   f149 c2: 1 boxes:  b13[1578, 113, 1636, 134]'oud Shell'
+   f149 unassigned=[] repair_counts={} out_tokens=442
+
+P12 annotate cost total: $2.42
+smoke-coords050-r1: echoed assign rects exact in the scaled space 255/255
+smoke-coords050-r2: echoed assign rects exact in the scaled space 253/253
+smoke-coords067-r1: echoed assign rects exact in the scaled space 255/255
+smoke-coords067-r2: echoed assign rects exact in the scaled space 255/255
