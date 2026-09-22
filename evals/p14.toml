@@ -1,0 +1,31 @@
+# P14: BOX TEXT IN THE USER TURN, under incremental group-only `ids` at scale 1.0, on the smoke span only. Under
+# group-only the model gives no second reading, so the rule that no OCR text reaches the model (there to keep the second
+# reading independent) protects nothing; `[annotate] box_text = true` lists each box's OCR reading beside its id on the
+# Boxes line and adds one hint sentence to the system prompt. The question: does the reading beside the id let the
+# model form label-value pairs by text as well as by locating tags on the image, where a smaller model loses pairs (the
+# local 27B reproduces 75 % of the API's reference pairs; its misses cross columns or merge adjacent lines)? Measured on
+# the API first: `boxtext` against `plain` (today's call, byte for byte), two cold repeats each, judged with P10's
+# qual.py against P10's ids100 yardstick (the same call as `plain`, so P10's two repeats give the repeat noise).
+phase = "p14"
+source = "runs/p0"
+stages = ["read", "track", "annotate"]
+repeats = 2
+
+[spans.smoke]
+frames = "145-155"
+
+[axis.ref.boxtext]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "ids"
+"annotate.scale" = 1.0
+"annotate.box_text" = true
+
+[axis.ref.plain]
+"model.concurrency" = 8  # requests in flight; a wall-time setting only (ledger L68)
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "ids"
+"annotate.scale" = 1.0
+"annotate.box_text" = false

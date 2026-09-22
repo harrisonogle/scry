@@ -27,6 +27,10 @@ TEXTS = """texts: for every target box id, the verbatim text inside that box, re
 
 DESCRIPTION = """description: what the boxes cannot express about this screen: selections, highlights, toggles, checked boxes, icons, diagrams and their relationships, dialogs, progress indicators, anything animating. Plain prose. The description is about the whole screen, as a person looking at it would describe it, and must never mention box numbers, box ids, targets, or what was or was not requested."""
 
+# box_text (group-only only): the user turn lists each box's OCR reading beside its id or rectangle, and the images
+# paragraph gains this one sentence, as a whole-paragraph swap
+BOX_TEXT = """The user message also gives the OCR engine's reading of each box; readings can be wrong, so use them as a hint and the image as the truth."""
+
 # group-only: replaces TEXTS as a whole; every other paragraph is shared
 NO_TEXTS = """Do not transcribe any text: the OCR reading of each box is used."""
 
@@ -46,22 +50,28 @@ Boxes that merely sit side by side stand alone: tabs, toolbar buttons, menu item
 TEXTS_COORDS = """texts: for every target, its rectangle and the verbatim text inside that box, read from the screenshot. Preserve case, punctuation, whitespace and symbols. Never correct, complete or normalize commands, code, paths or identifiers. Use ? for a character you cannot resolve. An icon is not text: give "". missed: text no box covers, with its container."""
 
 
-def system_prompt(arm: str = "A", transcribe: bool = True, pane: bool = False, reference: str = "ids") -> str:
+def system_prompt(arm: str = "A", transcribe: bool = True, pane: bool = False, reference: str = "ids", box_text: bool = False) -> str:
     """Named paragraphs joined by a blank line; a variant swaps whole paragraphs and never edits inside one."""
     if arm != "A":
         raise ValueError(f"no system prompt for arm {arm!r}")
     if pane:
         raise ValueError("no system prompt with a pane label")
+    if box_text and transcribe:
+        raise ValueError("no system prompt with box text and a second reading")
     if reference == "ids":
-        return "\n\n".join([ROLE, IMAGES, CONTAINERS, ASSIGN, LINKS, TEXTS if transcribe else NO_TEXTS, DESCRIPTION])
+        images = IMAGES + " " + BOX_TEXT if box_text else IMAGES
+        return "\n\n".join([ROLE, images, CONTAINERS, ASSIGN, LINKS, TEXTS if transcribe else NO_TEXTS, DESCRIPTION])
     if reference == "coords":
-        return "\n\n".join([ROLE, IMAGES_COORDS, CONTAINERS, ASSIGN_COORDS, LINKS_COORDS, TEXTS_COORDS if transcribe else NO_TEXTS,
+        images = IMAGES_COORDS + " " + BOX_TEXT if box_text else IMAGES_COORDS
+        return "\n\n".join([ROLE, images, CONTAINERS, ASSIGN_COORDS, LINKS_COORDS, TEXTS_COORDS if transcribe else NO_TEXTS,
                             DESCRIPTION])
     raise ValueError(f"no system prompt for reference {reference!r}")
 
 
-def prompt_version(arm: str = "A", transcribe: bool = True, pane: bool = False, scale: float = 1.0, reference: str = "ids") -> str:
+def prompt_version(arm: str = "A", transcribe: bool = True, pane: bool = False, scale: float = 1.0, reference: str = "ids",
+                   box_text: bool = False) -> str:
     """Names the system prompt and schema variant; the scale is here because the clean frame is scaled in memory and
     its file hash does not change."""
     return (VERSION + ("" if arm == "A" else "+" + arm) + ("+coords" if reference == "coords" else "")
-            + ("" if transcribe else "+grouponly") + ("+pane" if pane else "") + ("" if scale == 1.0 else f"+s{scale:g}"))
+            + ("" if transcribe else "+grouponly") + ("+boxtext" if box_text else "") + ("+pane" if pane else "")
+            + ("" if scale == 1.0 else f"+s{scale:g}"))

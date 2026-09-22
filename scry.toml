@@ -41,6 +41,7 @@ mode = "incremental"
 transcribe = false
 scale = 1.0
 reference = "ids"  # "ids": numbered overlay, answers by box id; "coords": boxes as rectangles, answers by the box's rectangle
+box_text = false  # lists each box's OCR reading in the user turn; group-only only
 
 [interpret]
 images = "scaled"

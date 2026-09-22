@@ -6,7 +6,7 @@ import tomllib
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class DetectParams(BaseModel):
@@ -83,6 +83,13 @@ class AnnotateConfig(BaseModel):
     # the answer names boxes by id. "coords": the clean frame alone, every box listed as a rectangle in the unscaled
     # frame, and the answer names a box by its rectangle, which code matches back to the box (no id in either direction).
     reference: Literal["ids", "coords"] = "ids"
+    box_text: bool = False  # lists each box's OCR reading in the user turn; group-only only
+
+    @model_validator(mode="after")
+    def _box_text_is_group_only(self) -> "AnnotateConfig":
+        if self.box_text and self.transcribe:  # the second reading must stay independent of OCR
+            raise ValueError("box_text = true needs transcribe = false: the second reading must stay independent of OCR")
+        return self
 
 
 class OverlayConfig(BaseModel):
