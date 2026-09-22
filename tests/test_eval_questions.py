@@ -1,5 +1,6 @@
 import itertools
 import re
+import threading
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -9,7 +10,7 @@ from fakes import fake_sync_client, response, text
 from minirun import mini_interpretations, mini_run
 
 from scry.ask import ToolCall
-from scry.config import AskConfig, Config
+from scry.config import AskConfig, Config, ModelConfig
 from scry.evaluation import adapters
 from scry.evaluation.adapters import AskOutcome
 from scry.evaluation.questions import load_answers, parse_questions, run_questions
@@ -44,15 +45,22 @@ def _clock():
     return lambda: next(ticks) * 2.0  # every call measures 2.0 s
 
 
-def _outcome(stop: str = "end_turn", dollars: float = 0.1) -> AskOutcome:
-    return AskOutcome("It ran at frame 2.", {"input_tokens": 10_000, "output_tokens": 2_000}, dollars, "claude-opus-5", 3,
+def _outcome(stop: str = "end_turn", dollars: float = 0.1, text: str = "It ran at frame 2.") -> AskOutcome:
+    return AskOutcome(text, {"input_tokens": 10_000, "output_tokens": 2_000}, dollars, "claude-opus-5", 3,
                       ["search", "get_frame"], stop, calls=[{"name": "search", "input": {"query": "git push"}, "results": 0}], prompt="ask-v1")
 
 
+def _numbered(n: int) -> str:
+    """A question file of n positive questions, "Question 1?" to "Question n?"."""
+    return "".join(f"### Q{i} (positive, lookup)\n- **Question:** Question {i}?\n- **Reference answer:** {i}.\n- **Rubric:**\n  - M1: says {i}.\n"
+                   for i in range(1, n + 1))
+
+
 def test_run_questions_records_cost_resumes_and_keeps_errors(tmp_path: Path):
+    """One question at a time (`[model] concurrency` 1): asked in file order, the clock read around each in turn."""
     path = tmp_path / "q.md"
     path.write_text(QUESTIONS)
-    cfg = Config()
+    cfg = Config(model=ModelConfig(concurrency=1))
     asked: list[str] = []
 
     def answer(run, cfg, question):
@@ -98,6 +106,62 @@ def test_run_questions_records_cost_resumes_and_keeps_errors(tmp_path: Path):
     h1, h2 = run_questions(run, cfg, path, answer=answer, clock=_clock())  # only the failed question is asked again
     assert asked == ["Where does `git status` get run?"]
     assert h1.error is None and h2 == g2
+
+
+def test_run_questions_asks_concurrency_questions_at_once_and_writes_them_in_file_order(tmp_path: Path):
+    """`[model] concurrency` questions are in flight together; whatever order they finish in, the answers are in file
+    order and the same as asking one at a time would have written."""
+    path = tmp_path / "q.md"
+    path.write_text(_numbered(3))
+    together = threading.Barrier(3, timeout=5)  # passed only when all three questions are in flight at once
+    done = {n: threading.Event() for n in (1, 2, 3)}
+    finished: list[int] = []
+
+    def answer(run, cfg, question):
+        n = int(question.removeprefix("Question ").rstrip("?"))
+        together.wait()  # BrokenBarrierError, recorded as this question's error, if fewer than three are in flight
+        if n < 3:
+            assert done[n + 1].wait(5)  # finish in the order 3, 2, 1: the reverse of the file
+        finished.append(n)
+        done[n].set()
+        return _outcome(text=f"answer {n}")
+
+    run = Run(tmp_path / "run")
+    answers = run_questions(run, Config(model=ModelConfig(concurrency=3)), path, answer=answer, clock=lambda: 0.0)
+    assert finished == [3, 2, 1]
+    assert [(a.qid, a.answer, a.error) for a in answers] == [("Q1", "answer 1", None), ("Q2", "answer 2", None), ("Q3", "answer 3", None)]
+    assert load_answers(run) == answers  # the file too is in file order
+    sequential = run_questions(Run(tmp_path / "run1"), Config(model=ModelConfig(concurrency=1)), path,
+                               answer=lambda run, cfg, q: _outcome(text=f"answer {q.removeprefix('Question ').rstrip('?')}"), clock=lambda: 0.0)
+    assert answers == sequential
+
+
+def test_run_questions_a_failed_question_beside_others_in_flight_loses_none_of_them(tmp_path: Path):
+    path = tmp_path / "q.md"
+    path.write_text(_numbered(3))
+    together = threading.Barrier(3, timeout=5)
+
+    def answer(run, cfg, question):
+        together.wait()
+        if question == "Question 2?":
+            raise RuntimeError("rate limit")
+        return _outcome(text=question)
+
+    run = Run(tmp_path / "run")
+    cfg = Config(model=ModelConfig(concurrency=3))
+    with pytest.raises(RuntimeError, match="1 questions failed"):
+        run_questions(run, cfg, path, answer=answer, clock=lambda: 0.0)
+    a1, a2, a3 = load_answers(run)  # all three lines were written before it raised
+    assert (a1.answer, a1.error) == ("Question 1?", None) and (a3.answer, a3.error) == ("Question 3?", None)
+    assert (a2.answer, a2.error) == ("", "RuntimeError: rate limit")
+    asked: list[str] = []
+
+    def again(run, cfg, question):
+        asked.append(question)
+        return _outcome(text=question)
+
+    b1, b2, b3 = run_questions(run, cfg, path, answer=again, clock=lambda: 0.0)  # only the failed question is asked again
+    assert asked == ["Question 2?"] and (b1, b3) == (a1, a3) and (b2.answer, b2.error) == ("Question 2?", None)
 
 
 def test_answer_fn_maps_ask_result(tmp_path: Path, monkeypatch):

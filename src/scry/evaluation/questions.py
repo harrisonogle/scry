@@ -1,11 +1,12 @@
 """The question set: the parser of a question file (the format of docs/ground-truth/span2-questions.md) and the runner
-that asks every question once per run directory through `ask`. These calls are what is judged: no call cache is
-involved, and a question that failed is recorded as an error, never as an answer."""
+that asks every question once per run directory through `ask`, `[model] concurrency` questions at a time. These calls
+are what is judged: no call cache is involved, and a question that failed is recorded as an error, never as an answer."""
 from __future__ import annotations
 
 import hashlib
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Literal
@@ -135,27 +136,36 @@ def load_answers(run: Run) -> list[Answer]:
 
 def run_questions(run: Run, cfg: Config, questions_path: Path, answer: Callable[..., adapters.AskOutcome] = adapters.answer_fn,
                   clock: Callable[[], float] = time.perf_counter) -> list[Answer]:
-    """Ask every question of the file once, in file order, each in a fresh conversation, and write answers.jsonl after
-    each. An answer the file already holds for the same key, without an error, is kept. A failed question is recorded
-    with its error and an empty answer; after the last question any failure raises, so the run is marked failed and the
-    next `scry eval run` asks only those questions again."""
+    """Ask every question of the file once, each in a fresh conversation, `[model] concurrency` of them at a time on
+    threads (the questions are independent; `ask` opens its own index connection and API client per call), and write
+    answers.jsonl in file order after each answer lands. An answer the file already holds for the same key, without an
+    error, is kept. A failed question is recorded with its error and an empty answer and stops no other; after the last
+    question any failure raises, so the run is marked failed and the next `scry eval run` asks only those questions
+    again."""
     questions = parse_questions(Path(questions_path).read_text())
     answers = {a.key: a for a in load_answers(run) if a.error is None}
-    for q in questions:
-        if q.key in answers:
-            continue
+
+    def one(q: Question) -> Answer:  # on a worker thread; nothing here is shared with another question
         base = dict(qid=q.id, key=q.key, polarity=q.polarity, question=q.question)
         t0 = clock()
         try:
             out = answer(run, cfg, q.question)
         except Exception as e:
-            answers[q.key] = Answer(**base, answer="", error=f"{type(e).__name__}: {e}"[:500], seconds=round(clock() - t0, 1))
-        else:
-            failed = out.stop == "api_error"  # the text is then the error message, never an answer
-            answers[q.key] = Answer(**base, answer="" if failed else out.text, error=out.text[:500] if failed else None,
-                                    usage=out.usage, model=out.model, dollars=out.dollars, seconds=round(clock() - t0, 1),
-                                    turns=out.turns, tools=out.tools, calls=out.calls, prompt=out.prompt, stop=out.stop)
-        write_jsonl(_answers_path(run), [answers[x.key] for x in questions if x.key in answers])
+            return Answer(**base, answer="", error=f"{type(e).__name__}: {e}"[:500], seconds=round(clock() - t0, 1))
+        failed = out.stop == "api_error"  # the text is then the error message, never an answer
+        return Answer(**base, answer="" if failed else out.text, error=out.text[:500] if failed else None,
+                      usage=out.usage, model=out.model, dollars=out.dollars, seconds=round(clock() - t0, 1),
+                      turns=out.turns, tools=out.tools, calls=out.calls, prompt=out.prompt, stop=out.stop)
+
+    pool = ThreadPoolExecutor(max_workers=max(1, cfg.model.concurrency))
+    try:
+        pending = [pool.submit(one, q) for q in questions if q.key not in answers]
+        for future in as_completed(pending):  # this thread alone writes the file, so the writes never interleave
+            a = future.result()
+            answers[a.key] = a
+            write_jsonl(_answers_path(run), [answers[x.key] for x in questions if x.key in answers])
+    finally:
+        pool.shutdown(wait=True, cancel_futures=True)  # on an interrupt: what has not started is never asked (or paid for)
     result = [answers[q.key] for q in questions]
     write_jsonl(_answers_path(run), result)
     failed = sum(a.error is not None for a in result)
