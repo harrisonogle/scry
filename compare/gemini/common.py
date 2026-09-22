@@ -43,8 +43,8 @@ def video_path() -> Path:
     return p if p.is_absolute() else MAIN / p
 
 
-def questions() -> list[Question]:
-    return parse_questions(QUESTIONS.read_text())
+def questions(path: Path = QUESTIONS) -> list[Question]:
+    return parse_questions(Path(path).read_text())
 
 
 def write_jsonl(path: Path, rows: list) -> None:
@@ -69,10 +69,12 @@ def gemini_client():
     return genai.Client(api_key=key)  # explicit, as outline.py does: a bare Client() may take GOOGLE_API_KEY
 
 
-def uploaded_video(client, video: Path) -> tuple[str, str, dict]:
-    """The uploaded file's (uri, mime_type, stats). The handle is kept in runs/compare-gemini/upload.json and reused by
-    every call of every arm while it is still ACTIVE on the server; otherwise the video is uploaded again."""
-    rec_path = OUT / "upload.json"
+def uploaded_video(client, video: Path, rec_path: Path | None = None) -> tuple[str, str, dict]:
+    """The uploaded file's (uri, mime_type, stats). The handle is kept in <out>/upload.json (default
+    runs/compare-gemini/) and reused by every call of every arm while it is still ACTIVE on the server; otherwise the
+    video is uploaded again."""
+    rec_path = OUT / "upload.json" if rec_path is None else rec_path
+    rec_path.parent.mkdir(parents=True, exist_ok=True)
     if rec_path.exists():
         rec = json.loads(rec_path.read_text())
         try:
@@ -145,8 +147,9 @@ class Ledger:
     """Appends every call's dollars and outcome to runs/compare-gemini/spend.jsonl (one line per call), so the cap of
     $15 on the whole comparison can be checked at any time with `python -m compare.gemini.spend`."""
 
-    def __init__(self):
-        self.path = OUT / "spend.jsonl"
+    def __init__(self, path: Path | None = None):
+        self.path = OUT / "spend.jsonl" if path is None else path
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         self.lock = threading.Lock()
 
     def add(self, vendor: str, arm: str, label: str, dollars: float | None, seconds: float, ok: bool, note: str = "") -> None:
