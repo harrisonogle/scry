@@ -47,7 +47,10 @@ class Run:
         m.update(kv)
         self.manifest.write_text(json.dumps(m, indent=2, sort_keys=True, default=str))
 
-    def inputs_hash(self, inputs: list[Path]) -> str:
+    @staticmethod
+    def inputs_hash(inputs: list[Path]) -> str:
+        """What a stage's `inputs` entry holds for these files; of the paths alone, so a directory that must not be
+        opened as a Run (a subset's source) can be checked against its manifest."""
         parts = [f"{p.name}:{sha256_file(p) if p.exists() else 'missing'}" for p in inputs]
         return "|".join(parts)
 

@@ -28,10 +28,16 @@ def assign_ids(raw: list[RawLine], churn: list[BBox]) -> tuple[list[Box], int]:
     return boxes, len(raw) - len(kept)
 
 
+def read_config_hash(cfg: Config) -> str:
+    """The config hash `read` writes to the manifest and checks itself against: the [read] section, nothing else. The
+    harness imports a source's boxes into a subset only when the subset's config hashes the same here (scry.subset)."""
+    return config_hash(cfg, "read")
+
+
 def run_read(run: Run, cfg: Config, engine: OcrEngine | None = None) -> None:
     """read: OCR boxes per emitted frame → boxes.jsonl. One pass of one engine; nothing is re-read or corrected."""
     inputs = [run.frames]
-    ch = config_hash(cfg, "read")
+    ch = read_config_hash(cfg)
     if run.stage_up_to_date("read", inputs, ch):
         log.info("read up to date")
         return
