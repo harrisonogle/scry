@@ -1,6 +1,8 @@
 [project]
 name = "scry"
 version = "0.1.0"
+license = "MIT"
+license-files = ["LICENSE"]
 description = "Visual transcript pipeline for silent screen-recording tutorials"
 requires-python = ">=3.12"
 dependencies = [
