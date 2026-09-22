@@ -1,0 +1,27 @@
+# P11 (ledger L69): the two group-only configurations P10 pointed at, measured on the whole video so that the cost per
+# video is measured and not projected: the tagged overlay (ids), incremental, group-only, at 1.0 and at 0.67, sync,
+# with the 27 questions and the command list. Against P4 (transcribing ids 1.0: $17.85, 27 of 27, 7/7) and P10full
+# (coords group-only 0.5 / 0.67: $13.41 / $13.83, 27 of 27, submitted 6/7).
+phase = "p11"
+source = "runs/p0"
+stages = ["read", "track", "annotate", "interpret", "summarize", "index", "ask"]
+repeats = 1
+
+[spans.full]
+frames = "0-220"
+ground_truth = "docs/ground-truth/span2-commands.md"
+questions = "docs/ground-truth/full-questions.md"
+
+[axis.base.ids100-grouponly]
+"model.concurrency" = 16
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "ids"
+"annotate.scale" = 1.0
+
+[axis.base.ids067-grouponly]
+"model.concurrency" = 16
+"annotate.mode" = "incremental"
+"annotate.transcribe" = false
+"annotate.reference" = "ids"
+"annotate.scale" = 0.67

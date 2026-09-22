@@ -1,0 +1,2666 @@
+{
+ "phase": "p10",
+ "matrix": "evals/p10.toml",
+ "date": "2026-09-21",
+ "scorecards": [
+  {
+   "run": {
+    "phase": "p10",
+    "name": "smoke-coords100-r1",
+    "config_id": "smoke-coords100",
+    "span": "smoke",
+    "frames": [
+     145,
+     155
+    ],
+    "values": {
+     "ref": "coords100"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 11,
+    "transitions": 10,
+    "lifetimes": 255
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 2,
+     "repair_counts": {
+      "link_malformed": 2
+     },
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 11,
+    "projection_frames": 221,
+    "dollars": 0.8095,
+    "per_frame": 0.0736,
+    "per_video": 16.26,
+    "seconds": 194.1,
+    "seconds_per_frame": 17.6,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 0.8095,
+      "per_frame": 0.0736,
+      "per_video": 16.26,
+      "seconds": 54.0,
+      "calls": 11,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 25912,
+       "cache_read_input_tokens": 9717,
+       "input_tokens": 43162,
+       "output_tokens": 17077
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 117.9,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 22.2,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0736
+    },
+    "seconds.per_frame": {
+     "run": 17.6
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "smoke-coords100-r2",
+    "config_id": "smoke-coords100",
+    "span": "smoke",
+    "frames": [
+     145,
+     155
+    ],
+    "values": {
+     "ref": "coords100"
+    },
+    "repeat": 2,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 11,
+    "transitions": 10,
+    "lifetimes": 255
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 2,
+     "repair_counts": {
+      "link_malformed": 1,
+      "rect_unplaced": 1
+     },
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 11,
+    "projection_frames": 221,
+    "dollars": 0.8372,
+    "per_frame": 0.0761,
+    "per_video": 16.82,
+    "seconds": 200.0,
+    "seconds_per_frame": 18.2,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 0.8372,
+      "per_frame": 0.0761,
+      "per_video": 16.82,
+      "seconds": 59.9,
+      "calls": 11,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 25912,
+       "cache_read_input_tokens": 9717,
+       "input_tokens": 43162,
+       "output_tokens": 18183
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 116.1,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 24.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0761
+    },
+    "seconds.per_frame": {
+     "run": 18.2
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "smoke-coords067-r1",
+    "config_id": "smoke-coords067",
+    "span": "smoke",
+    "frames": [
+     145,
+     155
+    ],
+    "values": {
+     "ref": "coords067"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 11,
+    "transitions": 10,
+    "lifetimes": 255
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 11,
+    "projection_frames": 221,
+    "dollars": 0.8378,
+    "per_frame": 0.0762,
+    "per_video": 16.83,
+    "seconds": 217.6,
+    "seconds_per_frame": 19.8,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 0.8378,
+      "per_frame": 0.0762,
+      "per_video": 16.83,
+      "seconds": 77.5,
+      "calls": 11,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 25912,
+       "cache_read_input_tokens": 9717,
+       "input_tokens": 27091,
+       "output_tokens": 21421
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 117.8,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 22.3,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0762
+    },
+    "seconds.per_frame": {
+     "run": 19.8
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "smoke-coords067-r2",
+    "config_id": "smoke-coords067",
+    "span": "smoke",
+    "frames": [
+     145,
+     155
+    ],
+    "values": {
+     "ref": "coords067"
+    },
+    "repeat": 2,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 11,
+    "transitions": 10,
+    "lifetimes": 255
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 11,
+    "projection_frames": 221,
+    "dollars": 0.7736,
+    "per_frame": 0.0703,
+    "per_video": 15.54,
+    "seconds": 181.6,
+    "seconds_per_frame": 16.5,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 0.7736,
+      "per_frame": 0.0703,
+      "per_video": 15.54,
+      "seconds": 41.6,
+      "calls": 11,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 25912,
+       "cache_read_input_tokens": 9717,
+       "input_tokens": 27091,
+       "output_tokens": 18854
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 117.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 23.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0703
+    },
+    "seconds.per_frame": {
+     "run": 16.5
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "smoke-coords050-r1",
+    "config_id": "smoke-coords050",
+    "span": "smoke",
+    "frames": [
+     145,
+     155
+    ],
+    "values": {
+     "ref": "coords050"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 11,
+    "transitions": 10,
+    "lifetimes": 255
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 11,
+    "projection_frames": 221,
+    "dollars": 0.7697,
+    "per_frame": 0.07,
+    "per_video": 15.46,
+    "seconds": 225.9,
+    "seconds_per_frame": 20.5,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 0.7697,
+      "per_frame": 0.07,
+      "per_video": 15.46,
+      "seconds": 85.8,
+      "calls": 11,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 25912,
+       "cache_read_input_tokens": 9717,
+       "input_tokens": 21635,
+       "output_tokens": 19790
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 116.5,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 23.6,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.07
+    },
+    "seconds.per_frame": {
+     "run": 20.5
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "smoke-coords050-r2",
+    "config_id": "smoke-coords050",
+    "span": "smoke",
+    "frames": [
+     145,
+     155
+    ],
+    "values": {
+     "ref": "coords050"
+    },
+    "repeat": 2,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 11,
+    "transitions": 10,
+    "lifetimes": 255
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 3,
+     "repair_counts": {
+      "link_already_linked": 1,
+      "link_malformed": 1,
+      "rect_unplaced": 1
+     },
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 11,
+    "projection_frames": 221,
+    "dollars": 0.6779,
+    "per_frame": 0.0616,
+    "per_video": 13.62,
+    "seconds": 180.5,
+    "seconds_per_frame": 16.4,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 0.6779,
+      "per_frame": 0.0616,
+      "per_video": 13.62,
+      "seconds": 40.4,
+      "calls": 11,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 25912,
+       "cache_read_input_tokens": 9717,
+       "input_tokens": 21635,
+       "output_tokens": 16116
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 117.8,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 22.3,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0616
+    },
+    "seconds.per_frame": {
+     "run": 16.4
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "smoke-ids100-r1",
+    "config_id": "smoke-ids100",
+    "span": "smoke",
+    "frames": [
+     145,
+     155
+    ],
+    "values": {
+     "ref": "ids100"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 11,
+    "transitions": 10,
+    "lifetimes": 255
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 11,
+    "projection_frames": 221,
+    "dollars": 0.6271,
+    "per_frame": 0.057,
+    "per_video": 12.6,
+    "seconds": 43.9,
+    "seconds_per_frame": 4.0,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 0.6271,
+      "per_frame": 0.057,
+      "per_video": 12.6,
+      "seconds": 33.7,
+      "calls": 11,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 33385,
+       "input_tokens": 63824,
+       "output_tokens": 11653
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 9.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 1.2,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.057
+    },
+    "seconds.per_frame": {
+     "run": 4.0
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "smoke-ids100-r2",
+    "config_id": "smoke-ids100",
+    "span": "smoke",
+    "frames": [
+     145,
+     155
+    ],
+    "values": {
+     "ref": "ids100"
+    },
+    "repeat": 2,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 11,
+    "transitions": 10,
+    "lifetimes": 255
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 11,
+    "projection_frames": 221,
+    "dollars": 0.6279,
+    "per_frame": 0.0571,
+    "per_video": 12.62,
+    "seconds": 43.2,
+    "seconds_per_frame": 3.9,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 0.6279,
+      "per_frame": 0.0571,
+      "per_video": 12.62,
+      "seconds": 33.3,
+      "calls": 11,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 33385,
+       "input_tokens": 63824,
+       "output_tokens": 11684
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 9.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.9,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0571
+    },
+    "seconds.per_frame": {
+     "run": 3.9
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "smoke-ids067-r1",
+    "config_id": "smoke-ids067",
+    "span": "smoke",
+    "frames": [
+     145,
+     155
+    ],
+    "values": {
+     "ref": "ids067"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 11,
+    "transitions": 10,
+    "lifetimes": 255
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 11,
+    "projection_frames": 221,
+    "dollars": 0.441,
+    "per_frame": 0.0401,
+    "per_video": 8.86,
+    "seconds": 53.6,
+    "seconds_per_frame": 4.9,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 0.441,
+      "per_frame": 0.0401,
+      "per_video": 8.86,
+      "seconds": 36.5,
+      "calls": 11,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 33385,
+       "input_tokens": 30934,
+       "output_tokens": 10787
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 14.7,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 2.4,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0401
+    },
+    "seconds.per_frame": {
+     "run": 4.9
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "smoke-ids067-r2",
+    "config_id": "smoke-ids067",
+    "span": "smoke",
+    "frames": [
+     145,
+     155
+    ],
+    "values": {
+     "ref": "ids067"
+    },
+    "repeat": 2,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 11,
+    "transitions": 10,
+    "lifetimes": 255
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 11,
+    "projection_frames": 221,
+    "dollars": 0.4615,
+    "per_frame": 0.042,
+    "per_video": 9.27,
+    "seconds": 44.7,
+    "seconds_per_frame": 4.1,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 0.4615,
+      "per_frame": 0.042,
+      "per_video": 9.27,
+      "seconds": 32.3,
+      "calls": 11,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 33385,
+       "input_tokens": 30934,
+       "output_tokens": 11607
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 11.4,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 1.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.042
+    },
+    "seconds.per_frame": {
+     "run": 4.1
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "smoke-ids050-r1",
+    "config_id": "smoke-ids050",
+    "span": "smoke",
+    "frames": [
+     145,
+     155
+    ],
+    "values": {
+     "ref": "ids050"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 11,
+    "transitions": 10,
+    "lifetimes": 255
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 11,
+    "projection_frames": 221,
+    "dollars": 0.4608,
+    "per_frame": 0.0419,
+    "per_video": 9.26,
+    "seconds": 142.0,
+    "seconds_per_frame": 12.9,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 0.4608,
+      "per_frame": 0.0419,
+      "per_video": 9.26,
+      "seconds": 55.1,
+      "calls": 11,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 33385,
+       "input_tokens": 20022,
+       "output_tokens": 13758
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 81.7,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 5.2,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0419
+    },
+    "seconds.per_frame": {
+     "run": 12.9
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "smoke-ids050-r2",
+    "config_id": "smoke-ids050",
+    "span": "smoke",
+    "frames": [
+     145,
+     155
+    ],
+    "values": {
+     "ref": "ids050"
+    },
+    "repeat": 2,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 11,
+    "transitions": 10,
+    "lifetimes": 255
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 11,
+    "projection_frames": 221,
+    "dollars": 0.602,
+    "per_frame": 0.0547,
+    "per_video": 12.09,
+    "seconds": 60.7,
+    "seconds_per_frame": 5.5,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 0.602,
+      "per_frame": 0.0547,
+      "per_video": 12.09,
+      "seconds": 48.4,
+      "calls": 11,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 24280,
+       "cache_read_input_tokens": 9105,
+       "input_tokens": 20022,
+       "output_tokens": 13825
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 11.1,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 1.2,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0547
+    },
+    "seconds.per_frame": {
+     "run": 5.5
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "span2-coords100-r1",
+    "config_id": "span2-coords100",
+    "span": "span2",
+    "frames": [
+     155,
+     187
+    ],
+    "values": {
+     "ref": "coords100"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 33,
+    "transitions": 32,
+    "lifetimes": 383
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 1,
+     "repair_counts": {
+      "link_malformed": 1
+     },
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 33,
+    "projection_frames": 221,
+    "dollars": 1.5174,
+    "per_frame": 0.046,
+    "per_video": 10.16,
+    "seconds": 221.3,
+    "seconds_per_frame": 6.7,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 1.5174,
+      "per_frame": 0.046,
+      "per_video": 10.16,
+      "seconds": 64.8,
+      "calls": 33,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 106887,
+       "input_tokens": 132985,
+       "output_tokens": 31962
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 153.9,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 2.6,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.046
+    },
+    "seconds.per_frame": {
+     "run": 6.7
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "span2-coords100-r2",
+    "config_id": "span2-coords100",
+    "span": "span2",
+    "frames": [
+     155,
+     187
+    ],
+    "values": {
+     "ref": "coords100"
+    },
+    "repeat": 2,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 33,
+    "transitions": 32,
+    "lifetimes": 383
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 1,
+     "repair_counts": {
+      "second_assignment": 1
+     },
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 33,
+    "projection_frames": 221,
+    "dollars": 1.5301,
+    "per_frame": 0.0464,
+    "per_video": 10.25,
+    "seconds": 240.4,
+    "seconds_per_frame": 7.3,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 1.5301,
+      "per_frame": 0.0464,
+      "per_video": 10.25,
+      "seconds": 83.9,
+      "calls": 33,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 106887,
+       "input_tokens": 132985,
+       "output_tokens": 32471
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 153.9,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 2.6,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0464
+    },
+    "seconds.per_frame": {
+     "run": 7.3
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "span2-coords067-r1",
+    "config_id": "span2-coords067",
+    "span": "span2",
+    "frames": [
+     155,
+     187
+    ],
+    "values": {
+     "ref": "coords067"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 33,
+    "transitions": 32,
+    "lifetimes": 383
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 2,
+     "repair_counts": {
+      "link_malformed": 2
+     },
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 33,
+    "projection_frames": 221,
+    "dollars": 1.4501,
+    "per_frame": 0.0439,
+    "per_video": 9.71,
+    "seconds": 430.6,
+    "seconds_per_frame": 13.0,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 1.4501,
+      "per_frame": 0.0439,
+      "per_video": 9.71,
+      "seconds": 76.1,
+      "calls": 33,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 106887,
+       "input_tokens": 84772,
+       "output_tokens": 38910
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 350.8,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 3.7,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0439
+    },
+    "seconds.per_frame": {
+     "run": 13.0
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "span2-coords067-r2",
+    "config_id": "span2-coords067",
+    "span": "span2",
+    "frames": [
+     155,
+     187
+    ],
+    "values": {
+     "ref": "coords067"
+    },
+    "repeat": 2,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 33,
+    "transitions": 32,
+    "lifetimes": 383
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 33,
+    "projection_frames": 221,
+    "dollars": 1.455,
+    "per_frame": 0.0441,
+    "per_video": 9.74,
+    "seconds": 548.0,
+    "seconds_per_frame": 16.6,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 1.455,
+      "per_frame": 0.0441,
+      "per_video": 9.74,
+      "seconds": 89.8,
+      "calls": 33,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 106887,
+       "input_tokens": 84772,
+       "output_tokens": 39107
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 450.4,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 7.8,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0441
+    },
+    "seconds.per_frame": {
+     "run": 16.6
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "span2-coords050-r1",
+    "config_id": "span2-coords050",
+    "span": "span2",
+    "frames": [
+     155,
+     187
+    ],
+    "values": {
+     "ref": "coords050"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 33,
+    "transitions": 32,
+    "lifetimes": 383
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 33,
+    "projection_frames": 221,
+    "dollars": 1.3586,
+    "per_frame": 0.0412,
+    "per_video": 9.1,
+    "seconds": 549.1,
+    "seconds_per_frame": 16.6,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 1.3586,
+      "per_frame": 0.0412,
+      "per_video": 9.1,
+      "seconds": 91.1,
+      "calls": 33,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 106887,
+       "input_tokens": 68404,
+       "output_tokens": 38524
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 449.4,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 8.6,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0412
+    },
+    "seconds.per_frame": {
+     "run": 16.6
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "span2-coords050-r2",
+    "config_id": "span2-coords050",
+    "span": "span2",
+    "frames": [
+     155,
+     187
+    ],
+    "values": {
+     "ref": "coords050"
+    },
+    "repeat": 2,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 33,
+    "transitions": 32,
+    "lifetimes": 383
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 33,
+    "projection_frames": 221,
+    "dollars": 1.2502,
+    "per_frame": 0.0379,
+    "per_video": 8.37,
+    "seconds": 540.7,
+    "seconds_per_frame": 16.4,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 1.2502,
+      "per_frame": 0.0379,
+      "per_video": 8.37,
+      "seconds": 83.6,
+      "calls": 33,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 106887,
+       "input_tokens": 68404,
+       "output_tokens": 34189
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 449.4,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 7.7,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0379
+    },
+    "seconds.per_frame": {
+     "run": 16.4
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "span2-ids100-r1",
+    "config_id": "span2-ids100",
+    "span": "span2",
+    "frames": [
+     155,
+     187
+    ],
+    "values": {
+     "ref": "ids100"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 33,
+    "transitions": 32,
+    "lifetimes": 383
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 1,
+     "repair_counts": {
+      "link_unknown_box": 1
+     },
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 33,
+    "projection_frames": 221,
+    "dollars": 1.7658,
+    "per_frame": 0.0535,
+    "per_video": 11.83,
+    "seconds": 473.3,
+    "seconds_per_frame": 14.3,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 1.7658,
+      "per_frame": 0.0535,
+      "per_video": 11.83,
+      "seconds": 65.1,
+      "calls": 33,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 24280,
+       "cache_read_input_tokens": 75875,
+       "input_tokens": 192758,
+       "output_tokens": 24494
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 391.8,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 16.4,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0535
+    },
+    "seconds.per_frame": {
+     "run": 14.3
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "span2-ids100-r2",
+    "config_id": "span2-ids100",
+    "span": "span2",
+    "frames": [
+     155,
+     187
+    ],
+    "values": {
+     "ref": "ids100"
+    },
+    "repeat": 2,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 33,
+    "transitions": 32,
+    "lifetimes": 383
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 33,
+    "projection_frames": 221,
+    "dollars": 1.6254,
+    "per_frame": 0.0493,
+    "per_video": 10.89,
+    "seconds": 522.4,
+    "seconds_per_frame": 15.8,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 1.6254,
+      "per_frame": 0.0493,
+      "per_video": 10.89,
+      "seconds": 64.2,
+      "calls": 33,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 100155,
+       "input_tokens": 192758,
+       "output_tokens": 24461
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 450.2,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 8.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0493
+    },
+    "seconds.per_frame": {
+     "run": 15.8
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "span2-ids067-r1",
+    "config_id": "span2-ids067",
+    "span": "span2",
+    "frames": [
+     155,
+     187
+    ],
+    "values": {
+     "ref": "ids067"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 33,
+    "transitions": 32,
+    "lifetimes": 383
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 1,
+     "repair_counts": {
+      "link_already_linked": 1
+     },
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 33,
+    "projection_frames": 221,
+    "dollars": 1.1459,
+    "per_frame": 0.0347,
+    "per_video": 7.67,
+    "seconds": 106.8,
+    "seconds_per_frame": 3.2,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 1.1459,
+      "per_frame": 0.0347,
+      "per_video": 7.67,
+      "seconds": 57.8,
+      "calls": 33,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 100155,
+       "input_tokens": 94088,
+       "output_tokens": 25016
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 46.4,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 2.6,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0347
+    },
+    "seconds.per_frame": {
+     "run": 3.2
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "span2-ids067-r2",
+    "config_id": "span2-ids067",
+    "span": "span2",
+    "frames": [
+     155,
+     187
+    ],
+    "values": {
+     "ref": "ids067"
+    },
+    "repeat": 2,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 33,
+    "transitions": 32,
+    "lifetimes": 383
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 33,
+    "projection_frames": 221,
+    "dollars": 1.1617,
+    "per_frame": 0.0352,
+    "per_video": 7.78,
+    "seconds": 87.2,
+    "seconds_per_frame": 2.6,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 1.1617,
+      "per_frame": 0.0352,
+      "per_video": 7.78,
+      "seconds": 54.9,
+      "calls": 33,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 100155,
+       "input_tokens": 94088,
+       "output_tokens": 25646
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 29.9,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 2.4,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0352
+    },
+    "seconds.per_frame": {
+     "run": 2.6
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "span2-ids050-r1",
+    "config_id": "span2-ids050",
+    "span": "span2",
+    "frames": [
+     155,
+     187
+    ],
+    "values": {
+     "ref": "ids050"
+    },
+    "repeat": 1,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 33,
+    "transitions": 32,
+    "lifetimes": 383
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 33,
+    "projection_frames": 221,
+    "dollars": 1.0118,
+    "per_frame": 0.0307,
+    "per_video": 6.78,
+    "seconds": 490.7,
+    "seconds_per_frame": 14.9,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 1.0118,
+      "per_frame": 0.0307,
+      "per_video": 6.78,
+      "seconds": 53.2,
+      "calls": 33,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 100155,
+       "input_tokens": 61352,
+       "output_tokens": 26198
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 432.4,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 5.1,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0307
+    },
+    "seconds.per_frame": {
+     "run": 14.9
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  },
+  {
+   "run": {
+    "phase": "p10",
+    "name": "span2-ids050-r2",
+    "config_id": "span2-ids050",
+    "span": "span2",
+    "frames": [
+     155,
+     187
+    ],
+    "values": {
+     "ref": "ids050"
+    },
+    "repeat": 2,
+    "status": "done",
+    "resumed": false,
+    "cold": true,
+    "git_commit": "daa16a3ac8ae13dd4a64d7415caca0c2b6f649ad",
+    "git_dirty": false
+   },
+   "inputs": {
+    "ground_truth_sha256": null,
+    "questions_sha256": null
+   },
+   "counts": {
+    "frames": 33,
+    "transitions": 32,
+    "lifetimes": 383
+   },
+   "commands": null,
+   "questions": null,
+   "counters": {
+    "annotate": {
+     "repairs": 0,
+     "repair_counts": {},
+     "errors": 0,
+     "failed_targets": 0
+    },
+    "interpret": {}
+   },
+   "cost": {
+    "frames": 33,
+    "projection_frames": 221,
+    "dollars": 1.0697,
+    "per_frame": 0.0324,
+    "per_video": 7.16,
+    "seconds": 512.5,
+    "seconds_per_frame": 15.5,
+    "question_seconds": 0.0,
+    "cache_hits": 0,
+    "by_stage": {
+     "annotate": {
+      "dollars": 1.0697,
+      "per_frame": 0.0324,
+      "per_video": 7.16,
+      "seconds": 63.8,
+      "calls": 33,
+      "model": "claude-opus-5",
+      "usage": {
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 100155,
+       "input_tokens": 61352,
+       "output_tokens": 28516
+      }
+     },
+     "decode": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 0.0,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "read": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 434.8,
+      "calls": null,
+      "model": null,
+      "usage": null
+     },
+     "track": {
+      "dollars": 0.0,
+      "per_frame": 0.0,
+      "per_video": 0.0,
+      "seconds": 13.9,
+      "calls": null,
+      "model": null,
+      "usage": null
+     }
+    },
+    "warnings": []
+   },
+   "units": {
+    "cost.per_frame": {
+     "run": 0.0324
+    },
+    "seconds.per_frame": {
+     "run": 15.5
+    }
+   },
+   "warnings": [],
+   "notes": [
+    "no second reader: exact.vlm not scored",
+    "no index: found not scored",
+    "no interpretations: submitted and false run not scored"
+   ]
+  }
+ ]
+}
